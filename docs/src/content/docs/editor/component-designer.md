@@ -122,6 +122,7 @@ its own colored icon. Pick a common type in the **Type** list of the property's 
 | Color | `pz.Color` | Color swatch with a theme token or `#rrggbb`. |
 | Icon | `pz.Icon` | Icon picker. |
 | Multiline | `pz.Multiline` | Text area. |
+| File, folder | `pz.FilePath`, `pz.FolderPath` (or `pathlib.Path`) | A path field with a button that opens the file or folder dialog. |
 | Choice | `Literal["fast", "slow"]` | Drop-down; the card has an **Options** field. |
 | Range | `Annotated[int, pz.Range(0, 5)]` | Number box with limits; the card has **Min**, **Max** and **Step**. |
 | Optional | `float \| None`, `Optional[float]` | **None** with **+** to set a value, or the value's editor with **×** to empty it. |

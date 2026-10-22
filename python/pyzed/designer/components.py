@@ -120,8 +120,10 @@ class Prop:
 
     ``kind`` picks the editor: text, multiline, number, bool, color, choice (from
     ``choices``), list (one item per line), rows (comma-separated rows, the first one the
-    header), icon (a Lucide icon name) or typed (any annotation in ``type``: unions, optionals,
-    dicts, tuples...).
+    header), icon (a Lucide icon name), file or folder (a path with a button that opens the
+    system's dialog; ``accept`` names the kind of file, like ``"image"``, or its extensions,
+    like ``"wgsl pzshad"``) or typed (any annotation in ``type``: unions, optionals, dicts,
+    tuples...).
     """
 
     name: str
@@ -135,6 +137,8 @@ class Prop:
     group: str = "Appearance"
     #: The annotation of a ``typed`` property (``int | None``, ``dict[str, int]``...), edited by its type.
     type: str = ""
+    #: The files a ``file`` property takes: a kind (``"image"``, ``"audio"``...) or extensions (``"png jpg"``).
+    accept: str = ""
 
     @property
     def title(self) -> str:
@@ -1128,12 +1132,12 @@ for _component in (
               (Prop("text", "text", "New"), Prop("tint", "choice", "accent", choices=TINTS), Prop("icon", "icon", "")),
               (), "A small status label."),
     Component("image", "Image", "image", "Display", _image, (160, 120),
-              (Prop("source", "text", "", label="File"),
+              (Prop("source", "file", "", label="File", accept="image"),
                Prop("fit", "choice", "cover", choices=("contain", "cover", "fill", "none", "scale-down")),
                Prop("radius", "number", 0)),
               ("click", "double_click"), "A picture from a file."),
     Component("shader", "Shader", "blend", "Display", _shader, (240, 160),
-              (Prop("file", "text", "", label="Shader file"),
+              (Prop("file", "file", "", label="Shader file", accept="shader"),
                Prop("variables", "typed", {}, type="dict[str, float | str]", group="Data")),
               (), "A shader made of nodes (.pzshad) drawn on the GPU; set its variables to animate it."),
     Component("icon", "Icon", "star", "Display", _icon_control, (24, 24),
@@ -1287,13 +1291,13 @@ for _component in (
                Prop("background", "color", "")),
               ("click", "double_click"), "A QR code that phones can scan."),
     Component("svg", "SVG image", "shapes", "Display", _svg, (96, 96),
-              (Prop("source", "text", "", label="File"),
+              (Prop("source", "file", "", label="File", accept="image"),
                Prop("fit", "choice", "contain", choices=("contain", "cover", "fill", "none", "scale-down")),
                Prop("color", "color", "", label="Tint"), Prop("opacity", "number", 1, min=0, max=1, step=0.1),
                Prop("rotation", "number", 0, label="Rotation (degrees)")),
               ("click", "double_click"), "A vector drawing from an .svg file, sharp at any size and tintable."),
     Component("image_viewer", "Image viewer", "zoom-in", "Display", _image_viewer, (280, 200),
-              (Prop("source", "text", "", label="File"), Prop("min_zoom", "number", 0.25, min=0.01, step=0.25),
+              (Prop("source", "file", "", label="File", accept="image"), Prop("min_zoom", "number", 0.25, min=0.01, step=0.25),
                Prop("max_zoom", "number", 10, min=0.01, step=0.5)),
               (), "A picture you can zoom with the wheel and pan by dragging."),
     Component("terminal", "Terminal output", "square-terminal", "Display", _terminal, (360, 160),
@@ -1309,14 +1313,14 @@ for _component in (
               (Prop("keys", "text", "ctrl-s", group="Behavior"),),
               ("activate",), "A keyboard shortcut for the whole window, such as ctrl-s.", visual=False),
     Component("file_watcher", "File watcher", "folder-search", NON_VISUAL, _non_visual, TRAY_SIZE,
-              (Prop("path", "text", ".", label="Path", group="Behavior"), Prop("pattern", "text", "*", group="Behavior"),
+              (Prop("path", "folder", ".", label="Path", group="Behavior"), Prop("pattern", "text", "*", group="Behavior"),
                Prop("recursive", "bool", False, label="Subfolders", group="Behavior"),
                Prop("interval", "number", 500, label="Interval (ms)", min=50, group="Behavior"),
                Prop("running", "bool", True, group="Behavior")),
               ("change", "created", "modified", "deleted"),
               "Raises events when files are created, modified or deleted in a folder.", visual=False),
     Component("process", "Process", "square-terminal", NON_VISUAL, _non_visual, TRAY_SIZE,
-              (Prop("command", "text", "", group="Behavior"), Prop("directory", "text", "", label="Folder", group="Behavior"),
+              (Prop("command", "text", "", group="Behavior"), Prop("directory", "folder", "", label="Folder", group="Behavior"),
                Prop("shell", "bool", False, label="Run in shell", group="Behavior"),
                Prop("autostart", "bool", False, label="Start on load", group="Behavior")),
               ("output", "error_output", "finished", "started", "failed"),
@@ -1336,13 +1340,13 @@ for _component in (
                Prop("interval", "number", 500, label="Interval (ms)", min=100, group="Behavior")),
               ("change", "paste"), "Copies and pastes text, and notices what is copied.", visual=False),
     Component("settings", "Settings", "settings-2", NON_VISUAL, _non_visual, TRAY_SIZE,
-              (Prop("file", "text", "", label="File", group="Behavior"),
+              (Prop("file", "file", "", label="File", group="Behavior", accept="data"),
                Prop("remember", "list", "", label="Remember", group="Behavior")),
               ("change",), "Keeps values between runs, and the values of the controls you list.", visual=False),
     Component("file_dialog", "File dialog", "folder-open", NON_VISUAL, _non_visual, TRAY_SIZE,
               (Prop("mode", "choice", "open", choices=("open", "open_many", "save", "folder"), group="Behavior"),
                Prop("title", "text", "", group="Behavior"), Prop("filters", "multiline", "", group="Behavior"),
-               Prop("directory", "text", "", label="Start folder", group="Behavior"),
+               Prop("directory", "folder", "", label="Start folder", group="Behavior"),
                Prop("file_name", "text", "", label="Suggested name", group="Behavior")),
               ("chosen", "cancelled"), "The system's open, save and folder dialogs.", visual=False),
     Component("notification", "Notification", "bell", NON_VISUAL, _non_visual, TRAY_SIZE,

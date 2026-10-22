@@ -39,8 +39,12 @@ flowchart TB
 - **Dibuja** un control nuevo dentro: elige un componente y haz clic o arrastra dentro del contenedor.
 - **Add inside…**: el **+** de la fila del contenedor en la estructura, o su menú contextual, abre la lista Añadir
   control.
-- **Agrupa**: selecciona algunos controles y usa **Editar → Agrupar en una fila / columna / cuadrícula** (paleta) o
-  el menú contextual, que además ofrece **Group in a panel**. El contenedor nuevo envuelve justo la selección.
+- **Agrupa**: selecciona algunos controles y pulsa <kbd>Ctrl</kbd>+<kbd>G</kbd> para meterlos en un panel invisible
+  que los envuelve justo, sin moverlos. <kbd>Shift</kbd>+<kbd>A</kbd> (**Añadir auto layout**) los envuelve en una
+  fila o columna flex, deducida de cómo están colocados. **Editar → Agrupar en una fila / columna / cuadrícula**
+  (paleta) y el menú contextual ofrecen todos los tipos, también **Group in a panel**.
+- **Desagrupa**: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> sobre un contenedor saca sus hijos y lo quita.
+  Conservan el sitio y el tamaño que tenían en el lienzo, incluso los que una fila flex estiraba.
 - **Saca**: arrastra el control al formulario vacío, usa **Move out of *contenedor*** en su menú contextual o la
   flecha junto a **Dentro de** en su sección Posición.
 
@@ -53,12 +57,18 @@ llevan. Un contenedor no se puede soltar dentro de sí mismo ni de sus hijos.
 | --- | --- |
 | **Dirección** | `row` (de izquierda a derecha) o `column` (de arriba abajo). Una fila flex y una columna flex son el mismo contenedor con otro valor por defecto. |
 | **Separación** | Espacio entre hijos, en píxeles. |
-| **Relleno** | Espacio entre el borde del contenedor y sus hijos. |
+| **Relleno** | Espacio entre el borde del contenedor y sus hijos: un número para todos los lados, dos (vertical y horizontal) o cuatro (arriba, derecha, abajo, izquierda). |
 | **Justificar** | Dónde van los hijos en el eje principal cuando sobra espacio: `start`, `center`, `end`, `space-between`, `space-around`, `space-evenly`. |
 | **Alineación** | En el eje cruzado: `stretch` (llenar), `start`, `center`, `end`. |
 | **Fondo** | Un color detrás de los hijos. |
 
-Cada hijo recibe un campo **Crecer** en su sección Posición: la parte del espacio libre que ocupa (0 mantiene su
+La sección **Auto layout** del panel Propiedades edita todo esto como Figma: una dirección, una caja de 3×3 de
+**Alineación** (haz clic donde quieres los hijos), la separación (o una forma de repartirlos), el relleno y **Llenar
+a lo ancho**. Ver [Propiedades](/pyzed/es/editor/properties/#auto-layout).
+
+Cada hijo dice en su sección Posición si su **Ancho** y su **Alto** son **Fijo** (su propio tamaño) o **Llenar** (el
+sitio que deja el contenedor); un hijo que llena a lo ancho ignora la **Alineación** del contenedor para sí mismo
+(`align_self` en el `.pzform`). Cada hijo recibe además un campo **Crecer** en su sección Posición: la parte del espacio libre que ocupa (0 mantiene su
 tamaño). Dos hijos con crecer 1 se reparten el espacio libre a medias; 2 y 1, en tercios. Cuando los hijos no caben,
 todos encogen en proporción a su tamaño, como `flex-shrink` de CSS.
 

@@ -546,10 +546,18 @@ Mueve controles dentro de `parent` (o al formulario con `None`), dejándolos don
 #### `Document.wrap`
 
 ```python
-Document.wrap(type_, names=None)
+Document.wrap(type_, names=None, props=None)
 ```
 
 Mete controles (por defecto, la selección) dentro de un contenedor nuevo de tipo `type_` que los rodea.
+
+#### `Document.ungroup`
+
+```python
+Document.ungroup(names=None)
+```
+
+Saca los hijos de los contenedores seleccionados (donde están en pantalla) y quita los contenedores; los hijos quedan seleccionados. Devuelve los nombres de los contenedores quitados.
 
 #### `Document.move_out`
 
@@ -1059,7 +1067,7 @@ Un control nuevo de este tipo con las propiedades por defecto.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='', accept='')
 ```
 
 Una propiedad que se muestra en la rejilla de propiedades del diseñador.

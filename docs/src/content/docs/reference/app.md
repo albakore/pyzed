@@ -893,6 +893,30 @@ Type hint for a component prop that holds long text: the designer shows a text a
 notes: pz.Multiline = ""
 ```
 
+### `FilePath`
+
+```python
+class FilePath
+```
+
+Type hint for a component prop that holds a file path: the designer shows the path with a button that opens the system's file dialog (a `pathlib.Path` annotation does the same). A plain `str` at run time.
+
+```python
+logo: pz.FilePath = ""
+```
+
+### `FolderPath`
+
+```python
+class FolderPath
+```
+
+Type hint for a component prop that holds a folder: the designer shows the path with a button that opens the system's folder dialog. A plain `str` at run time.
+
+```python
+output: pz.FolderPath = ""
+```
+
 ### `Range`
 
 ```python

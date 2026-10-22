@@ -893,6 +893,30 @@ Anotación para un prop de componente con texto largo: el diseñador muestra un 
 notes: pz.Multiline = ""
 ```
 
+### `FilePath`
+
+```python
+class FilePath
+```
+
+Anotación para un prop de componente con la ruta de un archivo: el diseñador muestra la ruta con un botón que abre el diálogo de archivos del sistema (una anotación `pathlib.Path` hace lo mismo). En ejecución es un `str` normal.
+
+```python
+logo: pz.FilePath = ""
+```
+
+### `FolderPath`
+
+```python
+class FolderPath
+```
+
+Anotación para un prop de componente con una carpeta: el diseñador muestra la ruta con un botón que abre el diálogo de carpetas del sistema. En ejecución es un `str` normal.
+
+```python
+output: pz.FolderPath = ""
+```
+
 ### `Range`
 
 ```python

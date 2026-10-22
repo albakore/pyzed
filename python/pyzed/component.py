@@ -822,7 +822,8 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
             return prop_class(info.name, "number", default, min=limits.min, max=limits.max, step=step)
         annotation = base_type
         text = getattr(base_type, "__name__", str(base_type))
-    for hint, kind in ((_hints.Color, "color"), (_hints.Icon, "icon"), (_hints.Multiline, "multiline")):
+    for hint, kind in ((_hints.Color, "color"), (_hints.Icon, "icon"), (_hints.Multiline, "multiline"),
+                       (_hints.FilePath, "file"), (_hints.FolderPath, "folder")):
         if annotation is hint or text.rsplit(".", 1)[-1] == hint.__name__:
             return prop_class(info.name, kind, "" if default is None else default)
     base = text.split("[")[0].replace("typing.", "").lower()

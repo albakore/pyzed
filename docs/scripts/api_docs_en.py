@@ -585,6 +585,11 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                     "desc": "An `input` with a magnifying glass icon.",
                     "params": {"value": "Current text.", "kwargs": "Same as `input`."},
                 },
+                "pyzed.ui.path_input": {
+                    "desc": "A text field for a file or folder path with a button that opens the system's file dialog, so the path never has to be typed (it still can be).",
+                    "params": {"value": "Current path.", "on_change": "Callable that receives the typed or chosen path.", "folder": "Picks a folder instead of a file.", "save": "Shows the \"Save as\" dialog.", "filters": "`(name, extensions)` pairs: `[(\"Images\", [\"png\", \"jpg\"])]`.", "kind": 'Common filters by name: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` or `"data"`.', "directory": "Folder the dialog opens in (by default, the current path's).", "relative_to": "A chosen path inside this folder is given relative to it.", "title": "Title of the dialog.", "placeholder": "Text shown while it is empty.", "size": '`"sm"`, `"md"` or `"lg"`.', "mono": "Monospaced text.", "disabled": "Greys it out.", "invalid": "Paints the border in the error color."},
+                    "example": 'ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")',
+                },
                 "pyzed.ui.switch": {"desc": "An on/off switch.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
                 "pyzed.ui.checkbox": {"desc": "A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
                 "pyzed.ui.slider": {
@@ -1471,8 +1476,8 @@ _section("ui", "Controls", {
         "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column.", "disabled": "`True`, or the values to disable.", "descriptions": "Maps values to a muted line under their label."},
     },
     "pyzed.ui.number_field": {
-        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
-        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.', "prefix": "Text before the number (`\"$\"`…).", "decimals": "Decimals shown (by default, as many as `step`).", "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_submit": "Sent on Enter."},
+        "desc": "A numeric field with −/+ buttons that you can also drag, like Figma's. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Press and move the mouse sideways over the number to change it (it keeps going outside the window); double-click it to type a value, and Enter, Escape or a click outside to finish. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+        "params": {"steppers": "Shows the −/+ buttons (`False`: a compact field, as in a property grid).", "drag": "Lets the mouse change it by dragging (`False`: a plain text field).", "drag_step": "How much each pixel dragged adds (by default `step`, up to 1; steps under 1 take three pixels each).", "min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.', "prefix": "Text before the number (`\"$\"`…).", "decimals": "Decimals shown (by default, as many as `step`).", "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_submit": "Sent on Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "A button with a separate arrow for more options. `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
@@ -1738,6 +1743,14 @@ _section("app", "Events and components", {
     "pyzed.Multiline": {
         "desc": "Type hint for a component prop that holds long text: the designer shows a text area for it. A plain `str` at run time.",
         "example": 'notes: pz.Multiline = ""',
+    },
+    "pyzed.FilePath": {
+        "desc": "Type hint for a component prop that holds a file path: the designer shows the path with a button that opens the system's file dialog (a `pathlib.Path` annotation does the same). A plain `str` at run time.",
+        "example": 'logo: pz.FilePath = ""',
+    },
+    "pyzed.FolderPath": {
+        "desc": "Type hint for a component prop that holds a folder: the designer shows the path with a button that opens the system's folder dialog. A plain `str` at run time.",
+        "example": 'output: pz.FolderPath = ""',
     },
     "pyzed.Range": {
         "desc": "Limits of a number prop, used with `typing.Annotated`: the designer shows a number box limited to them. See [Custom components](/pyzed/guides/components/#in-the-designer).",

@@ -1,11 +1,11 @@
 ---
 title: Animations and effects
-description: "Give controls rotation, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them on appear, hover, press, focus or click."
+description: "Give controls shadow, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them when they appear, on hover, click, a new value, a failed rule or another control's event."
 sidebar:
   order: 5.5
 ---
 
-Every visual control has two sections in the **Properties** panel, under **Style**: **Effects** and
+Every visual control has two sections at the end of the **Properties** panel, after its style: **Effects** and
 **Animation**. What you set there is saved in the `.pzform` and plays when the form runs. It is the same
 system as [`widget.animate()` and the style effects](/pyzed/animation/) of the library.
 
@@ -16,19 +16,24 @@ system as [`widget.animate()` and the style effects](/pyzed/animation/) of the l
 | Field | What it does |
 | --- | --- |
 | **Opacity** | How visible the control and everything inside it is (1 is opaque). |
-| **Rotation** | Degrees, clockwise, around the center. |
+| **Shadow** | A drop shadow: pick a color, then **Offset** (X and Y) and **Blur**. |
 | **Blur** | Blurs the control and everything inside it, in pixels. |
 | **Backdrop blur** | Blurs what is behind the box, in pixels. |
 | **Glow** | A soft halo around the box. Pick a color (or a theme token such as `accent`); **Glow size** sets how far it spreads. |
 | **Bloom** | Light that spills from the bright parts of the control. **Intensity** goes from 0 to 1. |
 | **Glass** | A translucent panel that blurs what is behind it, with a light edge. **Tint** colors it and **Strength** sets how much of the tint shows. |
 
-Sub-fields only show while the effect is on. Clear the color (or turn **Glass** off) to remove it.
-Effects are style properties (`opacity`, `rotate`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), so they also show in code as
+Rotation is in the **Position** section. Sub-fields only show while the effect is on. Clear the color (or turn **Glass** off) to remove it.
+Effects are style properties (`opacity`, `shadow`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), so they also show in code as
 `control.style` and work with **Reset style**. Glass looks best over a colorful background, such as a
 panel with a gradient.
 
 ## Animation
+
+An animation is two choices: **when** it plays and **what** plays (a preset such as *Fade in up*, *Pulse* or
+*Shake*). A control without animations shows a few ready-made ones to add with one click (**Fade in when it
+appears**, **Lift on hover**, **Pulse on click**, **Shake when the value is invalid**...), only those that suit the
+control, and **Add animation** for any other.
 
 Each row is one animation: an icon for what plays it, a summary (**Fade in up · 280 ms**, with
 **+delay** and **×repeat** when set) and the trigger under it. The **▶** button previews it and the trash
@@ -36,14 +41,28 @@ can removes it. Click a row to open its editor:
 
 | Field | Meaning |
 | --- | --- |
-| **When** | What plays it: **When it appears**, **While hovered**, **While pressed**, **While focused**, **On click** or **When played from code**. Hover, press and focus play forward while the condition holds and back when it ends. Under the field, a line says how the chosen one starts. |
-| **Animation** | The preset. The ones that suit the trigger come first (entrances for *appears*, interactions for hover and press, attention seekers for click); the tooltip describes the selected one. |
+| **When** | What plays it (see the table below). Under the field, a line says how the chosen one starts. |
+| **Control**, **Event** | Only for **On another control's event**: which control (or the form) and which of its events. |
+| **Animation** | The preset. The ones that suit the trigger come first (entrances for *appears*, interactions for hover and press, attention seekers for clicks and events); the tooltip describes the selected one. |
 | **Duration**, **Delay** | Milliseconds. Empty keeps the preset's own timing. |
 | **Easing** | How the speed changes along the way (ease, linear, ease out cubic, spring...). |
 | **Repeat** | 1, 2, 3, 5 or infinite. |
 
-**Add animation** adds a row (a *Fade in up* when it appears) and opens it. Picking another preset
-resets the row's timing to the new preset's. Every change can be undone.
+| When | Plays |
+| --- | --- |
+| **When it appears** | Once, when the form opens or the control is shown. |
+| **While hovered**, **While pressed**, **While focused** | Forward while the condition holds, and back when it ends. |
+| **On click**, **On double click**, **On right click** | Once on each click. |
+| **When the pointer enters**, **When the pointer leaves** | Once each time the mouse comes in or goes out. |
+| **When its value changes** | Once on each new value (typing, a new choice, a toggled switch...). |
+| **When Enter is pressed** | Once when the user submits a text box. |
+| **When its value is invalid** | Once each time a [validation rule](/pyzed/editor/data-binding/) fails: a classic *shake* on a wrong password. |
+| **On another control's event** | Once on each event of another control or the form: a label that pulses when **Save** is clicked, a card that fades in when the form loads. |
+| **When played from code** | Only when a handler calls `play_animation()` (see below). |
+
+The triggers that play on an event work even if the control has no handler for it, and they play before the
+handler runs. **Add animation** adds a row (a *Fade in up* when it appears) and opens it. Picking another
+preset resets the row's timing to the new preset's. Every change can be undone.
 
 ### Playing it from your code
 
@@ -90,7 +109,10 @@ Animations are saved as plain data on the control:
 ]
 ```
 
-`"on": "manual"` is **When played from code**. `Document.set_animations(name, animations)` changes them
+The `"on"` values are `mount` (the default), `hover`, `press`, `focus`, `click`, `double_click`, `right_click`,
+`enter`, `leave`, `change`, `submit`, `invalid`, `event` and `manual` (**When played from code**). An `event`
+entry also names its source and event: `{"preset": "tada", "on": "event", "source": "save", "event": "click"}`
+(an empty `source` is the form). `Document.set_animations(name, animations)` changes them
 from a script and `Control.animations` reads them. To play one from a handler, call
 `form.<control>.play_animation(...)` (see above); to make your own presets, use the library's
 `pz.Animation` and `define_animation` (see the [preset list](/pyzed/animation/presets/)).

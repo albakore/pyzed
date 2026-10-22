@@ -64,7 +64,7 @@ from .display import (
 from .frame import Menu, system_platform, window_controls, window_frame, window_title_bar
 from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
-from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
+from .inputs import checkbox, field, input, path_input, progress, search_input, segmented, slider, switch
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree, virtual_list
 from .navigation import Tab, breadcrumbs, tab, tab_bar, toolbar
 from .overlays import (
@@ -170,6 +170,7 @@ __all__ = [
     "progress",
     "radio_group",
     "search_input",
+    "path_input",
     "segmented",
     "select",
     "SEPARATOR",

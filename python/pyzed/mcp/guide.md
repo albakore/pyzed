@@ -147,6 +147,23 @@ Run a form with `pyzed run login.pzform` (`--reload` for hot reload). `new_form`
 files from a list of controls and `validate_form` checks a `.pzform`. The designer's toolbox
 types (`button`, `input`, `label`...) are listed by `list_components(kind="designer")`.
 
+Layout in a `.pzform`, like Figma: a `row` or `column` is an auto layout frame (`direction`, `gap`,
+`padding` as one number, `[vertical, horizontal]` or `[top, right, bottom, left]`, `justify`
+`start|center|end|space-between|space-around|space-evenly`, `align` `stretch|start|center|end`);
+each child sets `"layout": {"grow": 1}` to fill the main axis and `{"align_self": "stretch"}` (or
+`start`/`center`/`end`) for its own cross-axis alignment. A `panel` with `"background":
+"transparent", "border": false` is an invisible group. Path properties (`image.source`,
+`shader.file`, `file_watcher.path`...) take a path relative to the project.
+
+Animations of a control are a list in `"animations"`: `{"preset": "shake", "on": "invalid"}`.
+`on` is `mount` (appears), `hover`, `press`, `focus` (while it lasts), `click`, `double_click`,
+`right_click`, `enter`, `leave` (the pointer), `change` (new value), `submit` (Enter), `invalid`
+(a validation rule fails), `manual` (`form.name.play_animation()` from code) or `event` with
+`"source"` (another control's name, `""` for the form) and `"event"` (one of its events:
+`{"preset": "tada", "on": "event", "source": "save", "event": "click"}`). Optional keys:
+`duration`, `delay` (ms), `easing`, `repeat` (a count or `"infinite"`). `form_animations` lists the
+triggers and presets; `validate_form` checks them.
+
 Non-visual components (`"visual": false`: `timer`, `shortcut`, `file_watcher`, `process`, `worker`,
 `http_request`, `clipboard`, `settings`, `file_dialog`, `notification`) have properties and events
 but no position: they sit in the tray under the form and draw nothing when it runs. Handlers call

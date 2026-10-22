@@ -18,6 +18,7 @@ mod layout;
 mod min_size;
 mod recorder;
 mod render;
+mod scrub;
 mod select;
 mod selectable;
 mod shader;

@@ -156,6 +156,26 @@ def _format(value: float, step: float) -> str:
     return f"{value:.{decimals}f}"
 
 
+#: The number being dragged (``number_field``): its value when the drag started and the pixels moved since.
+_SCRUB: dict = {"start": 0.0, "dx": 0.0}
+
+
+def _scrubber(value: float, on_change: Any, clamp: Any, step: float, drag_step: Optional[float],
+              decimals: Optional[int]) -> Any:
+    """``on_scrub(dx)`` of a number field: the value it had when the drag started plus one ``drag_step`` per
+    pixel moved (one per three pixels for steps under 1, so small ranges stay controllable)."""
+    unit = float(drag_step) if drag_step else (step if step <= 1 else 1.0)
+    pixels = 3.0 if unit < 1 else 1.0
+    places = decimals if decimals is not None else max(0, len(repr(float(unit)).split(".")[1].rstrip("0")))
+
+    def scrub(dx: float) -> Any:
+        _SCRUB["dx"] = _SCRUB.get("dx", 0.0) + dx
+        new = clamp(round(float(_SCRUB.get("start", value)) + int(_SCRUB["dx"] / pixels) * unit, places))
+        return None if new == value else on_change(new)
+
+    return scrub
+
+
 def number_field(
     value: float,
     on_change: Any = None,
@@ -172,15 +192,22 @@ def number_field(
     invalid: bool = False,
     id: Optional[str] = None,  # noqa: A002
     on_submit: Any = None,
+    steppers: bool = True,
+    drag: bool = True,
+    drag_step: Optional[float] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A numeric input with −/+ buttons (Zed's ``NumericStepper``).
+    """A numeric input with −/+ buttons (Zed's ``NumericStepper``) that you can also drag, like Figma's.
 
-    ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
-    accepted as long as it parses; anything else is ignored. The number is centered
-    between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the ↑/↓
-    keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
+    ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Press and move
+    the mouse sideways over the number to change it (``drag_step`` per pixel: ``step`` up to
+    1 by default); double-click it to type a value, and Enter, Escape or a click outside to
+    finish. Typing is accepted as long as it parses; anything else is ignored. The number is
+    centered between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the
+    ↑/↓ keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
     ``decimals`` fixes how many decimals it shows (by default, as many as ``step``).
+    ``steppers=False`` leaves out the −/+ buttons (a compact field, as in a property grid)
+    and ``drag=False`` makes it a plain text field.
 
     Events:
         ``on_change(value)``: Callable that receives the new value.
@@ -237,27 +264,31 @@ def number_field(
 
     text = f"{value:.{decimals}f}" if decimals is not None else _format(value, step)
     muted = "text_disabled" if disabled else "text_muted"
+    field = _core.text_input(
+        text,
+        on_input=typed if on_change else None,
+        on_submit=None if disabled else on_submit,
+        id=id,
+        width="fill",
+        size=13,
+        padding=(0, 2 if steppers else 4),
+        bg="transparent",
+        border_width=0.0,
+        color=t.text_disabled if disabled else t.text,
+        selection_color=t.selection,
+        align_x=align,
+    )
+    if drag and on_change is not None:
+        field = _core.scrub(field, _scrubber(value, on_change, clamp, step, drag_step, decimals),
+                            on_start=lambda: _SCRUB.update(start=value, dx=0.0))
     box = _core.container(
         _core.row(
             [
-                side("minus", -step, disabled or (min is not None and value <= min)),
+                side("minus", -step, disabled or (min is not None and value <= min)) if steppers else None,
                 label(prefix, size="sm", color=muted, theme=t) if prefix else None,
-                _core.text_input(
-                    text,
-                    on_input=typed if on_change else None,
-                    on_submit=None if disabled else on_submit,
-                    id=id,
-                    width="fill",
-                    size=13,
-                    padding=(0, 2),
-                    bg="transparent",
-                    border_width=0.0,
-                    color=t.text_disabled if disabled else t.text,
-                    selection_color=t.selection,
-                    align_x=align,
-                ),
+                field,
                 label(suffix, size="sm", color=muted, theme=t) if suffix else None,
-                side("plus", step, disabled or (max is not None and value >= max)),
+                side("plus", step, disabled or (max is not None and value >= max)) if steppers else None,
             ],
             align="center",
             spacing=2,

@@ -62,6 +62,9 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | <kbd>Ctrl</kbd>+<kbd>V</kbd> | Paste |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicate |
 | <kbd>Ctrl</kbd>+<kbd>A</kbd> | Select every control |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> | Group the selection in an invisible panel |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Ungroup: take the children out of the selected container |
+| <kbd>Shift</kbd>+<kbd>A</kbd> | Add auto layout: wrap the selection in a flex row or column |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Undo |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Redo |
 | <kbd>Enter</kbd> | Open the code of the selected control's main event |
@@ -78,6 +81,7 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | Drag on an empty spot | Rubber-band selection |
 | Double-click a control | Open its main event's code, or a designed component in its tab |
 | Right-click | Context menu |
+| Drag a number sideways (Properties) | Lower or raise it; double-click it to type |
 | Drag from the toolbox | Place a control where you drop it |
 | Drag an outline row | Reorder, or move into another container |
 | Drag the grip under the form | Resize the form |

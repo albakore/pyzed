@@ -398,6 +398,53 @@ An `input` with a magnifying glass icon.
 | `placeholder` | Hint text shown when empty. |
 | `kwargs` | Same as `input`. |
 
+### `path_input`
+
+```python
+path_input(
+    value,
+    on_change=None,
+    *,
+    folder=False,
+    save=False,
+    filters=None,
+    kind=None,
+    directory=None,
+    relative_to=None,
+    title=None,
+    placeholder=None,
+    size='md',
+    mono=True,
+    disabled=False,
+    invalid=False,
+    theme=None,
+)
+```
+
+A text field for a file or folder path with a button that opens the system's file dialog, so the path never has to be typed (it still can be).
+
+| Parameter | Description |
+| --- | --- |
+| `value` | Current path. |
+| `on_change` | Callable that receives the typed or chosen path. |
+| `folder` | Picks a folder instead of a file. |
+| `save` | Shows the "Save as" dialog. |
+| `filters` | `(name, extensions)` pairs: `[("Images", ["png", "jpg"])]`. |
+| `kind` | Common filters by name: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` or `"data"`. |
+| `directory` | Folder the dialog opens in (by default, the current path's). |
+| `relative_to` | A chosen path inside this folder is given relative to it. |
+| `title` | Title of the dialog. |
+| `placeholder` | Text shown while it is empty. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `mono` | Monospaced text. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")
+```
+
 ### `switch`
 
 ```python
@@ -809,11 +856,14 @@ number_field(
     invalid=False,
     id=None,
     on_submit=None,
+    steppers=True,
+    drag=True,
+    drag_step=None,
     theme=None,
 )
 ```
 
-A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
+A numeric field with −/+ buttons that you can also drag, like Figma's. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Press and move the mouse sideways over the number to change it (it keeps going outside the window); double-click it to type a value, and Enter, Escape or a click outside to finish. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
 
 | Parameter | Description |
 | --- | --- |
@@ -831,6 +881,9 @@ A numeric field with −/+ buttons. `on_change(value)` receives the number alrea
 | `invalid` | Paints the border in the error color. |
 | `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `on_submit` | Sent on Enter. |
+| `steppers` | Shows the −/+ buttons (`False`: a compact field, as in a property grid). |
+| `drag` | Lets the mouse change it by dragging (`False`: a plain text field). |
+| `drag_step` | How much each pixel dragged adds (by default `step`, up to 1; steps under 1 take three pixels each). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split_button`

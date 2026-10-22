@@ -551,10 +551,18 @@ Moves controls into `parent` (or onto the form with `None`), keeping them where 
 #### `Document.wrap`
 
 ```python
-Document.wrap(type_, names=None)
+Document.wrap(type_, names=None, props=None)
 ```
 
-Puts controls (the selection by default) inside a new container of `type_` around them.
+Puts controls (the selection by default) inside a new container of `type_` around them, with `props` set on it (an invisible panel for a group).
+
+#### `Document.ungroup`
+
+```python
+Document.ungroup(names=None)
+```
+
+Takes the children out of the selected containers (`names`), where they are on screen, and removes the emptied containers; the children become the selection. Returns the removed containers' names.
 
 #### `Document.move_out`
 
@@ -1067,15 +1075,17 @@ A new control of this type with default properties.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='', accept='')
 ```
 
 A property shown in the designer's property grid.
 
 `kind` picks the editor: text, multiline, number, bool, color, choice (from
 `choices`), list (one item per line), rows (comma-separated rows, the first one the
-header), icon (a Lucide icon name) or typed (any annotation in `type`: unions, optionals,
-dicts, tuples...).
+header), icon (a Lucide icon name), file or folder (a path with a button that opens the
+system's dialog; `accept` names the kind of file, like `"image"`, or its extensions,
+like `"wgsl pzshad"`) or typed (any annotation in `type`: unions, optionals, dicts,
+tuples...).
 
 **Methods and properties**
 

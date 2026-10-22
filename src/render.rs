@@ -897,6 +897,18 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             s.into()
         }
         Kind::Opaque { child } => widget::opaque(build(py, child, ctx)),
+        Kind::Scrub {
+            child,
+            on_scrub,
+            on_start,
+            on_end,
+        } => crate::scrub::Scrub::new(
+            build(py, child, ctx),
+            on_scrub.clone(),
+            on_start.clone(),
+            on_end.clone(),
+        )
+        .into(),
         Kind::Styled(props) => {
             let inner = if props.defaults {
                 Ctx {

@@ -111,6 +111,111 @@ def search_input(value: str, on_input: Any = None, *, placeholder: str = "Search
     return input(value, on_input, placeholder=placeholder, icon="search", **kwargs)
 
 
+#: File dialog filters ``path_input`` offers for common kinds of files (``kind="image"``...).
+PATH_FILTERS = {
+    "image": [("Images", ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "ico"])],
+    "audio": [("Audio", ["wav", "mp3", "ogg", "flac", "aiff"])],
+    "video": [("Video", ["mp4", "webm", "mov", "mkv"])],
+    "font": [("Fonts", ["ttf", "otf"])],
+    "shader": [("Shaders", ["wgsl", "pzshad"])],
+    "data": [("Data", ["json", "csv", "toml", "yaml", "yml"])],
+}
+
+
+def path_input(
+    value: Any,
+    on_change: Any = None,
+    *,
+    folder: bool = False,
+    save: bool = False,
+    filters: Optional[Sequence[Tuple[str, Sequence[str]]]] = None,
+    kind: Optional[str] = None,
+    directory: Optional[str] = None,
+    relative_to: Optional[str] = None,
+    title: Optional[str] = None,
+    placeholder: Optional[str] = None,
+    size: str = "md",
+    mono: bool = True,
+    disabled: bool = False,
+    invalid: bool = False,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A text field for a file or folder path with a button that opens the system's file dialog, so the path
+    never has to be typed (it still can be).
+
+    ``folder=True`` picks a folder and ``save=True`` shows the "Save as" dialog. ``filters`` are
+    ``(name, extensions)`` pairs, or ``kind`` picks common ones (``"image"``, ``"audio"``, ``"video"``,
+    ``"font"``, ``"shader"``, ``"data"``). The dialog opens in ``directory`` (by default the folder of the
+    current path); with ``relative_to``, a chosen path inside that folder is given relative to it.
+
+    Events:
+        ``on_change(path)``: Callable that receives the typed or chosen path (a string).
+    """
+    t = _theme(theme)
+    text = "" if value is None else str(value)
+    handler = None if disabled else on_change
+    browse = None if handler is None else (lambda: browse_path(
+        handler, folder=folder, save=save, filters=filters if filters is not None else PATH_FILTERS.get(kind or ""),
+        directory=directory or _start_folder(text, relative_to), relative_to=relative_to, title=title,
+        file_name=text.replace("\\", "/").rsplit("/", 1)[-1] if save else None))
+    hint = placeholder if placeholder is not None else ("Choose a folder…" if folder else "Choose a file…")
+    font_size, _pad = SIZES[size]
+    button = _core.button(
+        _core.container(_icon("folder-open", size=font_size + 0.5, color=t.icon_muted if browse else t.text_disabled),
+                        center=True, width="fill", height="fill"),
+        browse, padding=0, width=font_size * 2 + 2, height="fill", bg=t.element, hover_bg=t.element_hover,
+        border_color=t.border, border_width=1.0, radius=t.radius_sm)
+    field = input(text, handler, placeholder=hint, size=size, mono=mono, disabled=disabled, invalid=invalid,
+                  theme=t)
+    from .base import tooltip_text
+
+    return _core.row([_core.container(field, width="fill"),
+                      tooltip_text(button, "Choose a folder…" if folder else "Choose a file…", theme=t)],
+                     spacing=4, align="center", width="fill", height="shrink")
+
+
+def _start_folder(text: str, relative_to: Optional[str]) -> Optional[str]:
+    """The folder a path field's dialog opens in: where its current path is, else ``relative_to``."""
+    import os
+
+    if text:
+        path = text if os.path.isabs(text) or not relative_to else os.path.join(relative_to, text)
+        folder = path if os.path.isdir(path) else os.path.dirname(path)
+        if folder and os.path.isdir(folder):
+            return folder
+    return relative_to if relative_to and os.path.isdir(relative_to) else None
+
+
+def browse_path(on_change: Any, *, folder: bool = False, save: bool = False, filters: Any = None,
+                directory: Optional[str] = None, relative_to: Optional[str] = None, title: Optional[str] = None,
+                file_name: Optional[str] = None) -> Any:
+    """The command that opens the file dialog and hands ``on_change`` the chosen path (relative to
+    ``relative_to`` when it is inside it); nothing happens when it is cancelled."""
+    import os
+
+    def chosen(paths: List[str]) -> Any:
+        if not paths:
+            return None
+        path = str(paths[0])
+        if relative_to:
+            try:
+                rel = os.path.relpath(path, relative_to)
+            except ValueError:  # another drive on Windows
+                rel = path
+            if not rel.startswith(".."):
+                path = rel.replace(os.sep, "/")
+        return on_change(path)
+
+    options: dict = {"title": title or ("Choose a folder" if folder else "Save as" if save else "Choose a file")}
+    if filters:
+        options["filters"] = [(name, list(exts)) for name, exts in filters]
+    if directory:
+        options["directory"] = directory
+    if save:
+        return _core.Command.save_file(chosen, file_name=file_name or None, **options)
+    return _core.Command.pick_files(chosen, multiple=False, folder=folder, **options)
+
+
 def switch(
     checked: bool,
     on_toggle: Any = None,

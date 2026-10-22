@@ -1318,7 +1318,8 @@ def _value_editor(d: "Designer", key: str, type_: str, value: Any, on_change: Ca
                                             width=112, theme=t)], spacing=4, align="center") for i in range(n)]
         return _core.grid(cells, columns="1fr 1fr", spacing=4)
     if type_ == "texture":
-        return ui.input(str(value or ""), on_change, placeholder=tr("image path"), size="sm", mono=True, theme=t)
+        return ui.path_input(str(value or ""), on_change, kind="image", placeholder=tr("image path"), size="sm",
+                             theme=t)
     return ui.input(str(value), on_change, size="sm", theme=t)
 
 

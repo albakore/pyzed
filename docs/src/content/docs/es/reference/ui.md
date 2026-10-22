@@ -398,6 +398,53 @@ Un `input` con icono de lupa.
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `kwargs` | Los de `input`. |
 
+### `path_input`
+
+```python
+path_input(
+    value,
+    on_change=None,
+    *,
+    folder=False,
+    save=False,
+    filters=None,
+    kind=None,
+    directory=None,
+    relative_to=None,
+    title=None,
+    placeholder=None,
+    size='md',
+    mono=True,
+    disabled=False,
+    invalid=False,
+    theme=None,
+)
+```
+
+Un campo de texto para la ruta de un archivo o carpeta con un botón que abre el diálogo de archivos del sistema, para no tener que escribirla (aunque se puede).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Ruta actual. |
+| `on_change` | Función que recibe la ruta escrita o elegida. |
+| `folder` | Elige una carpeta en vez de un archivo. |
+| `save` | Muestra el diálogo "Guardar como". |
+| `filters` | Pares `(nombre, extensiones)`: `[("Imágenes", ["png", "jpg"])]`. |
+| `kind` | Filtros comunes por nombre: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` o `"data"`. |
+| `directory` | Carpeta donde se abre el diálogo (por defecto, la de la ruta actual). |
+| `relative_to` | Una ruta elegida dentro de esta carpeta se da relativa a ella. |
+| `title` | Título del diálogo. |
+| `placeholder` | Texto que se ve mientras está vacío. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `mono` | Texto monoespaciado. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")
+```
+
 ### `switch`
 
 ```python
@@ -809,11 +856,14 @@ number_field(
     invalid=False,
     id=None,
     on_submit=None,
+    steppers=True,
+    drag=True,
+    drag_step=None,
     theme=None,
 )
 ```
 
-Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
+Un campo numérico con botones −/+ que también se puede arrastrar, como en Figma. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Mantén pulsado y mueve el ratón de lado a lado sobre el número para cambiarlo (sigue aunque salgas de la ventana); haz doble clic para escribir un valor, y Enter, Escape o un clic fuera para terminar. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -831,6 +881,9 @@ Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya li
 | `invalid` | Pinta el borde con el color de error. |
 | `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `on_submit` | Se envía con Enter. |
+| `steppers` | Muestra los botones −/+ (`False`: un campo compacto, como en una rejilla de propiedades). |
+| `drag` | Deja cambiarlo arrastrando el ratón (`False`: un campo de texto normal). |
+| `drag_step` | Cuánto suma cada píxel arrastrado (por defecto `step`, hasta 1; los pasos menores de 1 piden tres píxeles cada uno). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `split_button`

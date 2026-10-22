@@ -62,7 +62,7 @@ def test_animation_section_edits_saves_and_undoes(tmp_path):
     app.add_animation("nav1")
     rows = panels.control_properties(app, app.theme_obj)
     titles = [r.title for r in rows if isinstance(r, panels.Group)]
-    assert titles.index("Style") < titles.index("Effects") < titles.index("Animation")
+    assert titles.index("Position") < titles.index("Appearance") < titles.index("Text") < titles.index("Effects") < titles.index("Animation")
     assert app.view() is not None
     app.open_animation("nav1", 1)
     assert app.motion_open is None
@@ -174,3 +174,62 @@ def _text():
     from pyzed import _core
 
     return _core.text("x")
+
+
+def test_events_play_animations_once_each_time():
+    form = Form()
+    form.add(Control(name="save", type="button"))
+    form.add(Control(name="email", type="input", rules={"required": True},
+                     animations=[{"preset": "shake", "on": "invalid"}, {"preset": "pulse", "on": "change"}]))
+    form.add(Control(name="status", type="label",
+                     animations=[{"preset": "tada", "on": "event", "source": "save", "event": "click"},
+                                 {"preset": "fade_in", "on": "event", "source": "", "event": "load"},
+                                 {"preset": "rubber_band", "on": "enter"}]))
+    app = FormApp(form)
+    runtime = app.runtime
+    assert runtime.listeners[("save", "click")] == [("status", 0)]
+    # events only an animation listens to are raised anyway, without a handler
+    assert runtime.form["status"].events["mouse_enter"] == motion.ANIMATION_ONLY
+    assert "mouse_enter" not in form["status"].events  # the designed form is untouched
+    entries = runtime.form["status"].animations
+    calls = motion.apply(_Recorder(), entries, played=runtime.played.get("status")).calls
+    assert [o["on"] for _, o in calls] == ["manual"] * 3 and [o["key"] for _, o in calls] == [0, 0, 0]
+    runtime.ctx.on(runtime.form["save"], "click")()
+    runtime.load()
+    runtime.ctx.on(runtime.form["save"], "click")()
+    assert runtime.played["status"].fired == {0: 2, 1: 1}
+    runtime.ctx.on(runtime.form["email"], "change", "text")("")  # empty and required: fails, shakes
+    assert runtime.played["email"].fired == {0: 1, 1: 1}
+    assert runtime.error is None and app.view() is not None
+    # previews play everything as if it appeared
+    calls = motion.apply(_Recorder(), entries, preview=3).calls
+    assert {o["on"] for _, o in calls} == {"mount"}
+
+
+def test_triggers_recipes_and_the_event_editor(tmp_path):
+    assert motion.listens({"on": "enter"}, "b") == ("b", "mouse_enter")
+    assert motion.listens({"on": "event", "source": "", "event": "load"}, "b") == ("", "load")
+    assert motion.listens({"on": "hover"}, "b") is None
+    assert motion.new_entry("invalid")["preset"] == "shake"
+    assert motion.new_entry("event") == {"preset": "pulse", "on": "event", "source": "", "event": "click"}
+    labels = [label for label, _, _ in motion.recipes_for(("click",))]
+    assert "Pulse on click" in labels and "Shake when the value is invalid" not in labels
+    from pyzed.designer import motion_panel, panels
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    app.doc.add("button", 10, 10)
+    app.doc.add("label", 10, 60)
+    app.doc.select("label1")
+    t = app.theme_obj
+    rows = motion_panel.animation_rows(app, app.doc.form["label1"], t)
+    assert len(rows) == 4  # the group, the hint, the recipes and the add button
+    app.add_animation("label1", "mount")
+    app.set_animation("label1", 0, "on", "event")
+    app.set_animation("label1", 0, "source", "button1")
+    app.set_animation("label1", 0, "event", "click")
+    entry = app.doc.form["label1"].animations[0]
+    assert motion.listens(entry, "label1") == ("button1", "click")
+    assert motion_panel._trigger_text(entry, "event") == "When button1: click"
+    assert app.view() is not None
+    assert panels.control_properties(app, t)
