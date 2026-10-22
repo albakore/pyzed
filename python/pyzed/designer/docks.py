@@ -64,9 +64,16 @@ def _design(d: "Designer", t: Theme) -> Any:
         return shader_editor.design_panel(d, t)
     top = _core.column([ui.panel_header(tr("Toolbox"), icon="component", theme=t), panels.toolbox(d, t)],
                        width="fill", height="fill")
-    bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), panels.outline(d, t)],
+    outline = _nothing_open(t, "layers") if d.nothing_open else panels.outline(d, t)
+    bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), outline],
                           width="fill", height="fill")
     return ui.split(top, bottom, vertical=True, ratio=d.left_ratio, on_resize=d.resize_left, min_size=120, theme=t)
+
+
+def _nothing_open(t: Theme, icon: str) -> Any:
+    """What the form panels show while every tab is closed."""
+    return ui.empty_state(tr("No form open"), tr("Open or create a form to see its controls here."), icon=icon,
+                          size="sm", theme=t)
 
 
 def _project(d: "Designer", t: Theme) -> Any:
@@ -86,6 +93,8 @@ def _properties(d: "Designer", t: Theme) -> Any:
 
     if shader_editor.is_shader(d):
         return shader_editor.properties(d, t)
+    if d.nothing_open:
+        return _nothing_open(t, "settings-2")
     return panels.properties(d, t)
 
 
@@ -94,6 +103,8 @@ def _events(d: "Designer", t: Theme) -> Any:
 
     if shader_editor.is_shader(d):
         return shader_editor.events(d, t)
+    if d.nothing_open:
+        return _nothing_open(t, "zap")
     return panels.events(d, t)
 
 

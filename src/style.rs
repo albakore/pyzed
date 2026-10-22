@@ -94,6 +94,22 @@ pub fn opt_color(value: &Any<'_>) -> PyResult<Option<Color>> {
     }
 }
 
+/// `selectable=`: `None`/`False` (not selectable), `True` (`""`, a selection of its own) or the
+/// name of a selection group.
+pub fn selection_group(value: &Any<'_>) -> PyResult<Option<String>> {
+    match value {
+        Some(v) if v.is_none() => Ok(None),
+        Some(v) => {
+            if let Ok(name) = v.cast::<PyString>() {
+                let name = name.to_cow()?;
+                return Ok((!name.is_empty()).then(|| name.into_owned()));
+            }
+            Ok(v.is_truthy()?.then(String::new))
+        }
+        None => Ok(None),
+    }
+}
+
 /// `None` | number (pixels) | "fill" | "shrink" | "fill:N" (portion)
 pub fn length(value: &Bound<'_, PyAny>) -> PyResult<Length> {
     if let Ok(s) = value.cast::<PyString>() {

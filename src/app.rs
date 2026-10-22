@@ -1773,6 +1773,7 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
             .and_then(|w| crate::widget::child(&w));
         match root {
             Ok(root) => {
+                crate::selectable::begin_frame();
                 crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches)))
                     .into()
             }

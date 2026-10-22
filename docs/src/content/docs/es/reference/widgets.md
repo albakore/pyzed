@@ -769,6 +769,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -788,6 +790,8 @@ Un texto.
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `wrap` | Ajuste de línea. Con `False` el texto no se parte. |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `icon`
 
@@ -915,6 +919,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -930,6 +936,8 @@ Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces
 | `code_bg` | Fondo del código. |
 | `on_link` | Callable que recibe la URL al pulsar un enlace. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `rich_text`
 

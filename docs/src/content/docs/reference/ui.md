@@ -1690,7 +1690,7 @@ A muted hint like “Open file Ctrl P” for footers and empty states.
 ### `markdown`
 
 ```python
-markdown(source, *, size=None, on_link=None, width=None, theme=None)
+markdown(source, *, size=None, on_link=None, width=None, selectable=None, theme=None)
 ```
 
 `pz.markdown` with the theme's text, link and code colors.
@@ -1701,6 +1701,7 @@ markdown(source, *, size=None, on_link=None, width=None, theme=None)
 | `size` | Size. |
 | `on_link` | Callable that receives the URL when a link is clicked. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `selectable` | Same as in `pz.markdown`; the selection uses the theme's `selection` color. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split`

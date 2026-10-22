@@ -456,9 +456,13 @@ def load_font(source: Any) -> Any:
     by family name, e.g. `text("hi", font="JetBrains Mono")`.
     """
     ...
-def markdown(source: Any, *, size: Any = ..., color: Any = ..., link_color: Any = ..., code_color: Any = ..., code_bg: Any = ..., on_link: Any = ..., width: Any = ...) -> Any:
+def markdown(source: Any, *, size: Any = ..., color: Any = ..., link_color: Any = ..., code_color: Any = ..., code_bg: Any = ..., on_link: Any = ..., width: Any = ..., selectable: Any = ..., selection_color: Any = ...) -> Any:
     """Renders Markdown (headings, lists, code blocks, quotes, tables, links...).
     `on_link(url)` is called when a link is clicked.
+
+    With `selectable=True` its text can be selected with the mouse and copied (Ctrl+C); a string
+    names a selection group instead: texts and Markdown of the same group form one selection
+    area, in the order they are drawn (the messages of a chat). `selection_color` paints it.
 
     Events:
     - `on_link(url)`: Callable that receives the URL when a link is clicked.
@@ -621,7 +625,7 @@ def split(first: Any, second: Any, *, ratio: Any = ..., on_resize: Any = ..., ve
     ...
 def stack(children: Any = ..., *, width: Any = ..., height: Any = ...) -> Any: ...
 def svg(source: Any, *, width: Any = ..., height: Any = ..., color: Any = ..., content_fit: Any = ..., opacity: Any = ..., rotation: Any = ...) -> Any: ...
-def text(content: Any, *, size: Any = ..., color: Any = ..., font: Any = ..., weight: Any = ..., italic: Any = ..., line_height: Any = ..., align_x: Any = ..., align_y: Any = ..., width: Any = ..., height: Any = ..., wrap: Any = ...) -> Any: ...
+def text(content: Any, *, size: Any = ..., color: Any = ..., font: Any = ..., weight: Any = ..., italic: Any = ..., line_height: Any = ..., align_x: Any = ..., align_y: Any = ..., width: Any = ..., height: Any = ..., wrap: Any = ..., selectable: Any = ..., selection_color: Any = ...) -> Any: ...
 def text_input(value: Any, *, placeholder: Any = ..., on_input: Any = ..., on_submit: Any = ..., id: Any = ..., size: Any = ..., font: Any = ..., padding: Any = ..., width: Any = ..., secure: Any = ..., icon: Any = ..., icon_size: Any = ..., bg: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., focus_border_color: Any = ..., border_width: Any = ..., radius: Any = ..., color: Any = ..., placeholder_color: Any = ..., selection_color: Any = ..., icon_color: Any = ..., align_x: Any = ...) -> Any:
     """A controlled text field: it shows `value` and notifies you of changes through `on_input`. For
     the themed field use `ui.input`.

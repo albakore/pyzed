@@ -42,6 +42,12 @@ GRAB_OFFSET = (90.0, 14.0)
 TRANSIENT = {"drag": None, "guides": [], "drop_name": None, "menu": None}
 
 
+def is_blank(doc: Document) -> bool:
+    """Whether ``doc`` stands for "nothing open": the main window shows an empty area and no tab until a
+    document opens (or it gets a control, which makes it a new untitled form)."""
+    return getattr(doc, "blank", False) and not doc.dirty and not doc.form.controls
+
+
 class Pane:
     """The documents shown as tabs in one tab area (the main window's center, a dock or a window of its
     own), which one is in front, and whether a panel of the same area is in front of them."""
@@ -251,8 +257,10 @@ class PaneController:
         panels, and a window closes unless it still holds panels."""
         if pane.docs:
             return None
-        if pane is self.main:
-            pane.docs.append(Document())
+        if pane is self.main:  # nothing open: an empty area (a hidden form takes the place of the tabs)
+            blank = Document()
+            blank.blank = True
+            pane.docs.append(blank)
             pane.active = 0
             return None
         if self.active is pane:

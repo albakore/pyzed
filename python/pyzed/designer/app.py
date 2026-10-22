@@ -53,7 +53,7 @@ from . import project_picker as _project_picker
 from . import welcome as _welcome
 from . import workspace as _workspace
 from .welcome import Welcome
-from .windows import Pane, PaneController
+from .windows import Pane, PaneController, is_blank
 from .dock_windows import DockWindows
 from ..i18n import t as _t
 from .runtime import FormWindow
@@ -293,6 +293,8 @@ class Designer(App):
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
         """Returns the window title: the document's name, after a ``●`` when it has unsaved changes."""
+        if self.nothing_open:
+            return "Pyzed Design"
         return f"{'● ' if self.doc.dirty else ''}{self.doc.display_name} — Pyzed Design"
 
     # -- messages -------------------------------------------------------------
@@ -1772,6 +1774,11 @@ class Designer(App):
         """The document of the active tab."""
         return self.docs[self.active_doc]
 
+    @property
+    def nothing_open(self) -> bool:
+        """Whether every tab was closed: the main window shows an empty area (``doc`` is a hidden blank form)."""
+        return is_blank(self.doc)
+
     @doc.setter
     def doc(self, value: Document) -> None:
         """Opens ``value`` in a tab: the tab of the same file (in any window), an untouched empty tab, or a new one."""
@@ -1821,6 +1828,8 @@ class Designer(App):
         if not 0 <= index < len(self.docs):
             return
         doc = self.docs[index]
+        if is_blank(doc):  # nothing open: no tab to close
+            return None
 
         def close() -> None:
             if index == self.active_doc:
@@ -1886,6 +1895,8 @@ class Designer(App):
         main = pane is self.panes.main
         tabs = []
         for i, doc in enumerate(pane.docs):
+            if is_blank(doc):
+                continue
             icon, label = self.doc_tab_label(doc)
             accent = getattr(doc, "is_scene", False) or getattr(doc, "is_shader", False)
             tabs.append(ui.Tab(id=str(i), label=label, icon=icon, icon_color="accent" if accent else None,
@@ -1895,7 +1906,7 @@ class Designer(App):
             tabs.append(notes)
         if self.help_open and main:
             tabs.append(ui.Tab(id=HELP_TAB, label=_t("pyzed.reference.title"), icon="book-open", icon_color="accent"))
-        view = tr("Shader view") if getattr(pane.doc, "is_shader", False) else \
+        view = "" if is_blank(pane.doc) else tr("Shader view") if getattr(pane.doc, "is_shader", False) else \
             tr("Component view") if getattr(pane.doc, "is_scene", False) else tr("Form view")
         active = str(pane.active)
         if main:
@@ -2170,6 +2181,8 @@ class Designer(App):
             if buffer.text != before:  # "Convert indentation on save" rewrote it
                 return _core.Command.set_editor_text(self.editor_id, buffer.text)
             return None
+        if self.nothing_open:
+            return None
         if self.doc.path is None:
             self.dialog = "save_as"
             self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
@@ -2321,6 +2334,10 @@ class Designer(App):
             self.open_path(project.main_form)  # nothing open: run the startup form
             if self.doc.path is None:
                 return None
+        if self.nothing_open:
+            self.notify(tr("Nothing to run"), tr("Open a form, or a project with a startup file."), kind="info",
+                        seconds=4)
+            return None
         if self.prefs.save_on_run and self.doc.path is not None:
             self.save()
         if self.prefs.console_on_run:
@@ -2645,6 +2662,8 @@ class Designer(App):
             return ui.reference_browser(self.help, on_open_url=self.open_url, theme=t)
         if pane is self.panes.main and self.updates.notes_active:
             return self.updates.notes_view(t)
+        if is_blank(pane.doc):
+            return self.nothing_open_view(t)
         with self.panes.showing(pane):
             if shader_editor.is_shader(self):
                 content = shader_editor.view(self, t)
@@ -2653,6 +2672,34 @@ class Designer(App):
                 content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
                                        width="fill", height="fill")
         return self.panes.asleep(pane, content)
+
+    #: What the empty area offers when every tab is closed.
+    NOTHING_OPEN_ACTIONS = ("new", "new_component", "open", "find_file", "open_recent", "palette")
+
+    def nothing_open_view(self, t) -> Any:
+        """The main window's center when every tab was closed: what can be opened, with its keys."""
+        km = _keymap.get()
+        rows = []
+        for action_id in self.NOTHING_OPEN_ACTIONS:
+            action = _commands.BY_ID.get(action_id)
+            if action is None:
+                continue
+            keys = km.keys_for(f"workspace::{action_id}")
+            rows.append(_core.button(
+                _core.row([_icon(action.icon, size=14, color=t.icon_muted),
+                           ui.label(tr(action.label), size="sm", theme=t, width="fill"),
+                           ui.kbd(keys, size="xs", theme=t) if keys else None], spacing=10, align="center"),
+                lambda a=action_id: self.run_action(a), padding=(5, 10), width="fill", bg="transparent",
+                hover_bg=t.ghost_hover, radius=t.radius))
+        body = _core.column([
+            _core.container(_icon("app-window", size=40, color=t.text_placeholder), padding=(0, 0, 8, 0)),
+            ui.label(tr("No open files"), size="lg", weight="medium", theme=t),
+            ui.label(tr("Open a form, a component or a file of the project, or start a new one."), size="sm",
+                     color="text_muted", theme=t),
+            _core.container(_core.column(rows, spacing=2, width="fill"), padding=(12, 0, 0, 0), width="fill"),
+        ], spacing=6, align="center", max_width=340)
+        return _core.container(body, width="fill", height="fill", align_x="center", align_y="center",
+                               bg=t.background)
 
     def window_overlays(self, body: Any, pane: Pane, t) -> Any:
         """Adds what opens over a window to ``body``, the view of the window of ``pane``: the context menu,
@@ -2798,7 +2845,8 @@ class Designer(App):
             _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
             *_project_picker.title_items(self, t),
             ui.label("/", color="text_muted", size="sm", theme=t),
-            ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
+            ui.title_button(tr("Open…") if self.nothing_open else doc.display_name, self.open_dialog, icon="file",
+                            chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
             ui.badge("Component", tint="accent", icon="component", theme=t) if scene_panel.is_scene(self) else None,
             ui.badge(tr("Shader"), tint="accent", icon=shader_editor.ICON, theme=t)
@@ -2927,6 +2975,8 @@ class Designer(App):
         elif primary is not None:
             info = f"{primary.name}  {primary.width:g}×{primary.height:g} " + tr(
                 "at {x}, {y}", x=f"{primary.x:g}", y=f"{primary.y:g}")
+        elif self.nothing_open:
+            info = tr("No open files")
         else:
             info = f"{doc.form.name}  {doc.form.width:g}×{doc.form.height:g}"
         tool = tr(_components.get(self.tool).label) if self.tool else None
@@ -2944,7 +2994,8 @@ class Designer(App):
                            color="accent") if self.preview_language else None,
             ui.status_item(ui_frame.PLATFORM_LABELS[surface.frame_style(self)], lambda: self.open_preview_picker("frame"),
                            icon="app-window", tooltip=tr("Window frame shown around the form")),
-            ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers"),
+            ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers")
+            if not self.nothing_open else None,
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
             ui.status_item(tr("Snap"), self.toggle("snap"), icon="magnet", selected=self.snap),

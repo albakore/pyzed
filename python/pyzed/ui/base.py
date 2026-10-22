@@ -42,8 +42,14 @@ def label(
     theme: Optional[Theme] = None,
     **kwargs,
 ) -> _core.Widget:
-    """Text using a theme color token (``"text"``, ``"text_muted"``, ``"accent"``...) or a hex color."""
+    """Text using a theme color token (``"text"``, ``"text_muted"``, ``"accent"``...) or a hex color.
+
+    ``selectable=True`` lets the mouse select it (Ctrl+C copies); a string names a selection group,
+    so one drag can select across every text of the group (the lines of a log, a chat's messages).
+    """
     t = _theme(theme)
+    if kwargs.get("selectable") and kwargs.get("selection_color") is None:
+        kwargs["selection_color"] = t.selection
     return _core.text(
         content,
         size=_size(size),

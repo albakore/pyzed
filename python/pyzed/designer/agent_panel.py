@@ -2053,6 +2053,11 @@ class AgentController:
                     out += [f"- `{b.get('name', '')}`" + (f" {preview}" if preview else ""), ""]
         return "\n".join(out).rstrip() + "\n"
 
+    def copy_text(self, text: str) -> Any:
+        """Copies ``text`` (an answer) to the clipboard and says so."""
+        self.d.notify(tr("Copied to the clipboard"), kind="success", seconds=2, log=False)
+        return _core.Command.copy(text)
+
     def copy_markdown(self) -> Any:
         self.menu = None
         self.d.notify(tr("Thread copied as Markdown"), kind="success", seconds=3)
@@ -2392,7 +2397,8 @@ def _thinking_card(c: AgentController, key: str, text: str, t: Theme, live: bool
                       ui.label(tr("Thinking…") if live else tr("Thought"), size="sm", color="text_muted", theme=t),
                       _icon("chevron-down" if opened else "chevron-right", size=12, color=t.text_placeholder)],
                      spacing=6, align="center")
-    body = ui.label(text.strip(), size="sm", color="text_muted", theme=t) if opened and text.strip() else None
+    body = ui.label(text.strip(), size="sm", color="text_muted", selectable=SELECTION, theme=t) \
+        if opened and text.strip() else None
     return _core.column([_core.button(head, lambda: c.toggle_block(key), padding=(3, 6), bg=None,
                                       hover_bg=t.element_hover, radius=t.radius),
                          _core.container(body, padding=(0, 0, 0, 24)) if body else None], spacing=2, width="fill")
@@ -2417,11 +2423,15 @@ def _image_bytes(block: Dict[str, Any]) -> Optional[bytes]:
     return _IMAGES[key]
 
 
+#: The selection group of the thread's text: one drag can select across its messages.
+SELECTION = "agent-thread"
+
+
 def _user_bubble(text: str, t: Theme, images: Sequence[Dict[str, Any]] = ()) -> Any:
     pictures = [_core.image(data, height=72, content_fit="contain", radius=4)
                 for data in (_image_bytes(b) for b in images) if data]
     return _core.container(_core.column([
-        ui.label(text, size="sm", theme=t) if text else None,
+        ui.label(text, size="sm", selectable=SELECTION, theme=t) if text else None,
         _core.row(pictures, spacing=6, wrap=True) if pictures else None,
     ], spacing=6), padding=(8, 10), width="fill", bg=t.element, border_color=t.border_variant, border_width=1,
         radius=t.radius + 2)
@@ -2443,6 +2453,13 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
                 if b.get("type") == "tool_result":
                     results[b.get("tool_use_id", "")] = b
     rows: List[Any] = []
+    answer: List[str] = []  # the text of the agent's answer since the last user message
+
+    def end_answer() -> None:
+        if answer:
+            rows.append(_answer_actions(c, "\n\n".join(answer), t))
+            answer.clear()
+
     for i, m in enumerate(messages):
         blocks = m.get("content", [])
         if m.get("role") == "user":
@@ -2450,27 +2467,37 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
                      and not b.get("text", "").startswith("<context>")]
             images = [b for b in blocks if b.get("type") == "image"]
             if texts or images:
+                end_answer()
                 rows.append(_user_bubble("\n".join(texts), t, images))
             continue
         for j, b in enumerate(blocks):
             kind = b.get("type")
             if kind == "text" and b.get("text", "").strip():
-                rows.append(ui.markdown(b["text"], size=13, theme=t))
+                answer.append(b["text"].strip())
+                rows.append(ui.markdown(b["text"], size=13, selectable=SELECTION, theme=t))
             elif kind == "thinking" and c.settings.show_thinking and b.get("thinking", "").strip():
                 rows.append(_thinking_card(c, f"think:{i}:{j}", b["thinking"], t))
             elif kind == "tool_use":
                 rows.append(_tool_card(c, b, results.get(b.get("id", "")), tools, t))
+    if not c.running:
+        end_answer()
     if c.running:
         if c.live_thinking and c.settings.show_thinking:
             rows.append(_thinking_card(c, "think:live", c.live_thinking, t, live=True))
         if c.live_text and live is None:  # an external agent's text is already in its live blocks
-            rows.append(ui.markdown(c.live_text, size=13, theme=t))
+            rows.append(ui.markdown(c.live_text, size=13, selectable=SELECTION, theme=t))
         if c.live_tool:
             rows.append(ui.ToolCall(title=_tool_title(c.live_tool, tools), detail=tr("preparing…"), status="running",
                                     kind=_kind_of(c.live_tool, tools.get(c.live_tool)), theme=t, key="tool:live"))
         elif not c.live_text or live is not None:
             rows.append(_working(c, t))
     return rows
+
+
+def _answer_actions(c: AgentController, text: str, t: Theme) -> Any:
+    """Under each answer of the agent: a button that copies it (its text can also be selected)."""
+    return _core.row([ui.icon_button("copy", lambda: c.copy_text(text), size="sm", tooltip=tr("Copy the answer"),
+                                     theme=t)], width="fill")
 
 
 def _working(c: AgentController, t: Theme) -> Any:
