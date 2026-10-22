@@ -16,6 +16,35 @@ stable version.
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-22
+
+### Highlights
+
+- **A code editor that knows your code**: hover cards with types and docs, go to definition, find references, rename across the project, quick fixes (ruff, ty, auto-imports, `uv add`) and sticky scroll.
+- **A Figma-style Properties panel**: numbers you drag, position and size first, auto layout for flex and grid containers, a margin/padding box model, file and folder pickers and animations on events.
+- **Dates, files and the system**: date, range and time pickers, a calendar, a file picker, a drop zone, popups and `pyzed.system` (system info, launcher, network and power monitors).
+- **Settings that follow you**: one Settings dialog with search, user profiles, per-project settings, Reset to default and the project's renderer (GPU or CPU) in `pyproject.toml`.
+
+### Features
+
+- ✨ IDE features in the code editor: hover, go to definition (F12, Ctrl+click), type definition, back/forward, find references, rename symbol (F2), quick fixes (Ctrl+.) and sticky scroll; the language servers fall back to the designer's Python when the project has no `.venv`. PR [#183](https://github.com/albakore/pyzed/pull/183) by [@albakore](https://github.com/albakore).
+- ✨ Component icons take the color of their role (layout, input, action, navigation, display, media, system, custom) in the toolbox, the outline, the tray and the Properties/Events headers, and the Design tab is now called Toolbox. PR [#184](https://github.com/albakore/pyzed/pull/184) by [@albakore](https://github.com/albakore).
+- ✨ One Settings dialog with search, user profiles, per-project settings and Reset to default; a project picks its renderer (GPU or CPU, graphics API, GPU and vsync) in `pyproject.toml`, and the MCP server reads and changes it. PR [#185](https://github.com/albakore/pyzed/pull/185) by [@albakore](https://github.com/albakore).
+- ✨ Keyboard focus for selects, switches, check boxes, sliders, segmented controls and radio groups, `pz.focusable` for any control, and tooltip shortcuts shown as key caps from the keymap. PR [#186](https://github.com/albakore/pyzed/pull/186) by [@albakore](https://github.com/albakore).
+- ✨ A Figma-style Properties panel: draggable numbers, Position first with align buttons, Text/Fill/Border/Spacing sections, auto layout, group and ungroup (Ctrl+G, Ctrl+Shift+G), path pickers for every file or folder property and animations on events. PR [#188](https://github.com/albakore/pyzed/pull/188) by [@albakore](https://github.com/albakore).
+- ✨ `ui.Calendar`, `ui.DatePicker`, `ui.DateRangePicker`, `ui.TimePicker`, `ui.file_input`, `ui.DropZone`, `pz.popup` and `pyzed.system` (`SystemInfo`, `Launcher`, `NetworkMonitor`, `PowerMonitor`), with the toolbox split into Forms, Date & time and System. PR [#189](https://github.com/albakore/pyzed/pull/189) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 A WSL project opened from Windows still lists its tools when Windows can't reach the distro. PR [#180](https://github.com/albakore/pyzed/pull/180) by [@albakore](https://github.com/albakore).
+- 🐛 A project's components load whenever it opens, and a missing one is drawn as a warning instead of breaking the form. PR [#182](https://github.com/albakore/pyzed/pull/182) by [@albakore](https://github.com/albakore).
+- 🐛 Windows updates no longer keep the old version: the installer clears the old files before copying, and Restart to update stops child processes, retries the folder swap and says so if it fails. PR [#192](https://github.com/albakore/pyzed/pull/192) by [@albakore](https://github.com/albakore).
+- 🐛 Component descriptions show without raw reST marks: inline code in the Properties header and clean tooltips. PR [#187](https://github.com/albakore/pyzed/pull/187) by [@albakore](https://github.com/albakore).
+
+### Refactors
+
+- ♻️ Custom events have their own place in the Events tab, apart from the built-in ones. PR [#181](https://github.com/albakore/pyzed/pull/181) by [@albakore](https://github.com/albakore).
+
 ## [1.8.1] - 2026-10-22
 
 ### Highlights
@@ -29,7 +58,6 @@ stable version.
 ### Fixes
 
 - 🐛 Restarting after an update on Windows no longer fails with `'NoneType' object has no attribute 'flush'` or opens several console windows. PR [#178](https://github.com/albakore/pyzed/pull/178) by [@albakore](https://github.com/albakore).
-- 🐛 A WSL project opened from Windows still lists its tools when Windows can't reach the distro. PR [#180](https://github.com/albakore/pyzed/pull/180) by [@albakore](https://github.com/albakore).
 
 ### Docs
 
