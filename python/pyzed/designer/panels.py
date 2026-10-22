@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 from .. import _core, component as _component, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
+from ..ui.base import TEXT_SIZES
 from . import components as _components
 from . import help as _help
 from . import keymap as _keymap
@@ -42,6 +43,21 @@ def section(title: str, t: Theme, end: Any = None) -> Any:
         _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
         padding=(10, spacing.GUTTER, 4, spacing.GUTTER), width="fill")
+
+
+def doc_text(text: str, t: Theme, *, size: str = "xs", color: str = "text_muted") -> Any:
+    """A component's description: its Markdown ``code`` (and reST ````code````) in the editor's font on a tint."""
+    parts = re.split(r"``?([^`]+?)``?", " ".join(text.split()))
+    if len(parts) == 1:
+        return ui.label(text, size=size, color=color, theme=t)
+    spans = [_core.span(part, font="mono", color=t.editor_text, bg=alpha(t.text, 0.1), radius=3, padding=(0, 2))
+             if i % 2 else _core.span(part) for i, part in enumerate(parts) if part]
+    return _core.rich_text(spans, size=TEXT_SIZES[size], color=t.color(color), width="fill")
+
+
+def plain_doc(text: str) -> str:
+    """A component's description without its Markdown/reST code marks (for tooltips)."""
+    return re.sub(r"``?([^`]+?)``?", r"\1", " ".join(text.split()))
 
 
 def scroll_panel(content: Any) -> Any:
@@ -367,7 +383,7 @@ def _toolbox(d: "Designer", t: Theme) -> Any:
             rows.append(ui.tooltip(
                 press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
                           icon=spec.icon, selected=d.tool == spec.type, icon_color=_roles.color(role, t)),
-                f"{_roles.name(role)} · {tr(spec.description) if spec.description else tr(spec.label)}",
+                f"{_roles.name(role)} · {plain_doc(tr(spec.description)) if spec.description else tr(spec.label)}",
                 position="right", theme=t))
     if not query:  # a reusable component of your own joins the toolbox once it is created
         rows.append(ui.tooltip(press_row(d, "tool:+component", tr("New component…"), d.new_component, t,
@@ -563,7 +579,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     rows: List[Any] = [
         _core.container(_core.row([_icon(spec.icon, size=16, color=_roles.icon_color(spec, t)),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
-                                                 ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
+                                                 doc_text(tr(spec.description), t)],
                                                 width="fill"),
                                    _help_button(d, c.name, t)],
                                   spacing=10, align="center"), padding=spacing.HEADER_PADDING, width="fill"),
