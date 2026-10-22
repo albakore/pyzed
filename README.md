@@ -1,64 +1,71 @@
 # Pyzed
 
-**Interfaces de escritorio modernas y rápidas en Python, dibujadas por [Iced](https://iced.rs) (Rust).**
-Componentes inspirados en el editor [Zed](https://zed.dev), un diseñador visual al estilo de Godot y Unreal,
-shaders por nodos, animaciones, juegos y agentes de IA integrados.
+**English** · [Español](README.es.md)
+
+**Modern, fast desktop GUIs in Python, drawn natively by [Iced](https://iced.rs) (Rust).**
+Components inspired by the [Zed](https://zed.dev) editor, a visual designer in the spirit of Godot and Unreal,
+node-based shaders, animations, games and built-in AI agents. A modern alternative to tkinter, PyQt, Kivy and Flet.
 
 [![PyPI](https://img.shields.io/pypi/v/pyzed-ui)](https://pypi.org/project/pyzed-ui/)
 [![Python](https://img.shields.io/pypi/pyversions/pyzed-ui)](https://pypi.org/project/pyzed-ui/)
 [![CI](https://github.com/albakore/pyzed/actions/workflows/ci.yml/badge.svg)](https://github.com/albakore/pyzed/actions/workflows/ci.yml)
-[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-📖 **[Documentación](https://albakore.github.io/pyzed/es/)** ·
-⬇️ **[Descargar Pyzed Design](https://albakore.github.io/pyzed/es/download/)** ·
-🧩 **[Biblioteca de componentes](https://albakore.github.io/pyzed/es/library/)** ·
-📰 **[Novedades](CHANGELOG.md)**
+📖 **[Documentation](https://albakore.github.io/pyzed/)** ·
+⬇️ **[Download Pyzed Design](https://albakore.github.io/pyzed/download/)** ·
+🧩 **[Component library](https://albakore.github.io/pyzed/library/)** ·
+📰 **[Changelog](CHANGELOG.md)**
 
-![Pyzed Design con un formulario de inicio de sesión abierto](docs/src/assets/editor/form-view.png)
+![Pyzed Design with a sign-in form open](docs/src/assets/editor/form-view.png)
 
-## Qué es Pyzed
+## What is Pyzed
 
-- **Rendimiento nativo.** Python describe la interfaz; el layout, el texto y el dibujado los hace Iced 0.14 en
-  Rust (wgpu en la GPU, tiny-skia por CPU como respaldo). `import pyzed` tarda unos 35 ms.
-- **Sencillo.** Arquitectura Elm: estado, `update` y `view`. Un botón puede llamar directamente a un método
-  (`on_press=self.guardar`), y `update` acepta corrutinas, generadores y streams.
-- **Más de 90 componentes** listos para usar: botones, formularios, tablas virtuales de cientos de miles de filas,
-  árbol de archivos, pestañas, paleta de comandos, editor de código, terminal, marco de ventana propio, gráficos…
-  Todos siguen el tema actual.
-- **Pyzed Design**, un diseñador visual que se instala como una app: dibuja formularios y componentes, escribe su
-  código con autocompletado y diagnósticos, crea shaders por nodos y ejecútalo todo con **F5**.
-- **Efectos y animaciones**: anima cualquier propiedad, transiciones entre ventanas, glow, bloom, blur, cristal y
-  shaders WGSL con `pz.shader`.
-- **Juegos**: bucle de juego (`pz.frames`), teclas mantenidas, sprites y partículas con `pyzed.game`.
-- **IA**: un panel de agentes dentro de Pyzed Design (Claude, OpenAI, Gemini, Copilot, modelos locales…),
-  `pyzed.agents` para tus apps y un servidor MCP para que cualquier agente construya apps con Pyzed.
-- **Temas de Zed**: One, Ayu y Gruvbox incluidos, cualquier tema de Zed, temas generados y modo claro/oscuro
-  del sistema.
-- **Multiplataforma**: Linux, macOS y Windows (x86-64 y ARM). Fuentes IBM Plex y unos 2000 iconos Lucide incluidos.
-- **Capturas sin ventana**: `app.screenshot("ui.png")` renderiza sin GPU ni pantalla, ideal para tests y docs.
+- **Native performance.** Python describes the interface; layout, text and drawing are done by Iced 0.14 in
+  Rust (wgpu on the GPU, tiny-skia on the CPU as a fallback). `import pyzed` takes about 35 ms.
+- **Simple.** The Elm architecture: state, `update` and `view`. A button can call a method directly
+  (`on_press=self.save`), and `update` accepts coroutines, generators and streams.
+- **More than 90 components** ready to use: buttons, forms, virtual tables with hundreds of thousands of rows,
+  file tree, tabs, command palette, code editor, terminal, custom window frame, charts… They all follow the
+  current theme.
+- **Pyzed Design**, a visual designer installed as an app: draw forms and components, write their code with
+  completion and diagnostics, build node-based shaders and run it all with **F5**.
+- **Effects and animations**: animate any property, transitions between windows, glow, bloom, blur, glass and
+  WGSL shaders with `pz.shader`.
+- **Games**: a game loop (`pz.frames`), held keys, sprites and particles with `pyzed.game`.
+- **AI**: an agent panel inside Pyzed Design (Claude, OpenAI, Gemini, Copilot, local models…), `pyzed.agents`
+  for your own apps and an MCP server so any agent can build apps with Pyzed.
+- **Zed themes**: One, Ayu and Gruvbox included, any Zed theme, generated themes and the system's light/dark mode.
+- **Cross-platform**: Linux, macOS and Windows (x86-64 and ARM). IBM Plex fonts and about 2000 Lucide icons
+  included.
+- **Headless screenshots**: `app.screenshot("ui.png")` renders without a GPU or a display, ideal for tests and
+  docs.
 
-| Showcase: HUD de juego | Panel de cristal |
+| Showcase: game HUD | Glass dashboard |
 | --- | --- |
-| ![HUD de un juego hecho con Pyzed](docs/src/assets/showcase/hud.png) | ![Panel de control con efecto cristal](docs/src/assets/showcase/glass-dashboard.png) |
-| **Menú principal con shaders** | **Neon Invaders** |
-| ![Menú principal synthwave](docs/src/assets/showcase/main-menu.png) | ![Juego Neon Invaders](docs/src/assets/games/neon-invaders.png) |
+| ![A game HUD made with Pyzed](docs/src/assets/showcase/hud.png) | ![A control panel with a glass effect](docs/src/assets/showcase/glass-dashboard.png) |
+| **Main menu with shaders** | **Neon Invaders** |
+| ![A synthwave main menu](docs/src/assets/showcase/main-menu.png) | ![The Neon Invaders game](docs/src/assets/games/neon-invaders.png) |
 
-## Instalación
+## Installation
 
-Necesitas Python 3.10 o superior. Hay wheels para Linux (glibc y musl), macOS y Windows, así que no hace falta Rust.
+You need Python 3.10 or newer. There are wheels for Linux (glibc and musl), macOS and Windows, so Rust is not
+needed.
 
 ```bash
-uv add pyzed-ui                  # en un proyecto de uv
-pip install pyzed-ui             # dentro de un entorno virtual activado
-python3 -m pip install pyzed-ui  # con el Python del sistema (en Windows: py -m pip install pyzed-ui)
+uv add pyzed-ui                  # in a uv project
+pip install pyzed-ui             # inside an activated virtual environment
+python3 -m pip install pyzed-ui  # with the system Python (on Windows: py -m pip install pyzed-ui)
 ```
 
-Extras opcionales: `pyzed-ui[mcp]` (servidor MCP) y `pyzed-ui[agents]` (agentes de IA en tus apps).
+Optional extras: `pyzed-ui[mcp]` (MCP server) and `pyzed-ui[agents]` (AI agents in your apps).
 
-**Pyzed Design** se instala aparte como app, con instaladores para Windows y macOS y un script para Linux, y se
-actualiza solo: ver [Descargar Pyzed Design](https://albakore.github.io/pyzed/es/download/).
+The package is `pyzed-ui` on PyPI and is imported as `pyzed`. It is not related to the `pyzed` module of the
+Stereolabs ZED camera SDK.
 
-## Inicio rápido
+**Pyzed Design** is installed separately as an app, with installers for Windows and macOS and a script for Linux,
+and it updates itself: see [Download Pyzed Design](https://albakore.github.io/pyzed/download/).
+
+## Quick start
 
 ```python
 import pyzed as pz
@@ -72,7 +79,7 @@ class Counter(pz.App):
     def __init__(self):
         self.count = 0
 
-    def update(self, message):          # los mensajes pueden ser cualquier valor de Python
+    def update(self, message):          # messages can be any Python value
         if message == "increment":
             self.count += 1
         elif message == "decrement":
@@ -85,7 +92,7 @@ class Counter(pz.App):
                 pz.row([
                     ui.button("1", "decrement", icon="minus"),
                     ui.button("1", "increment", icon="plus", variant="solid"),
-                    # ...o un callable, que se llama directamente
+                    # ...or a callable, which is called directly
                     ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0), tooltip="Reset"),
                 ], spacing=8),
             ], spacing=16, align="center"),
@@ -96,140 +103,140 @@ class Counter(pz.App):
 pz.run(Counter)
 ```
 
-<img src="docs/screenshots/counter.png" width="360" alt="Contador">
+<img src="docs/screenshots/counter.png" width="360" alt="Counter">
 
-Sigue con el [inicio rápido](https://albakore.github.io/pyzed/es/getting-started/quickstart/) y los
-[tutoriales](https://albakore.github.io/pyzed/es/tutorials/) básicos, intermedios y avanzados.
+Continue with the [quick start](https://albakore.github.io/pyzed/getting-started/quickstart/) and the basic,
+intermediate and advanced [tutorials](https://albakore.github.io/pyzed/tutorials/).
 
-### Un proyecto completo
+### A complete project
 
 ```bash
-pyzed new mi-app          # proyecto de uv: UI en ui/, backend en src/, ruff, ty y git
-cd mi-app
-uv run pyzed design       # abre Pyzed Design en el proyecto
-uv run pyzed dev main.py  # hot reload: la ventana se actualiza al guardar y conserva el estado
-uv run pyzed build        # ejecutable para esta plataforma
+pyzed new my-app          # a uv project: UI in ui/, backend in src/, ruff, ty and git
+cd my-app
+uv run pyzed design       # opens Pyzed Design on the project
+uv run pyzed dev main.py  # hot reload: the window updates on save and keeps its state
+uv run pyzed build        # an executable for this platform
 ```
 
-Más en [Crear un proyecto](https://albakore.github.io/pyzed/es/getting-started/new-project/) y
-[Distribuir](https://albakore.github.io/pyzed/es/packaging/).
+More in [Create a project](https://albakore.github.io/pyzed/getting-started/new-project/) and
+[Distribute](https://albakore.github.io/pyzed/packaging/).
 
 ## Pyzed Design
 
-Un diseñador visual hecho con Pyzed, con la interfaz de Zed: arrastra componentes a una grilla con anclajes, edita
-sus propiedades y estilos, haz doble clic para escribir el código de cada evento y pulsa **F5** para ejecutarlo.
+A visual designer made with Pyzed, with Zed's interface: drag components onto a grid with anchors, edit their
+properties and styles, double-click to write the code of each event and press **F5** to run it.
 
-| Pantalla de bienvenida con proyectos de ejemplo | Shaders por nodos, como en Godot |
+| Welcome screen with sample projects | Node-based shaders, like in Godot |
 | --- | --- |
-| ![Ventana de bienvenida de Pyzed Design](docs/src/assets/editor/welcome.png) | ![Vista Shader con un grafo de nodos](docs/src/assets/shading/shader-view.png) |
+| ![The Pyzed Design welcome window](docs/src/assets/editor/welcome.png) | ![The Shader view with a node graph](docs/src/assets/shading/shader-view.png) |
 
-- **Vistas** de formulario, componente, shader y código, con pestañas que se pueden sacar a su propia ventana.
-- **Editor de código** de nivel Zed: autocompletado con ty, diagnósticos con ruff, varios cursores, buscar y
-  reemplazar, plegado, minimapa, atajos configurables e IME.
-- **Proyecto**: árbol de archivos con el menú de Zed, búsqueda de archivos, dependencias con uv y terminal.
-- **Componentes propios** con propiedades tipadas, herencia, data binding y validación.
-- **Agente de IA** integrado que lee el proyecto, crea formularios y apps completas y controla el editor a través
-  del MCP de Pyzed.
-- Se actualiza solo, como Zed, con una pestaña de novedades.
+- **Form, component, shader and code views**, with tabs that can be torn off into their own window.
+- **A Zed-grade code editor**: completion with ty, diagnostics with ruff, multiple cursors, find and replace,
+  folding, minimap, configurable shortcuts and IME.
+- **Project**: a file tree with Zed's menu, file search, dependencies with uv and a terminal.
+- **Custom components** with typed properties, inheritance, data binding and validation.
+- **A built-in AI agent** that reads the project, creates forms and complete apps and drives the editor through
+  Pyzed's MCP.
+- It updates itself, like Zed, with a what's-new tab.
 
-Manual completo en [Diseñador](https://albakore.github.io/pyzed/es/editor/) y
-[Shading](https://albakore.github.io/pyzed/es/shading/).
+Full manual in [Designer](https://albakore.github.io/pyzed/editor/) and
+[Shading](https://albakore.github.io/pyzed/shading/).
 
-## Componentes
+## Components
 
-![Galería de componentes](docs/screenshots/components-dark.png)
+![Component gallery](docs/screenshots/components-dark.png)
 
-Cada componente tiene su página con todas sus variantes, ejemplos y API en la
-[biblioteca](https://albakore.github.io/pyzed/es/library/). También hay [bloques](https://albakore.github.io/pyzed/es/blocks/)
-listos para copiar: pantallas de inicio de sesión, ajustes, paneles…
+Every component has its own page with all its variants, examples and API in the
+[library](https://albakore.github.io/pyzed/library/). There are also ready-to-copy
+[blocks](https://albakore.github.io/pyzed/blocks/): sign-in screens, settings, dashboards…
 
-Cualquier widget tiene los eventos habituales de un editor gráfico (`click`, `double_click`, `drag`, `key_down`,
-`resize`…), y los componentes propios son clases con props anotados, estado y eventos:
+Any widget has the usual events of a GUI builder (`click`, `double_click`, `drag`, `key_down`, `resize`…), and
+custom components are classes with annotated props, state and events:
 
 ```python
 class Rating(pz.Component):
     value: int = 0
-    events = {"change": "Se eligió una estrella"}
+    events = {"change": "A star was picked"}
 
     def render(self):
         return pz.row([pz.text("★" if i <= self.value else "☆").on(click=lambda i=i: self.emit("change", i))
                        for i in range(1, 6)])
 ```
 
-## IA
+## AI
 
-- **Panel de agentes** en Pyzed Design: inicia sesión en Claude por navegador o con tu suscripción, o usa OpenAI,
-  Gemini, GitHub Copilot, Vertex AI, OpenRouter, Ollama y más. Adjunta imágenes, conecta servidores MCP externos
-  o agentes ACP (Gemini CLI, Codex…).
-- **Servidor MCP** (`pyzed mcp`): Claude, Cursor, VS Code y otros agentes consultan la API exacta, generan y
-  comprueban apps y ven una captura del resultado.
+- **Agent panel** in Pyzed Design: sign in to Claude in the browser or with your subscription, or use OpenAI,
+  Gemini, GitHub Copilot, Vertex AI, OpenRouter, Ollama and more. Attach images, connect external MCP servers or
+  ACP agents (Gemini CLI, Codex…).
+- **MCP server** (`pyzed mcp`): Claude, Cursor, VS Code and other agents look up the exact API, generate and check
+  apps and see a screenshot of the result.
 
   ```bash
   claude mcp add pyzed -- uvx --from "pyzed-ui[mcp]" pyzed mcp
   ```
 
-- **`pyzed.agents`** para añadir un agente con herramientas a tus propias apps.
+- **`pyzed.agents`** to add an agent with tools to your own apps.
 
-Ver [IA](https://albakore.github.io/pyzed/es/ai/).
+See [AI](https://albakore.github.io/pyzed/ai/). For language models, the whole documentation is also available as
+[llms.txt](https://albakore.github.io/pyzed/llms.txt).
 
-## Integraciones
+## Integrations
 
-Tutoriales y demos ejecutables con [FastAPI, SQLAlchemy, SQLModel, Django, httpx y Pydantic](https://albakore.github.io/pyzed/es/integrations/overview/):
-dónde corre cada cosa (hilo de la UI, loop de asyncio, hilos de trabajo) y cómo mostrar errores de validación en
-los formularios. El código está en [`examples/integrations`](examples/integrations).
+Tutorials and runnable demos with [FastAPI, SQLAlchemy, SQLModel, Django, httpx and Pydantic](https://albakore.github.io/pyzed/integrations/overview/):
+where each thing runs (UI thread, asyncio loop, worker threads) and how to show validation errors in forms. The
+code is in [`examples/integrations`](examples/integrations).
 
-## ¿Por qué Pyzed?
+## Why Pyzed?
 
-Comparativas con tkinter, Qt, Kivy, Flet, Dear PyGui y Toga, con
-[benchmarks medidos y reproducibles](https://albakore.github.io/pyzed/es/why/benchmarks/) de arranque, memoria,
-actualización y tamaño instalado ([`benchmarks/`](benchmarks)).
+Comparisons with tkinter, Qt, Kivy, Flet, Dear PyGui and Toga, with
+[measured, reproducible benchmarks](https://albakore.github.io/pyzed/why/benchmarks/) of startup, memory, updates
+and installed size ([`benchmarks/`](benchmarks)).
 
-## Ejemplos
+## Examples
 
-| Carpeta o archivo | Qué muestra |
+| Folder or file | What it shows |
 | --- | --- |
-| [`examples/counter.py`](examples/counter.py), [`todo.py`](examples/todo.py) | Lo mínimo: estado, mensajes, formularios y listas. |
-| [`examples/gallery.py`](examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. |
-| [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor de código completo sobre una carpeta real. |
-| [`examples/showcase/`](examples/showcase) | HUD de juego, menú principal, inventario, panel de cristal y galería de shaders. |
-| [`examples/games/`](examples/games) | Snake, Breakout y Neon Invaders. |
-| [`examples/integrations/`](examples/integrations) | FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic y aiosqlite. |
-| [`examples/effects.py`](examples/effects.py), [`animations.py`](examples/animations.py) | Efectos visuales y animaciones. |
-| [`examples/window_frame.py`](examples/window_frame.py) | Marco de ventana propio con menús y botones de cada plataforma. |
-| [`examples/ai_chat.py`](examples/ai_chat.py) | Un chat con un agente de IA. |
-| [`examples/designer/`](examples/designer) | Un formulario de Pyzed Design (`.pzform` + `.py`). |
-| [`examples/tutorial/`](examples/tutorial), [`hot_reload/`](examples/hot_reload) | Tutorial paso a paso y hot reload. |
+| [`examples/counter.py`](examples/counter.py), [`todo.py`](examples/todo.py) | The basics: state, messages, forms and lists. |
+| [`examples/gallery.py`](examples/gallery.py) | Every component, interactive, with a theme picker. |
+| [`examples/zed_editor.py`](examples/zed_editor.py) | A complete code editor over a real folder. |
+| [`examples/showcase/`](examples/showcase) | Game HUD, main menu, inventory, glass dashboard and shader gallery. |
+| [`examples/games/`](examples/games) | Snake, Breakout and Neon Invaders. |
+| [`examples/integrations/`](examples/integrations) | FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic and aiosqlite. |
+| [`examples/effects.py`](examples/effects.py), [`animations.py`](examples/animations.py) | Visual effects and animations. |
+| [`examples/window_frame.py`](examples/window_frame.py) | A custom window frame with each platform's menus and buttons. |
+| [`examples/ai_chat.py`](examples/ai_chat.py) | A chat with an AI agent. |
+| [`examples/designer/`](examples/designer) | A Pyzed Design form (`.pzform` + `.py`). |
+| [`examples/tutorial/`](examples/tutorial), [`hot_reload/`](examples/hot_reload) | Step-by-step tutorial and hot reload. |
 
-Todos se ejecutan con `python examples/<archivo>.py` (o `uv run`). Más en
-[Ejemplos](https://albakore.github.io/pyzed/es/examples/).
+They all run with `python examples/<file>.py` (or `uv run`). More in
+[Examples](https://albakore.github.io/pyzed/examples/).
 
-## Cómo funciona
+## How it works
 
 ```
 Python                         Rust (pyzed._core, PyO3)                 Iced 0.14
-App.view() ──► árbol de Widget ──► render.rs: Widget → iced::Element ──► layout + wgpu/tiny-skia
-App.update() ◄── mensajes ◄────── app.rs: Message, Command → Task ◄──── eventos (ratón, teclado)
+App.view() ──► Widget tree ──► render.rs: Widget → iced::Element ──► layout + wgpu/tiny-skia
+App.update() ◄── messages ◄────── app.rs: Message, Command → Task ◄──── events (mouse, keyboard)
 ```
 
-Los widgets son objetos inmutables de Rust, así que construir la vista desde Python es barato. El estado interno
-de cada editor vive en Rust y el GIL se libera mientras corre el bucle de eventos. Más en
-[Arquitectura](https://albakore.github.io/pyzed/es/guides/architecture/).
+Widgets are immutable Rust objects, so building the view from Python is cheap. The internal state of each editor
+lives in Rust and the GIL is released while the event loop runs. More in
+[Architecture](https://albakore.github.io/pyzed/guides/architecture/).
 
-## Desarrollar Pyzed
+## Developing Pyzed
 
 ```bash
 git clone https://github.com/albakore/pyzed && cd pyzed
-uv sync                     # compila el núcleo de Rust (1.88 o superior) e instala pyzed editable
+uv sync                     # builds the Rust core (1.88 or newer) and installs pyzed in editable mode
 uv run pytest tests
 uv run python examples/gallery.py
 ```
 
-Ver [CONTRIBUTING.md](CONTRIBUTING.md). Pyzed sigue [versionado semántico](https://semver.org/lang/es/) desde la
-1.0; la política y las limitaciones conocidas están en
-[Estabilidad](https://albakore.github.io/pyzed/es/guides/stability/).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Pyzed follows [semantic versioning](https://semver.org/) since 1.0; the
+policy and known limitations are in [Stability](https://albakore.github.io/pyzed/guides/stability/).
 
-## Licencia
+## License
 
-MIT. Las fuentes incluidas son IBM Plex (SIL Open Font License) y Lucide (ISC); sus licencias están en
-[`assets/fonts`](assets/fonts). Los temas One, Ayu y Gruvbox vienen del repositorio de Zed (MIT); ver
+MIT. The bundled fonts are IBM Plex (SIL Open Font License) and Lucide (ISC); their licenses are in
+[`assets/fonts`](assets/fonts). The One, Ayu and Gruvbox themes come from the Zed repository (MIT); see
 [`python/pyzed/zed_themes/LICENSE`](python/pyzed/zed_themes/LICENSE).
