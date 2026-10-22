@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union
 
 from .. import _core, hot_reload, ui
+from .. import animation as _animation
 from .. import services as _services
 from ..app import App, Window
 from ..app import run as _run_app
@@ -33,6 +34,7 @@ from . import binding as _binding
 from . import code as _code
 from . import components as _components
 from . import layout as _layout
+from . import motion
 from . import nonvisual
 from . import styling
 from . import timeline
@@ -212,6 +214,34 @@ class ControlProxy:
         """A command that focuses this control (text boxes and text areas)."""
         return _core.Command.focus(self._runtime.ctx.key(self._control))
 
+    def play_animation(self, animation: Any = None, **options: Any) -> None:
+        """Plays an animation on the control now, from the start.
+
+        Without arguments it plays the control's own animations set to **When played from code**
+        in Pyzed Design (and replays the ones set to **When it appears**). With a preset name, a
+        ``pz.Animation`` or property values it plays that once::
+
+            form.title.play_animation()                       # its animations from the Animation section
+            form.password.play_animation("shake")             # any preset
+            form.badge.play_animation("pulse", repeat=3)      # with animate() options
+            form.card.play_animation(scale=1.1, duration=200) # to these values and back
+        """
+        props = {k: options[k] for k in list(options) if k in _animation.PROPERTIES}
+        if props and animation is None:
+            animation = _animation.Animation(  # like animate(on="manual", scale=1.1): there and back
+                [{k: None for k in props}, props, {k: None for k in props}], duration=300)
+            options = {k: v for k, v in options.items() if k not in props}
+        if animation is not None:
+            _animation._compile([animation], {**options, "on": "mount"})  # raise bad names and options here
+        played = self._runtime.played.setdefault(self._control.name, motion.Played())
+        played.play(animation, **options)
+
+    def stop_animation(self) -> None:
+        """Stops what ``play_animation`` started (a looping "from code" animation, a preset played on it)."""
+        played = self._runtime.played.get(self._control.name)
+        if played is not None:
+            played.stop()
+
     def __repr__(self) -> str:
         return f"<{self._control.type} {self._control.name}>"
 
@@ -359,6 +389,10 @@ class LiveContext(_components.RenderContext):
         target.props[prop] = value
         self.runtime.changed(target, prop, value)
 
+    @property
+    def played(self) -> Optional[Dict[str, Any]]:  # type: ignore[override]
+        return getattr(self.runtime, "played", None)
+
 
 class FormRuntime:
     """The engine behind ``FormApp``/``FormWindow``: state, event dispatch and drawing."""
@@ -383,6 +417,8 @@ class FormRuntime:
         self.handlers = dict(handlers or {})
         self.window = window
         self.theme = theme_for(form, self.preview_theme)
+        #: What handlers played on each control (``form.title.play_animation()``), by name.
+        self.played: Dict[str, motion.Played] = {}
         self.ctx = LiveContext(self)
         self.proxy = FormProxy(self)
         self.error: Optional[str] = None

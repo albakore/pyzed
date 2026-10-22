@@ -42,6 +42,18 @@ COLORS = ("background", "border_color", "color", "glow_color")
 #: What a container's tracks also do to the controls inside it (they are drawn on their own).
 INHERITED = ("opacity", "x", "y", "blur")
 
+# The Animation panel's geometry, in pixels (the panel draws it, the editor hit-tests it).
+#: Height of a track's row and of the calls lane.
+ROW = 30.0
+#: Height of the time ruler above the lanes.
+RULER = 24.0
+#: Space before time 0, so the first keys show whole.
+ORIGIN = 12.0
+#: How far from a key (or call) the pointer can be and still grab it.
+HIT = 9.0
+#: How close a dragged key (or the playhead) has to come to a key, the start or the end to snap to it.
+SNAP = 6.0
+
 
 # ---------------------------------------------------------------------------
 # Clips of a form
@@ -281,6 +293,14 @@ class TimelineEditor:
         self.dragging: Optional[Tuple[str, float]] = None
         #: Where the pointer is along the ruler or a lane, in pixels.
         self.pointer_x = 0.0
+        #: Where the pointer is over the panel's lanes (``pointer_move``), in pixels from the ruler's top left.
+        self.pointer = (0.0, 0.0)
+        #: What is under the pointer: ``("key", path, time)``, ``("call", index)`` or ``None``.
+        self.hover: Optional[Tuple[Any, ...]] = None
+        #: The call being dragged along its lane (its index).
+        self.dragging_call: Optional[int] = None
+        #: How far from the grabbed key or call the pointer pressed, in pixels (it keeps that distance).
+        self.grab_dx = 0.0
         self.scrubbing = False
         #: What is typed in the clip name and call fields (``None``: the clip's own name).
         self.name_draft: Optional[str] = None
@@ -415,8 +435,23 @@ class TimelineEditor:
             self._player.seek(self.time)
 
     def seek_x(self, x: float, _y: float = 0.0) -> None:
-        """Moves the playhead to ``x`` pixels along the ruler."""
-        self.seek(round(max(x, 0.0) / self.px, 2))
+        """Moves the playhead to ``x`` pixels along the ruler (snapped to a key, the start or the end nearby)."""
+        self.seek(self.snap(max(x, 0.0) / self.px))
+
+    def snap(self, time: float, exclude: Optional[Tuple[str, float]] = None) -> float:
+        """``time`` moved onto a key of any track, the start or the end when it is within ``SNAP``
+        pixels of one (``exclude`` is the key being dragged), else rounded to 1/100 s."""
+        clip = self.clip
+        marks = [0.0]
+        if clip is not None:
+            marks.append(clip.length)
+            for track in clip.tracks:
+                marks.extend(k.time for k in track.keys
+                             if exclude is None or track.path != exclude[0] or abs(k.time - exclude[1]) > 1e-6)
+        best = min(marks, key=lambda m: abs(m - time))
+        if abs(best - time) * self.px <= SNAP:
+            return round(best, 3)
+        return round(time, 2)
 
     def scrub_move(self, x: float, _y: float = 0.0) -> None:
         self.pointer_x = x
@@ -438,6 +473,136 @@ class TimelineEditor:
 
     def add_key_at_pointer(self, path: str) -> None:
         self.add_key_x(path, self.pointer_x)
+
+    # -- the pointer over the lanes (one area: the ruler, a lane per track, the calls lane) --
+
+    def row_at(self, y: float) -> Optional[int]:
+        """What is at ``y`` pixels from the top: ``-1`` the ruler, ``0``... a track, ``len(tracks)`` the
+        calls lane, ``None`` below them."""
+        if y < RULER:
+            return -1
+        clip = self.clip
+        index = int((y - RULER) // ROW)
+        return index if clip is not None and index <= len(clip.tracks) else None
+
+    def hit(self, x: float, y: float) -> Optional[Tuple[Any, ...]]:
+        """The key (``("key", path, time)``) or call (``("call", index)``) within ``HIT`` pixels of the
+        point, the nearest one."""
+        clip = self.clip
+        row = self.row_at(y)
+        if clip is None or row is None or row < 0:
+            return None
+        at = x - ORIGIN
+        if row < len(clip.tracks):
+            track = clip.tracks[row]
+            near = [(abs(k.time * self.px - at), k.time) for k in track.keys]
+            near = [n for n in near if n[0] <= HIT]
+            return ("key", track.path, min(near)[1]) if near else None
+        near_calls = [(at - c.time * self.px, i) for i, c in enumerate(clip.calls)]
+        # a call's chip starts at its time and runs to the right
+        near_calls = [(abs(d), i) for d, i in near_calls if -HIT <= d <= 60]
+        return ("call", min(near_calls)[1]) if near_calls else None
+
+    def pointer_move(self, x: float, y: float) -> None:
+        """The pointer moved over the lanes: scrubs, drags a key or a call, or updates what is hovered."""
+        self.pointer = (x, y)
+        self.pointer_x = x - ORIGIN
+        if self.scrubbing:
+            self.seek_x(self.pointer_x)
+        elif self.dragging is not None:
+            self.drag_to(self.pointer_x - self.grab_dx)
+        elif self.dragging_call is not None:
+            self.drag_call_to(self.pointer_x - self.grab_dx)
+        else:
+            self.hover = self.hit(x, y)
+
+    def pointer_press(self) -> None:
+        """A press on the lanes: on the ruler it scrubs, on a key it starts dragging it, on a call it drags
+        the call, and anywhere else it moves the playhead there (and drops the key selection)."""
+        self.d.focus = "timeline"
+        x, y = self.pointer
+        row = self.row_at(y)
+        if row == -1:
+            self.scrub_press()
+            return
+        found = self.hit(x, y)
+        if found and found[0] == "key":
+            self.start_drag(found[1], found[2])
+            self.grab_dx = self.pointer_x - found[2] * self.px
+        elif found and found[0] == "call":
+            self.dragging_call = found[1]
+            self.grab_dx = self.pointer_x - self.clip.calls[found[1]].time * self.px  # type: ignore[union-attr]
+        elif row is not None:
+            self.pause()
+            self.selected = None
+            self.scrubbing = True
+            self.seek_x(self.pointer_x)
+
+    def pointer_release(self) -> None:
+        self.end_drag()
+        self.dragging_call = None
+        self.scrubbing = False
+
+    def pointer_double_click(self) -> None:
+        """Double-click: on a track's lane adds a key there; on the calls lane adds the call typed in its field."""
+        x, y = self.pointer
+        clip = self.clip
+        row = self.row_at(y)
+        if clip is None or row is None or row < 0 or self.hit(x, y) is not None:
+            return
+        self.scrubbing = False
+        if row < len(clip.tracks):
+            self.add_key_x(clip.tracks[row].path, self.pointer_x)
+        elif self.call_draft.strip():
+            self.seek_x(self.pointer_x)
+            self.submit_call()
+
+    def pointer_right_press(self) -> None:
+        """Right-click on a key deletes it; on a call removes it."""
+        found = self.hit(*self.pointer)
+        if found and found[0] == "key":
+            self.selected = (found[1], found[2])
+            self.delete_key()
+        elif found and found[0] == "call":
+            self.remove_call(found[1])
+        self.hover = None
+
+    def cursor(self) -> str:
+        """The pointer's shape over the lanes."""
+        if self.dragging is not None or self.dragging_call is not None:
+            return "grabbing"
+        return "grab" if self.hover else "pointer"
+
+    def on_key(self, combo: str) -> Tuple[bool, Any]:
+        """Keys (normalized: ``"shift-left"``) while the panel has the keyboard: Delete removes the selected key, Space plays or pauses,
+        Left/Right move the selected key (or the playhead) by 1/100 s (Shift: 1/10 s), Home and End jump."""
+        clip = self.clip
+        if clip is None:
+            return False, None
+        step = 0.1 if combo.startswith("shift-") else 0.01
+        key = combo.removeprefix("shift-")
+        if key in ("delete", "backspace") and self.selected is not None:
+            self.delete_key()
+        elif key == "space":
+            self.toggle()
+        elif key in ("left", "right"):
+            delta = step if key == "right" else -step
+            selected = self.key()
+            if selected is not None:
+                self._replace_key(selected, time=max(round(selected.time + delta, 3), 0.0),
+                                  group=f"key-nudge:{self.selected}")
+                self.seek(self.selected[1])  # type: ignore[index]
+            else:
+                self.pause()
+                self.seek(round(self.position + delta, 3))
+        elif key == "home":
+            self.stop()
+        elif key == "end":
+            self.pause()
+            self.seek(clip.length)
+        else:
+            return False, None
+        return True, None
 
     def set_zoom(self, zoom: float) -> None:
         self.zoom = min(max(float(zoom), 0.25), 8.0)
@@ -614,11 +779,12 @@ class TimelineEditor:
         self.dragging = (path, time)
 
     def drag_to(self, x: float, _y: float = 0.0) -> None:
-        """Moves the dragged key to ``x`` pixels along its lane (snapped to 1/100 s)."""
+        """Moves the dragged key to ``x`` pixels along its lane (snapped to the keys of every track, the
+        start and the end nearby, else to 1/100 s)."""
         if self.dragging is None:
             return
         key = self.key()
-        time = round(max(x, 0.0) / self.px, 2)
+        time = self.snap(max(x, 0.0) / self.px, exclude=self.selected)
         if key is not None and abs(key.time - time) > 1e-6:
             self._replace_key(key, time=time, group=f"key-drag:{self.dragging}")
             self.time = time
@@ -634,6 +800,20 @@ class TimelineEditor:
             return
         calls = tuple(c for c in clip.calls if not (abs(c.time - self.position) < 1e-6 and c.method == method))
         self._store(replace(clip, calls=calls + (Call(round(self.position, 3), method),)))
+
+    def drag_call_to(self, x: float) -> None:
+        """Moves the dragged call to ``x`` pixels along the calls lane."""
+        clip = self.clip
+        index = self.dragging_call
+        if clip is None or index is None or not 0 <= index < len(clip.calls):
+            return
+        time = min(self.snap(max(x, 0.0) / self.px), clip.length)
+        call = clip.calls[index]
+        if abs(call.time - time) > 1e-6:
+            moved = Call(time, call.method, *call.args)
+            calls = clip.calls[:index] + (moved,) + clip.calls[index + 1:]
+            self._store(replace(clip, calls=calls), group=f"call-drag:{index}")
+            self.time = time
 
     def remove_call(self, index: int) -> None:
         clip = self.clip

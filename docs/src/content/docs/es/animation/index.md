@@ -19,6 +19,13 @@ ui.button("Grabando", self.parar).animate("glow_pulse")          # un brillo en 
 pz.icon("loader-circle").animate("spin")                         # un indicador de carga
 ```
 
+:::tip[Empieza aquí]
+¿Primera vez con animaciones? [Empieza aquí: aplicar y reproducir](/pyzed/es/animation/start/) muestra
+dónde va `.animate()`, todas las formas de iniciar una animación (al aparecer un widget, con el
+puntero, desde tu código con `pz.Trigger`, desde una línea de tiempo) y cómo se hace lo mismo en
+Pyzed Design.
+:::
+
 ## Tres formas de animar
 
 Elige la que encaje con lo que quieres hacer. Funcionan juntas, así que una app suele usar las tres.
@@ -58,7 +65,8 @@ para una línea de tiempo. Los dos son cortos y están comentados.
 
 | Página | Qué explica |
 | --- | --- |
-| [animate() y disparadores](/pyzed/es/animation/animate/) | Qué reproduce una animación (aparecer, hover, press, focus, clic, un indicador) y sus opciones de tiempo. |
+| [Empieza aquí: aplicar y reproducir](/pyzed/es/animation/start/) | Dónde va `.animate()`, qué inicia una animación, cómo se nombran y se personalizan, en cada estilo de código y en el editor. |
+| [animate() y disparadores](/pyzed/es/animation/animate/) | Qué reproduce una animación (aparecer, hover, press, focus, clic, un indicador, un `pz.Trigger`) y sus opciones de tiempo. |
 | [Propiedades animables](/pyzed/es/animation/properties/) | Todas las propiedades que puede cambiar una animación y cómo funcionan los valores. |
 | [Keyframes y curvas](/pyzed/es/animation/keyframes/) | Tus propias animaciones con `pz.Animation` y las curvas que dan forma al movimiento. |
 | [Transiciones y estados](/pyzed/es/animation/transitions/) | `transition()`, estilos de hover y pressed, cambios de página con `presence`, listas con `stagger` y transiciones de ventana. |

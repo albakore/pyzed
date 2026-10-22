@@ -1467,6 +1467,9 @@ class Designer(App):
         when the pointer comes back to its panel)."""
         if panel == "project" and self.focus == "files":
             return
+        if panel == "animation":  # the timeline's keys: Delete, Space, arrows (see TimelineEditor.on_key)
+            self.focus = "timeline"
+            return
         self.focus = panel if panel in ("console", "logs") else "panel"  # their lines take Ctrl+C and Ctrl+A
 
     def focus_code(self) -> None:
@@ -2366,6 +2369,10 @@ class Designer(App):
             return None
         if self.focus in ("console", "logs") and not self.dialog and not self.app_menu:
             handled, result = self.logs.on_key(self.focus, combo)
+            if handled:
+                return result
+        if self.focus == "timeline" and not self.dialog and not self.app_menu:  # before Delete deletes controls
+            handled, result = self.timeline.on_key(keys)
             if handled:
                 return result
         code = self.focus == "code" and (self.editing is not None or self.buffers.current) and not self.dialog

@@ -3,10 +3,12 @@
 - The toolbar picks, creates, renames, duplicates and deletes clips, sets their length, loop
   and autoplay, and plays the preview (backwards, play/pause, stop).
 - Each track is a row: its name, buttons to mute it, hold its values or add a key at the
-  playhead, and a lane with its keys. Click the ruler to move the playhead; click a key to
-  select it and drag it to move it; double-click a lane to add a key there.
-- The selected key's time, value and easing are edited below the tracks; calls to the
-  form's handlers sit on their own lane.
+  playhead, and a lane with its keys. The ruler and the lanes are one area: press anywhere to
+  move the playhead, press near a key to grab it and drag it (it snaps to the keys of other
+  tracks, the start and the end), double-click a lane to add a key, right-click a key to
+  delete it. Calls to the form's handlers sit on their own lane and drag the same way.
+- The selected key's time, value and easing are edited below the tracks. With the pointer
+  over the panel, Delete removes the selected key, Space plays, the arrows nudge.
 
 The canvas follows the playhead (see ``TimelineEditor.target``), so scrubbing shows each
 frame of the animation on the form.
@@ -22,22 +24,20 @@ from ..theme import Theme
 from . import motion
 from . import timeline
 from .locale import tr
+from .timeline import ORIGIN, ROW, RULER
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
-ROW = 26.0
 LEFT = 240.0
-RULER = 24.0
-KEY = 11.0
-#: Pixels before time 0, so the first keys show whole.
-ORIGIN = 10.0
+#: The size of a key's diamond (the pointer grabs it from ``timeline.HIT`` pixels away).
+KEY = 12.0
 LOOP_LABELS = {"none": "Once", "loop": "Loop", "pingpong": "Ping-pong"}
 
 
 def _lane_width(e: timeline.TimelineEditor) -> float:
     clip = e.clip
-    return max((clip.length if clip else 1.0) * e.px + ORIGIN + 32, 320)
+    return max((clip.length if clip else 1.0) * e.px + ORIGIN + 32, 640)
 
 
 def _toolbar(d: "Designer", e: timeline.TimelineEditor, t: Theme) -> Any:
@@ -84,35 +84,53 @@ def _ruler(e: timeline.TimelineEditor, width: float, t: Theme) -> Any:
         layers.append(_core.pin(_core.container(width=1, height=8, bg=t.border), x=ORIGIN + x, y=RULER - 8))
         layers.append(_core.pin(_core.text(text, size=10, color=t.text_muted), x=ORIGIN + x + 3, y=3))
     head = ORIGIN + e.position * e.px
-    layers.append(_core.pin(_core.container(width=9, height=9, bg=t.accent, radius=2), x=head - 4, y=RULER - 10))
-    return _core.mouse_area(_core.stack(layers, width=width, height=RULER),
-                            on_move=lambda x, y: e.scrub_move(x - ORIGIN, y),
-                            on_press=e.scrub_press, on_release=e.scrub_release, cursor="pointer")
+    layers.append(_core.pin(_core.container(width=11, height=11, bg=t.accent, radius=2), x=head - 5, y=RULER - 12))
+    return _core.stack(layers, width=width, height=RULER)
+
+
+def _after_end(e: timeline.TimelineEditor, width: float, t: Theme) -> List[Any]:
+    """The line at the clip's end and the dimmed time after it."""
+    clip = e.clip
+    if clip is None:
+        return []
+    end = ORIGIN + clip.length * e.px
+    return [_core.pin(_core.container(width=max(width - end, 0), height=ROW, bg=t.background).style(opacity=0.5),
+                      x=end, y=0),
+            _core.pin(_core.container(width=1, height=ROW, bg=t.border_variant), x=end, y=0)]
 
 
 def _diamond(e: timeline.TimelineEditor, path: str, time: float, enabled: bool, t: Theme) -> Any:
     selected = e.selected is not None and e.selected[0] == path and abs(e.selected[1] - time) < 1e-6
+    hovered = e.hover is not None and e.hover[0] == "key" and e.hover[1] == path and abs(e.hover[2] - time) < 1e-6
+    size = KEY + 2 if hovered or selected else KEY
     color = t.accent if selected else (t.text if enabled else t.text_muted)
-    mark = _core.container(width=KEY - 2, height=KEY - 2, bg=color, radius=1,
-                           border_color=t.background, border_width=1).style(rotate=45)
-    mark = _core.container(mark, width=KEY + 4, height=KEY + 4, align_x="center", align_y="center")
-    return _core.mouse_area(mark, on_press=lambda: e.start_drag(path, time), cursor="grab")
+    mark = _core.container(width=size - 2, height=size - 2, bg=color, radius=1,
+                           border_color=t.accent if hovered else t.background, border_width=1).style(rotate=45)
+    return _core.container(mark, width=KEY + 6, height=KEY + 6, align_x="center", align_y="center")
+
+
+def _key_label(e: timeline.TimelineEditor, track: Any, time: float, t: Theme) -> Any:
+    """A chip with the time and value of the key under the pointer (or being dragged)."""
+    key = next((k for k in track.keys if abs(k.time - time) < 1e-6), None)
+    value = "" if key is None else key.value
+    if isinstance(value, float):
+        value = f"{value:.3g}"
+    text = f"{time:.2f}s · {value}"
+    return _core.container(_core.text(text, size=10, color=t.text), padding=(1, 5), bg=t.elevated, radius=3,
+                           border_color=t.border, border_width=1)
 
 
 def _lane(e: timeline.TimelineEditor, track: Any, width: float, t: Theme, odd: bool) -> Any:
     layers: List[Any] = [_core.container(width=width, height=ROW, bg=t.element if odd else t.background)]
-    clip = e.clip
-    if clip is not None:
-        end = ORIGIN + clip.length * e.px
-        layers.append(_core.pin(_core.container(width=1, height=ROW, bg=t.border_variant), x=end, y=0))
+    layers += _after_end(e, width, t)
     for key in track.keys:
         layers.append(_core.pin(_diamond(e, track.path, key.time, track.enabled, t),
-                                x=ORIGIN + key.time * e.px - (KEY + 4) / 2, y=(ROW - KEY - 4) / 2))
+                                x=ORIGIN + key.time * e.px - (KEY + 6) / 2, y=(ROW - KEY - 6) / 2))
     layers.append(_core.pin(_core.container(width=1, height=ROW, bg=t.accent), x=ORIGIN + e.position * e.px, y=0))
-    return _core.mouse_area(_core.stack(layers, width=width, height=ROW),
-                            on_move=lambda x, y: e.lane_move(x - ORIGIN, y),
-                            on_release=e.end_drag,
-                            on_double_click=lambda: e.add_key_at_pointer(track.path))
+    shown = e.selected if e.dragging is not None else (e.hover[1:] if e.hover and e.hover[0] == "key" else None)
+    if shown is not None and shown[0] == track.path:
+        layers.append(_core.pin(_key_label(e, track, shown[1], t), x=ORIGIN + shown[1] * e.px + KEY, y=6))
+    return _core.stack(layers, width=width, height=ROW)
 
 
 def _track_head(e: timeline.TimelineEditor, track: Any, t: Theme) -> Any:
@@ -134,14 +152,23 @@ def _track_head(e: timeline.TimelineEditor, track: Any, t: Theme) -> Any:
 def _calls_lane(e: timeline.TimelineEditor, width: float, t: Theme) -> Any:
     clip = e.clip
     layers: List[Any] = [_core.container(width=width, height=ROW, bg=t.elevated)]
+    layers += _after_end(e, width, t)
     if clip is not None:
         for index, call in enumerate(clip.calls):
-            chip = _core.container(_core.text(f"{call.method}()", size=10, color=t.background), padding=(2, 5),
-                                   bg=t.accent, radius=3)
-            layers.append(_core.pin(_core.mouse_area(chip, on_right_press=lambda i=index: e.remove_call(i)),
-                                    x=ORIGIN + call.time * e.px, y=4))
+            hovered = e.hover == ("call", index) or e.dragging_call == index
+            chip = _core.container(_core.text(f"{call.method}()", size=10, color=t.background), padding=(3, 6),
+                                   bg=t.accent, radius=3, border_color=t.text if hovered else t.accent,
+                                   border_width=1)
+            layers.append(_core.pin(chip, x=ORIGIN + call.time * e.px, y=6))
     layers.append(_core.pin(_core.container(width=1, height=ROW, bg=t.accent), x=ORIGIN + e.position * e.px, y=0))
     return _core.stack(layers, width=width, height=ROW)
+
+
+def _lanes(e: timeline.TimelineEditor, lanes: List[Any], width: float) -> Any:
+    """The ruler and the lanes as one pointer area (see ``TimelineEditor.pointer_press``)."""
+    return _core.mouse_area(_core.column(lanes, width=width), on_move=e.pointer_move, on_press=e.pointer_press,
+                            on_release=e.pointer_release, on_double_click=e.pointer_double_click,
+                            on_right_press=e.pointer_right_press, cursor=e.cursor())
 
 
 def _add_track(d: "Designer", e: timeline.TimelineEditor, t: Theme) -> Any:
@@ -172,11 +199,36 @@ def _value_editor(e: timeline.TimelineEditor, key: Any, t: Theme) -> Any:
     return ui.input("" if value is None else str(value), e.set_key_value, size="sm", width=180, theme=t)
 
 
-def _inspector(e: timeline.TimelineEditor, t: Theme) -> Any:
+def play_line(name: str) -> str:
+    """The line of handler code that plays clip ``name``."""
+    return f'form.animations.play("{name}")'
+
+
+def _how_it_plays(d: "Designer", e: timeline.TimelineEditor, t: Theme) -> Any:
+    """What starts the clip: autoplay, or the line a handler calls (with a copy button)."""
+    clip = e.clip
+    if clip is None:
+        return _core.space(width=0)
+    if d.doc.form.autoplay == clip.name:
+        return ui.label(tr("Plays when the form opens."), size="sm", color="text_muted", wrap=False, theme=t)
+    line = play_line(clip.name)
+    return _core.row([
+        ui.label(tr("Play it from a handler:"), size="sm", color="text_muted", wrap=False, theme=t),
+        _core.container(ui.label(line, size="sm", mono=True, wrap=False, theme=t), padding=(1, 6), bg=t.element,
+                        radius=t.radius_sm),
+        ui.icon_button("copy", lambda: _core.Command.copy(line), size="xs", tooltip=tr("Copy"), theme=t),
+    ], spacing=6, align="center")
+
+
+def _inspector(d: "Designer", e: timeline.TimelineEditor, t: Theme) -> Any:
     key = e.key()
     if key is None:
-        hint = tr("Click a key to edit it. Double-click a lane to add one.")
-        return _core.container(ui.label(hint, size="sm", color="text_muted", theme=t), padding=(6, 10))
+        hint = tr("Click to move the playhead, drag a key to move it, double-click a lane to add a key, "
+                  "right-click a key to delete it.")
+        return _core.container(_core.row([
+            _core.container(ui.label(hint, size="sm", color="text_muted", theme=t), width="fill"),
+            _how_it_plays(d, e, t),
+        ], spacing=12, align="center"), padding=(6, 10), width="fill")
     easings = ["track", *motion.EASINGS]
     current = key.easing if isinstance(key.easing, str) else "track"
     return _core.container(_core.row([
@@ -202,9 +254,18 @@ def view(d: "Designer", t: Theme) -> Any:
     toolbar = _toolbar(d, e, t)
     if clip is None:
         empty = ui.empty_state(tr("No animations yet"), tr("Create one to animate this form's controls over time."),
-                               icon="clapperboard", theme=t)
-        return _core.column([toolbar, _core.container(empty, width="fill", height="fill", align_x="center",
-                                                      align_y="center")], width="fill", height="fill")
+                               icon="clapperboard", actions=[ui.button(tr("New animation"), e.new_clip, icon="plus", size="sm", theme=t)],
+                               theme=t)
+        steps = _core.column([
+            ui.label(tr(text), size="sm", color="text_muted", theme=t) for text in (
+                "1. Select a control on the form and press Add track.",
+                "2. Move the playhead and double-click the lane to add keys; edit each key's value below.",
+                "3. Press ▶ to preview it. Turn on ⚡ to play it when the form opens, or call "
+                "form.animations.play(\"name\") from a handler.",
+            )], spacing=4)
+        return _core.column([toolbar, _core.container(_core.column([empty, steps], spacing=16, align="center"),
+                                                      width="fill", height="fill", align_x="center",
+                                                      align_y="center", padding=16)], width="fill", height="fill")
     width = _lane_width(e)
     heads: List[Any] = [_core.container(ui.label(tr("Tracks"), size="sm", weight="semibold", theme=t), width=LEFT,
                                         height=RULER, padding=(4, 8))]
@@ -222,12 +283,12 @@ def view(d: "Designer", t: Theme) -> Any:
     body = _core.row([
         _core.column([*heads, _add_track(d, e, t)], width=LEFT),
         ui.divider(vertical=True, theme=t),
-        _core.scrollable(_core.column(lanes, width=width), direction="horizontal", width="fill"),
+        _core.scrollable(_lanes(e, lanes, width), direction="horizontal", width="fill"),
     ], width="fill")
     return _core.column([
         toolbar,
         ui.divider(theme=t),
         _core.scrollable(body, height="fill", width="fill"),
         ui.divider(theme=t),
-        _inspector(e, t),
+        _inspector(d, e, t),
     ], width="fill", height="fill")

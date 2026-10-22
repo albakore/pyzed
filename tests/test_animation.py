@@ -49,6 +49,22 @@ def test_property_values_make_an_animation_for_the_trigger():
         anim._compile(["fade_in"], {"opacity": 0})
 
 
+def test_triggers_start_animations_from_code():
+    shake = pz.Trigger()
+    (manual,) = anim._compile(["shake"], {"on": shake})
+    assert manual["trigger"] == "manual" and manual["key"] == "0"
+    shake.fire()
+    shake.fire("ignored", "arguments")  # usable as any callback
+    assert shake.count == 2 and repr(shake) == "Trigger(count=2)"
+    assert anim._compile(["shake"], {"on": shake})[0]["key"] == "2"
+    assert anim._compile(["shake"], {"on": shake, "key": "a"})[0]["key"] == repr(("a", 2))
+    (back,) = anim._compile([], {"on": shake, "scale": 1.2})  # values: there and back, like a click
+    assert back["trigger"] == "manual" and [f[1] for f in dict(back["tracks"])["scale"]] == [None, 1.2, None]
+    assert anim._compile(["pulse"], {"on": "manual", "key": 1})[0]["trigger"] == "manual"
+    assert "manual" in anim.TRIGGERS and pz.Animation([{"x": 0}, {"x": 4}], on="manual").on == "manual"
+    assert "animate" in repr(pz.text("x").animate("shake", on=shake))
+
+
 def test_invalid_options_explain_what_is_valid():
     with pytest.raises(TypeError, match="unknown animate\\(\\) option 'speed'"):
         anim._compile(["fade_in"], {"speed": 2})
@@ -187,6 +203,27 @@ def test_opacity_and_animations_render_their_resting_state(tmp_path):
     assert column[10][0] > 240  # opaque
     assert 110 < column[30][0] < 145  # half transparent over black
     assert column[50][0] > 240  # screenshots show where the fade in ends
+
+
+def test_manual_animations_wait_for_their_trigger(tmp_path):
+    class Demo(pz.App):
+        size = (60, 40)
+        theme = pz.themes.ONE_DARK
+
+        def __init__(self):
+            self.go = pz.Trigger()
+
+        def view(self):
+            box = lambda: pz.container(None, width=60, height=20).style(background="#ff0000")  # noqa: E731
+            return pz.column([
+                box().animate("fade_out", on=self.go),  # not fired: stays as it is
+                box().animate("fade_out"),  # plays when it appears (screenshots show its end)
+            ], spacing=0).style(background="#000000", width="fill", height="fill")
+
+    out = tmp_path / "shot.png"
+    pz.screenshot(Demo, out, size=(60, 40), scale=1)
+    column = _png_column(out, 30)
+    assert column[10][0] > 240 and column[30][0] < 20
 
 
 def test_transforms_move_the_drawing(tmp_path):

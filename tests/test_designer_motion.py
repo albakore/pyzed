@@ -96,6 +96,71 @@ def test_canvas_plays_only_previews_and_the_running_form_plays_all():
     assert Control.from_dict(form["b"].to_dict()).animations == [{"preset": "fade_in"}]
 
 
+class _Recorder:
+    """Stands in for a widget: records what ``motion.apply`` animates it with."""
+
+    def __init__(self):
+        self.calls = []
+
+    def animate(self, animation, **options):
+        self.calls.append((getattr(animation, "description", animation), options))
+        return self
+
+
+def test_code_plays_a_controls_animations():
+    entries = [{"preset": "fade_in"}, {"preset": "pulse", "on": "manual"}, {"preset": "lift", "on": "hover"}]
+    still = motion.apply(_Recorder(), entries).calls
+    assert [o.get("key") for _, o in still] == [None, None, None]
+    played = motion.Played()
+    played.play()
+    calls = motion.apply(_Recorder(), entries, played=played).calls
+    assert [o.get("key") for _, o in calls] == [1, 1, None]  # appear and from-code entries replay; hover doesn't
+    played.play("shake", repeat=2)
+    calls = motion.apply(_Recorder(), entries, played=played).calls
+    assert calls[-1] == ("shake", {"repeat": 2, "on": "mount", "key": 2})
+    played.stop()
+    calls = motion.apply(_Recorder(), entries, played=played).calls
+    assert len(calls) == 2 and all(o.get("on") != "manual" for _, o in calls)
+    assert motion.new_entry("manual") == {"preset": "pulse", "on": "manual"}
+    assert motion.TRIGGER_LABELS["manual"] == "When played from code"
+
+
+def test_handlers_play_animations_on_controls():
+    import pytest
+
+    form = Form()
+    form.add(Control(name="heading", type="label", animations=[{"preset": "pulse", "on": "manual"}]))
+    form.add(Control(name="plain", type="label"))
+    app = FormApp(form)
+    proxy = app.runtime.proxy
+    assert "animate" in repr(components.animated(_text(), form["heading"], app.runtime.ctx))
+    assert repr(components.animated(_text(), form["plain"], app.runtime.ctx)) == repr(_text())
+    proxy.heading.play_animation()
+    proxy.plain.play_animation("shake", duration=300)
+    proxy.plain.play_animation(scale=1.1)
+    played = app.runtime.played
+    assert played["heading"].count == 1 and played["plain"].count == 2
+    assert "animate" in repr(components.animated(_text(), app.runtime.form["plain"], app.runtime.ctx))
+    with pytest.raises(KeyError, match="no animation named 'nope'"):
+        proxy.plain.play_animation("nope")
+    with pytest.raises(TypeError, match="unknown animate"):
+        proxy.plain.play_animation("shake", speed=2)
+    proxy.plain.stop_animation()
+    assert played["plain"].stopped and played["plain"].extra == []
+    assert app.view() is not None
+
+
+def test_the_open_row_says_how_its_animation_starts(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.add_animation("nav1", "manual")
+    assert app.doc.form["nav1"].animations == [{"preset": "pulse", "on": "manual"}]
+    assert motion_panel.code_line("nav1") == "form.nav1.play_animation()"
+    assert app.view() is not None
+    for trigger in motion_panel.TRIGGER_HINTS:
+        app.set_animation("nav1", 0, "on", trigger)
+        assert motion_panel.animation_rows(app, app.doc.form["nav1"], app.theme_obj)
+
+
 def test_effect_rows_show_sub_fields_only_when_on(tmp_path):
     app = sidebar_app(tmp_path)
     control = app.doc.form["nav1"]

@@ -1000,7 +1000,7 @@ La propiedad que enlaza cada tipo de control y si el usuario la edita (en los do
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
 ```
 
 Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`.
@@ -1090,6 +1090,14 @@ RenderContext.on(control, event, prop=None)
 ```
 
 Un callback para `event`; si se da `prop`, el valor también se guarda ahí.
+
+#### `RenderContext.set`
+
+```python
+RenderContext.set(control, prop, value)
+```
+
+Guarda `value` en `prop` de un control en ejecución sin lanzar ningún evento (las carpetas abiertas de un árbol).
 
 #### `RenderContext.key`
 

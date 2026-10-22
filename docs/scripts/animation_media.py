@@ -214,6 +214,55 @@ def overview_clip(t):
     ], spacing=28), padding=32)
 
 
+START_BUTTON = (24 + 24 + 146, 24 + 24 + 30 + 14 + 36 + 14 + 18)
+
+
+@clip("start", "Apply and play: a card rises in, its button lifts on hover, a pz.Trigger shakes the field and another "
+      "pops a check in.", (760, 270), 6.0)
+def start_clip(t):
+    shake = t - 2.1 if t >= 2.1 else None
+    done = t - 3.75 if t >= 3.75 else None
+    wrong = shake is not None and done is None
+    hover = toward(t, 1.35, 4.7, 0.16)
+    field = pz.container(code("•" * (6 if t < 3.0 or t >= 3.4 else 3), 14, "#ffffff"), width=292, height=36,
+                         padding=(0, 12), align_y="center").style(
+        background="#0f1324", border=(1, PINK if wrong else EDGE), radius=8)
+    if shake is not None and done is None:
+        field = field.animate(Frozen(shake, "shake"))
+    button = pz.container(label("Sign in"), width=292, height=36, align_x="center", align_y="center").style(
+        background=ACCENT, radius=8).animate(Held(hover, "lift"))
+    status: Any = pz.text("Wrong password" if wrong else "", size=12, color=PINK)
+    if done is not None:
+        status = pz.row([pz.icon("circle-check", size=18, color=GREEN).animate(Frozen(done, "pop_in")),
+                         pz.text("Signed in", size=13, color=GREEN).animate(Frozen(done - 0.1, "fade_in_left"))],
+                        spacing=8, align="center")
+    card = pz.column([
+        pz.container(label("Welcome back", 20, weight="bold"), height=30),
+        field,
+        button,
+        pz.container(status, height=28, align_y="center"),
+    ], spacing=14).style(background=CARD, border=(1, EDGE), radius=14, padding=24, width=340).animate(
+        Frozen(t - 0.2, "fade_in_up"))
+
+    def line(text: str, lit: bool) -> Any:
+        return code(text, 12, "#ffffff" if lit else FAINT)
+
+    lines = pz.column([
+        code("# where it goes → when it plays", 11, FAINT),
+        line('card.animate("fade_in_up")', t < 0.9),
+        line('button.animate("lift", on="hover")', 1.35 <= t < 4.9),
+        line('field.animate("shake", on=self.wrong)', shake is not None and shake < 0.6),
+        line('check.animate("pop_in", on=self.done)', done is not None and done < 0.6),
+        pz.space(height=6),
+        code("# in a handler", 11, FAINT),
+        line("self.wrong.fire()", shake is not None and shake < 0.6),
+        line("self.done.fire()", done is not None and done < 0.6),
+    ], spacing=8)
+    pointer = glide(t, [(0, 700, 300), (1.2, *START_BUTTON), (4.8, *START_BUTTON), (5.6, 700, 300), (6.0, 700, 300)])
+    pressed = any(a <= t < b for a, b in ((2.0, 2.1), (3.65, 3.75)))
+    return Shot(stage(pz.row([card, lines], spacing=36, align="center")), pointer, pressed)
+
+
 TRIGGER_X = [24 + 56 + i * 120 for i in range(6)]
 TRIGGER_Y = 120
 
@@ -861,7 +910,7 @@ def timeline_reuse_clip(t):
 # -- clips: the Animation panel of Pyzed Design ----------------------------------------------------------
 DESIGNER_SIZE = (1440, 900)
 DESIGNER_CROP = (240, 36, 840, 834)
-LANE_X0, PX_PER_S, RULER_Y = 491, 160, 622
+LANE_X0, PX_PER_S, RULER_Y = 493, 160, 622
 
 
 def _designer(build: Callable[[Any], None]) -> Callable[[], Any]:
@@ -935,7 +984,7 @@ def _fade_only(app: Any) -> None:
     e.seek(0)
 
 
-SCALE_LANE_Y = 671
+SCALE_LANE_Y = 679
 
 
 @clip("editor-keys", "Adding a track from the panel, double-clicking a lane to add a key, dragging it and picking its easing.",
@@ -944,7 +993,7 @@ def editor_keys_clip(app, t):
     e = app.timeline
     if t == 0 and e.clip.track("title:scale") is not None:  # a second pass (a still, then the recording)
         e.remove_track("title:scale")
-    stops = [(0, 700, 760), (0.6, 330, 700), (1.1, 330, 700), (1.6, 313, 810), (2.0, 313, 810),
+    stops = [(0, 700, 760), (0.6, 330, 708), (1.1, 330, 708), (1.6, 313, 818), (2.0, 313, 818),
              (2.6, *_ruler(0.8)[:1], SCALE_LANE_Y), (3.2, *_ruler(0.8)[:1], SCALE_LANE_Y),
              (4.4, *_ruler(0.45)[:1], SCALE_LANE_Y), (4.9, *_ruler(0.45)[:1], SCALE_LANE_Y),
              (5.5, 760, 853), (7.0, 760, 853)]
