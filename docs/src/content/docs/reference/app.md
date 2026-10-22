@@ -194,6 +194,7 @@ forwards them to `app.update()`.
 | `on_close()` | When the user asks to close it; return `False` to prevent it. |
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
+| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 
 **Methods and properties**
 
@@ -220,6 +221,30 @@ Window.on_close()
 ```
 
 Called when the user asks to close the window. Return `False` to keep it open.
+
+#### `Window.on_file_hover`
+
+```python
+Window.on_file_hover(path)
+```
+
+A file dragged from the system is over the window: lights up the `ui.DropZone` it would land on.
+
+#### `Window.on_file_drop`
+
+```python
+Window.on_file_drop(path)
+```
+
+A file was dropped on the window from the system (once per file): goes to a `ui.DropZone`.
+
+#### `Window.on_file_leave`
+
+```python
+Window.on_file_leave()
+```
+
+The files dragged over the window left it without being dropped.
 
 #### `Window.is_open`
 

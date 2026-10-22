@@ -16,8 +16,8 @@ Pyzed widgets react to events in two layers:
 - **The common events**: 18 events every widget has, whatever it is, attached with `.on(...)`:
   clicks, hover, drag, focus, keys and size. A `pz.Component` also raises `on_mount` and `on_unmount`.
 
-So a component can have up to its own events plus 18 common ones. Across the 108 components of
-the library there are **142 own events**; the ones with the most are listed first in the table at the end.
+So a component can have up to its own events plus 18 common ones. Across the 114 components of
+the library there are **160 own events**; the ones with the most are listed first in the table at the end.
 
 ```python
 ui.list_item("main.py", self.open, icon="file").on(   # on_press is its own event
@@ -74,11 +74,11 @@ Controls that produce a value call your callable with it. The most common shapes
 | Handler | Description | Events |
 | --- | --- | --- |
 | `()` | Nothing: the event is the news (a press, a close, Enter). | `ui.alert(on_close=)`, `ui.badge(on_press=)`, `ui.breadcrumbs(on_more=)`, `ui.button(on_press=)`… |
-| `(event)` | A `pz.Event`: its `value` holds the data, `source` the component. | `ui.Catalog(on_install=)`, `ui.ColorPicker(on_change=)`, `ui.EditsBar(on_keep=)`, `ui.EditsBar(on_reject=)`… |
+| `(event)` | A `pz.Event`: its `value` holds the data, `source` the component. | `ui.Calendar(on_change=)`, `ui.Calendar(on_month=)`, `ui.Catalog(on_install=)`, `ui.ColorPicker(on_change=)`… |
 | `(text)` | The new text, on every keystroke. | `ui.command_palette(on_query=)`, `ui.console(on_query=)`, `ui.editor(on_change=)`, `ui.input(on_input=)`… |
 | `(x, y)` | The pointer position, relative to the widget. | `pz.canvas(on_press=)`, `pz.canvas(on_release=)`, `pz.canvas(on_right_press=)`, `pz.canvas(on_move=)`… |
 | `(info)` | A dict (scroll offset and sizes) or a `ui.ErrorInfo`. | `ui.editor(on_scroll=)`, `ui.error_boundary(on_error=)`, `ui.error_boundary(on_details=)`, `pz.scrollable(on_scroll=)`… |
-| `(value)` | The new value: a number, a color, an option… | `ui.number_field(on_change=)`, `ui.radio_group(on_select=)`, `ui.slider(on_change=)`, `ui.toggle_group(on_select=)` |
+| `(value)` | The new value: a number, a color, an option… | `ui.file_input(on_change=)`, `ui.number_field(on_change=)`, `ui.radio_group(on_select=)`, `ui.slider(on_change=)`… |
 | `(tab_id)` | The id of the tab. | `ui.tab_bar(on_select=)`, `ui.tab_bar(on_close=)`, `ui.tab_bar(on_drag=)`, `ui.tab_bar(on_context=)` |
 | `(id)` | The id of the row or tab (for a tree, its path). | `ui.tree(on_toggle=)`, `ui.tree(on_select=)`, `ui.tree(on_open=)`, `ui.tree(on_context=)` |
 | `(row)` | The row (the dict or object you passed in `rows`). | `ui.table(on_row_press=)`, `ui.table(on_row_double_press=)`, `ui.table(on_row_context=)` |
@@ -101,21 +101,26 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Tab bar](/pyzed/library/tab-bar/#events) | 7 | 25 | `on_select`, `on_close`, `on_drag`, `on_drop`, `on_drag_over`, `on_context`, `on_new` |
 | [Editor](/pyzed/library/editor/#events) | 6 | 24 | `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` |
 | [Canvas](/pyzed/library/canvas/#events) | 5 | 23 | `on_press`, `on_release`, `on_right_press`, `on_move`, `on_scroll` |
+| [Drop zone](/pyzed/library/drop-zone/#events) | 5 | 25 | `on_drop`, `on_files`, `on_reject`, `on_enter`, `on_leave` |
 | [Edits bar](/pyzed/library/edits-bar/#events) | 5 | 25 | `on_keep`, `on_reject`, `on_keep_file`, `on_reject_file`, `on_open` |
 | [Window frame](/pyzed/library/window-frame/#events) | 5 | 23 | `on_drag`, `on_minimize`, `on_maximize`, `on_close`, `on_menu` |
+| [Date picker](/pyzed/library/date-picker/#events) | 4 | 24 | `on_change`, `on_open`, `on_close`, `on_dismiss` |
 | [Sign-in prompt](/pyzed/library/auth-prompt/#events) | 4 | 24 | `on_pick`, `on_cancel`, `on_open_url`, `on_copy` |
 | [Table](/pyzed/library/table/#events) | 4 | 22 | `on_sort`, `on_row_press`, `on_row_double_press`, `on_row_context` |
 | [Tree](/pyzed/library/tree/#events) | 4 | 22 | `on_toggle`, `on_select`, `on_open`, `on_context` |
 | [Command palette](/pyzed/library/command-palette/#events) | 3 | 21 | `on_query`, `on_submit`, `on_press` |
+| [Date range picker](/pyzed/library/date-range-picker/#events) | 3 | 23 | `on_change`, `on_open`, `on_close` |
 | [Error dialog](/pyzed/library/error-dialog/#events) | 3 | 21 | `on_close`, `on_go_to`, `on_logs` |
 | [Icon picker](/pyzed/library/icon-picker/#events) | 3 | 23 | `on_change`, `on_pick`, `on_close` |
 | [Input](/pyzed/library/input/#events) | 3 | 21 | `on_input`, `on_submit`, `on_clear` |
 | [List item](/pyzed/library/list-item/#events) | 3 | 21 | `on_press`, `on_right_press`, `on_double_press` |
 | [Prompt](/pyzed/library/prompt/#events) | 3 | 21 | `on_input`, `on_submit`, `on_cancel` |
 | [Select](/pyzed/library/select/#events) | 3 | 21 | `on_select`, `on_open`, `on_close` |
+| [Time picker](/pyzed/library/time-picker/#events) | 3 | 23 | `on_change`, `on_open`, `on_close` |
 | [Tool call](/pyzed/library/tool-call/#events) | 3 | 23 | `on_allow`, `on_allow_always`, `on_deny` |
 | [Unsaved changes](/pyzed/library/unsaved-changes/#events) | 3 | 21 | `on_save`, `on_discard`, `on_cancel` |
 | [Breadcrumbs](/pyzed/library/breadcrumbs/#events) | 2 | 20 | `on_press`, `on_more` |
+| [Calendar](/pyzed/library/calendar/#events) | 2 | 22 | `on_change`, `on_month` |
 | [Chip](/pyzed/library/chip/#events) | 2 | 20 | `on_press`, `on_remove` |
 | [Color picker](/pyzed/library/color-picker/#events) | 2 | 22 | `on_change`, `on_press` |
 | [Confirm](/pyzed/library/confirm/#events) | 2 | 20 | `on_confirm`, `on_cancel` |
@@ -138,6 +143,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Choice](/pyzed/library/choice/#events) | 1 | 19 | `on_cancel` |
 | [Dialog layer](/pyzed/library/dialog-layer/#events) | 1 | 19 | `on_dismiss` |
 | [Disclosure](/pyzed/library/disclosure/#events) | 1 | 19 | `on_toggle` |
+| [File picker](/pyzed/library/file-input/#events) | 1 | 19 | `on_change` |
 | [Icon button](/pyzed/library/icon-button/#events) | 1 | 19 | `on_press` |
 | [Layer](/pyzed/library/layer/#events) | 1 | 19 | `on_dismiss` |
 | [Markdown](/pyzed/library/markdown/#events) | 1 | 19 | `on_link` |

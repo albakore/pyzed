@@ -27,6 +27,7 @@ from .base import (
 )
 from .agent import AuthPrompt, Catalog, EditsBar, Plan, ServiceRow, ThreadHistory, ToolCall, context_meter, diff_view, format_tokens
 from .color import ColorPicker, checkerboard, color_swatch
+from .dates import Calendar, DatePicker, DateRangePicker, TimePicker, format_date, format_time, parse_date, parse_time
 from .icon_picker import IconPicker, icon_grid, icon_picker_dialog
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, LogSelection, console
 from .errors import ErrorInfo, error_boundary, error_card, error_dialog
@@ -79,11 +80,22 @@ from .overlays import (
     toast,
     toasts,
 )
+from .system import DropZone, file_input
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 from . import audio, camera, rack  # noqa: E402  (namespaces: ui.audio.Knob, ui.camera.Webcam, ui.rack.Rack)
 
 __all__ = [
+    "Calendar",
     "ColorPicker",
+    "DatePicker",
+    "DateRangePicker",
+    "DropZone",
+    "TimePicker",
+    "file_input",
+    "format_date",
+    "format_time",
+    "parse_date",
+    "parse_time",
     "IconPicker",
     "icon_grid",
     "icon_picker_dialog",

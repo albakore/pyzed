@@ -61,6 +61,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
     opaque,
     pick_list,
     pin,
+    popup,
     post,
     progress_bar,
     qr_code,
@@ -130,6 +131,11 @@ _LAZY = {
     "Shortcut": ("services", "Shortcut"),
     "Timer": ("services", "Timer"),
     "Worker": ("services", "Worker"),
+    "system": ("system", None),
+    "Launcher": ("system", "Launcher"),
+    "NetworkMonitor": ("system", "NetworkMonitor"),
+    "PowerMonitor": ("system", "PowerMonitor"),
+    "SystemInfo": ("system", "SystemInfo"),
 }
 
 
@@ -263,6 +269,10 @@ __all__ = [
     "Shortcut",
     "Timer",
     "Worker",
+    "Launcher",
+    "NetworkMonitor",
+    "PowerMonitor",
+    "SystemInfo",
     "accessibility",
     "animation",
     "animation_player",
@@ -318,6 +328,7 @@ __all__ = [
     "pick_list",
     "pin",
     "focusable",
+    "popup",
     "post",
     "presence",
     "pressed",

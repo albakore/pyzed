@@ -39,6 +39,8 @@ BIND_PROPS: Dict[str, Tuple[str, bool]] = {
     "empty_state": ("title", False), "counter": ("count", False), "status_dot": ("text", False),
     "facepile": ("people", False), "qr_code": ("data", False), "svg": ("source", False),
     "image_viewer": ("source", False), "terminal": ("text", False), "diff_stat": ("added", False),
+    "date_picker": ("value", True), "time_picker": ("value", True), "calendar": ("value", True),
+    "file_input": ("path", True),
 }
 
 #: Validation rules, in the order they are checked, with the kinds of control they apply to.

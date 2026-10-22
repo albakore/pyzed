@@ -1,6 +1,6 @@
 ---
 title: Componentes no visuales
-description: "Temporizadores, atajos de teclado, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, el portapapeles, ajustes, diálogos de archivos y notificaciones en Pyzed Design: componentes con propiedades y eventos que no dibujan nada."
+description: "Temporizadores, atajos de teclado, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, el portapapeles, ajustes, diálogos de archivos, notificaciones, información del sistema, el lanzador y los monitores de red y batería en Pyzed Design: componentes con propiedades y eventos que no dibujan nada."
 sidebar:
   order: 6.2
 ---
@@ -14,7 +14,7 @@ ejecutar: solo aparecen en la bandeja y en el **Outline**, donde pertenecen al f
 
 ## Añadir uno
 
-1. Búscalo en la caja de herramientas, en **Componentes** (o escribe su nombre en **Buscar componentes…**).
+1. Búscalo en la caja de herramientas, en **Componentes** o **Sistema** (o escribe su nombre en **Buscar componentes…**).
 2. **Haz clic**: va directo a la bandeja, seleccionado y con sus propiedades a la derecha. Arrastrarlo al
    formulario hace lo mismo; nunca queda dentro de un contenedor.
 3. Ajusta sus propiedades en el panel **Propiedades** y haz **doble clic** en su ficha para escribir el handler de
@@ -45,6 +45,10 @@ renombran sus handlers.
 | **Ajustes** | Valores que se guardan entre ejecuciones (un JSON por usuario) y el valor de los controles de `remember`. | `change` (`(clave, valor)`) |
 | **Diálogo de archivos** | El diálogo del sistema: `mode` es `open`, `open_many`, `save` o `folder`; `filters` lleva una línea `Imágenes: png, jpg` por filtro. | `chosen` (la ruta o una lista), `cancelled` |
 | **Notificación** | Una notificación de escritorio con `title` y `text`. | `shown`, `failed` |
+| **Información del sistema** | El ordenador: `os`, `os_version`, `machine`, `hostname`, `user`, `home`, `cpu_count`, `language`, la memoria y el disco libre (de `disk_path`). Con `interval` vuelve a mirar cada cierto tiempo. | `update` (un diccionario con todo) |
+| **Lanzador** | Abre `target` con el programa que usa el sistema para eso: un archivo, una carpeta, una página web o un enlace `mailto:`. | `opened`, `failed` (el destino) |
+| **Monitor de red** | Si se llega a internet, probando `host`:`port` cada `interval` ms mientras `running`. | `change` (`True`/`False`), `online`, `offline` |
+| **Monitor de batería** | La carga de la batería y si está enchufada, cada `interval` ms. | `change` (`(porcentaje, enchufada)`), `low` (bajo `low_level`), `plugged`, `unplugged` |
 
 La página de cada componente en la referencia integrada (<kbd>Shift</kbd>+<kbd>F1</kbd> con él seleccionado) lista
 todas sus propiedades y eventos con el nombre de su handler.
@@ -82,6 +86,10 @@ def proc_finished(form, event):
 | Ajustes | `settings1["clave"]`, `settings1["clave"] = valor`, `get(clave, defecto)`, `set()`, `delete()`, `keys()` |
 | Diálogo de archivos | `show()` (un comando: devuélvelo), `path`, `paths` |
 | Notificación | `show(text=None)` |
+| Información del sistema | `check()`, `env(name)`, `folder("documents")`, `memory_available`, `disk_free`, `is_windows`, `is_mac`, `is_linux` |
+| Lanzador | `open(target=None)`, `reveal(path)` (lo muestra en el explorador de archivos), `email(to, subject, body)` |
+| Monitor de red | `check()`, `online`, `start()`, `stop()` |
+| Monitor de batería | `check()`, `percent`, `plugged`, `has_battery` |
 
 Los eventos que ocurren en segundo plano (una línea de salida, un archivo que cambia, una respuesta web) llegan a tus
 handlers en el hilo de la ventana, así que pueden cambiar controles sin problema. La única excepción es el evento

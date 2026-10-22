@@ -16,6 +16,7 @@ mod highlighter;
 mod imaging;
 mod layout;
 mod min_size;
+mod popup;
 mod recorder;
 mod render;
 mod scrub;

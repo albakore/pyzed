@@ -989,6 +989,22 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
         }
         Kind::Presence(props) => build_presence(py, props, ctx),
         Kind::Hover { base, top } => widget::hover(build(py, base, ctx), build(py, top, ctx)),
+        Kind::Popup {
+            child,
+            content,
+            on_dismiss,
+            side,
+            align,
+            gap,
+        } => crate::popup::Popup::new(
+            build(py, child, ctx),
+            content.as_ref().map(|c| build(py, c, ctx)),
+            on_dismiss.clone().map(Message::Py),
+            *side,
+            *align,
+            *gap,
+        )
+        .into(),
         Kind::Tooltip {
             child,
             tip,

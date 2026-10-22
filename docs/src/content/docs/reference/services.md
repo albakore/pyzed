@@ -113,3 +113,37 @@ class Notification
 ```
 
 A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`.
+
+## Operating system (pyzed.system)
+
+### `SystemInfo`
+
+```python
+class SystemInfo
+```
+
+What the computer is: `os` (`"Windows"`, `"macOS"`, `"Linux"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, plus `memory_available`, `disk_free` and `disk_total` read when asked. `env(name)` reads a variable, `folder("documents")` finds the user's folders. With `interval` above 0, `start()` raises `update` with `snapshot()` every so often.
+
+### `Launcher`
+
+```python
+class Launcher
+```
+
+Opens files, folders and links with the app the system uses for them: `open(target)`, `reveal(path)` (selected in the file manager) and `email(to, subject, body)`; raises `opened` or `failed`.
+
+### `NetworkMonitor`
+
+```python
+class NetworkMonitor
+```
+
+Notices when the computer goes online or offline by reaching `host` every `interval` milliseconds in the background: `online`, `check()`, `start()`, `stop()`; raises `change`, `online` and `offline`.
+
+### `PowerMonitor`
+
+```python
+class PowerMonitor
+```
+
+The battery: `percent`, `plugged` and `has_battery`; every `interval` milliseconds raises `change`, `low` (under `low_level` while unplugged), `plugged` and `unplugged`.

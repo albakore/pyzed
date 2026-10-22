@@ -194,6 +194,7 @@ reenvía a `app.update()`.
 | `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
+| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 
 **Métodos y propiedades**
 
@@ -220,6 +221,30 @@ Window.on_close()
 ```
 
 Se llama cuando el usuario pide cerrar la ventana. Devuelve `False` para mantenerla abierta.
+
+#### `Window.on_file_hover`
+
+```python
+Window.on_file_hover(path)
+```
+
+Un archivo arrastrado desde el sistema está sobre la ventana: ilumina la `ui.DropZone` donde caería.
+
+#### `Window.on_file_drop`
+
+```python
+Window.on_file_drop(path)
+```
+
+Se soltó un archivo del sistema en la ventana (una vez por archivo): va a una `ui.DropZone`.
+
+#### `Window.on_file_leave`
+
+```python
+Window.on_file_leave()
+```
+
+Los archivos arrastrados sobre la ventana salieron sin soltarse.
 
 #### `Window.is_open`
 

@@ -1291,6 +1291,27 @@ Hace que un widget bloquee el ratón para lo que está debajo en un `stack`.
 | --- | --- |
 | `content` | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
 
+### `popup`
+
+```python
+popup(base, content=None, *, on_dismiss=None, side='bottom', align='start', gap=4.0)
+```
+
+Muestra `content` encima de todo junto a `base`, como el menú de un desplegable: no lo recortan los paneles donde está `base`, se pasa al otro lado cuando no cabe y se queda dentro de la ventana. Un clic fuera (y fuera de `base`) o Escape llama a `on_dismiss`. Con `content=None` solo se muestra `base`. Los selectores de fecha abren su calendario con él.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `base` | El widget al que pertenece (un campo, un botón). |
+| `content` | Lo que se abre (un panel, un menú), o `None` mientras está cerrado. |
+| `on_dismiss` | Mensaje o función que se envía con un clic fuera o Escape. |
+| `side` | `"bottom"`, `"top"`, `"right"` o `"left"` de `base`. |
+| `align` | `"start"`, `"center"` o `"end"`: cómo se alinea con `base`. |
+| `gap` | Espacio entre `base` y el contenido. |
+
+```python
+pz.popup(field, panel if self.open else None, on_dismiss=self.close)
+```
+
 ### `tooltip`
 
 ```python

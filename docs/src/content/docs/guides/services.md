@@ -62,6 +62,10 @@ raised the event.
 | `pz.Settings(name, folder=None, defaults=None)` | `change` (`(key, value)`) | A dict saved as JSON at once (`autosave`), per user, in Pyzed's settings folder. |
 | `pz.FileDialog(mode="open", filters=..., directory=None, file_name="")` | `chosen` (path or list), `cancelled` | `show()` returns the command that opens it; modes `open`, `open_many`, `save`, `folder`. |
 | `pz.Notification(title, text)` | `shown`, `failed` | `show(text=None)` returns whether it could be shown. |
+| `pz.SystemInfo(interval=0, disk_path=None)` | `update` (a dict) | `os`, `os_version`, `hostname`, `user`, `cpu_count`, `language`, `memory_total`, `memory_available`, `disk_free`; `folder("downloads")`, `env(name)`. |
+| `pz.Launcher(target="")` | `opened`, `failed` (the target) | `open(target)` with the system's program (files, folders, links, `mailto:`), `reveal(path)`, `email(to, subject, body)`. |
+| `pz.NetworkMonitor(host="1.1.1.1", port=53, interval=5000)` | `change` (bool), `online`, `offline` | Tries a connection every `interval` ms in the background; `online` holds the last answer. |
+| `pz.PowerMonitor(interval=30000, low_level=20)` | `change` (`(percent, plugged)`), `low`, `plugged`, `unplugged` | `percent` is `None` on computers without a battery (`has_battery`). |
 
 ### A timer and a shortcut
 
@@ -138,6 +142,30 @@ dialog = pz.FileDialog("open", filters="Images: png, jpg", on_chosen=self.load_i
 def open_clicked(self):
     return dialog.show()              # a command: return it
 ```
+
+### The operating system
+
+The services of `pyzed.system` (also at the top level: `pz.SystemInfo`, `pz.Launcher`...) read the computer and
+open things with the programs the user already has:
+
+```python
+info = pz.SystemInfo()
+f"{info.os} {info.os_version}, {info.cpu_count} cores"   # "Windows 11, 8 cores"
+info.folder("downloads")                                 # the user's Downloads folder
+info.disk_free // 2**30                                  # free GB
+
+launcher = pz.Launcher(on_failed=lambda target: print("Could not open", target))
+launcher.open("https://example.com")                     # the default browser
+launcher.open("report.pdf")                              # the PDF viewer
+launcher.reveal("report.pdf")                            # its folder, with the file selected
+
+network = pz.NetworkMonitor(on_offline=lambda: print("Offline"), on_online=lambda: print("Back"))
+network.start()
+```
+
+For files, `ui.file_input` is a path field with a button that opens the system's dialog, and `ui.DropZone` takes
+files dragged from the desktop. A window also gets every dropped file in `on_file_drop(path)` (`on_file_hover` and
+`on_file_leave` while they are dragged over it). See the [System](/pyzed/library/drop-zone/) pages of the library.
 
 ## Without a window
 

@@ -87,12 +87,14 @@ CATEGORIES = {
     "actions": T("Actions", "Acciones"),
     "display": T("Display", "Visualización"),
     "forms": T("Forms", "Formularios"),
+    "dates": T("Dates and times", "Fechas y horas"),
     "feedback": T("Feedback", "Estado y avisos"),
     "data": T("Data", "Datos"),
     "lists": T("Lists and menus", "Listas y menús"),
     "navigation": T("Navigation", "Navegación"),
     "overlays": T("Overlays", "Capas flotantes"),
     "dialogs": T("Dialogs", "Diálogos"),
+    "system": T("System", "Sistema"),
     "workspace": T("Workspace", "Espacio de trabajo"),
     "code": T("Code and tools", "Código y herramientas"),
     "agents": T("AI agents", "Agentes de IA"),
@@ -107,6 +109,8 @@ CATEGORY_INTROS = {
                  "Texto, insignias, teclas, avatares y superficies."),
     "forms": T("Controlled inputs: they show your state and report every change.",
                "Controles controlados: muestran tu estado y te avisan de cada cambio."),
+    "dates": T("Calendars and fields for dates, ranges and times, in the format you choose.",
+               "Calendarios y campos para fechas, rangos y horas, en el formato que elijas."),
     "feedback": T("Progress, loading, notices and empty states.",
                   "Progreso, carga, avisos y estados vacíos."),
     "data": T("Tables, numbers and small charts drawn with the theme colors.",
@@ -118,6 +122,8 @@ CATEGORY_INTROS = {
                   "Lo que se dibuja encima de la interfaz: capas, modales, paletas y notificaciones."),
     "dialogs": T("Ready-made dialogs with translated buttons.",
                  "Diálogos listos para usar con los botones traducidos."),
+    "system": T("Pieces that talk to the operating system: its file dialogs and files dropped from the desktop.",
+                "Piezas que hablan con el sistema operativo: sus diálogos de archivos y los archivos soltados desde el escritorio."),
     "workspace": T("The frame of an editor-style window: docks, title bar, status bar and panels.",
                    "El marco de una ventana estilo editor: docks, barra de título, barra de estado y paneles."),
     "code": T("The code editor, a terminal view, a log console and help boxes.",
@@ -455,7 +461,7 @@ add(
     slug="kbd",
     name=T("Kbd", "Kbd"),
     category="display",
-    api=["pyzed.ui.kbd", "pyzed.ui.format_keys"],
+    api=["pyzed.ui.kbd", "pyzed.ui.format_keys", "pyzed.ui.keys_text"],
     blurb=T("Keyboard shortcuts drawn as keys, with symbols on macOS.",
             "Atajos de teclado dibujados como teclas, con símbolos en macOS."),
     desc=T(
@@ -1051,6 +1057,312 @@ add(
         return ui.dialog_layer(page, dialog if self.picking else None,
                                on_dismiss=lambda: setattr(self, "picking", False))""",
     related=["icon", "dialog-layer", "color-picker"],
+)
+
+# ------------------------------------------------------------------------------------ dates and times
+
+add(
+    slug="date-picker",
+    name=T("Date picker", "Selector de fecha"),
+    category="dates",
+    api=["pyzed.ui.DatePicker", "pyzed.ui.format_date", "pyzed.ui.parse_date", "pyzed.popup"],
+    badge="new",
+    blurb=T("A date field with a calendar that drops down, in the format you choose.",
+            "Un campo de fecha con un calendario desplegable, en el formato que elijas."),
+    desc=T(
+        "`ui.DatePicker` is a text field for one date. The calendar button (or Alt+↓) opens a "
+        "[Calendar](/pyzed/library/calendar/) under it, and the user can also type the date: it is read with "
+        "`format` when they press Enter or leave the field. With the focus in the field, ↑ and ↓ move one day "
+        "and Page Up/Page Down one month, without opening anything. `on_change` receives a `datetime.date` "
+        "(or `None` when the field is cleared) in `event.value`.",
+        "`ui.DatePicker` es un campo de texto para una fecha. El botón del calendario (o Alt+↓) abre un "
+        "[Calendario](/pyzed/es/library/calendar/) debajo, y el usuario también puede escribir la fecha: se lee "
+        "con `format` al pulsar Enter o al salir del campo. Con el foco en el campo, ↑ y ↓ mueven un día y "
+        "Re Pág/Av Pág un mes, sin abrir nada. `on_change` recibe un `datetime.date` (o `None` si se vacía el "
+        "campo) en `event.value`.",
+    ),
+    when=T(
+        ["For birthdays, due dates, bookings and any form field that holds a date.",
+         "`format` takes tokens (`DD/MM/YYYY`, `MMM D, YYYY`, `dddd D MMMM`) or a `strftime` pattern (`%d.%m.%Y`). "
+         "Month and day names follow the app's language.",
+         "`min`, `max` and `disabled_dates` (dates, `\"weekend\"` or day names) turn days off.",
+         "For two dates (from–to), use [Date range picker](/pyzed/library/date-range-picker/)."],
+        ["Para fechas de nacimiento, vencimientos, reservas y cualquier campo de formulario con una fecha.",
+         "`format` acepta tokens (`DD/MM/YYYY`, `MMM D, YYYY`, `dddd D MMMM`) o un patrón de `strftime` "
+         "(`%d.%m.%Y`). Los nombres de meses y días siguen el idioma de la app.",
+         "`min`, `max` y `disabled_dates` (fechas, `\"weekend\"` o nombres de días) desactivan días.",
+         "Para dos fechas (desde–hasta), usa [Selector de rango de fechas](/pyzed/es/library/date-range-picker/)."],
+    ),
+    preview={"code": """pz.container(
+    ui.DatePicker(value="2026-10-22", format="DD/MM/YYYY", on_change=on_change),
+    width=220, height=330, align_y="start")""", "size": (720, 380)},
+    usage="""import datetime
+
+
+class Booking(pz.App):
+    def __init__(self):
+        self.day = datetime.date.today()
+
+    def view(self):
+        return pz.column([
+            ui.field("Check-in", ui.DatePicker(value=self.day, format="ddd D MMM YYYY",
+                                               min=datetime.date.today(), disabled_dates=["sunday"],
+                                               on_change=lambda e: setattr(self, "day", e.value))),
+            ui.label(f"Booked for {ui.format_date(self.day, 'dddd D MMMM')}"),
+        ], spacing=12, width=320)""",
+    examples=[
+        {"title": T("Formats", "Formatos"),
+         "text": T("`ui.format_date` and `ui.parse_date` use the same tokens as the field, for your own labels.",
+                   "`ui.format_date` y `ui.parse_date` usan los mismos tokens que el campo, para tus propias etiquetas."),
+         "code": """pz.column([
+    ui.label(ui.format_date("2026-10-22", "DD/MM/YYYY"), mono=True),
+    ui.label(ui.format_date("2026-10-22", "MMM D, YYYY"), mono=True),
+    ui.label(ui.format_date("2026-10-22", "dddd, D MMMM YYYY"), mono=True),
+    ui.label(ui.format_date("2026-10-22", "[week of] D/M/YY"), mono=True),
+], spacing=6)"""},
+    ],
+    notes=T(
+        "The calendar opens in a `pz.popup`, a layer drawn over the window: it is never clipped by a scrollable "
+        "or a small container, flips above the field when there is no room below and closes with Escape or a "
+        "click outside.",
+        "El calendario se abre en un `pz.popup`, una capa dibujada sobre la ventana: nunca la recorta un "
+        "scrollable ni un contenedor pequeño, se da la vuelta y sale por encima del campo si abajo no hay "
+        "sitio, y se cierra con Escape o con un clic fuera.",
+    ),
+    related=["calendar", "date-range-picker", "time-picker", "input"],
+)
+
+add(
+    slug="date-range-picker",
+    name=T("Date range picker", "Selector de rango de fechas"),
+    category="dates",
+    api=["pyzed.ui.DateRangePicker"],
+    badge="new",
+    blurb=T("Two dates in one field, with two months side by side and quick ranges.",
+            "Dos fechas en un campo, con dos meses lado a lado y rangos rápidos."),
+    desc=T(
+        "`ui.DateRangePicker` holds a start and an end date. Its popup shows two months: the first click "
+        "picks the start, the pointer previews the range and the second click picks the end (in any order). "
+        "The column on the left has quick ranges (today, last 7 days, this week, this month, last month...). "
+        "`on_change` receives `(start, end)` as two `datetime.date`.",
+        "`ui.DateRangePicker` guarda una fecha de inicio y una de fin. Su ventana muestra dos meses: el primer "
+        "clic elige el inicio, el puntero previsualiza el rango y el segundo clic elige el fin (en cualquier "
+        "orden). La columna de la izquierda tiene rangos rápidos (hoy, últimos 7 días, esta semana, este mes, "
+        "el mes pasado...). `on_change` recibe `(inicio, fin)` como dos `datetime.date`.",
+    ),
+    when=T(
+        ["For reports, filters, stays and anything that spans days.",
+         "`months=1` shows a single month and `presets=False` hides the quick ranges.",
+         "The field can be typed too: two dates in `format` with any separator."],
+        ["Para informes, filtros, estancias y todo lo que dura varios días.",
+         "`months=1` muestra un solo mes y `presets=False` oculta los rangos rápidos.",
+         "El campo también se puede escribir: dos fechas en `format` con cualquier separador."],
+    ),
+    preview={"code": """pz.container(
+    ui.DateRangePicker(value=("2026-10-05", "2026-10-14"), format="DD/MM/YYYY", on_change=on_change),
+    width=260, height=330, align_y="start")""", "size": (720, 380)},
+    usage="""class Report(pz.App):
+    def __init__(self):
+        self.period = (None, None)
+
+    def view(self):
+        start, end = self.period
+        days = (end - start).days + 1 if start and end else 0
+        return pz.column([
+            ui.DateRangePicker(value=self.period, format="MMM D, YYYY",
+                               on_change=lambda e: setattr(self, "period", e.value)),
+            ui.label(f"{days} days selected", color="text_muted"),
+        ], spacing=8, width=300)""",
+    related=["date-picker", "calendar"],
+)
+
+add(
+    slug="time-picker",
+    name=T("Time picker", "Selector de hora"),
+    category="dates",
+    api=["pyzed.ui.TimePicker", "pyzed.ui.format_time", "pyzed.ui.parse_time"],
+    badge="new",
+    blurb=T("A time field with columns of hours and minutes, in 24 or 12 hours.",
+            "Un campo de hora con columnas de horas y minutos, en 24 o 12 horas."),
+    desc=T(
+        "`ui.TimePicker` is a field for a time of day. Its popup has a column of hours, one of minutes (every "
+        "`minute_step` minutes), seconds when the format has `ss` and AM/PM when it has `A` or `h`. ↑ and ↓ "
+        "move it by one step from the keyboard. `on_change` receives a `datetime.time`.",
+        "`ui.TimePicker` es un campo para una hora del día. Su ventana tiene una columna de horas, una de minutos "
+        "(cada `minute_step` minutos), segundos si el formato tiene `ss` y AM/PM si tiene `A` o `h`. ↑ y ↓ la "
+        "mueven un paso desde el teclado. `on_change` recibe un `datetime.time`.",
+    ),
+    when=T(
+        ["For alarms, opening hours, meetings and reminders.",
+         "`format=\"HH:mm\"` is 24 hours; `\"h:mm A\"` is 12 hours with AM/PM; `\"HH:mm:ss\"` adds seconds."],
+        ["Para alarmas, horarios de apertura, reuniones y recordatorios.",
+         "`format=\"HH:mm\"` es de 24 horas; `\"h:mm A\"` es de 12 horas con AM/PM; `\"HH:mm:ss\"` añade segundos."],
+    ),
+    preview={"code": """pz.row([
+    pz.container(ui.TimePicker(value="14:30", on_change=on_change), width=140, height=290, align_y="start"),
+    pz.container(ui.TimePicker(value="14:30", format="h:mm A", minute_step=15, on_change=on_change),
+                 width=140, height=290, align_y="start"),
+], spacing=24)""", "size": (720, 360)},
+    usage="""import datetime
+
+
+class Alarm(pz.App):
+    def __init__(self):
+        self.at = datetime.time(7, 30)
+
+    def view(self):
+        return ui.field("Wake me at", ui.TimePicker(value=self.at, format="h:mm A",
+                                                    on_change=lambda e: setattr(self, "at", e.value)))""",
+    related=["date-picker", "number-field"],
+)
+
+add(
+    slug="calendar",
+    name=T("Calendar", "Calendario"),
+    category="dates",
+    api=["pyzed.ui.Calendar"],
+    badge="new",
+    blurb=T("A month grid to pick a day, a range or several days, always on screen.",
+            "Una cuadrícula del mes para elegir un día, un rango o varios días, siempre a la vista."),
+    desc=T(
+        "`ui.Calendar` shows one or more months. `mode` picks a single day (`\"single\"`), a range "
+        "(`\"range\"`, two clicks) or any number of days (`\"multiple\"`, each click toggles one). The header "
+        "switches to a grid of months and then of years to jump far, and the arrows of the keyboard move "
+        "the focused day (Page Up/Page Down by month, Enter picks). The pickers on this page open one of these "
+        "in a popup.",
+        "`ui.Calendar` muestra uno o varios meses. `mode` elige un solo día (`\"single\"`), un rango "
+        "(`\"range\"`, dos clics) o cualquier número de días (`\"multiple\"`, cada clic marca o desmarca uno). "
+        "La cabecera cambia a una cuadrícula de meses y luego de años para saltar lejos, y las flechas del "
+        "teclado mueven el día enfocado (Re Pág/Av Pág por meses, Enter lo elige). Los selectores de esta "
+        "sección abren uno de estos en una ventana flotante.",
+    ),
+    when=T(
+        ["In a side panel or a dashboard, where the calendar stays visible.",
+         "`first_weekday` (`\"monday\"`, `\"sunday\"`...) and `week_numbers=True` follow local customs.",
+         "Inside a form field, use [Date picker](/pyzed/library/date-picker/) instead."],
+        ["En un panel lateral o un tablero, donde el calendario se queda a la vista.",
+         "`first_weekday` (`\"monday\"`, `\"sunday\"`...) y `week_numbers=True` siguen las costumbres locales.",
+         "Dentro de un campo de formulario, usa [Selector de fecha](/pyzed/es/library/date-picker/)."],
+    ),
+    preview={"code": """pz.row([
+    ui.Calendar(value="2026-10-22", today_button=True, on_change=on_change),
+    ui.Calendar(value=("2026-10-05", "2026-10-14"), mode="range", disabled=["weekend"], on_change=on_change),
+], spacing=24)""", "size": (720, 380)},
+    usage="""class Planner(pz.App):
+    def __init__(self):
+        self.days = []
+
+    def view(self):
+        return pz.row([
+            ui.Calendar(value=self.days, mode="multiple", week_numbers=True,
+                        on_change=lambda e: setattr(self, "days", e.value)),
+            pz.column([ui.label(ui.format_date(d, "ddd D MMM")) for d in self.days], spacing=4),
+        ], spacing=16)""",
+    related=["date-picker", "date-range-picker"],
+)
+
+# ------------------------------------------------------------------------------------------ system
+
+add(
+    slug="file-input",
+    name=T("File picker", "Selector de archivos"),
+    category="system",
+    api=["pyzed.ui.file_input", "pyzed.ui.path_input", "pyzed.ui.system.pick"],
+    badge="new",
+    blurb=T("A path field with a button that opens the system's file or folder dialog.",
+            "Un campo de ruta con un botón que abre el diálogo de archivos o carpetas del sistema."),
+    desc=T(
+        "`ui.file_input` shows a path and a browse button. The button opens the operating system's own dialog "
+        "to open a file (`mode=\"open\"`), several (`\"open_many\"`), a folder (`\"folder\"`) or to choose where "
+        "to save (`\"save\"`), and `on_change` receives what the user chose: a path, or a list of paths with "
+        "`open_many`. The path can also be typed or pasted. `filters` limits the file types "
+        "(`\"Images: png, jpg\"`).",
+        "`ui.file_input` muestra una ruta y un botón para buscar. El botón abre el diálogo del propio sistema "
+        "operativo para abrir un archivo (`mode=\"open\"`), varios (`\"open_many\"`), una carpeta (`\"folder\"`) o "
+        "elegir dónde guardar (`\"save\"`), y `on_change` recibe lo elegido: una ruta, o una lista de rutas con "
+        "`open_many`. La ruta también se puede escribir o pegar. `filters` limita los tipos de archivo "
+        "(`\"Imágenes: png, jpg\"`).",
+    ),
+    when=T(
+        ["For settings that point to a file or folder: a project folder, a log file, an export target.",
+         "`button=\"Browse…\"` shows text instead of the folder icon.",
+         "`ui.system.pick(then, mode=...)` returns the same dialog as a `Command`, for your own buttons."],
+        ["Para ajustes que apuntan a un archivo o carpeta: la carpeta de un proyecto, un archivo de registro, "
+         "el destino de una exportación.",
+         "`button=\"Examinar…\"` muestra un texto en lugar del icono de carpeta.",
+         "`ui.system.pick(then, mode=...)` devuelve el mismo diálogo como un `Command`, para tus propios botones."],
+    ),
+    preview={"code": """pz.column([
+    ui.field("Project folder", ui.file_input("~/projects/notes", on_change, mode="folder")),
+    ui.field("Logo", ui.file_input("", on_change, filters="Images: png, jpg, svg", placeholder="Choose an image")),
+    ui.field("Export to", ui.file_input("report.pdf", on_change, mode="save", button="Browse…")),
+], spacing=12, width=420)"""},
+    usage="""class Export(pz.App):
+    def __init__(self):
+        self.target = ""
+
+    def view(self):
+        return ui.file_input(self.target, lambda path: setattr(self, "target", path),
+                             mode="save", file_name="report.pdf", filters="PDF: pdf")""",
+    related=["drop-zone", "input", "field"],
+)
+
+add(
+    slug="drop-zone",
+    name=T("Drop zone", "Zona para soltar"),
+    category="system",
+    api=["pyzed.ui.DropZone"],
+    badge="new",
+    blurb=T("An area that takes files dragged from the desktop or the file manager.",
+            "Un área que recibe archivos arrastrados desde el escritorio o el explorador de archivos."),
+    desc=T(
+        "`ui.DropZone` lights up when files are dragged over the window and receives them when they are "
+        "dropped: `on_drop` gets each path and `on_files` the whole list. `accept` limits the types "
+        "(`[\"png\", \"jpg\"]`, `[\"*.tar.gz\"]`, `[\"folder\"]`) and files of other types go to `on_reject`. "
+        "With `browse=True` (the default) a click opens the file dialog too. When a window has several zones, "
+        "the one under the pointer gets the files, or else the one that accepts their type.",
+        "`ui.DropZone` se ilumina cuando se arrastran archivos sobre la ventana y los recibe al soltarlos: "
+        "`on_drop` recibe cada ruta y `on_files` la lista completa. `accept` limita los tipos "
+        "(`[\"png\", \"jpg\"]`, `[\"*.tar.gz\"]`, `[\"folder\"]`) y los archivos de otros tipos van a "
+        "`on_reject`. Con `browse=True` (por defecto) un clic también abre el diálogo de archivos. Si una "
+        "ventana tiene varias zonas, recibe los archivos la que está bajo el puntero o, si no, la que acepta "
+        "su tipo.",
+    ),
+    when=T(
+        ["For importing images, documents or data files, and attaching files to a message.",
+         "`show_files=True` lists what was dropped, with a button to remove each one; `multiple=False` keeps "
+         "only the last file.",
+         "Dropped files also reach `on_file_drop(path)` of the window, for apps that don't need a zone."],
+        ["Para importar imágenes, documentos o archivos de datos, y adjuntar archivos a un mensaje.",
+         "`show_files=True` lista lo que se soltó, con un botón para quitar cada archivo; `multiple=False` se "
+         "queda solo con el último.",
+         "Los archivos soltados también llegan a `on_file_drop(path)` de la ventana, para apps que no necesitan "
+         "una zona."],
+    ),
+    preview={"code": """pz.row([
+    ui.DropZone(text="Drop images here", hint="PNG or JPG, up to 10 MB", accept=["png", "jpg"],
+                on_files=on_files),
+    ui.DropZone(icon_name="file-spreadsheet", text="Import a CSV", accept=["csv"], multiple=False,
+                show_files=True, files=["~/data/sales-2026.csv"], on_files=on_files),
+], spacing=16, width=600)"""},
+    usage="""class Gallery(pz.App):
+    def __init__(self):
+        self.images = []
+
+    def view(self):
+        return pz.column([
+            ui.DropZone(text="Drop photos", accept=["png", "jpg", "webp"],
+                        on_files=lambda e: setattr(self, "images", list(e.value))),
+            pz.row([pz.image(path, width=96, height=96) for path in self.images], spacing=8),
+        ], spacing=12)""",
+    notes=T(
+        "Pyzed Design has a Drop zone in the System section of the toolbox, next to the non-visual helpers "
+        "of the operating system (system information, launcher, network and battery monitors).",
+        "Pyzed Design tiene una Zona para soltar en la sección Sistema de la caja de herramientas, junto a los "
+        "ayudantes no visuales del sistema operativo (información del sistema, lanzador, monitores de red y "
+        "batería).",
+    ),
+    related=["file-input", "card"],
 )
 
 # --------------------------------------------------------------------------------------- feedback
@@ -3926,6 +4238,18 @@ _BASE_APIS = {
 # One or two sentences per component for readers who don't program: what it is, as you'd see it.
 
 PLAIN = {
+    "date-picker": T("A box for a date. Type it, or press the little calendar and click a day.",
+                     "Una casilla para una fecha. Escríbela, o pulsa el calendarito y haz clic en un día."),
+    "date-range-picker": T("A box for two dates, from and to. You click where the period starts and where it ends.",
+                           "Una casilla para dos fechas, desde y hasta. Haces clic donde empieza el periodo y donde termina."),
+    "time-picker": T("A box for a time of day, with lists of hours and minutes to choose from.",
+                     "Una casilla para una hora del día, con listas de horas y minutos para elegir."),
+    "calendar": T("A month on screen, like a wall calendar, where you click days to choose them.",
+                  "Un mes en pantalla, como un calendario de pared, donde haces clic en los días para elegirlos."),
+    "file-input": T("A box with the location of a file and a button that opens the usual window to look for it.",
+                    "Una casilla con la ubicación de un archivo y un botón que abre la ventana de siempre para buscarlo."),
+    "drop-zone": T("A dashed area where you drag files from your desktop and let go to add them.",
+                   "Un área con borde de rayas donde arrastras archivos desde el escritorio y los sueltas para añadirlos."),
     "button": T("A button is something you click to make the app do something: save, send, open, delete.",
                 "Un botón es algo que pulsas para que la app haga algo: guardar, enviar, abrir, borrar."),
     "icon-button": T("A small button with just a picture (a magnifying glass, a gear) instead of words.",
@@ -5846,6 +6170,97 @@ VARIANTS.update({
             ('format_tokens(1_250_000)', 'ui.label(ui.format_tokens(1_250_000), mono=True)'),
         ], T("`ui.format_tokens` returns the text the meter shows, for your own labels.",
              "`ui.format_tokens` devuelve el texto que muestra el medidor, para tus propias etiquetas.")),
+    ],
+})
+
+VARIANTS.update({
+    # ------------------------------------------------------------------------------ dates and times
+    "date-picker": [
+        V(T("Format", "Formato"), [
+            ('"YYYY-MM-DD"', 'ui.DatePicker(value="2026-10-22", on_change=on_change)', {"size": (360, 120)}),
+            ('"DD/MM/YYYY"', 'ui.DatePicker(value="2026-10-22", format="DD/MM/YYYY", on_change=on_change)', {"size": (360, 120)}),
+            ('"MMM D, YYYY"', 'ui.DatePicker(value="2026-10-22", format="MMM D, YYYY", on_change=on_change)', {"size": (360, 120)}),
+            ('"ddd D MMM"', 'ui.DatePicker(value="2026-10-22", format="ddd D MMM", on_change=on_change)', {"size": (360, 120)}),
+        ], T("Tokens: `YYYY` `YY`, `MMMM` `MMM` `MM` `M`, `DD` `D`, `dddd` `ddd`; `[text]` is copied as is.",
+             "Tokens: `YYYY` `YY`, `MMMM` `MMM` `MM` `M`, `DD` `D`, `dddd` `ddd`; `[texto]` se copia tal cual.")),
+        V(T("States", "Estados"), [
+            ('placeholder', 'ui.DatePicker(placeholder="Pick a date", on_change=on_change)', {"size": (360, 120)}),
+            ('invalid=True', 'ui.DatePicker(value="2026-10-22", invalid=True, on_change=on_change)', {"size": (360, 120)}),
+            ('disabled=True', 'ui.DatePicker(value="2026-10-22", disabled=True, on_change=on_change)', {"size": (360, 120)}),
+            (T("Open", "Abierto"), 'ui.DatePicker(value="2026-10-22", on_change=on_change)',
+             {"size": (360, 400), "draw": 'picker = ui.DatePicker.create("2026-10-22", min="2026-10-08", disabled_dates=["weekend"])\npicker.open = True\npz.container(picker.render(), width=200, height=340, align_y="start")'}),
+        ]),
+    ],
+    "date-range-picker": [
+        V(T("Popup", "Ventana"), [
+            ('months=2', 'ui.DateRangePicker(value=("2026-10-05", "2026-10-14"), on_change=on_change)',
+             {"size": (720, 400), "draw": 'picker = ui.DateRangePicker.create(("2026-10-05", "2026-10-14"))\npicker.open = True\npz.container(picker.render(), width=240, height=340, align_y="start")'}),
+            ('months=1, presets=False', 'ui.DateRangePicker(months=1, presets=False, on_change=on_change)',
+             {"size": (360, 400), "draw": 'picker = ui.DateRangePicker.create(("2026-10-05", "2026-10-14"), months=1, presets=False)\npicker.open = True\npz.container(picker.render(), width=240, height=340, align_y="start")'}),
+        ]),
+    ],
+    "time-picker": [
+        V(T("Format", "Formato"), [
+            ('"HH:mm"', 'ui.TimePicker(value="14:30", on_change=on_change)', {"size": (300, 120)}),
+            ('"h:mm A"', 'ui.TimePicker(value="14:30", format="h:mm A", on_change=on_change)', {"size": (300, 120)}),
+            ('"HH:mm:ss"', 'ui.TimePicker(value="14:30:15", format="HH:mm:ss", on_change=on_change)', {"size": (300, 120)}),
+        ]),
+        V(T("Open", "Abierto"), [
+            ('format="HH:mm:ss"', 'ui.TimePicker(value="06:15:30", format="HH:mm:ss", on_change=on_change)',
+             {"size": (360, 360), "draw": 'picker = ui.TimePicker.create("06:15:30", format="HH:mm:ss")\npicker.open = True\npz.container(picker.render(), width=160, height=300, align_y="start")'}),
+            ('format="h:mm A"', 'ui.TimePicker(value="14:30", format="h:mm A", minute_step=15, on_change=on_change)',
+             {"size": (360, 360), "draw": 'picker = ui.TimePicker.create("14:30", format="h:mm A", minute_step=15)\npicker.open = True\npz.container(picker.render(), width=160, height=300, align_y="start")'}),
+        ]),
+    ],
+    "calendar": [
+        V(T("Mode", "Modo"), [
+            ('mode="single"', 'ui.Calendar(value="2026-10-22", on_change=on_change)', {"size": (360, 360)}),
+            ('mode="range"', 'ui.Calendar(value=("2026-10-05", "2026-10-14"), mode="range", on_change=on_change)', {"size": (360, 360)}),
+            ('mode="multiple"', 'ui.Calendar(value=["2026-10-06", "2026-10-13", "2026-10-20", "2026-10-27"], mode="multiple", on_change=on_change)', {"size": (360, 360)}),
+        ]),
+        V(T("Options", "Opciones"), [
+            ('week_numbers=True', 'ui.Calendar(value="2026-10-22", week_numbers=True, first_weekday="monday", on_change=on_change)', {"size": (360, 360)}),
+            ('first_weekday="sunday"', 'ui.Calendar(value="2026-10-22", first_weekday="sunday", on_change=on_change)', {"size": (360, 360)}),
+            ('min, max, disabled', 'ui.Calendar(value="2026-10-22", min="2026-10-08", max="2026-10-28", disabled=["weekend"], on_change=on_change)', {"size": (360, 360)}),
+            ('show_outside=False', 'ui.Calendar(value="2026-10-22", show_outside=False, today_button=True, on_change=on_change)', {"size": (360, 380)}),
+        ]),
+        V(T("Views", "Vistas"), [
+            ('months=2', 'ui.Calendar(value=("2026-10-26", "2026-11-04"), mode="range", months=2, on_change=on_change)', {"size": (720, 360)}),
+            ('set_view("months")', 'ui.Calendar(value="2026-10-22", on_change=on_change)',
+             {"size": (360, 360), "draw": 'cal = ui.Calendar.create("2026-10-22")\ncal.set_view("months")\ncal.render()'}),
+            ('set_view("years")', 'ui.Calendar(value="2026-10-22", on_change=on_change)',
+             {"size": (360, 360), "draw": 'cal = ui.Calendar.create("2026-10-22")\ncal.set_view("years")\ncal.render()'}),
+        ], T("A click on the title goes to the months, and another one to the years.",
+             "Un clic en el título pasa a los meses, y otro a los años.")),
+    ],
+    # --------------------------------------------------------------------------------------- system
+    "file-input": [
+        V(T("Mode", "Modo"), [
+            ('mode="open"', 'ui.file_input("~/notes/todo.md", on_change, width=320)', {"size": (420, 120)}),
+            ('mode="open_many"', 'ui.file_input(["a.png", "b.png"], on_change, mode="open_many", width=320)', {"size": (420, 120)}),
+            ('mode="folder"', 'ui.file_input("~/projects", on_change, mode="folder", width=320)', {"size": (420, 120)}),
+            ('mode="save"', 'ui.file_input("report.pdf", on_change, mode="save", width=320)', {"size": (420, 120)}),
+        ]),
+        V(T("States", "Estados"), [
+            ('button="Browse…"', 'ui.file_input("", on_change, button="Browse…", width=320)', {"size": (420, 120)}),
+            ('editable=False', 'ui.file_input("~/notes/todo.md", on_change, editable=False, width=320)', {"size": (420, 120)}),
+            ('invalid=True', 'ui.file_input("~/missing.txt", on_change, invalid=True, width=320)', {"size": (420, 120)}),
+            ('disabled=True', 'ui.file_input("~/notes/todo.md", on_change, disabled=True, width=320)', {"size": (420, 120)}),
+        ]),
+    ],
+    "drop-zone": [
+        V(T("States", "Estados"), [
+            (T("Waiting", "Esperando"), 'ui.DropZone(text="Drop files here", on_files=on_files)', {"size": (360, 220)}),
+            (T("Files over it", "Con archivos encima"), 'ui.DropZone(text="Drop files here", on_files=on_files)',
+             {"size": (360, 220), "draw": 'zone = ui.DropZone.create(text="Drop files here", live=False)\nzone.hover("/home/ada/photo.png")\nzone.render()'}),
+            (T("Wrong type", "Tipo no aceptado"), 'ui.DropZone(text="Drop images here", accept=["png", "jpg"], on_files=on_files)',
+             {"size": (360, 220), "draw": 'zone = ui.DropZone.create(text="Drop images here", accept=["png", "jpg"], live=False)\nzone.hover("/home/ada/notes.txt")\nzone.render()'}),
+            ('disabled=True', 'ui.DropZone(text="Drop files here", disabled=True, on_files=on_files)', {"size": (360, 220)}),
+        ]),
+        V(T("Files", "Archivos"), [
+            ('show_files=True', 'ui.DropZone(text="Attach files", show_files=True, files=["~/docs/brief.pdf", "~/img/cover.png"], on_files=on_files)', {"size": (420, 300)}),
+            ('browse=False', 'ui.DropZone(icon_name="image", text="Drag a picture", hint="Only by dragging", browse=False, on_files=on_files)', {"size": (360, 220)}),
+        ]),
     ],
 })
 

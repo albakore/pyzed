@@ -62,7 +62,10 @@ class Window:
     default) keeps the system's frame.
 
     Optional hooks: ``on_open()``, ``on_close()`` (return ``False`` to keep the window
-    open), ``on_resize(width, height)``, ``on_key(combo)`` and ``subscriptions()``.
+    open), ``on_resize(width, height)``, ``on_key(combo)`` and ``subscriptions()``. Files
+    dragged from the system onto the window call ``on_file_hover(path)`` while they are over
+    it, ``on_file_drop(path)`` when they are dropped (once per file) and ``on_file_leave()``
+    when the drag leaves without dropping (see ``ui.drop_zone``).
     """
 
     title: Union[str, Any] = "Pyzed"
@@ -118,6 +121,24 @@ class Window:
     def on_close(self) -> Optional[bool]:
         """Called when the user asks to close the window. Return ``False`` to keep it open."""
         return None
+
+    def on_file_hover(self, path: str) -> Any:
+        """A file dragged from the system is over the window: lights up the ``ui.DropZone`` it would land on."""
+        from .ui import system
+
+        return system.deliver("hover", path)
+
+    def on_file_drop(self, path: str) -> Any:
+        """A file was dropped on the window from the system (once per file): goes to a ``ui.DropZone``."""
+        from .ui import system
+
+        return system.deliver("drop", path)
+
+    def on_file_leave(self) -> Any:
+        """The files dragged over the window left it without being dropped."""
+        from .ui import system
+
+        return system.deliver("leave")
 
     # -- conveniences -------------------------------------------------------
     @property
@@ -209,6 +230,8 @@ class App(Window):
         ``on_key(combo)``      receives key presses as Zed-style strings like
                                ``"ctrl-shift-p"`` or ``"escape"``.
         ``on_key_up(key)``     receives key releases by name (``"left"``, ``"space"``).
+        ``on_file_drop(path)`` receives each file dropped on the window from the system
+                               (also ``on_file_hover(path)`` and ``on_file_leave()``).
         ``subscriptions()``    returns timers, streams and frame callbacks
                                (``pz.every``, ``pz.listen``, ``pz.frames``).
 

@@ -1,6 +1,6 @@
 ---
 title: Non-visual components
-description: "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications in Pyzed Design: components with properties and events that draw nothing."
+description: "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing."
 sidebar:
   order: 6.2
 ---
@@ -14,7 +14,7 @@ in the tray and in the **Outline**, where they belong to the form.
 
 ## Adding one
 
-1. Find it in the toolbox, under **Components** (or type its name in **Search components…**).
+1. Find it in the toolbox, under **Components** or **System** (or type its name in **Search components…**).
 2. **Click it**: it goes straight to the tray, selected, with its properties on the right. Dragging it onto the
    form does the same; it never lands inside a container.
 3. Set its properties in the **Properties** panel, and **double-click** its chip to write the handler of its main
@@ -44,6 +44,10 @@ events). Copy, paste, undo and rename work as with any control, and renaming one
 | **Settings** | Values kept between runs (a JSON file per user), and the value of the controls listed in `remember`. | `change` (`(key, value)`) |
 | **File dialog** | The system's dialog: `mode` is `open`, `open_many`, `save` or `folder`; `filters` has one `Images: png, jpg` per line. | `chosen` (the path, or a list), `cancelled` |
 | **Notification** | A desktop notification with `title` and `text`. | `shown`, `failed` |
+| **System info** | The computer: `os`, `os_version`, `machine`, `hostname`, `user`, `home`, `cpu_count`, `language`, memory and free disk (of `disk_path`). With `interval` it checks again periodically. | `update` (a dict with all of it) |
+| **Launcher** | Opens `target` with the program the system uses for it: a file, a folder, a web page or a `mailto:` link. | `opened`, `failed` (the target) |
+| **Network monitor** | Whether the internet can be reached, checking `host`:`port` every `interval` ms while `running`. | `change` (`True`/`False`), `online`, `offline` |
+| **Battery monitor** | The battery's charge and whether it is plugged in, every `interval` ms. | `change` (`(percent, plugged)`), `low` (under `low_level`), `plugged`, `unplugged` |
 
 Each component's page in the built-in reference (<kbd>Shift</kbd>+<kbd>F1</kbd> with it selected) lists every
 property and event with its handler name.
@@ -81,6 +85,10 @@ def proc_finished(form, event):
 | Settings | `settings1["key"]`, `settings1["key"] = value`, `get(key, default)`, `set()`, `delete()`, `keys()` |
 | File dialog | `show()` (a command: return it), `path`, `paths` |
 | Notification | `show(text=None)` |
+| System info | `check()`, `env(name)`, `folder("documents")`, `memory_available`, `disk_free`, `is_windows`, `is_mac`, `is_linux` |
+| Launcher | `open(target=None)`, `reveal(path)` (shows it in the file manager), `email(to, subject, body)` |
+| Network monitor | `check()`, `online`, `start()`, `stop()` |
+| Battery monitor | `check()`, `percent`, `plugged`, `has_battery` |
 
 Events that happen in the background (a line of output, a file that changed, a web answer) reach your handlers on
 the window's thread, so handlers can change controls freely. The one exception is the worker's `work` event:
