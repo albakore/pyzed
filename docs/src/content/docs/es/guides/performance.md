@@ -51,6 +51,17 @@ rápidos para mantener ágil su interfaz: empezar a dibujar cuanto antes y no re
   primera vez que se dibuja y se conserva mientras está en pantalla, tenga los bloques que tenga.
 - **Las listas largas construyen lo visible.** `ui.table`, `ui.virtual_list` y el List box de Pyzed
   Design (desde 50 elementos) solo construyen las filas que se ven.
+- **Los componentes se dibujan cuando cambian.** Un [`pz.Component`](#componentes-que-solo-se-dibujan-cuando-cambian)
+  cuyas props, estado y contexto son los mismos que la vez anterior devuelve su último dibujo en
+  vez de volver a ejecutar `render()`. Una vista de 500 filas de componentes se reconstruye en
+  4 ms en lugar de 26 ms cuando cambia una.
+- **Y los controles de los formularios.** Un formulario hecho en Pyzed Design, en marcha o en el
+  lienzo del diseñador, solo vuelve a construir los controles cuyas propiedades cambiaron. El
+  diseñador hace lo mismo con su consola, su árbol y su caja de herramientas: su vista pasó de 21 ms
+  a 4,5 ms con un formulario de 85 controles y 400 líneas de log.
+- **Los archivos se listan fuera del hilo de la interfaz.** El diálogo Abrir, la lista `@` del
+  agente y el selector de archivos de los shaders leen la carpeta del proyecto una vez y luego la
+  actualizan en un hilo aparte, así que escribir en ellos nunca espera al disco.
 
 Medido con la [app del benchmark](/pyzed/es/why/benchmarks/) (ventana de 640×480, una etiqueta
 y un botón por fila, Xvfb sin GPU, medianas de 5 arranques) en la misma máquina:
@@ -147,6 +158,55 @@ eventos `mouse_move`, `mouse_enter`, `mouse_leave`... de `.on(...)`), en los men
 Para resaltar algo bajo el puntero no hace falta ningún callback: `.style(hover={"background": "ghost_hover"})`
 lo dibuja el propio widget nativo.
 :::
+
+## Componentes que solo se dibujan cuando cambian
+
+Cada [componente](/pyzed/es/guides/components/) guarda su último dibujo. En el siguiente `view()`
+se reutiliza, sin llamar a `render()`, mientras todo esto siga igual:
+
+- sus **props** y su **estado** (cualquier atributo que pongas en `self`). Las listas, dicts, sets y
+  objetos normales se comparan por su contenido, así que `self.items.append(x)` se nota;
+- los valores que lee con `pz.use_context` (o `self.context`);
+- el tema, el idioma, el tamaño de la ventana y la hoja de estilos;
+- los componentes que dibuja dentro: cuando un hijo cambia su estado, se vuelven a dibujar también
+  todos los componentes que lo contienen.
+
+Los callbacks que pasas como props o creas en `render()` no estorban: se comparan por su código y
+los valores que capturaron, así que un `lambda: self.pick(i)` nuevo con el mismo `i` cuenta como
+el mismo callback.
+
+```python
+class Row(pz.Component):
+    name: str = ""
+    stars: int = 0
+
+    def render(self):  # solo se ejecuta si cambian name, stars o el Rating de dentro
+        return pz.row([ui.label(self.name), Rating(value=self.stars)])
+```
+
+Dos casos necesitan ayuda, porque el componente no puede ver qué cambió:
+
+- `render()` lee algo que no es ni prop, ni estado, ni contexto: la hora, una variable global,
+  datos que cambia otro objeto. Llama a `self.refresh()` cuando cambie, o pon `cache = False` en la
+  clase para dibujarlo en cada `view()` (los medidores en vivo lo hacen).
+- Un valor cuyos cambios no se pueden comparar (un array de NumPy, un recurso nativo, un grafo de
+  objetos enorme) desactiva la caché de ese componente por sí solo: se dibuja siempre, como antes.
+
+Un componente que recibe widgets como `children` se dibuja cada vez que el padre los vuelve a
+construir, porque son widgets nuevos; no cuesta más que dibujarlo.
+
+## Hilos
+
+Tu `view()`, tu `update()` y tus callbacks se ejecutan en el hilo de la interfaz, de uno en uno,
+como en cualquier toolkit nativo. Python ejecuta un solo hilo a la vez de todos modos (el GIL), así
+que la interfaz más rápida es la que hace menos en ese hilo, y para eso están las cachés de arriba.
+Lo que Pyzed hace en otros hilos:
+
+- Iced calcula el layout y renderiza el frame en Rust, fuera del GIL, y la GPU lo dibuja.
+- Las fuentes del sistema se buscan, los archivos del proyecto se listan y los agentes, servidores
+  de lenguaje y builds del diseñador corren en hilos aparte.
+- Tu trabajo lento también va ahí: [tareas async](/pyzed/es/guides/async/) o un `threading.Thread`
+  que envía su resultado con `pz.post(...)`.
 
 ## Subárboles memoizados
 

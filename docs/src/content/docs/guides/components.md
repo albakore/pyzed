@@ -104,10 +104,18 @@ flowchart LR
     Slot -->|yes| Same["same instance<br/>(state kept)"]
     New --> Props["props set"]
     Same --> Props
-    Props --> Render["render() → widgets"]
+    Props --> Changed{"props, state or<br/>context changed?"}
+    Changed -->|yes| Render["render() → widgets"]
+    Changed -->|no| Last["last drawing, reused"]
     Render -->|first time| Mount["on_mount()"]
     View -.->|not rendered again| Unmount["on_unmount()"]
 ```
+
+`render()` only runs when something it depends on changed: its props, its state, the context it
+reads, the theme or a component inside it. Otherwise the last drawing is reused, so a view with
+hundreds of components stays fast. If `render()` reads something else (the time, a global), call
+`self.refresh()` when it changes or set `cache = False` on the class. See
+[components drawn only when they change](/pyzed/guides/performance/#components-drawn-only-when-they-change).
 
 ## Children, context and styles
 

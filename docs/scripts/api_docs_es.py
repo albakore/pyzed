@@ -137,6 +137,14 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                         threading.Thread(target=worker, daemon=True).start()
                     """,
                 },
+                "pyzed.UNCHANGED": {
+                    "desc": "Devuélvelo desde un callback que no cambió nada en pantalla (un movimiento del puntero que solo guardas, un cambio de foco): la ventana no se reconstruye. Cualquier otro valor redibuja como siempre. Ver la [guía de rendimiento](/pyzed/es/guides/performance/).",
+                    "example": """
+                        def pointer_moved(self, x, y):
+                            self.pointer = (x, y)
+                            return pz.UNCHANGED  # no cambió nada visible: no se reconstruye
+                    """,
+                },
                 "pyzed.load_font": {
                     "desc": 'Carga una fuente extra (ruta a un `.ttf`/`.otf` o sus bytes) para usarla por su nombre de familia: `text("hola", font="JetBrains Mono")`.',
                     "params": {"source": "Ruta del archivo de fuente o `bytes`."},
@@ -2595,6 +2603,7 @@ MEMBERS = {
     "pyzed.Component.emit": "Lanza el evento personalizado `name`: llama al handler que el padre pasó como `on_<name>`.",
     "pyzed.Component.provide": "Valores que comparte con todos los componentes que dibuja (se leen con `pz.use_context`).",
     "pyzed.Component.context": "El valor compartido más cercano llamado `name` (ver `pz.provide`).",
+    "pyzed.Component.refresh": "Vuelve a dibujar el componente en el próximo `view()`, aunque sus props y su estado sean los mismos.",
     "pyzed.Component.handles": "Si el padre pasó un handler para el evento personalizado `name`.",
     "pyzed.Component.describe": "El primer párrafo del docstring (se muestra en el diseñador).",
     "pyzed.Component.designer_spec": "Este componente como entrada de la caja de herramientas del diseñador (`pyzed.designer.Component`).",

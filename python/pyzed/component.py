@@ -70,6 +70,15 @@ Lifecycle hooks: ``setup()`` (before the first render, props already set),
 ``on_mount()`` (after the first render) and ``on_unmount()`` (when it stops being
 rendered). ``on_mount`` may return a ``Command`` or a message.
 
+A component is only drawn again when something it depends on changed: its props, its
+state (also a list or dict changed in place), the values it reads with ``use_context``,
+the theme, the language, the window size or the stylesheet. Otherwise its last drawing
+is reused, like ``React.memo`` or Zed's views. If a child component changes, every
+component that contains it is drawn again too. ``render()`` should therefore depend on
+those things only; a component that shows something else (the clock, a global, data
+that changes in another object) calls ``self.refresh()`` when it changes, or turns the
+cache off with ``cache = False`` on the class.
+
 Components show up in the designer's toolbox automatically (see ``label``, ``icon``,
 ``category``, ``size`` and ``designer``).
 """
@@ -77,8 +86,10 @@ Components show up in the designer's toolbox automatically (see ``label``, ``ico
 from __future__ import annotations
 
 import copy
+import functools
 import re
 import sys
+import types
 import typing
 from contextlib import contextmanager
 from typing import Any, Callable, ClassVar, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
@@ -87,7 +98,9 @@ from . import _core
 from . import events as _events
 from . import hints as _hints
 from . import hot_reload as _hot_reload
+from . import i18n as _i18n
 from . import style as _style
+from . import theme as _theme
 
 __all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "provide", "registered",
            "render_pass", "state", "use_context"]
@@ -166,6 +179,7 @@ class _Pass:
         self.seen: set = set()
         self.counters: Dict[tuple, int] = {}
         self.path: tuple = ()
+        self.order: List[tuple] = []  # the slots in the order they were drawn
 
     def key_for(self, cls: type, key: Any) -> tuple:
         if key is not None:
@@ -246,10 +260,149 @@ def provide(**values: Any) -> Iterator[None]:
 
 def use_context(name: str, default: Any = None) -> Any:
     """The closest value shared with ``pz.provide`` (or a component's ``provide()``) as ``name``."""
-    for values in reversed(_context):
-        if name in values:
-            return values[name]
-    return default
+    index, value = _lookup(name, default)
+    if _reads:
+        _note(name, default, index, value)
+    return value
+
+
+def _lookup(name: str, default: Any) -> Tuple[int, Any]:
+    for index in range(len(_context) - 1, -1, -1):
+        if name in _context[index]:
+            return index, _context[index][name]
+    return -1, default
+
+
+#: The components being drawn: the ``_context`` depth they started at and what they read.
+_reads: List[Tuple[int, Dict[str, Tuple[Any, Any]]]] = []
+
+
+def _note(name: str, default: Any, index: int, value: Any) -> None:
+    """Records a context read for every component being drawn that gets it from outside."""
+    for depth, reads in _reads:
+        if index < depth and name not in reads:
+            reads[name] = (default, value)
+
+
+# -- drawing only what changed ----------------------------------------------------------
+class _Uncomparable(Exception):
+    """A value whose changes can't be seen (a NumPy array, a native handle, a huge object)."""
+
+
+class _Identity:
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: Any) -> None:
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, _Identity) and other.obj is self.obj
+
+
+_ATOMS = frozenset({str, int, float, bool, bytes, complex, type(None), range})
+_EMPTY_CELL = object()
+#: How many values a snapshot may visit before the component gives up caching.
+_SNAPSHOT_BUDGET = 5000
+
+
+def _ref(value: Any) -> Any:
+    """A key for a value captured by a callback: by value when hashable, else by identity."""
+    if type(value) in _ATOMS:
+        return value
+    try:
+        hash(value)
+    except TypeError:
+        return _Identity(value)
+    return value
+
+
+def _cell(cell: Any) -> Any:
+    try:
+        return _ref(cell.cell_contents)
+    except ValueError:
+        return _EMPTY_CELL
+
+
+def _snapshot(value: Any) -> Any:
+    """A comparable copy of ``value``: equal snapshots mean nothing a render reads changed.
+
+    Containers and plain objects are compared by content, callbacks by their code and the
+    values they captured, widgets by identity (they never change). Raises
+    ``_Uncomparable`` for values whose changes can't be seen.
+    """
+    left = [_SNAPSHOT_BUDGET]
+    active: set = set()
+
+    def snap(v: Any) -> Any:
+        t = type(v)
+        if t in _ATOMS:
+            return v
+        left[0] -= 1
+        if left[0] < 0:
+            raise _Uncomparable
+        if t is list or t is tuple:
+            return (t, tuple([snap(x) for x in v]))
+        if t is dict:
+            return (t, tuple([(snap(k), snap(x)) for k, x in v.items()]))
+        if t is set or t is frozenset:
+            return (t, frozenset([snap(x) for x in v]))
+        if t is _core.Widget or t is type or t is types.ModuleType:
+            return v
+        if t is types.FunctionType:
+            return (t, v.__code__, tuple([_cell(c) for c in v.__closure__ or ()]),
+                    _ref(v.__defaults__), _ref(v.__kwdefaults__))
+        if t is types.MethodType:
+            return (t, _ref(v.__self__), v.__func__)
+        if t is functools.partial:
+            return (t, snap(v.func), tuple([_ref(a) for a in v.args]),
+                    tuple([(k, _ref(a)) for k, a in v.keywords.items()]))
+        hasher = t.__hash__
+        if hasher is not None and hasher is not object.__hash__:
+            try:
+                hash(v)  # compared by value (an enum, a frozen dataclass, a Path...)
+                return v
+            except TypeError:
+                pass  # say, a frozen dataclass holding a list: look inside
+        attrs = getattr(v, "__dict__", None)
+        if type(attrs) is dict and not isinstance(v, type):
+            if id(v) in active:
+                return ("cycle", id(v))
+            active.add(id(v))
+            try:
+                return (t, tuple([(k, snap(x)) for k, x in attrs.items() if not k.startswith("_pyzed")]))
+            finally:
+                active.discard(id(v))
+        if t in (types.BuiltinFunctionType, types.BuiltinMethodType):
+            return _ref(v)
+        raise _Uncomparable
+
+    return snap(value)
+
+
+def _state_of(component: "Component") -> Any:
+    return _snapshot({k: v for k, v in vars(component).items() if not k.startswith("_pyzed")})
+
+
+def _token() -> tuple:
+    """What every drawing depends on: theme, language, window size, styles and code."""
+    return (id(_theme.current()), _i18n.language(), _style._viewport, _style._screen, _style._named_version,
+            _style._rules_version, _hot_reload.generation)
+
+
+class _Drawn(typing.NamedTuple):
+    """A component's last drawing and what it was drawn from."""
+
+    token: tuple
+    state: Any
+    reads: Tuple[Tuple[str, Any, Any], ...]  # (name, default, snapshot) of the context values read
+    widget: Any
+    children: Tuple[Tuple[tuple, "Component"], ...]  # every component drawn inside, at any depth
+
+
+_stats = {"hits": 0, "misses": 0}
 
 
 def _children(args: Sequence[Any]) -> List[Any]:
@@ -275,6 +428,8 @@ class Component:
         ``type_name``  id used in saved forms (defaults to the class name in snake case).
         ``stylesheet`` rules added to ``pz.stylesheet`` when the class is defined; ``&`` in a
                        selector stands for the component (``"&"``, ``"&:hover"``, ``"&.big"``).
+        ``cache``      ``False`` draws the component on every ``view()``, not only when its
+                       props, state or context change (see ``refresh()``).
 
     A prop called ``children`` takes the positional arguments, like JSX children:
     ``Card(pz.text("Hi"), ui.button("OK", ok), title="Welcome")``.
@@ -287,6 +442,7 @@ class Component:
     size: ClassVar[Tuple[float, float]] = (160, 40)
     designer: ClassVar[bool] = True
     type_name: ClassVar[str] = ""
+    cache: ClassVar[bool] = True
 
     #: The props of this class, in declaration order (filled in for each subclass).
     __props__: ClassVar[Dict[str, PropInfo]] = {}
@@ -367,12 +523,9 @@ class Component:
                 _hot_reload.remember(instance)
         if current is not None:
             current.seen.add(slot)
+            current.order.append(slot)
             current.store[slot] = instance
-            parent, current.path = current.path, slot
-            try:
-                widget = instance._render()
-            finally:
-                current.path = parent
+            widget = instance._draw(current, slot)
         else:
             widget = instance._render()
         if not isinstance(widget, _core.Widget):
@@ -388,6 +541,78 @@ class Component:
         if animation is not None:
             widget = widget.animate(*(animation if isinstance(animation, (list, tuple)) else (animation,)))
         return widget
+
+    def _draw(self, current: _Pass, slot: tuple) -> Any:
+        """Renders, or reuses the last drawing when nothing it depends on changed."""
+        cls = type(self)
+        caching = (cls.cache if "cache" not in cls.__props__ else True) and not self.__dict__.get("_pyzed_nocache")
+        state = token = None
+        if caching:
+            try:
+                state = _state_of(self)
+            except _Uncomparable:
+                caching = False
+                self._pyzed_nocache = True
+            else:
+                token = _token()
+                drawn = self.__dict__.get("_pyzed_drawn")
+                if drawn is not None and drawn.token == token and drawn.state == state:
+                    widget = self._reuse(drawn, current)
+                    if widget is not None:
+                        return widget
+        _stats["misses"] += 1
+        self._pyzed_drawn = None
+        parent, current.path = current.path, slot
+        start = len(current.order)
+        reads: Dict[str, Tuple[Any, Any]] = {}
+        _reads.append((len(_context), reads))
+        try:
+            widget = self._render()
+        finally:
+            _reads.pop()
+            current.path = parent
+        if caching:
+            children = tuple((s, current.store[s]) for s in current.order[start:])
+            if all(c.__dict__.get("_pyzed_drawn") is not None for _s, c in children):
+                try:
+                    noted = tuple((name, default, _snapshot(value)) for name, (default, value) in reads.items())
+                except _Uncomparable:
+                    pass
+                else:
+                    self._pyzed_drawn = _Drawn(token, state, noted, widget, children)
+        return widget
+
+    def _reuse(self, drawn: _Drawn, current: _Pass) -> Any:
+        """The last drawing if the components inside and the context it read are the same."""
+        try:
+            for slot, child in drawn.children:
+                done = child.__dict__.get("_pyzed_drawn")
+                if current.store.get(slot) is not child or done is None or _state_of(child) != done.state:
+                    return None
+            found = []
+            for name, default, snapshot in drawn.reads:
+                index, value = _lookup(name, default)
+                if _snapshot(value) != snapshot:
+                    return None
+                found.append((name, default, index, value))
+        except _Uncomparable:
+            return None
+        for slot, _child in drawn.children:
+            current.seen.add(slot)
+            current.order.append(slot)
+        if _reads:  # the component drawing this one depends on the same context values
+            for name, default, index, value in found:
+                _note(name, default, index, value)
+        _stats["hits"] += 1
+        return drawn.widget
+
+    def refresh(self) -> None:
+        """Draws the component again on the next ``view()``, even if its props and state are the same.
+
+        For components whose ``render()`` reads something else that changed (the time, a
+        global, an object updated elsewhere). ``cache = False`` on the class draws it every time.
+        """
+        self.__dict__.pop("_pyzed_drawn", None)
 
     def _render(self) -> Any:
         shared = self.provide()

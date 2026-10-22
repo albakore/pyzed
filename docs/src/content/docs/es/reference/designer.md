@@ -273,7 +273,7 @@ Devuelve una copia profunda del formulario y sus controles.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={})
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={}, hidden_in_editor=False)
 ```
 
 Un componente colocado en un formulario.

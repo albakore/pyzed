@@ -25,7 +25,7 @@ from ..agents import mcp_client as _mcp
 from ..agents import providers as _providers
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
-from . import agent_tools
+from . import agent_tools, file_scan
 from . import logs as _logs
 from .locale import tr
 
@@ -292,7 +292,7 @@ class AgentController:
         import atexit
 
         atexit.register(self.shutdown)
-        self._files: Optional[Tuple[float, List[str]]] = None
+        self._files: Optional[Tuple[List[Path], List[str]]] = None
         self._queue: "queue.Queue[Tuple[Any, ...]]" = queue.Queue()
         self._agent: Optional[_agents.Agent] = None
         self._stream = stream
@@ -1200,27 +1200,16 @@ class AgentController:
         return clear
 
     def project_files(self) -> List[str]:
-        """Files of the project the @ popup offers (no hidden, build or secret files), cached briefly."""
-        now = time.monotonic()
-        if self._files is not None and now - self._files[0] < 10:
-            return self._files[1]
-        from ..agents.tools import SECRET_FILES, SKIP_DIRS
+        """Files of the project the @ popup offers (no hidden, build or secret files), read in the background."""
+        from ..agents.tools import SECRET_FILES
 
         root = self.project_root()
-        out: List[str] = []
-        try:
-            for path in sorted(root.rglob("*")):
-                rel = path.relative_to(root)
-                if any(part in SKIP_DIRS or part.startswith(".") for part in rel.parts):
-                    continue
-                if path.suffix in _FILE_SUFFIXES and path.is_file() and \
-                        not any(fnmatch.fnmatch(path.name, p) for p in SECRET_FILES):
-                    out.append(rel.as_posix())
-                    if len(out) >= 300:
-                        break
-        except OSError:
-            pass
-        self._files = (now, out)
+        found = file_scan.files(root, _FILE_SUFFIXES, 300)
+        if self._files is not None and self._files[0] is found:  # the same list as last time
+            return self._files[1]
+        out = [p.relative_to(root).as_posix() for p in found
+               if not any(fnmatch.fnmatch(p.name, pattern) for pattern in SECRET_FILES)]
+        self._files = (found, out)
         return out
 
     def mention_candidates(self) -> List[Tuple[Mention, str]]:

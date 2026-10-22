@@ -669,6 +669,8 @@ _resolved: "OrderedDict[Hashable, Tuple[Dict[str, Any], Dict[str, Any]]]" = Orde
 _RESOLVED_SIZE = 1024
 #: Bumped by ``define_style``: a named style may change what a name resolves to.
 _named_version = 0
+#: Bumped when the stylesheet changes (cached component drawings depend on it).
+_rules_version = 0
 
 
 class _Same:
@@ -914,6 +916,7 @@ def stylesheet(rules: Optional[Mapping[str, Any]] = None, **classes: Any) -> Dic
             parsed = [Rule(one.strip(), *_parse_selector(one), _rule_props(one, style)) for one in selector.split(",")]
         _rules.pop(selector, None)
         _rules[selector] = parsed
+    _bump_rules()
     return {selector: Style(*[r.props for r in rules if r.media is None]) for selector, rules in _rules.items()}
 
 
@@ -926,6 +929,12 @@ def _rule_props(selector: str, style: Any) -> Dict[str, Any]:
 def clear_stylesheet() -> None:
     """Removes every rule added with ``pz.stylesheet``."""
     _rules.clear()
+    _bump_rules()
+
+
+def _bump_rules() -> None:
+    global _rules_version
+    _rules_version += 1
 
 
 def stylesheet_rules() -> List[Rule]:

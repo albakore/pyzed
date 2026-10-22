@@ -17,10 +17,11 @@ exactly what runs. Add your own with ``register``::
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from .. import _core, ui
+from .. import _core, component as _components_api, ui
 from ..icons import icon as _icon
 from ..theme import Theme, current
 from .model import Control
@@ -256,8 +257,42 @@ def categories() -> Dict[str, List[Component]]:
     return out
 
 
+#: The last drawing of each control, reused while nothing it is drawn from changes (see ``render``).
+_drawn: "OrderedDict[tuple, Tuple[Any, Any]]" = OrderedDict()
+_DRAWN_SIZE = 4096
+#: Controls drawn every time: they read the form (a dock's tabs) or files that can change on disk.
+_UNCACHED = frozenset({"dock", "shader", "image", "image_viewer"})
+
+
 def render(control: Control, ctx: RenderContext) -> Any:
-    """Draws ``control`` at its size (its own props, falling back to the component defaults)."""
+    """Draws ``control`` at its size (its own props, falling back to the component defaults).
+
+    A control whose fields, theme, language and animations are the same as last time gets its
+    last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
+    Controls made from a ``pz.Component`` keep their own cache (see ``pyzed.component``).
+    """
+    if control.type in _UNCACHED or _components_api.find(control.type) is not None:
+        return _render_now(control, ctx)
+    plain = type(ctx) is RenderContext  # the designer's: inert callbacks, nothing tied to the context
+    try:
+        key = (_components_api._token(), ctx.theme, ctx.form_name, ctx.language, ctx.live,
+               _components_api._snapshot((control.__dict__, (ctx.played or {}).get(control.name),
+                                         (getattr(ctx, "preview", None) or {}).get(control.name))))
+    except _components_api._Uncomparable:
+        return _render_now(control, ctx)
+    slot = (None if plain else ctx, ctx.form_name, control.name)
+    entry = _drawn.get(slot)
+    if entry is not None and entry[0] == key:
+        _drawn.move_to_end(slot)
+        return entry[1]
+    widget = _render_now(control, ctx)
+    _drawn[slot] = (key, widget)
+    if len(_drawn) > _DRAWN_SIZE:
+        _drawn.popitem(last=False)
+    return widget
+
+
+def _render_now(control: Control, ctx: RenderContext) -> Any:
     from .binding import translate
 
     spec = get(control.type)

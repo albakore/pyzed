@@ -281,6 +281,66 @@ def _looks_like_error(line: str) -> bool:
     return line.startswith(("Traceback", "  File ", "    ")) or "Error" in line.split(":", 1)[0]
 
 
+class _Rows:
+    """What the cached rows of one console call back into: the current callbacks and line order."""
+
+    def __init__(self) -> None:
+        self.order: List[int] = []
+        self.rows: Dict[int, Tuple[Any, Any]] = {}
+        self.selection: Optional[LogSelection] = None
+        self.on_context: Any = None
+        self.on_open: Any = None
+
+    def click(self, ev: Any, entry_id: int) -> None:
+        if self.selection is not None:
+            self.selection.click(entry_id, self.order, shift=bool(ev.shift), ctrl=bool(ev.ctrl or ev.logo))
+
+    def context(self, entry: LogEntry) -> Any:
+        if self.on_context is None:
+            return None
+        if self.selection is not None and entry.id not in self.selection:
+            self.selection.click(entry.id, self.order)
+        return self.on_context(entry)
+
+    def open(self, entry: LogEntry) -> Any:
+        return self.on_open(entry) if self.on_open is not None else None
+
+
+#: The rows of each console with an ``id``, kept between views.
+_consoles: Dict[str, _Rows] = {}
+
+
+def _row(e: LogEntry, picked: bool, t: Theme, font_size: float, show_source: bool, group: str, live: _Rows) -> Any:
+    icon, color = _LEVEL_STYLE.get(e.level, ("dot", "text"))
+    fg = t.color(color) if e.level in ("error", "warning", "stderr", "event") else t.text
+    bg = t.ghost_selected if picked else (
+        alpha(t.error, 0.08) if e.level == "error" else (alpha(t.warning, 0.06) if e.level == "warning" else None))
+    line = _core.row([
+        _core.text(e.clock, size=font_size - 1, font="mono", color=t.text_placeholder, wrap=False),
+        _icon(icon, size=12, color=t.color(color)),
+        _core.container(_core.text(e.source, size=11, color=t.text_muted, wrap=False), padding=(0, 6),
+                        bg=t.element, radius=t.radius_sm) if show_source and e.source else None,
+        _core.text(e.text, size=font_size, font="mono", color=fg, wrap=True, width="fill", selectable=group,
+                   selection_color=t.selection),
+        _icon("chevron-down" if picked else "chevron-right", size=12, color=t.icon_muted) if e.detail else None,
+        _core.container(_core.text(f"×{e.count}", size=11, color=t.text_muted), padding=(0, 6), bg=t.element,
+                        radius=8) if e.count > 1 else None,
+    ], spacing=8, align="start")
+    detail = _core.container(_core.text(e.detail, size=font_size - 1, font="mono", color=t.text_muted,
+                                        wrap=True, width="fill", selectable=group, selection_color=t.selection),
+                             padding=(4, 0, 2, 20), width="fill") \
+        if picked and e.detail else None
+    row = _core.container(_core.column([line, detail], width="fill"), padding=(2, 10), width="fill", bg=bg)
+    handlers: Dict[str, Any] = {}
+    if live.selection is not None:
+        handlers["click"] = lambda ev, i=e.id: live.click(ev, i)
+    if live.on_context is not None:
+        handlers["right_click"] = lambda _ev, e=e: live.context(e)
+    if live.on_open is not None:
+        handlers["double_click"] = lambda e=e: live.open(e)
+    return row.on(**handlers) if handlers else row
+
+
 def console(
     entries: Sequence[LogEntry],
     *,
@@ -372,43 +432,26 @@ def console(
 
     visible = shown[-1000:]  # drawing tens of thousands of rows would be slow; the newest matter
     group = f"console:{id or 'log'}"  # one drag selects text across lines, like a terminal
-    order = [e.id for e in visible]
+    # Rows are cached by console ``id``: only new or changed lines are built again. Their handlers read
+    # the current callbacks and order from ``live``, so a cached row never calls an old one.
+    live = _consoles.get(id) if id is not None else None
+    if live is None:
+        live = _Rows()
+        if id is not None:
+            _consoles[id] = live
+    live.order[:] = [e.id for e in visible]
+    live.selection, live.on_context, live.on_open = selection, on_context, on_open
+    wired = (selection is not None, on_context is not None, on_open is not None)
+    cache: Dict[int, Tuple[Any, Any]] = {}
     rows: List[Any] = []
     for e in visible:
-        icon, color = _LEVEL_STYLE.get(e.level, ("dot", "text"))
-        fg = t.color(color) if e.level in ("error", "warning", "stderr", "event") else t.text
         picked = selection is not None and e.id in selection
-        bg = t.ghost_selected if picked else (
-            alpha(t.error, 0.08) if e.level == "error" else (alpha(t.warning, 0.06) if e.level == "warning" else None))
-        line = _core.row([
-            _core.text(e.clock, size=font_size - 1, font="mono", color=t.text_placeholder, wrap=False),
-            _icon(icon, size=12, color=t.color(color)),
-            _core.container(_core.text(e.source, size=11, color=t.text_muted, wrap=False), padding=(0, 6),
-                            bg=t.element, radius=t.radius_sm) if show_source and e.source else None,
-            _core.text(e.text, size=font_size, font="mono", color=fg, wrap=True, width="fill", selectable=group,
-                       selection_color=t.selection),
-            _icon("chevron-down" if picked else "chevron-right", size=12, color=t.icon_muted) if e.detail else None,
-            _core.container(_core.text(f"×{e.count}", size=11, color=t.text_muted), padding=(0, 6), bg=t.element,
-                            radius=8) if e.count > 1 else None,
-        ], spacing=8, align="start")
-        detail = _core.container(_core.text(e.detail, size=font_size - 1, font="mono", color=t.text_muted,
-                                            wrap=True, width="fill", selectable=group, selection_color=t.selection),
-                                 padding=(4, 0, 2, 20), width="fill") \
-            if picked and e.detail else None
-        row = _core.container(_core.column([line, detail], width="fill"), padding=(2, 10), width="fill", bg=bg)
-        handlers: Dict[str, Any] = {}
-        if selection is not None:
-            handlers["click"] = lambda ev, i=e.id: selection.click(i, order, shift=bool(ev.shift),
-                                                                   ctrl=bool(ev.ctrl or ev.logo))
-        if on_context is not None:
-            def context(_ev: Any, e: LogEntry = e) -> Any:
-                if selection is not None and e.id not in selection:
-                    selection.click(e.id, order)
-                return on_context(e)
-            handlers["right_click"] = context
-        if on_open is not None:
-            handlers["double_click"] = lambda e=e: on_open(e)
-        rows.append(row.on(**handlers) if handlers else row)
+        key = (e.time, e.level, e.text, e.count, e.source, e.detail, picked, t, font_size, show_source, wired, group)
+        hit = live.rows.get(e.id)
+        row = hit[1] if hit is not None and hit[0] == key else _row(e, picked, t, font_size, show_source, group, live)
+        cache[e.id] = (key, row)
+        rows.append(row)
+    live.rows = cache
     if not rows:
         message = empty or _t("pyzed.console.empty")
         rows.append(_core.container(_core.text(message if not entries else _t("pyzed.console.no_match"),

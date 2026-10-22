@@ -872,6 +872,7 @@ class VuMeter(Component):
     icon = "activity"
     category = "Audio"
     size = (40, 170)
+    cache = False  # peaks fall with time: drawn on every frame
 
     def setup(self) -> None:
         self.peaks: List[Tuple[float, float]] = []
@@ -1286,6 +1287,7 @@ class Spectrum(Component):
     icon = "audio-lines"
     category = "Audio"
     size = (360, 140)
+    cache = False  # peaks fall with time: drawn on every frame
 
     def setup(self) -> None:
         self.levels: List[float] = []

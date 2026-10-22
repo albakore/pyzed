@@ -137,6 +137,14 @@ If `view()` raises an exception, the window shows the traceback instead of closi
                         threading.Thread(target=worker, daemon=True).start()
                     """,
                 },
+                "pyzed.UNCHANGED": {
+                    "desc": "Return it from a callback that changed nothing on screen (a pointer move you only record, a focus change): the window is not rebuilt. Any other return value redraws as usual. See the [performance guide](/pyzed/guides/performance/).",
+                    "example": """
+                        def pointer_moved(self, x, y):
+                            self.pointer = (x, y)
+                            return pz.UNCHANGED  # nothing visible changed: no rebuild
+                    """,
+                },
                 "pyzed.load_font": {
                     "desc": 'Loads an extra font (path to a `.ttf`/`.otf` or its bytes) so you can use it by family name: `text("hello", font="JetBrains Mono")`.',
                     "params": {"source": "Path to the font file, or `bytes`."},
