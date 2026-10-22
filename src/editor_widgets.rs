@@ -571,32 +571,142 @@ impl<'a> From<Minimap<'a>> for Element<'a, Message> {
 // EditorInput
 // ---------------------------------------------------------------------------
 
-/// Keeps the editor's keyboard modifiers up to date (Alt+click adds a cursor) and turns
+/// Keeps the editor's keyboard modifiers up to date (Alt+click adds a cursor), turns
 /// Ctrl/Cmd + mouse wheel over its content into `on_zoom(+1 | -1)`, before the content
-/// (a scrollable) sees the wheel.
+/// (a scrollable) sees the wheel, and reports the word the mouse rests on to `on_hover`.
 pub struct EditorInput<'a> {
     content: Element<'a, Message>,
+    id: std::sync::Arc<str>,
     state: &'a EditorState,
     on_zoom: Option<PyMsg>,
+    on_hover: Option<PyMsg>,
+    hover_delay: Duration,
 }
 
 impl<'a> EditorInput<'a> {
     pub fn new(
         content: impl Into<Element<'a, Message>>,
+        id: std::sync::Arc<str>,
         state: &'a EditorState,
         on_zoom: Option<PyMsg>,
+        on_hover: Option<PyMsg>,
+        hover_delay: Duration,
     ) -> Self {
         Self {
             content: content.into(),
+            id,
             state,
             on_zoom,
+            on_hover,
+            hover_delay,
         }
     }
 }
 
+/// How long a shown hover stays after the mouse leaves its word (time to reach the popup).
+const HOVER_GRACE: Duration = Duration::from_millis(300);
+
 #[derive(Default)]
 struct ZoomState {
     modifiers: keyboard::Modifiers,
+    /// Where the mouse rests (relative to the editor) and since when.
+    rest: Option<(Point, Instant)>,
+    /// The word whose hover is shown: `(line, start, end)`.
+    shown: Option<(usize, usize, usize)>,
+    /// When the shown hover goes away, after the mouse left its word.
+    hide_at: Option<Instant>,
+}
+
+impl EditorInput<'_> {
+    /// Follows the mouse for `on_hover`: a rest on a word reports it, leaving the word hides it
+    /// (after a moment, so the mouse can reach the popup), and typing, clicking or scrolling hide it.
+    fn track_hover(
+        &self,
+        state: &mut ZoomState,
+        event: &Event,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        let Some(on_hover) = &self.on_hover else {
+            return;
+        };
+        let hide = |state: &mut ZoomState, shell: &mut Shell<'_, Message>| {
+            state.hide_at = None;
+            if state.shown.take().is_some() {
+                shell.publish(Message::Hover(on_hover.clone(), None));
+            }
+        };
+        let bounds = layout.bounds();
+        match event {
+            Event::Mouse(mouse::Event::CursorMoved { .. }) => {
+                let now = Instant::now();
+                // Over a layer above the editor (the hover popup itself): keep it.
+                let Some(position) = cursor.position() else {
+                    state.rest = None;
+                    state.hide_at = None;
+                    return;
+                };
+                if !bounds.contains(position) {
+                    state.rest = None;
+                    if state.shown.is_some() && state.hide_at.is_none() {
+                        state.hide_at = Some(now + HOVER_GRACE);
+                        shell.request_redraw_at(now + HOVER_GRACE);
+                    }
+                    return;
+                }
+                let local = Point::new(position.x - bounds.x, position.y - bounds.y);
+                state.rest = Some((local, now));
+                shell.request_redraw_at(now + self.hover_delay);
+                if let Some(shown) = state.shown {
+                    let same = self.state.hit(local).is_some_and(|hit| hit.key() == shown);
+                    if same {
+                        state.hide_at = None;
+                    } else if state.hide_at.is_none() {
+                        state.hide_at = Some(now + HOVER_GRACE);
+                        shell.request_redraw_at(now + HOVER_GRACE);
+                    }
+                }
+            }
+            Event::Window(window::Event::RedrawRequested(now)) => {
+                if let Some(at) = state.hide_at
+                    && *now >= at
+                {
+                    hide(state, shell);
+                }
+                if let Some((local, since)) = state.rest {
+                    if now.saturating_duration_since(since) >= self.hover_delay {
+                        state.rest = None;
+                        if let Some(hit) = self.state.hit(local)
+                            && state.shown != Some(hit.key())
+                        {
+                            state.shown = Some(hit.key());
+                            state.hide_at = None;
+                            shell.publish(Message::Hover(on_hover.clone(), Some(hit)));
+                        }
+                    } else {
+                        shell.request_redraw_at(since + self.hover_delay);
+                    }
+                }
+            }
+            Event::Mouse(mouse::Event::ButtonPressed(_)) if cursor.position().is_some() => {
+                state.rest = None;
+                hide(state, shell)
+            }
+            Event::Mouse(mouse::Event::WheelScrolled { .. }) if cursor.is_over(bounds) => {
+                state.rest = None;
+                hide(state, shell)
+            }
+            Event::Keyboard(keyboard::Event::KeyPressed { .. }) => {
+                state.rest = None;
+                hide(state, shell)
+            }
+            Event::Mouse(mouse::Event::CursorLeft) => {
+                state.rest = None;
+            }
+            _ => {}
+        }
+    }
 }
 
 impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
@@ -655,6 +765,17 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_mut::<ZoomState>();
+        self.track_hover(state, event, layout, cursor, shell);
+        if let Event::Window(window::Event::RedrawRequested(_)) = event
+            && self.state.reveal.get()
+        {
+            if self.state.viewport.get().is_some() {
+                self.state.reveal.set(false);
+                shell.publish(Message::EditorReveal(self.id.clone()));
+            } else {
+                shell.request_redraw(); // not drawn yet: try again on the next frame
+            }
+        }
         // The text editor draws the input method's preedit itself; the caret hides meanwhile
         // and the committed text is grouped with typing for undo.
         if let Event::InputMethod(ime) = event

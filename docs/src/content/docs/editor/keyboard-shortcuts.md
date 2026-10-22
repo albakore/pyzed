@@ -62,6 +62,9 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | <kbd>Ctrl</kbd>+<kbd>V</kbd> | Paste |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicate |
 | <kbd>Ctrl</kbd>+<kbd>A</kbd> | Select every control |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> | Group the selection in an invisible panel |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Ungroup: take the children out of the selected container |
+| <kbd>Shift</kbd>+<kbd>A</kbd> | Add auto layout: wrap the selection in a flex row or column |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Undo |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Redo |
 | <kbd>Enter</kbd> | Open the code of the selected control's main event |
@@ -78,10 +81,13 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | Drag on an empty spot | Rubber-band selection |
 | Double-click a control | Open its main event's code, or a designed component in its tab |
 | Right-click | Context menu |
+| Drag a number sideways (Properties) | Lower or raise it; double-click it to type |
 | Drag from the toolbox | Place a control where you drop it |
 | Drag an outline row | Reorder, or move into another container |
 | Drag the grip under the form | Resize the form |
 | <kbd>Ctrl</kbd>+wheel in the code editor | Font size |
+| <kbd>Ctrl</kbd>+click in the code editor | Go to the definition |
+| Rest the mouse on a name in the code editor | Its type, documentation and problems |
 
 ## Lists, palettes and dialogs
 
@@ -119,6 +125,12 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | Move nine rows in the list, or a page in the code |
 | <kbd>Enter</kbd>, <kbd>Tab</kbd> | Accept the completion |
 | <kbd>Esc</kbd> | Close the completion list |
+| <kbd>F12</kbd> / <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Go to the definition / the type's definition |
+| <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Go back / forward |
+| <kbd>Shift</kbd>+<kbd>F12</kbd> | Find all references |
+| <kbd>F2</kbd> | Rename the symbol |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Quick fixes and refactorings |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> | Organize imports |
 | <kbd>Tab</kbd> | Indent with spaces |
 | <kbd>Enter</kbd> | New line, keeping the indentation (one level more after `:`) |
 | <kbd>Backspace</kbd> | In the indentation, remove one level |

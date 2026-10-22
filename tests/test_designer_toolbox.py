@@ -234,3 +234,18 @@ def test_ide_example_runs(tmp_path):
     assert "terminal → right" in rt.form["log"].props["text"]
     assert rt.error is None
     app.screenshot(tmp_path / "ide.png", scale=1)
+
+
+def test_descriptions_read_as_text():
+    """A docstring's reST ``literals`` and indentation don't leak into the toolbox and the Properties panel."""
+    from pyzed.designer import panels
+    from pyzed.ui.audio import Piano
+
+    text = Piano.describe()
+    assert "``" not in text and "  " not in text
+    assert text.startswith("A piano keyboard.") and "`pressed` lights notes" in text
+    assert components.get("piano").description == text
+    assert panels.plain_doc(text).count("`") == 0 and "pressed lights" in panels.plain_doc(text)
+    assert panels.plain_doc("the ``KEYBOARD``\n    map") == "the KEYBOARD map"
+    for spec in components.all_components():  # every library description is one clean line
+        assert "``" not in spec.description and "\n" not in spec.description and "  " not in spec.description, spec.type

@@ -616,6 +616,37 @@ The translation that makes a rotation and a scale (which turn around a box's cen
 | `rotate` | Degrees clockwise. |
 | `scale` | Scale factor. |
 
+### `focusable`
+
+```python
+focusable(
+    content,
+    on_key=None,
+    *,
+    keys=None,
+    id=None,
+    ring_color=None,
+    ring_radius=4.0,
+    ring_offset=2.0,
+)
+```
+
+Lets any widget take the keyboard focus like a text field: a click or Tab focuses it (`Command.focus(id)` too) and, while it has it, the combos in `keys` call `on_key(combo)` instead of reaching the app's `on_key`. A ring is drawn around it once the keyboard is used on it. The library's switches, check boxes, sliders, segmented controls and radio groups use it.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The control. |
+| `on_key` | Called with the combo (`"space"`, `"shift-right"`…) of each key in `keys` pressed while it has the focus. `None` leaves `content` unfocusable. |
+| `keys` | The combos it takes (by default Space, Enter, the arrows, Home and End); `"*"` takes every key. Tab is left to move the focus. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
+| `ring_color` | Color of the focus ring (none by default). |
+| `ring_radius` | Corner radius of the ring. |
+| `ring_offset` | Pixels between the control and the ring. |
+
+```python
+pz.focusable(stars, lambda combo: self.rate(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")
+```
+
 ### `window_edges`
 
 ```python
@@ -769,6 +800,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -788,6 +821,8 @@ A piece of text.
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `wrap` | Line wrapping. With `False` the text doesn't wrap. |
+| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
+| `selection_color` | Color behind the selected text. |
 
 ### `icon`
 
@@ -915,6 +950,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -930,6 +967,8 @@ Renders Markdown (headings, lists, code blocks, quotes, tables, links…). For t
 | `code_bg` | Code background. |
 | `on_link` | Callable that receives the URL when a link is clicked. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
+| `selection_color` | Color behind the selected text. |
 
 ### `rich_text`
 
@@ -1285,6 +1324,27 @@ Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.
 | `radius` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
 | `shadow` | Shadow: `(color, (dx, dy), blur)`. |
 
+### `popup`
+
+```python
+popup(base, content=None, *, on_dismiss=None, side='bottom', align='start', gap=4.0)
+```
+
+Shows `content` over everything else next to `base`, like the menu of a drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls `on_dismiss`. With `content=None` only `base` is shown. The date pickers open their calendars with it.
+
+| Parameter | Description |
+| --- | --- |
+| `base` | The widget it belongs to (a field, a button). |
+| `content` | What opens (a panel, a menu), or `None` while closed. |
+| `on_dismiss` | Message or callable sent on a press outside or Escape. |
+| `side` | `"bottom"`, `"top"`, `"right"` or `"left"` of `base`. |
+| `align` | `"start"`, `"center"` or `"end"`: how it lines up with `base`. |
+| `gap` | Space between `base` and the content. |
+
+```python
+pz.popup(field, panel if self.open else None, on_dismiss=self.close)
+```
+
 ## Controls
 
 ### `checkbox`
@@ -1466,10 +1526,12 @@ pick_list(
     menu_border_color=None,
     selected_bg=None,
     selected_color=None,
+    focus_border_color=None,
+    id=None,
 )
 ```
 
-A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.
+A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`. It takes the keyboard focus like a text field (a click, Tab or `Command.focus(id)`) and keeps it after a choice: ↑/↓ then pick the previous or next option without opening it, Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open the menu, where ↑/↓ move, Enter picks and Esc closes.
 
 | Parameter | Description |
 | --- | --- |
@@ -1498,6 +1560,8 @@ A dropdown to choose one of `options`. `on_select(option)` receives the chosen o
 | `menu_border_color` | Menu border. |
 | `selected_bg` | Background of the highlighted option. |
 | `selected_color` | Text of the highlighted option. |
+| `focus_border_color` | Border color while it has the keyboard focus. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 
 ### `radio`
 
@@ -1590,6 +1654,9 @@ code_editor(
     backspace_unindent=True,
     repeat_delay=None,
     repeat_rate=None,
+    on_hover=None,
+    hover_delay=500.0,
+    sticky_scroll=0,
 )
 ```
 
@@ -1651,6 +1718,9 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `backspace_unindent` | With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space). |
 | `repeat_delay` | Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's). |
 | `repeat_rate` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
+| `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
+| `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 
 ## Styles
 

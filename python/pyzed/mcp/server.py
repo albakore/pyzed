@@ -35,7 +35,7 @@ What to do for each kind of request:
   a stylesheet and pz.provide / use_context (cookbook "Web-style pages").
 - "Make a component": list_components to reuse what exists, new_component, then validate_code and
   screenshot with a preview() function.
-- "Make a designer form": list_components(kind="designer"), new_form, validate_form.
+- "Make a designer form": list_components(kind="designer"), new_form, form_animations, validate_form.
 - "A shader / visual effect": get_guide("shaders"); node graphs (.pzshad, drawn with pz.shader("x.pzshad"))
   start from new_shader, use list_shader_nodes and check_shader; style effects (glow, glass...) are in the cookbook.
 - "Animate it": one widget uses .animate() / .transition() (cookbook); several widgets or app state on one
@@ -45,7 +45,9 @@ What to do for each kind of request:
 
 Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
 describe_component, search_icons, list_themes, list_examples / read_example (blocks are whole screens).
-Checks: validate_code, validate_form, check_project; pictures: screenshot, screenshot_project.
+Checks: validate_code, validate_form, check_project; animation triggers: form_animations; pictures: screenshot, screenshot_project.
+Settings: project_settings / set_project_settings (the renderer, GPU or CPU, and the editor preferences the
+project shares, like its tab size).
 Project tools work in the folder the server runs in and in the project's own environment (its .venv through
 uv run; project_info shows it, WSL included). Code goes in the project's files: the entry is its script
 (`script` in [tool.pyzed]) or its main form; forms, components and shaders are files of the project."""
@@ -112,13 +114,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(knowledge.guides())
 
     @tool()
-    def list_components(kind: str = "all", query: str = "", category: str = "") -> str:
+    def list_components(kind: str = "all", query: str = "", category: str = "", role: str = "") -> str:
         """Lists Pyzed widgets and components with a one-line summary.
 
         kind: "widget" (pz.* primitives), "ui" (pz.ui.* Zed-style components), "designer" (the visual
         designer's toolbox types), "component" (pz.Component classes) or "all".
-        query filters by name or summary; category keeps one section (e.g. "Layout", "Navigation")."""
-        return _json(knowledge.list_components(kind, query, category))
+        query filters by name or summary; category keeps one section (e.g. "Layout", "Navigation");
+        role keeps the designer types of one color role: layout, input, action, navigation, display, media,
+        system or custom (the color of their icon in the designer)."""
+        return _json(knowledge.list_components(kind, query, category, role))
 
     @tool()
     def describe_component(name: str) -> str:
@@ -274,6 +278,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(validate.check_code(code))
 
     @tool()
+    def form_animations() -> str:
+        """The animations a .pzform control takes in its "animations" list: every trigger ("on": appearing,
+        hover, click, double click, pointer enter/leave, a new value, Enter, a failed validation rule, another
+        control's event, code) and the presets by category, with examples."""
+        from . import validate
+
+        return _json(validate.animation_triggers())
+
+    @tool()
     def validate_form(form: str, handlers: str = "") -> str:
         """Validates the JSON of a .pzform (component types, props, events, names, parents) and, when the
         handlers module is given, that it defines every handler the form calls."""
@@ -295,6 +308,21 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         """The Pyzed project in path (relative to the folder this server works in): name, version, main
         form, forms, components, package, dependencies and files. Says so when there is none yet."""
         return _json(projects.info(base, path))
+
+    @gated()
+    def project_settings(path: str = ".") -> str:
+        """The project's own settings: its renderer ([tool.pyzed.rendering]: renderer auto/gpu/cpu, gpu_api,
+        power, vsync) and the code editor and designer preferences it sets for everyone who opens it
+        (.pyzed/settings.json), with every key and its default."""
+        return _json(projects.settings(base, path))
+
+    @gated()
+    def set_project_settings(rendering: Optional[Dict[str, str]] = None, editor: Optional[Dict[str, Any]] = None,
+                             designer: Optional[Dict[str, Any]] = None, path: str = ".") -> str:
+        """Changes the project's settings. rendering, e.g. {"renderer": "cpu"} for virtual machines or
+        {"renderer": "gpu"} for shaders ("auto" lets Pyzed decide); editor and designer, e.g.
+        {"tab_size": 2, "hard_tabs": false} or {"grid": 4} (null removes a key, so the user's own value applies)."""
+        return _json(projects.set_settings(base, path, rendering=rendering, editor=editor, designer=designer))
 
     @gated()
     def list_files(pattern: str = "*", path: str = ".", limit: int = 300) -> str:

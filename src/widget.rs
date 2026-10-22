@@ -180,6 +180,12 @@ pub struct EditorProps {
     pub scrollbar: bool,
     /// The text can be selected and copied but not changed.
     pub readonly: bool,
+    /// `on_hover(info)` when the mouse rests on a word (`None` when it leaves it).
+    pub on_hover: Option<PyMsg>,
+    /// How long the mouse rests on a word before `on_hover`.
+    pub hover_delay: std::time::Duration,
+    /// Most block headers pinned to the top while scrolling (0: no sticky scroll).
+    pub sticky_scroll: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -281,9 +287,24 @@ pub enum Kind {
     Opaque {
         child: Py<Widget>,
     },
+    Scrub {
+        child: Py<Widget>,
+        on_scrub: Option<PyMsg>,
+        on_start: Option<PyMsg>,
+        on_end: Option<PyMsg>,
+    },
     Hover {
         base: Py<Widget>,
         top: Py<Widget>,
+    },
+    /// Content drawn over everything else next to `child` (`popup(...)`, see `popup.rs`).
+    Popup {
+        child: Py<Widget>,
+        content: Option<Py<Widget>>,
+        on_dismiss: Option<PyMsg>,
+        side: crate::popup::Side,
+        align: crate::popup::Align,
+        gap: f32,
     },
     Tooltip {
         child: Py<Widget>,
@@ -401,6 +422,11 @@ pub enum Kind {
     },
     /// Content that animates out while its replacement animates in (`presence(...)`).
     Presence(Box<crate::animation::PresenceProps>),
+    /// A control that takes the keyboard focus and some keys (`focusable(...)`).
+    Focus {
+        child: Py<Widget>,
+        props: Box<crate::focus::FocusProps>,
+    },
 }
 
 pub enum SvgSource {
@@ -432,8 +458,10 @@ impl Widget {
             Kind::MouseArea { .. } => "mouse_area",
             Kind::Stack { .. } => "stack",
             Kind::Opaque { .. } => "opaque",
+            Kind::Scrub { .. } => "scrub",
             Kind::Hover { .. } => "hover",
             Kind::Tooltip { .. } => "tooltip",
+            Kind::Popup { .. } => "popup",
             Kind::Checkbox { .. } => "checkbox",
             Kind::Toggler { .. } => "toggler",
             Kind::Slider { .. } => "slider",
@@ -460,6 +488,7 @@ impl Widget {
             }
             Kind::Resizable(_) => "resizable",
             Kind::WindowEdges { .. } => "window_edges",
+            Kind::Focus { .. } => "focusable",
             Kind::Presence(_) => "presence",
             Kind::Animated { child, spec } => {
                 let inner = Python::attach(|py| child.bind(py).get().__repr__());
@@ -541,7 +570,9 @@ impl Widget {
                 Some(l) => Some(l),
                 None => return Widget::_length(props.child.bind(py), axis),
             },
-            Kind::Events { child, .. } | Kind::Animated { child, .. } => {
+            Kind::Events { child, .. }
+            | Kind::Animated { child, .. }
+            | Kind::Focus { child, .. } => {
                 return Widget::_length(child.bind(py), axis);
             }
             _ => None,
@@ -1309,6 +1340,38 @@ pub fn opaque(py: Python<'_>, content: &Bound<'_, PyAny>) -> PyResult<Py<Widget>
     )
 }
 
+/// Lets the mouse change a number field by dragging over it, like Figma's.
+///
+/// Pressing the left button over `content` and moving sideways calls `on_scrub(dx)` with the
+/// pixels moved since the last call (even outside the window), between `on_start()` and
+/// `on_end()`. A double click focuses the text input inside with its text selected, to type
+/// a value; Enter, Escape or a click outside end the typing. While the input has the focus,
+/// every event goes to it.
+///
+/// Events:
+/// - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
+/// - `on_start()`: A drag begins.
+/// - `on_end()`: The button is released after a drag.
+#[pyfunction]
+#[pyo3(signature = (content, on_scrub=None, *, on_start=None, on_end=None))]
+pub fn scrub(
+    py: Python<'_>,
+    content: &Bound<'_, PyAny>,
+    on_scrub: Any<'_>,
+    on_start: Any<'_>,
+    on_end: Any<'_>,
+) -> PyResult<Py<Widget>> {
+    new(
+        py,
+        Kind::Scrub {
+            child: child(content)?,
+            on_scrub: PyMsg::maybe(&on_scrub),
+            on_start: PyMsg::maybe(&on_start),
+            on_end: PyMsg::maybe(&on_end),
+        },
+    )
+}
+
 /// Shows `top` over `base` only while the mouse hovers it.
 #[pyfunction]
 pub fn hover(
@@ -1321,6 +1384,59 @@ pub fn hover(
         Kind::Hover {
             base: child(base)?,
             top: child(top)?,
+        },
+    )
+}
+
+/// Shows `content` over everything else next to `base` (below it by default), like the menu of a
+/// drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does
+/// not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls
+/// `on_dismiss`. With `content=None` only `base` is shown.
+///
+/// `side` is ``"bottom"``, ``"top"``, ``"right"`` or ``"left"``; `align` lines it up with the start,
+/// center or end of `base`; `gap` is the space between them.
+#[pyfunction]
+#[pyo3(signature = (base, content=None, *, on_dismiss=None, side="bottom", align="start", gap=4.0))]
+pub fn popup(
+    py: Python<'_>,
+    base: &Bound<'_, PyAny>,
+    content: Option<&Bound<'_, PyAny>>,
+    on_dismiss: Any<'_>,
+    side: &str,
+    align: &str,
+    gap: f32,
+) -> PyResult<Py<Widget>> {
+    use crate::popup::{Align, Side};
+    let side = match side {
+        "bottom" => Side::Bottom,
+        "top" => Side::Top,
+        "right" => Side::Right,
+        "left" => Side::Left,
+        _ => {
+            return Err(PyValueError::new_err(
+                "side must be bottom, top, right or left",
+            ));
+        }
+    };
+    let align = match align {
+        "start" => Align::Start,
+        "center" => Align::Center,
+        "end" => Align::End,
+        _ => return Err(PyValueError::new_err("align must be start, center or end")),
+    };
+    let content = match content {
+        Some(c) if !c.is_none() => Some(child(c)?),
+        _ => None,
+    };
+    new(
+        py,
+        Kind::Popup {
+            child: child(base)?,
+            content,
+            on_dismiss: PyMsg::maybe(&on_dismiss),
+            side,
+            align,
+            gap,
         },
     )
 }
@@ -1523,7 +1639,13 @@ pub fn progress_bar(
 /// - `on_zoom(step)`: Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and
 ///   Ctrl+wheel.
 /// - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
-///   `"select_next"`…).
+///   `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+/// - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
+///   its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
+///   `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.
+///
+/// `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
+/// the top of the editor (0 turns it off); a click on one moves the cursor there.
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
@@ -1534,7 +1656,8 @@ pub fn progress_bar(
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
     cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
     match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false,
-    hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None))]
+    hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None, on_hover=None,
+    hover_delay=500.0, sticky_scroll=0))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1589,6 +1712,9 @@ pub fn code_editor(
     backspace_unindent: bool,
     repeat_delay: Option<f32>,
     repeat_rate: Option<f32>,
+    on_hover: Any<'_>,
+    hover_delay: f32,
+    sticky_scroll: usize,
 ) -> PyResult<Py<Widget>> {
     // Held Backspace/Delete: kept after `repeat_delay` ms, then `repeat_rate` times a second.
     let key_repeat =
@@ -1714,6 +1840,9 @@ pub fn code_editor(
             readonly,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
+            on_hover: PyMsg::maybe(&on_hover),
+            hover_delay: std::time::Duration::from_secs_f32(hover_delay.max(0.0) / 1000.0),
+            sticky_scroll,
         })),
     )
 }
@@ -1783,8 +1912,10 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(event_names, m)?)?;
     m.add_function(wrap_pyfunction!(stack, m)?)?;
     m.add_function(wrap_pyfunction!(opaque, m)?)?;
+    m.add_function(wrap_pyfunction!(scrub, m)?)?;
     m.add_function(wrap_pyfunction!(hover, m)?)?;
     m.add_function(wrap_pyfunction!(tooltip, m)?)?;
+    m.add_function(wrap_pyfunction!(popup, m)?)?;
     m.add_function(wrap_pyfunction!(checkbox, m)?)?;
     m.add_function(wrap_pyfunction!(toggler, m)?)?;
     m.add_function(wrap_pyfunction!(slider, m)?)?;

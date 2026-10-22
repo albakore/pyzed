@@ -31,6 +31,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import components as _components
 from . import layout as _layout
+from . import roles as _roles
 from . import styling
 from .geometry import HANDLES
 from .locale import tr
@@ -319,7 +320,7 @@ def tray(d: "Designer", width: float, t: Theme) -> Any:
         selected = doc.is_selected(name)
         color = t.text if control.enabled else t.text_muted
         body = _core.container(
-            _core.row([_icon(spec.icon, size=14, color=t.accent if selected else t.icon_muted),
+            _core.row([_icon(spec.icon, size=14, color=_roles.icon_color(spec, t)),
                        _core.container(_core.text(name, size=12.5, color=color, wrap=False), width="fill", clip=True)],
                       spacing=6, align="center"),
             width=TRAY_CHIP, height=28, padding=(0, 8), align_y="center", radius=t.radius_sm,

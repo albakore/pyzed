@@ -32,7 +32,7 @@ flowchart TB
     T["① Title bar: ☰ menu · project / file · Run ▶ Stop · 🔍 Search · View · Help · ⚙"]
     subgraph W[" "]
         direction LR
-        L["② Left dock<br/>Design · Project · Dependencies"]
+        L["② Left dock<br/>Toolbox · Project · Dependencies"]
         subgraph C["③ Center"]
             direction TB
             D["Document tabs"]
@@ -97,7 +97,7 @@ a **window of its own**, alone or stacked with others.
 
 | Panel | Dock | What it is for | Manual |
 | --- | --- | --- | --- |
-| **Design** | Left | The **Toolbox** (everything you can place) above the **Outline** (the tree of what is placed). In a shader it becomes the **Shading** sidebar and the shader's variables. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
+| **Toolbox** | Left | Everything you can place, above the **Outline** (the tree of what is placed); icons are [colored by role](/pyzed/editor/toolbox-and-canvas/#icon-colors). In a shader it becomes the **Shading** sidebar and the shader's variables. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
 | **Project** | Left | The files of the project as a tree, with search, git status and a right-click menu. | [Projects](/pyzed/editor/projects/#files) |
 | **Dependencies** | Left | Packages, ruff and ty of the project (only with a project open). | [Projects](/pyzed/editor/projects/#the-dependencies-panel) |
 | **Properties** | Right | Everything about the selection: text, size, colors, data, behavior. | [Properties](/pyzed/editor/properties/) |

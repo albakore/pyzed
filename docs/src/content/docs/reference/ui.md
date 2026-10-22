@@ -226,6 +226,18 @@ Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl
 | --- | --- |
 | `keys` | The shortcut. |
 
+### `keys_text`
+
+```python
+keys_text(keys)
+```
+
+A shortcut as plain text for a label or a status line: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` with macOS symbols), chords separated by a space. Tooltips, buttons and menus take `keys=` instead and draw key caps, so never write the keys into their text.
+
+| Parameter | Description |
+| --- | --- |
+| `keys` | The shortcut. |
+
 ### `avatar`
 
 ```python
@@ -386,10 +398,66 @@ An `input` with a magnifying glass icon.
 | `placeholder` | Hint text shown when empty. |
 | `kwargs` | Same as `input`. |
 
+### `path_input`
+
+```python
+path_input(
+    value,
+    on_change=None,
+    *,
+    folder=False,
+    save=False,
+    filters=None,
+    kind=None,
+    directory=None,
+    relative_to=None,
+    title=None,
+    placeholder=None,
+    size='md',
+    mono=True,
+    disabled=False,
+    invalid=False,
+    theme=None,
+)
+```
+
+A text field for a file or folder path with a button that opens the system's file dialog, so the path never has to be typed (it still can be).
+
+| Parameter | Description |
+| --- | --- |
+| `value` | Current path. |
+| `on_change` | Callable that receives the typed or chosen path. |
+| `folder` | Picks a folder instead of a file. |
+| `save` | Shows the "Save as" dialog. |
+| `filters` | `(name, extensions)` pairs: `[("Images", ["png", "jpg"])]`. |
+| `kind` | Common filters by name: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` or `"data"`. |
+| `directory` | Folder the dialog opens in (by default, the current path's). |
+| `relative_to` | A chosen path inside this folder is given relative to it. |
+| `title` | Title of the dialog. |
+| `placeholder` | Text shown while it is empty. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `mono` | Monospaced text. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")
+```
+
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+switch(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 An on/off switch.
@@ -401,12 +469,22 @@ An on/off switch.
 | `label` | Label text. |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | Greys it out and ignores clicks. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+checkbox(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.
@@ -418,6 +496,7 @@ A checkbox. `checked=None` shows the mixed state (part of a group checked); clic
 | `label` | Label text. |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | Greys it out and ignores clicks. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `slider`
@@ -436,6 +515,7 @@ slider(
     height=None,
     disabled=False,
     show_value=False,
+    id=None,
     theme=None,
 )
 ```
@@ -455,6 +535,7 @@ A slider.
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `disabled` | Greys it out. |
 | `show_value` | Shows the number next to it: `True`, or a format such as `"{:.0%}"`. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `progress`
@@ -497,6 +578,7 @@ segmented(
     size='md',
     width=None,
     disabled=False,
+    id=None,
     theme=None,
 )
 ```
@@ -511,6 +593,7 @@ A group of mutually exclusive buttons.
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `width` | `"fill"` stretches the buttons evenly. |
 | `disabled` | `True`, or the values to disable. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `field`
@@ -701,6 +784,7 @@ select(
     invalid=False,
     on_open=None,
     on_close=None,
+    id=None,
     theme=None,
 )
 ```
@@ -719,6 +803,7 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `invalid` | Paints the border in the error color. |
 | `on_open` | Sent when the menu opens. |
 | `on_close` | Sent when the menu closes. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -733,6 +818,7 @@ radio_group(
     spacing=8,
     disabled=False,
     descriptions=None,
+    id=None,
     theme=None,
 )
 ```
@@ -748,6 +834,7 @@ Mutually exclusive options as radio buttons.
 | `spacing` | Space between children, in pixels. |
 | `disabled` | `True`, or the values to disable. |
 | `descriptions` | Maps values to a muted line under their label. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `number_field`
@@ -769,11 +856,14 @@ number_field(
     invalid=False,
     id=None,
     on_submit=None,
+    steppers=True,
+    drag=True,
+    drag_step=None,
     theme=None,
 )
 ```
 
-A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
+A numeric field with −/+ buttons that you can also drag, like Figma's. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Press and move the mouse sideways over the number to change it (it keeps going outside the window); double-click it to type a value, and Enter, Escape or a click outside to finish. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
 
 | Parameter | Description |
 | --- | --- |
@@ -791,6 +881,9 @@ A numeric field with −/+ buttons. `on_change(value)` receives the number alrea
 | `invalid` | Paints the border in the error color. |
 | `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `on_submit` | Sent on Enter. |
+| `steppers` | Shows the −/+ buttons (`False`: a compact field, as in a property grid). |
+| `drag` | Lets the mouse change it by dragging (`False`: a plain text field). |
+| `drag_step` | How much each pixel dragged adds (by default `step`, up to 1; steps under 1 take three pixels each). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -2711,6 +2804,9 @@ editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    on_hover=None,
+    hover_delay=500,
+    sticky_scroll=0,
     theme=None,
 )
 ```
@@ -2758,6 +2854,9 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `keymap` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `False` hides the scrollbars. |
 | `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
+| `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
+| `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`
@@ -3083,6 +3182,282 @@ A light/dark checkerboard to draw under translucent colors.
 | `width` | Width. |
 | `height` | Height. |
 | `size` | Cell size. |
+
+## Dates and times
+
+### `Calendar`
+
+```python
+class Calendar
+```
+
+A component with a month to pick a day on (`mode="single"`), a range (`"range"`: the first click starts it, the second ends it) or several days (`"multiple"`). The title opens a grid of months, then of years. Once clicked it takes the keyboard: arrows move, Enter picks, Page Up/Down change month. See the [Calendar](/pyzed/library/calendar/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | A date (`datetime.date` or `"2026-10-22"`), a `(start, end)` pair or a list of dates, by `mode`. |
+| `mode` | `"single"`, `"range"` or `"multiple"`. |
+| `min` | The earliest day that can be picked. |
+| `max` | The latest day that can be picked. |
+| `disabled` | Days that cannot be picked: dates, weekday names (`"sunday"`) or `"weekends"`. |
+| `first_weekday` | `"monday"`, `"sunday"` or `"saturday"`. |
+| `months` | Months shown side by side. |
+| `week_numbers` | Shows the ISO week number of each row. |
+| `show_outside` | Shows the days of the months around. |
+| `today_button` | Adds a Today link. |
+| `on_change` | Receives `event.value` (a date, a tuple or a list). |
+| `on_month` | Receives `event.value`, the `(year, month)` shown. |
+
+```python
+ui.Calendar(self.day, on_change=lambda e: setattr(self, "day", e.value))
+ui.Calendar(self.stay, mode="range", months=2, on_change=lambda e: setattr(self, "stay", e.value))
+```
+
+### `DatePicker`
+
+```python
+class DatePicker
+```
+
+A component: a date field that opens a calendar below it, in a popup that panels never cut off. It can be typed in `format` (Enter or leaving the field reads it); once clicked, ↑/↓ move the date a day and Page Up/Down a month without opening anything, Alt+↓ opens the calendar and Escape closes it. See the [Date picker](/pyzed/library/date-picker/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | The date (`datetime.date`, ISO text or `None`). |
+| `format` | How it is written: `"DD/MM/YYYY"`, `"MMM D, YYYY"`... (see `format_date`). |
+| `placeholder` | Hint while empty (default: the format). |
+| `min` | The earliest date. |
+| `max` | The latest date. |
+| `disabled_dates` | Days that cannot be picked (as in `Calendar`). |
+| `first_weekday` | `"monday"`, `"sunday"` or `"saturday"`. |
+| `week_numbers` | Shows week numbers in the calendar. |
+| `clearable` | Shows an x that empties it. |
+| `today_button` | Adds a Today link to the calendar. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `on_change` | Receives `event.value`: a `datetime.date` or `None`. |
+| `on_open` | The calendar opened. |
+| `on_close` | The calendar closed. |
+
+```python
+ui.DatePicker(self.due, format="DD/MM/YYYY", on_change=lambda e: setattr(self, "due", e.value))
+```
+
+### `DateRangePicker`
+
+```python
+class DateRangePicker
+```
+
+A component: a field for a start and an end date, with two months and quick ranges (Today, Last 7 days, This month...) in its popup. Typed text is two dates separated by `separator`. See the [Date range picker](/pyzed/library/date-range-picker/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | `(start, end)`: dates, ISO text or `None`. |
+| `format` | How each date is written. |
+| `separator` | Text between the two dates. |
+| `placeholder` | Hint while empty. |
+| `min` | The earliest date. |
+| `max` | The latest date. |
+| `disabled_dates` | Days that cannot be picked. |
+| `first_weekday` | `"monday"`, `"sunday"` or `"saturday"`. |
+| `months` | Months shown side by side. |
+| `presets` | Shows the quick ranges. |
+| `clearable` | Shows an x that empties it. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `on_change` | Receives `event.value`: `(start, end)`. |
+| `on_open` | The calendar opened. |
+| `on_close` | The calendar closed. |
+
+```python
+ui.DateRangePicker(self.period, on_change=lambda e: setattr(self, "period", e.value))
+```
+
+### `TimePicker`
+
+```python
+class TimePicker
+```
+
+A component: a time field with columns of hours and minutes (and seconds, and AM/PM with a 12-hour `format`) in a popup. Once clicked, ↑/↓ change it by `minute_step`. See the [Time picker](/pyzed/library/time-picker/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | The time (`datetime.time`, `"14:30"` or `None`). |
+| `format` | `"HH:mm"`, `"HH:mm:ss"`, `"h:mm A"`... |
+| `placeholder` | Hint while empty. |
+| `minute_step` | Minutes between the ones offered. |
+| `min` | The earliest time. |
+| `max` | The latest time. |
+| `clearable` | Shows an x that empties it. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `on_change` | Receives `event.value`: a `datetime.time` or `None`. |
+| `on_open` | The list opened. |
+| `on_close` | The list closed. |
+
+```python
+ui.TimePicker(self.alarm, format="h:mm A", minute_step=15, on_change=lambda e: setattr(self, "alarm", e.value))
+```
+
+### `format_date`
+
+```python
+format_date(value, fmt='YYYY-MM-DD', *, language=None)
+```
+
+Writes a date with a pattern of tokens: `YYYY` 2026, `YY` 26, `MMMM` October, `MMM` Oct, `MM` 10, `M` 10, `DD` 05, `D` 5, `dddd` Monday, `ddd` Mon, `HH`/`hh` hours, `mm` minutes, `ss` seconds, `A` AM/PM and `[text]` kept as is. A pattern with `%` is a `strftime` one. Month and day names follow the language of `pyzed.i18n`.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | A date, a datetime, ISO text or `None` (gives `""`). |
+| `fmt` | The pattern. |
+| `language` | A language for the names instead of the current one. |
+
+```python
+ui.format_date(day, "dddd, D MMMM YYYY")   # "Monday, 5 October 2026"
+```
+
+### `parse_date`
+
+```python
+parse_date(text, fmt='YYYY-MM-DD', *, language=None)
+```
+
+Reads a date written with a pattern of `format_date` (month names in the current language or English); ISO `YYYY-MM-DD` always works. Returns `None` when the text is not a date.
+
+| Parameter | Description |
+| --- | --- |
+| `text` | The text. |
+| `fmt` | The pattern. |
+| `language` | The language of the names. |
+
+### `format_time`
+
+```python
+format_time(value, fmt='HH:mm')
+```
+
+Writes a time (or `"14:30"`) with a pattern such as `"h:mm A"`.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | A `datetime.time` or text. |
+| `fmt` | The pattern. |
+
+### `parse_time`
+
+```python
+parse_time(text, fmt='HH:mm')
+```
+
+Reads a time: `"14:30"`, `"2:30 PM"`, `"14:30:05"`, with `fmt` first. `None` when it is not one.
+
+| Parameter | Description |
+| --- | --- |
+| `text` | The text. |
+| `fmt` | The pattern. |
+
+## System
+
+### `file_input`
+
+```python
+file_input(
+    value,
+    on_change=None,
+    *,
+    mode='open',
+    filters=None,
+    title=None,
+    directory=None,
+    file_name='',
+    placeholder=None,
+    button=None,
+    editable=True,
+    disabled=False,
+    invalid=False,
+    id=None,
+    width='fill',
+    theme=None,
+)
+```
+
+A path field with a button that opens the system's file dialog, so nobody types a path by hand. See the [File picker](/pyzed/library/file-input/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | Current value. |
+| `on_change` | Receives the path (a list with `"open_many"`). |
+| `mode` | `"open"` (a file), `"open_many"` (a list), `"save"` or `"folder"`. |
+| `filters` | Files shown: `{"Images": "png jpg"}` or `"Images: png, jpg"`. |
+| `title` | The dialog's title. |
+| `directory` | Where the dialog opens (default: the folder of the current path). |
+| `file_name` | The name suggested when saving. |
+| `placeholder` | Hint text shown when empty. |
+| `button` | Text for the button instead of a folder icon. |
+| `editable` | `False` keeps the path from being typed. |
+| `disabled` | Disables it (ignores clicks). |
+| `invalid` | Paints the border in the error color. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.file_input(self.photo, self.set_photo, filters={"Images": "png jpg"})
+```
+
+### `pick`
+
+```python
+pick(then, *, mode='open', title=None, filters=None, directory=None, file_name='')
+```
+
+The system's file dialog as a `Command`: return it from a callback and `then` receives what the user chose (a path, a list of paths with `"open_many"`, or `None` when they cancel). `ui.file_input` uses it.
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Called with the result. |
+| `mode` | `"open"`, `"open_many"`, `"save"` or `"folder"`. |
+| `title` | The dialog's title. |
+| `filters` | Files shown: `{"Images": "png jpg"}` or `"Images: png, jpg"`. |
+| `directory` | Where the dialog opens. |
+| `file_name` | The name suggested when saving. |
+
+```python
+ui.button("Open…", lambda: ui.system.pick(self.load, filters="Text: txt, md"))
+```
+
+### `DropZone`
+
+```python
+class DropZone
+```
+
+A component that takes files dragged from the system's file manager and dropped on the window, and opens the file dialog on a click. It lights up while files are dragged over the window and keeps the dropped paths in `files`. The window's `on_file_drop` hook hands each file to the zone under the pointer, else to one whose `accept` lists its type. See the [Drop zone](/pyzed/library/drop-zone/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `text` | The main text (default: Drop files here). |
+| `hint` | The line under it. |
+| `icon_name` | Its icon. |
+| `accept` | Extensions (`["png", "jpg"]`), patterns (`"*.tar.gz"`) or `"folder"`; empty takes everything. |
+| `multiple` | `False` keeps only the last file. |
+| `browse` | A click opens the file dialog. |
+| `show_files` | Lists the files under the text (each with an x). |
+| `files` | The dropped paths. |
+| `disabled` | Takes nothing. |
+| `live` | `False` draws it without taking files (the designer's canvas). |
+| `on_drop` | Receives `event.value`: one dropped path (once per file). |
+| `on_files` | Receives `event.value`: the list of files. |
+| `on_reject` | Receives a path it does not accept. |
+| `on_enter` | Files are dragged over the window. |
+| `on_leave` | The drag left without dropping. |
+
+```python
+ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: self.photos.append(e.value))
+```
 
 ## Agent
 

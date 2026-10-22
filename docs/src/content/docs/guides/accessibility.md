@@ -14,8 +14,10 @@ comes next.
 <kbd>Tab</kbd> moves the keyboard focus to the next field of the window and
 <kbd>Shift</kbd>+<kbd>Tab</kbd> to the previous one, in the order they appear in `view()`.
 After the last field it goes back to the first. Fields are `text_input`s, `text_editor`s and
-`code_editor`s (and the components built on them, like `ui.input` or `ui.search`); each window
-cycles through its own fields only.
+`code_editor`s (and the components built on them, like `ui.input` or `ui.search`), dropdowns
+(`pz.pick_list` and `ui.select`) and the controls wrapped in `pz.focusable`: the library's
+`ui.switch`, `ui.checkbox`, `ui.slider`, `ui.segmented` and `ui.radio_group`. Each window cycles
+through its own fields only.
 
 A `code_editor` with `tab_size` keeps <kbd>Tab</kbd> to indent, like a code editor. Editors without it
 pass the key on, so <kbd>Tab</kbd> leaves them.
@@ -34,11 +36,45 @@ class App(pz.App):
 ```
 
 `Command.focus_next()` and `Command.focus_previous()` do the same from code, and
-`Command.focus(id)` jumps to a specific field.
+`Command.focus(id)` jumps to a specific field (pass `id=` to the control).
+
+## Controls with the keyboard focus
+
+A click or <kbd>Tab</kbd> gives a control the focus, and it keeps it after you use it, like a
+text field. A ring in the theme's focus color shows around it once you use the keys (a click
+alone draws none, like a browser's `:focus-visible`); a dropdown lights its border instead.
+
+| Control | Keys while it has the focus |
+| --- | --- |
+| `ui.select`, `pz.pick_list` | <kbd>↓</kbd>/<kbd>↑</kbd> (and <kbd>→</kbd>/<kbd>←</kbd>) pick the next or previous option **without opening the menu**, <kbd>Home</kbd>/<kbd>End</kbd> the first and last, letters jump to the option that starts with them. <kbd>Enter</kbd>, <kbd>Space</kbd>, <kbd>Alt</kbd>+<kbd>↓</kbd> or <kbd>F4</kbd> open the menu; there <kbd>↑</kbd>/<kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. |
+| `ui.switch` | <kbd>Space</kbd> or <kbd>Enter</kbd> flip it. |
+| `ui.checkbox` | <kbd>Space</kbd> toggles it (a mixed one becomes checked). |
+| `ui.segmented`, `ui.radio_group` | The arrows pick the previous or next choice, skipping disabled ones; <kbd>Home</kbd>/<kbd>End</kbd> the first and last. |
+| `ui.slider` | The arrows move one `step`, with <kbd>Shift</kbd> (or <kbd>Page Up</kbd>/<kbd>Page Down</kbd>) ten; <kbd>Home</kbd>/<kbd>End</kbd> go to `min`/`max`. |
+| `ui.number_field` | <kbd>↑</kbd>/<kbd>↓</kbd> step it (ten with <kbd>Shift</kbd>), <kbd>Home</kbd>/<kbd>End</kbd> go to `min`/`max`. |
+
+The keys a focused control uses do not reach the app's `on_key`, so <kbd>↓</kbd> on a dropdown
+does not also scroll a list or move a selection elsewhere. Every other key (shortcuts like
+<kbd>Ctrl</kbd>+<kbd>S</kbd>) still does.
+
+Your own controls get the same with `pz.focusable(content, on_key, keys=[...])`: while it has the
+focus, the combos in `keys` call `on_key(combo)` and nothing else sees them.
+
+```python
+def stars(self):
+    t = self.theme
+    row = pz.row([pz.icon("star", color=t.warning if i < self.rating else t.text_muted)
+                  for i in range(5)], spacing=2)
+
+    def rate(combo):
+        self.rating = max(0, min(5, self.rating + (1 if combo == "right" else -1)))
+
+    return pz.focusable(row, rate, keys=["left", "right"], id="rating",
+                        ring_color=self.theme.border_focused)
+```
 
 :::note
-In Iced 0.14 only text fields can take the keyboard focus. Buttons, checkboxes and sliders
-are used with the mouse or with shortcuts from `on_key`; give important actions a
+Plain buttons don't take the focus yet: use them with the mouse or give important actions a
 shortcut (see [Keyboard and shortcuts](/pyzed/guides/keyboard/)).
 :::
 

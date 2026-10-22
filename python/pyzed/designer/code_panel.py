@@ -7,8 +7,12 @@ The designer forwards the editor's callbacks and the keys pressed while it has f
 
 from __future__ import annotations
 
+import ast
 import bisect
+import io
+import keyword
 import re
+import tokenize
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
@@ -21,7 +25,8 @@ from . import intellisense as _intel
 from . import keymap as _keymap
 from . import settings as _settings
 from . import telemetry as _telemetry
-from .intellisense import CodeIntel, CompletionItem, Diagnostic
+from . import code as _code
+from .intellisense import CodeAction, CodeIntel, CompletionItem, Diagnostic, Location
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -48,6 +53,14 @@ SETTINGS_SECTIONS = ("appearance", "cursor", "editing", "scrolling", "diagnostic
 FIND_ID = "designer-code-find"
 REPLACE_ID = "designer-code-replace"
 GOTO_ID = "designer-code-goto"
+RENAME_ID = "designer-code-rename"
+#: Headers sticky scroll pins at most.
+STICKY_LINES = 5
+HOVER_WIDTH = 520.0
+HOVER_HEIGHT = 300.0
+ACTIONS_WIDTH = 420.0
+#: How many places Go back remembers.
+HISTORY = 50
 #: Most matches the search highlights.
 MAX_MATCHES = 5000
 
@@ -95,6 +108,65 @@ class Completion:
         return self.shown[self.index] if 0 <= self.index < len(self.shown) else None
 
 
+@dataclass
+class HoverCard:
+    """What the mouse rests on: the symbol's documentation and the problems there."""
+
+    line: int
+    column: int
+    #: 1-based byte columns of the word (``end`` excluded).
+    start: int
+    end: int
+    #: Where the word is drawn, relative to the editor.
+    x: float
+    y: float
+    height: float
+    text: str = ""
+    diagnostics: List[Diagnostic] = field(default_factory=list)
+    loading: bool = True
+
+
+@dataclass
+class RenameBox:
+    """The rename field (F2) over the symbol being renamed."""
+
+    line: int
+    start: int
+    end: int
+    old: str
+    text: str
+
+
+@dataclass
+class ActionMenu:
+    """The quick fixes and refactorings offered at a line (Ctrl+.)."""
+
+    line: int
+    column: int
+    items: List[CodeAction] = field(default_factory=list)
+    index: int = 0
+    #: Answers still awaited from the language servers.
+    pending: int = 0
+
+    @property
+    def selected(self) -> Optional[CodeAction]:
+        """The highlighted action, or ``None`` if there is none."""
+        return self.items[self.index] if 0 <= self.index < len(self.items) else None
+
+
+@dataclass
+class References:
+    """Every use of a symbol (Shift+F12), listed under the editor."""
+
+    name: str
+    items: List[Tuple[Location, str]] = field(default_factory=list)
+    loading: bool = True
+
+
+#: A place in the code to go back to: ``("form", handler or "*", line, column)`` or ``("file", path, line, column)``.
+Place = Tuple[str, str, int, int]
+
+
 class CodeAssist:
     """Completion, diagnostics, code lens and preferences for the designer's code editor."""
 
@@ -118,6 +190,14 @@ class CodeAssist:
         self.settings_section = "appearance"
         self._typed = False
         self._text = ""
+        #: The hover card, the rename field, the quick fixes menu and the references list, while shown.
+        self.hover: Optional[HoverCard] = None
+        self.rename: Optional[RenameBox] = None
+        self.actions: Optional[ActionMenu] = None
+        self.references: Optional[References] = None
+        #: Places left by jumps (Go to definition, a reference), for Go back and Go forward.
+        self.back: List[Place] = []
+        self.forward: List[Place] = []
 
     # -- plumbing -------------------------------------------------------------
     @staticmethod
@@ -133,8 +213,21 @@ class CodeAssist:
 
     @property
     def plain(self) -> bool:
-        """True while the editor shows a project file: no language servers or completion, only editing."""
-        return self.d.buffers.current is not None
+        """True while the editor shows a project file that is not Python: no language servers or completion,
+        only editing."""
+        buffer = self.d.buffers.current
+        return buffer is not None and buffer.language != "py"
+
+    @property
+    def line_height(self) -> int:
+        """The editor's line height in pixels, from the font size and the line height setting."""
+        return round(self.settings.font_size * _settings.LINE_HEIGHTS.get(self.settings.line_height, 1.6))
+
+    @property
+    def readonly(self) -> bool:
+        """Whether the file shown belongs to an installed package (opened by Go to definition): look, don't touch."""
+        buffer = self.d.buffers.current
+        return buffer is not None and _is_library(buffer.path)
 
     @property
     def handler(self) -> Optional[str]:
@@ -154,8 +247,9 @@ class CodeAssist:
 
     # -- lifecycle --------------------------------------------------------------
     def opened(self) -> None:
-        """The editor shows a new handler (or the whole file)."""
+        """The editor shows a new handler, the whole file or a project file."""
         self.completion = None
+        self.hover = self.rename = self.actions = None
         self.cursor = (1, 1)
         self.scroll = (0.0, 0.0)
         buffer = self.d.buffers.current
@@ -163,6 +257,9 @@ class CodeAssist:
             self._text = buffer.text
             if self.search is not None:
                 self._find()
+            if not self.plain and self.servers:
+                self.intel.attach(buffer.path)
+            self._sync()
             return
         if self.d.editing is None:
             return
@@ -180,10 +277,29 @@ class CodeAssist:
         self.intel.shutdown()
 
     def _sync(self) -> None:
-        if self.d.editing is None or self.plain:
+        if self.plain:
+            return
+        if self.d.buffers.current is not None:
+            text = self.d.buffers.current.text
+            self.intel.update(text, None, text)
+            self.intel.use_form(None)
+            self.intel.refresh_lenses()
+            return
+        if self.d.editing is None:
             return
         self.intel.update(self.d.doc.code, self.handler, self.d.editing[1])
         self.intel.refresh_lenses(self.d.doc.form)
+
+    def _document(self, text: str) -> Tuple[str, Optional[str], str]:
+        """What the language servers get for editor text ``text``: ``(module, handler, buffer)``."""
+        if self.d.buffers.current is not None:
+            return text, None, text
+        return self.d.doc.code, self.handler, text
+
+    def environment_changed(self) -> None:
+        """The project's packages may have changed (uv add, sync): restarts the servers if they did."""
+        if self.servers:
+            self.intel.refresh_environment()
 
     # -- editor callbacks ---------------------------------------------------------
     def changed(self, text: str) -> None:
@@ -192,8 +308,9 @@ class CodeAssist:
         if len(text) < len(self._text) and self.completion is not None:
             self._typed = True  # deleting inside a word keeps the list open and refilters it
         self._text = text
+        self.hover = None
         if not self.plain:
-            self.intel.update(self.d.doc.code, self.handler, text)
+            self.intel.update(*self._document(text))
         if self.search is not None:
             self._find()
 
@@ -343,12 +460,41 @@ class CodeAssist:
             "replace": lambda: self.open_search(replacing=True),
             "go_to_line": self.open_goto,
             "toggle_soft_wrap": lambda: self.set("wrap", not self.settings.wrap),
+            "go_to_definition": self.go_to_definition,
+            "go_to_type_definition": lambda: self.go_to_definition("typeDefinition"),
+            "find_all_references": self.find_references,
+            "rename_symbol": self.start_rename,
+            "code_actions": lambda: self.open_actions(),
+            "organize_imports": lambda: self.source_action("source.organizeImports"),
+            "fix_all": lambda: self.source_action("source.fixAll"),
+            "go_back": lambda: self.go_back(1),
+            "go_forward": lambda: self.go_back(-1),
+            "toggle_sticky_scroll": lambda: self.set("sticky_scroll", not self.settings.sticky_scroll),
         }
         return panel[name]() if name in panel else None
 
     def on_key(self, combo: str) -> Any:
-        """The keys of the find bar, go to line and the completion list while they are open (before the
-        keymap's); returns ``(handled, result)``."""
+        """The keys of the find bar, go to line, the rename field, the quick fixes and the completion list while
+        they are open (before the keymap's); returns ``(handled, result)``."""
+        if self.rename is not None and combo == "escape":
+            return True, self.cancel_rename()
+        m = self.actions
+        if m is not None and combo in ("up", "down", "enter", "tab", "escape", "pageup", "pagedown"):
+            if combo == "escape":
+                return True, self.close_actions()
+            if combo in ("enter", "tab"):
+                return True, self.apply_action(m.index)
+            step = {"up": -1, "down": 1, "pageup": -8, "pagedown": 8}[combo]
+            if m.items:
+                m.index = (m.index + step) % len(m.items) if abs(step) == 1 else \
+                    max(0, min(len(m.items) - 1, m.index + step))
+            return True, None
+        if self.hover is not None and combo == "escape":
+            self.hover = None
+            return True, None
+        if self.references is not None and combo == "escape" and self.search is None and self.goto is None:
+            self.references = None
+            return True, None
         if self.search is not None and combo in ("f3", "shift-f3", "shift-enter", "alt-enter", "escape"):
             if combo == "escape":
                 return True, self.close_search()
@@ -378,7 +524,499 @@ class CodeAssist:
         """Keys the editor must hand to the designer instead of handling them: the list navigation keys while
         a completion list is shown, and the keymap's keys without Ctrl for the designer's actions (Alt+Z)."""
         keys = _keymap.get().captured(("Editor", "CodePanel", "Workspace"))
-        return (CAPTURED if self.completion is not None and self.completion.shown else ()) + keys
+        lists = (self.completion is not None and self.completion.shown) or self.actions is not None
+        return (CAPTURED if lists else ()) + keys
+
+    # -- hover ------------------------------------------------------------------------
+    def hovered(self, info: Optional[Dict[str, Any]]) -> None:
+        """The mouse rests on a word (``info`` from the editor's ``on_hover``), or left it (``None``): shows or
+        hides its hover card with the symbol's documentation and the problems there."""
+        if info is None:
+            self.hover = None
+            return
+        if self.plain or not self.settings.hover or self.rename is not None or self.actions is not None \
+                or (self.completion is not None and self.completion.shown):
+            return
+        card = HoverCard(int(info["line"]), int(info["column"]), int(info["start"]), int(info["end"]),
+                         float(info["x"]), float(info["y"]), float(info["height"]))
+        card.diagnostics = [d for d in self.diagnostics() if _covers(d, card.line, card.start, card.end)]
+        text = self._line(card.line)
+        if self.d.buffers.current is None:
+            card.text = _intel.designer_hover(self.d.doc.form, text, card.start, card.end)
+        self.hover = card
+        if card.text or not self.intel.hover(card.line, card.column, lambda doc: self._hover_text(card, doc)):
+            card.loading = False
+            if not card.text and not card.diagnostics:
+                self.hover = None
+        _telemetry.get().count("editor.hover")
+
+    def _hover_text(self, card: HoverCard, text: str) -> None:
+        if self.hover is not card:
+            return
+        card.text, card.loading = text, False
+        if not text and not card.diagnostics:
+            self.hover = None
+
+    # -- navigation -------------------------------------------------------------------
+    def _place(self) -> Optional[Place]:
+        """Where the cursor is now, to come back to it."""
+        line, column = self.cursor
+        buffer = self.d.buffers.current
+        if buffer is not None:
+            return ("file", str(buffer.path), line, column)
+        if self.d.editing is not None:
+            return ("form", self.d.editing[0], line, column)
+        return None
+
+    def _remember(self) -> None:
+        place = self._place()
+        if place is not None and (not self.back or self.back[-1] != place):
+            self.back = (self.back + [place])[-HISTORY:]
+        self.forward = []
+
+    def go_back(self, step: int = 1) -> Any:
+        """Goes back to where the cursor was before the last jump (``step=-1``: forward again)."""
+        source, target = (self.back, self.forward) if step > 0 else (self.forward, self.back)
+        if not source:
+            return None
+        here = self._place()
+        place = source.pop()
+        if here is not None:
+            target.append(here)
+        _telemetry.get().count("editor.go_back" if step > 0 else "editor.go_forward")
+        return self._go(place)
+
+    def _go(self, place: Place) -> Any:
+        kind, where, line, column = place
+        if kind == "file":
+            path = Path(where)
+            current = self.d.buffers.current
+            if current is None or current.path.resolve() != path.resolve():
+                if not self.d.buffers.open(path):
+                    return None
+        else:
+            current = self.d.editing[0] if self.d.editing is not None else None
+            if (self.d.buffers.current is not None or current != where) and not self.d.edit_code(where):
+                return None
+        return self._move_to(line, column)
+
+    def _move_to(self, line: int, column: int) -> Any:
+        self.cursor = (line, column)
+        self.completion = self.hover = None
+        editor = self.d.editor_id
+        return _core.Command.batch([_core.Command.set_editor_cursor(editor, line, column),
+                                    _core.Command.focus(editor)])
+
+    def go_to_definition(self, kind: str = "definition") -> Any:
+        """Goes to where the symbol at the cursor is defined (F12, Ctrl+click), or its type's definition with
+        ``kind="typeDefinition"``. Without ty, looks for a ``def`` or ``class`` of that name in the code."""
+        if self.plain:
+            return None
+        line, column = self.cursor
+        word = _word_at(self._line(line), _char_index(self._line(line), column))
+        if not word:
+            return None
+        _telemetry.get().count(f"editor.go_to_{'type_' if kind != 'definition' else ''}definition")
+
+        def found(locations: List[Location]) -> Any:
+            if locations:
+                return self.open_location(locations[0])
+            return self._local_definition(word)
+
+        if not self.intel.definition(line, column, found, kind=kind):
+            return self._local_definition(word)
+        return None
+
+    def _local_definition(self, word: str) -> Any:
+        """Goes to a ``def``/``class`` named ``word`` (or the control of ``form.<word>``) without ty."""
+        for d in _intel.definitions(self.intel.text or self._text):
+            if d.name == word:
+                where = self.intel.editor_position(d.line - 1, d.column) if self.intel.text else (d.line, d.column + 1)
+                if where is not None:
+                    self._remember()
+                    return self._move_to(*where)
+                if self.d.buffers.current is None and self.d.editing is not None:
+                    self._remember()
+                    return self._open_form_code(d.line - 1, d.column)
+        if self.d.buffers.current is None and self.d.doc.form.get(word) is not None:
+            self.d.doc.select(word)  # form.<control>: select it on the canvas
+            self.d.notify(tr("{name} is a control of the form", name=word), kind="info", seconds=2)
+            return None
+        self.d.notify(tr("No definition found for {name}", name=word), kind="info", seconds=2)
+        return None
+
+    def open_location(self, loc: Location, remember: bool = True) -> Any:
+        """Shows ``loc`` in the editor: in the text shown, another handler of the form or another file (opened in a
+        tab); returns the commands that move the cursor there."""
+        if remember:
+            self._remember()
+        target = loc.path.resolve()
+        here = self.intel.file
+        if here is not None and target == here and not self.plain:
+            where = self.intel.editor_position(loc.line, loc.character)
+            if where is not None:
+                return self._move_to(*where)
+            if self.d.buffers.current is None and self.d.editing is not None:
+                return self._open_form_code(loc.line, loc.character)
+        code = self.d.doc.code_path
+        if code is not None and target == code.resolve():
+            return self._open_form_code(loc.line, loc.character)
+        if not self.d.buffers.open(loc.path):
+            self.d.notify(tr("Could not open {name}", name=loc.path.name), kind="error", seconds=3)
+            return None
+        text = self.d.buffers.current.text if self.d.buffers.current is not None else ""
+        lines = text.split("\n")
+        line = min(loc.line, max(len(lines) - 1, 0))
+        return self._move_to(line + 1, _intel.byte_column(lines[line] if lines else "", loc.character))
+
+    def _open_form_code(self, line: int, character: int) -> Any:
+        """Opens the form's function holding file line ``line`` (0-based) in the editor, or the whole file when
+        it is outside every function, with the cursor there."""
+        if self.d.editing is not None and not self.d._flush_code():
+            return None
+        source = self.d.doc.code
+        handler, first = "*", 1
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            tree = None
+        for node in tree.body if tree is not None else []:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                span = _code.find_function(source, node.name)
+                if span is not None and span[0] <= line + 1 <= span[1]:
+                    handler, first = node.name, span[0]
+                    break
+        if not self.d.edit_code(handler):
+            return None
+        text = source.split("\n")
+        column = _intel.byte_column(text[line] if line < len(text) else "", character)
+        return self._move_to(line + 2 - first, column)
+
+    # -- references -------------------------------------------------------------------
+    def find_references(self) -> Any:
+        """Lists every use of the symbol at the cursor under the editor (Shift+F12)."""
+        if self.plain:
+            return None
+        line, column = self.cursor
+        word = _word_at(self._line(line), _char_index(self._line(line), column))
+        if not word:
+            return None
+        refs = References(word)
+        self.references = refs
+        _telemetry.get().count("editor.find_references")
+
+        def found(locations: List[Location]) -> None:
+            if self.references is not refs:
+                return
+            refs.items = [(loc, self._preview(loc)) for loc in locations]
+            refs.loading = False
+
+        if not self.intel.references(line, column, found):
+            refs.loading = False
+            source = self.intel.text or self._text
+            for i, text in enumerate(source.split("\n")):
+                for m in re.finditer(rf"\b{re.escape(word)}\b", text):
+                    path = self.intel.file or self.code_file()
+                    loc = Location(path, i, len(text[: m.start()].encode("utf-16-le")) // 2)
+                    refs.items.append((loc, text.strip()))
+        return None
+
+    def _preview(self, loc: Location) -> str:
+        """The text of the line at ``loc`` (from the editor, an open tab or the disk)."""
+        target = loc.path.resolve()
+        if self.intel.file is not None and target == self.intel.file:
+            text = self.intel.text
+        else:
+            index = self.d.buffers.index_of(loc.path)
+            if index is not None:
+                text = self.d.buffers.items[index].text
+            else:
+                from .files import read_text
+
+                text = read_text(loc.path) or ""
+        lines = text.split("\n")
+        return lines[loc.line].strip() if loc.line < len(lines) else ""
+
+    def close_references(self) -> None:
+        """Closes the references list."""
+        self.references = None
+
+    # -- rename -----------------------------------------------------------------------
+    def start_rename(self) -> Any:
+        """Opens the rename field (F2) on the symbol at the cursor; returns the command that focuses it."""
+        if self.plain:
+            return None
+        line, column = self.cursor
+        text = self._line(line)
+        index = _char_index(text, column)
+        word = _word_at(text, index)
+        if not word or not word.isidentifier():
+            return None
+        start = index
+        while start > 0 and (text[start - 1].isalnum() or text[start - 1] == "_"):
+            start -= 1
+        first = len(text[:start].encode("utf-8")) + 1
+        self.rename = RenameBox(line, first, first + len(word.encode("utf-8")), word, word)
+        self.completion = self.hover = None
+        return _core.Command.batch([_core.Command.focus(RENAME_ID), _core.Command.select_all(RENAME_ID)])
+
+    def set_rename_text(self, text: str) -> None:
+        """The rename field changed."""
+        if self.rename is not None:
+            self.rename.text = text
+
+    def cancel_rename(self) -> Any:
+        """Closes the rename field and gives the keyboard back to the editor."""
+        self.rename = None
+        return _core.Command.focus(self.d.editor_id)
+
+    def submit_rename(self) -> Any:
+        """Renames the symbol everywhere it is used (ty knows the uses across files; without it, the names in
+        this code). A renamed handler stays wired to its events."""
+        r = self.rename
+        if r is None:
+            return None
+        new = r.text.strip()
+        if not new.isidentifier() or keyword.iskeyword(new):
+            self.d.notify(tr("{name} is not a valid name", name=new or "''"), kind="error", seconds=3)
+            return None
+        self.rename = None
+        focus = _core.Command.focus(self.d.editor_id)
+        if new == r.old:
+            return focus
+        _telemetry.get().count("editor.rename")
+
+        def done(edit: Optional[Dict[str, Any]]) -> Any:
+            if not edit or not _intel.edits_by_path(edit):
+                return self._local_rename(r.old, new)
+            return self.apply_workspace_edit(edit, renamed=(r.old, new))
+
+        if not self.intel.rename(r.line, r.start, new, done):
+            return _core.Command.batch([self._local_rename(r.old, new), focus])
+        return focus
+
+    def _local_rename(self, old: str, new: str) -> Any:
+        """Renames ``old`` in the code shown (names only, not in strings or comments)."""
+        try:
+            tokens = list(tokenize.generate_tokens(io.StringIO(self._text).readline))
+        except (tokenize.TokenError, IndentationError, SyntaxError):
+            tokens = []
+        lines = self._text.split("\n")
+        ranges = []
+        for tok in tokens:
+            if tok.type == tokenize.NAME and tok.string == old:
+                (row, col), (end_row, end_col) = tok.start, tok.end
+                head, tail = lines[row - 1][:col], lines[end_row - 1][:end_col]
+                ranges.append(((row, len(head.encode("utf-8")) + 1, end_row, len(tail.encode("utf-8")) + 1), new))
+        if not ranges:
+            self.d.notify(tr("Nothing to rename"), kind="info", seconds=2)
+            return None
+        self._rename_wiring(old, new)
+        return _core.Command.replace_editor_ranges(self.d.editor_id, ranges)
+
+    def _rename_wiring(self, old: str, new: str) -> None:
+        """Keeps the events of a renamed handler pointing at it."""
+        if self.d.buffers.current is None or (self.d.doc.code_path is not None and self.intel.file is not None
+                                              and self.d.doc.code_path.resolve() == self.intel.file):
+            self.d.doc.rename_handler(old, new)
+
+    # -- edits from the language servers --------------------------------------------------
+    def apply_workspace_edit(self, edit: Dict[str, Any], renamed: Optional[Tuple[str, str]] = None) -> Any:
+        """Applies an LSP ``WorkspaceEdit`` (a rename or a fix): to the code shown, the form's code, open tabs,
+        and other files, which open as unsaved tabs to review; returns the editor's commands."""
+        changes = _intel.edits_by_path(edit)
+        here = self.intel.file
+        commands = []
+        others = []
+        for path, edits in changes.items():
+            if here is not None and path.resolve() == here and not self.plain:
+                command = self._edit_shown(edits, renamed)
+                if command is not None:
+                    commands.append(command)
+            elif self._edit_elsewhere(path, edits):
+                others.append(path.name)
+        if renamed is not None:
+            self._rename_wiring(*renamed)
+        if others:
+            self.d.notify(tr("Changed {count} more files", count=len(others)), ", ".join(others[:4]), kind="info",
+                          seconds=4)
+        return _core.Command.batch(commands) if commands else None
+
+    def _edit_shown(self, edits: List[Dict[str, Any]], renamed: Optional[Tuple[str, str]]) -> Any:
+        """Applies edits (file coordinates) to the document the editor shows."""
+        handler = self.handler if self.d.buffers.current is None else None
+        if handler is None:
+            # The editor shows the whole file: replace the ranges, so Undo takes them back.
+            ranges = []
+            for e in edits:
+                start, end = e["range"]["start"], e["range"]["end"]
+                a = self._editor_point(start["line"], start["character"])
+                b = self._editor_point(end["line"], end["character"])
+                ranges.append(((*a, *b), e.get("newText", "")))
+            if not ranges:
+                return None
+            line, column = _shifted(self.cursor, ranges)
+            return _core.Command.batch([_core.Command.replace_editor_ranges(self.d.editor_id, ranges),
+                                        _core.Command.set_editor_cursor(self.d.editor_id, line, column)])
+        # One handler is shown: edit the whole module and show the handler again.
+        full = _intel.apply_edits(self.intel.text, edits)
+        try:
+            ast.parse(full)
+        except SyntaxError:
+            self.d.notify(tr("Fix the errors in the code first"), kind="error", seconds=3)
+            return None
+        name = handler
+        if renamed is not None and renamed[0] == handler and _code.find_function(full, renamed[1]) \
+                and not _code.find_function(full, handler):
+            name = renamed[1]
+        self.d.doc.set_code(full)
+        text = self.d.doc.handler_source(name)
+        self.d.editing = (name, text)
+        self.d.last_handler = name
+        self.d._code_base = None
+        self.d.code_revision += 1  # a new editor buffer with the new text
+        line, column = self.cursor
+        self.opened()
+        self.cursor = (line, column)
+        return _core.Command.set_editor_cursor(self.d.editor_id, line, column)
+
+    def _editor_point(self, line: int, character: int) -> Tuple[int, int]:
+        """The editor position of an LSP position, clamped to the text (the end of the file included)."""
+        where = self.intel.editor_position(line, character)
+        if where is not None:
+            return where
+        lines = self._text.split("\n")
+        if line - self.intel.offset >= len(lines):
+            return len(lines), len(lines[-1].encode("utf-8")) + 1
+        return 1, 1
+
+    def _edit_elsewhere(self, path: Path, edits: List[Dict[str, Any]]) -> bool:
+        """Applies edits to a file not shown: its open tab, the form's code, or the file opened in a new unsaved
+        tab; returns whether it changed."""
+        from .files import Buffer, read_text
+
+        buffers = self.d.buffers
+        index = buffers.index_of(path)
+        if index is not None:
+            buffer = buffers.items[index]
+            buffer.text = _intel.apply_edits(buffer.text, edits)
+            buffer.revision += 1
+            return True
+        code = self.d.doc.code_path
+        if code is not None and path.resolve() == code.resolve():
+            self.d.doc.set_code(_intel.apply_edits(self.d.doc.code, edits))
+            return True
+        text = read_text(path)
+        if text is None:
+            return False
+        buffers.items.append(Buffer(path, _intel.apply_edits(text, edits), text))
+        return True
+
+    # -- quick fixes and refactorings ----------------------------------------------------
+    def open_actions(self, line: Optional[int] = None) -> Any:
+        """Shows the quick fixes and refactorings for a line (the cursor's by default; Ctrl+.): ruff's and ty's
+        fixes, imports for undefined names and installing a missing package."""
+        if self.plain:
+            return None
+        line = line or self.cursor[0]
+        column = self.cursor[1] if line == self.cursor[0] else 1
+        menu = ActionMenu(line, column)
+        self.actions = menu
+        self.completion = self.hover = None
+        diags = [d for d in self.intel.diagnostics() if d.line <= line <= d.end_line]
+        project = self.d.projects.project
+        installed = {d.name for d in self.d.projects.deps}
+        for diag in diags:
+            package = _intel.missing_package(diag)
+            if package and project is not None and _project_name(package) not in installed:
+                menu.items.append(CodeAction(tr("Install {package} in the project (uv add)", package=package),
+                                             preferred=True, run=lambda package=package: self.install(package)))
+        for diag in diags:
+            undefined = re.search(r"[Nn]ame `(\w+)` used when not defined", diag.message)
+            if undefined:
+                menu.pending += 1
+                name = undefined.group(1)
+                asked = self.intel.complete(diag.end_line, diag.end_column,
+                                            lambda items, name=name: self._imports_received(menu, name, items))
+                if not asked:
+                    menu.pending -= 1
+                break  # one completion request at a time
+        if self.intel.code_actions(line, line, lambda items: self._actions_received(menu, items)):
+            menu.pending += 1
+        _telemetry.get().count("editor.code_actions")
+        if not menu.pending and not menu.items:
+            self.actions = None
+            self.d.notify(tr("No quick fixes here"), kind="info", seconds=2)
+        return None
+
+    def _imports_received(self, menu: ActionMenu, name: str, items: List[CompletionItem]) -> None:
+        menu.pending -= 1
+        if self.actions is not menu or self.intel.uri is None:
+            return
+        fixes = []
+        for item in items:
+            if item.label == name and item.additional_edits:
+                found = re.search(r"from ([\w.]+) import|import ([\w.]+)", item.detail or "")
+                where = (found.group(1) or found.group(2)) if found else (item.detail or "").strip(" ()")
+                title = tr("Import {name} from {module}", name=name, module=where) if where else \
+                    tr("Import {name}", name=name)
+                fixes.append(CodeAction(title, edit={"changes": {self.intel.uri: item.additional_edits}},
+                                        preferred=not fixes))
+        menu.items[:0] = fixes[:5]
+        self._settle(menu)
+
+    def _actions_received(self, menu: ActionMenu, items: List[CodeAction]) -> None:
+        menu.pending -= 1
+        if self.actions is not menu:
+            return
+        menu.items.extend(items)
+        self._settle(menu)
+
+    def _settle(self, menu: ActionMenu) -> None:
+        if not menu.pending and not menu.items:
+            self.actions = None
+            self.d.notify(tr("No quick fixes here"), kind="info", seconds=2)
+
+    def apply_action(self, index: int) -> Any:
+        """Runs quick fix ``index`` of the open menu and closes it."""
+        menu, self.actions = self.actions, None
+        if menu is None or not 0 <= index < len(menu.items):
+            return _core.Command.focus(self.d.editor_id)
+        action = menu.items[index]
+        _telemetry.get().count("editor.apply_code_action")
+        focus = _core.Command.focus(self.d.editor_id)
+        if action.run is not None:
+            return _core.Command.batch([c for c in (action.run(), focus) if c is not None])
+        result = self.apply_workspace_edit(action.edit or {})
+        return _core.Command.batch([c for c in (result, focus) if c is not None])
+
+    def close_actions(self) -> Any:
+        """Closes the quick fixes menu."""
+        self.actions = None
+        return _core.Command.focus(self.d.editor_id)
+
+    def source_action(self, kind: str) -> Any:
+        """Runs ruff's ``source.organizeImports`` or ``source.fixAll`` on the code."""
+        if self.plain:
+            return None
+        lines = (self.intel.text or self._text).count("\n") + 1 - self.intel.offset
+
+        def received(items: List[CodeAction]) -> Any:
+            for item in items:
+                if item.kind.startswith(kind) and item.edit:
+                    return self.apply_workspace_edit(item.edit)
+            self.d.notify(tr("Nothing to change"), kind="info", seconds=2)
+            return None
+
+        if not self.intel.code_actions(1, max(min(lines, self.intel.length or lines), 1), received):
+            self.d.notify(tr("ruff is not running"), kind="warning", seconds=3)
+        _telemetry.get().count(f"editor.{kind.split('.')[-1]}")
+        return None
+
+    def install(self, package: str) -> Any:
+        """Adds ``package`` to the project with ``uv add``; the servers restart once it is installed, so its
+        imports resolve."""
+        return self.d.projects.add_package(package)
 
     # -- diagnostics and lenses -----------------------------------------------------
     def diagnostics(self) -> List[Diagnostic]:
@@ -428,8 +1066,9 @@ class CodeAssist:
         return _keymap.get().editor_keymap()
 
     def show_settings_section(self, section: str) -> None:
-        """Shows ``section`` of the editor settings."""
+        """Shows ``section`` of the editor settings (a page of the Settings dialog)."""
         self.settings_section = section
+        self.d.settings_ui.show(f"editor.{section}")
 
     def setter(self, key: str) -> Any:
         """Returns a callback that sets editor setting ``key`` to the value it receives (for settings
@@ -443,9 +1082,13 @@ class CodeAssist:
         if size != self.settings.font_size:
             self.set("font_size", size)
 
-    def action_ran(self, name: str) -> None:
-        """An editor action ran (``on_action``): counted by the telemetry when it is on."""
+    def action_ran(self, name: str) -> Any:
+        """An editor action ran (``on_action``): counted by the telemetry when it is on. Ctrl+click reports
+        ``go_to_definition``, which goes there."""
         _telemetry.get().count(f"editor.{name}")
+        if name == "go_to_definition":
+            return self.go_to_definition()
+        return None
 
     # -- search -----------------------------------------------------------------------
     def open_search(self, replacing: bool = False) -> Any:
@@ -670,6 +1313,42 @@ def _slice(text: str, match: Range) -> str:
     return text[offset(l1, c1):offset(l2, c2)]
 
 
+def _shifted(cursor: Tuple[int, int], ranges: List[Tuple[Tuple[int, int, int, int], str]]) -> Tuple[int, int]:
+    """Where the cursor ends up after one-line replacements on its line (a rename): text replaced before it moves
+    it, and inside a replaced word it stays at the same distance from the word's start."""
+    line, column = cursor
+    shift = 0
+    for (l1, c1, l2, c2), text in sorted(ranges, key=lambda r: r[0]):
+        if l1 != line or l2 != line or "\n" in text or c1 > column:
+            continue
+        size = len(text.encode("utf-8"))
+        if c2 <= column:
+            shift += size - (c2 - c1)
+        else:
+            return line, c1 + shift + min(column - c1, size)
+    return line, column + shift
+
+
+def _is_library(path: Path) -> bool:
+    """Whether ``path`` is inside an installed package (a ``site-packages`` folder or a Python install)."""
+    parts = {p.lower() for p in path.parts}
+    return bool(parts & {"site-packages", "dist-packages", "typeshed"})
+
+
+def _covers(diag: Diagnostic, line: int, start: int, end: int) -> bool:
+    """Whether diagnostic ``diag`` touches the word at ``line`` between byte columns ``start`` and ``end``."""
+    if not diag.line <= line <= diag.end_line:
+        return False
+    if diag.line == line and diag.column > end:
+        return False
+    return not (diag.end_line == line and diag.end_column < start)
+
+
+def _project_name(package: str) -> str:
+    """A package name as the project lists it (lower case, ``-`` for ``_`` and ``.``)."""
+    return re.sub(r"[-_.]+", "-", package).lower()
+
+
 def _char_index(line: str, column: int) -> int:
     """The character index of 1-based byte ``column`` in ``line``."""
     return len(line.encode("utf-8")[: column - 1].decode("utf-8", "ignore"))
@@ -821,25 +1500,32 @@ def _short(text: str, limit: int) -> str:
 
 
 def _editor_area(a: CodeAssist, editor: Any, below: List[Any], size: float, line_count: int, gutter: bool) -> Any:
-    """The editor, with the completion list pinned under (or above) the word being completed, and ``below`` it.
+    """The editor, with its popups pinned over it (the completion list under or above the word being completed,
+    the hover card, the rename field and the quick fixes), and ``below`` it.
 
-    The widget tree is the same with or without the list, so the editor keeps its focus.
+    The widget tree is the same with or without the popups, so the editor keeps its focus.
     """
     t = a.d.theme_obj
-    lh = round(size * 1.6)
+    lh = a.line_height
     left = (MARKER_WIDTH + max(len(str(line_count)), 2) * size * 0.62 + 28) if gutter else 0.0
     char = size * CHAR_WIDTH
     below_height = sum(h for _, h in below)
+    nothing = _core.space(width=0, height=0)
+
+    def anchor(line: int, column: int) -> Tuple[float, float]:
+        """Where 1-based ``column`` of ``line`` is drawn: its left and the bottom of its line."""
+        sx, sy = a.scroll
+        return left + PAD_LEFT + (column - 1) * char - sx, PAD_Y + line * lh - sy
 
     def place(width: float, height: float) -> Any:
+        visible = height - below_height
+        pins = []
         c = a.completion
-        popup: Any = _core.space(width=0, height=0)
+        popup: Any = nothing
         x = y = 0.0
         if c is not None and (c.shown or c.loading):
-            sx, sy = a.scroll
-            visible = height - below_height
-            x = left + PAD_LEFT + (c.start - 1) * char - sx - 30
-            y = PAD_Y + c.line * lh - sy + 2
+            x, y = anchor(c.line, c.start)
+            x, y = x - 30, y + 2
             # below the line if it fits, else on the side with more room, with as many rows as fit
             space_below, space_above = visible - y - 4, y - lh - 6
             wanted = min(len(c.shown), POPUP_ROWS) if c.shown else 1
@@ -851,10 +1537,151 @@ def _editor_area(a: CodeAssist, editor: Any, below: List[Any], size: float, line
             docs = c.selected is not None and bool(c.selected.detail or c.selected.documentation)
             x = max(4.0, min(x, width - LIST_WIDTH - (DOC_WIDTH + 4 if docs else 0) - 4))
             popup = completion_popup(a, t, rows, max(room, 80))
-        area = _core.stack([editor, _core.pin(popup, x=x, y=y)], width="fill", height="fill")
+        pins.append(_core.pin(popup, x=x, y=y))
+        h = a.hover
+        card: Any = nothing
+        x = y = 0.0
+        if h is not None and (h.text or h.diagnostics):
+            room_width = max(min(HOVER_WIDTH, width - 8), 200.0)
+            estimate = min(HOVER_HEIGHT, 24 + 30 * len(h.diagnostics) + 19 * _text_rows(h.text, room_width))
+            below_room = visible - (h.y + h.height) - 6
+            up = below_room < estimate and h.y - 6 > below_room
+            room = h.y - 6 if up else below_room
+            tall = max(min(room, HOVER_HEIGHT), 80)
+            card = hover_card(a, h, t, room_width, tall)
+            x = max(4.0, min(h.x - 6, width - room_width - 4))
+            y = h.y + h.height + 2
+            if up:  # its bottom right above the word, however tall it turns out
+                card = _core.container(card, height=tall, align_y="bottom")
+                y = h.y - tall - 2
+        pins.append(_core.pin(card, x=x, y=y))
+        r = a.rename
+        box: Any = nothing
+        x = y = 0.0
+        if r is not None:
+            x, y = anchor(r.line, r.start)
+            box = rename_box(a, r, t)
+            x = max(4.0, min(x - 8, width - 300))
+            y = y + 2 if y + 70 < visible else y - lh - 70
+        pins.append(_core.pin(box, x=x, y=y))
+        m = a.actions
+        menu: Any = nothing
+        x = y = 0.0
+        if m is not None:
+            x, y = anchor(m.line, m.column)
+            rows = max(len(m.items) + (1 if m.pending else 0), 1)
+            tall = min(rows, 10) * ROW_HEIGHT + 10
+            space_below, space_above = visible - y - 6, y - lh - 6
+            up = space_below < tall and space_above > space_below
+            tall = max(min(tall, space_above if up else space_below), ROW_HEIGHT + 10)
+            menu = actions_menu(a, m, t, tall)
+            x = max(4.0, min(x - 8, width - ACTIONS_WIDTH - 4))
+            y = max(y - lh - tall - 4, 0.0) if up else y + 2
+        pins.append(_core.pin(menu, x=x, y=y))
+        area = _core.stack([editor, *pins], width="fill", height="fill")
         return _core.column([area, *(w for w, _ in below)], width="fill", height="fill")
 
     return _core.responsive(place)
+
+
+def _text_rows(text: str, width: float) -> int:
+    """About how many rows ``text`` (Markdown) takes in the hover card, ``width`` pixels wide."""
+    per_row = max(int((width - 24) / 7.2), 20)
+    return sum(max(1, -(-len(line) // per_row)) for line in text.split("\n")) if text else 0
+
+
+def hover_card(a: CodeAssist, h: HoverCard, t: Theme, width: float, max_height: float) -> Any:
+    """The hover card: the problems at the word (with their quick fix) over the symbol's documentation."""
+    icons = {1: ("circle-x", t.error), 2: ("triangle-alert", t.warning), 3: ("info", t.info), 4: ("info", t.info)}
+    parts: List[Any] = []
+    for diag in h.diagnostics:
+        icon, color = icons.get(diag.severity, icons[3])
+        source = " ".join(x for x in (diag.source, f"({diag.code})" if diag.code else "") if x)
+        parts.append(_core.row([_icon(icon, size=13, color=color),
+                                _core.text(diag.message, size=12, color=t.text, width="fill"),
+                                _core.text(source, size=11, color=t.text_muted, wrap=False)], spacing=8))
+    if h.diagnostics:
+        package = next((p for p in (_intel.missing_package(d) for d in h.diagnostics) if p), None)
+        actions = [ui.button(tr("Quick fix…"), lambda: a.open_actions(h.line), icon="lightbulb", variant="ghost",
+                             size="sm", theme=t)]
+        if package and a.d.projects.project is not None:
+            actions.insert(0, ui.button(tr("Install {package}", package=package), lambda: a.install(package),
+                                        icon="package-plus", variant="tinted", size="sm", theme=t))
+        parts.append(_core.row(actions, spacing=6))
+    if h.text:
+        if parts:
+            parts.append(ui.divider(theme=t))
+        parts.append(ui.markdown(h.text, size=12, selectable=True, theme=t))
+    elif h.loading:
+        parts.append(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t))
+    body = _core.scrollable(_core.column(parts, spacing=8, width="fill", padding=(0, 6, 0, 0)), scrollbar_width=4,
+                            height="shrink")
+    card = _core.container(body, width=width, max_height=max_height, padding=10, clip=True, bg=t.elevated,
+                           border_color=t.border, border_width=1, radius=6)
+    return _core.mouse_area(card, cursor="default")
+
+
+def rename_box(a: CodeAssist, r: RenameBox, t: Theme) -> Any:
+    """The rename field over the symbol (F2): Enter renames it everywhere, Escape cancels."""
+    return _core.container(_core.column([
+        ui.input(r.text, a.set_rename_text, id=RENAME_ID, on_submit=a.submit_rename, size="sm", mono=True,
+                 width=280, theme=t),
+        ui.label(tr("Enter to rename, Esc to cancel"), size="xs", color="text_muted", theme=t),
+    ], spacing=4), padding=6, bg=t.elevated, border_color=t.border_focused, border_width=1, radius=6)
+
+
+def actions_menu(a: CodeAssist, m: ActionMenu, t: Theme, max_height: float = 10 * ROW_HEIGHT + 10) -> Any:
+    """The quick fixes and refactorings at a line (Ctrl+.), at most ``max_height`` pixels tall (scrolling with the
+    highlighted one in view)."""
+    rows: List[Any] = []
+    best = next((i for i, item in enumerate(m.items) if item.preferred), None)
+    for i, item in enumerate(m.items[:30]):
+        icon = "package-plus" if item.run is not None else "lightbulb" if item.kind.startswith("quickfix") else \
+            "wand-sparkles"
+        color = t.warning if item.kind.startswith("quickfix") else t.accent
+        rows.append(_core.button(_core.row([
+            _icon(icon, size=13, color=color),
+            _core.text(item.title, size=13, color=t.text, wrap=False, width="fill"),
+            ui.badge(tr("preferred"), theme=t) if i == best else None,
+        ], spacing=8, align="center"), lambda i=i: a.apply_action(i), padding=(0, 8), height=ROW_HEIGHT, width="fill",
+            bg=t.element_selected if i == m.index else "transparent", hover_bg=t.element_hover, radius=4))
+    if m.pending:
+        rows.append(_core.container(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t), padding=(4, 8)))
+    fits = max(int((max_height - 10) // ROW_HEIGHT), 1)
+    top = min(max(m.index - fits + 1, 0), max(len(rows) - fits, 0))
+    listing = _core.column(rows[top: top + fits], spacing=0, width="fill")
+    return _core.container(listing, width=ACTIONS_WIDTH, max_height=max_height, padding=4, clip=True,
+                           bg=t.elevated, border_color=t.border, border_width=1, radius=6)
+
+
+def references_list(a: CodeAssist, refs: References, t: Theme) -> Tuple[Any, float]:
+    """The uses of a symbol under the editor (Shift+F12), each one a link to it; returns ``(widget, height)``."""
+    root = a.d.projects.files.root
+    rows = []
+    for loc, preview in refs.items:
+        try:
+            name = loc.path.relative_to(root).as_posix() if root is not None else loc.path.name
+        except ValueError:
+            name = loc.path.name
+        rows.append(_core.button(
+            _core.row([_core.text(f"{name}:{loc.line + 1}", size=12, font="mono", color=t.text_muted, wrap=False),
+                       _core.text(preview, size=12, font="mono", color=t.text, wrap=False, width="fill")],
+                      spacing=10, align="center"),
+            lambda loc=loc: a.open_location(loc), padding=(2, 12), width="fill", bg="transparent",
+            hover_bg=t.element_hover))
+    if refs.loading:
+        title = tr("Looking for the uses of {name}…", name=refs.name)
+    else:
+        title = tr("{count} uses of {name}", count=len(refs.items), name=refs.name)
+    header = _core.container(_core.row([
+        _icon("list-tree", size=13, color=t.icon_muted),
+        ui.label(title, size="sm", theme=t),
+        _core.space(width="fill"),
+        ui.icon_button("x", a.close_references, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
+    ], spacing=8, align="center"), padding=(2, 8), width="fill")
+    height = min(len(rows), 6) * 22 + 34
+    body = _core.scrollable(_core.column(rows, width="fill"), scrollbar_width=4)
+    return _core.container(_core.column([header, body], spacing=0), height=height, width="fill", bg=t.panel), height
 
 
 def problems_list(a: CodeAssist, diags: List[Diagnostic], t: Theme) -> Tuple[Any, float]:
@@ -929,8 +1756,9 @@ def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any]
         minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
         on_action=a.action_ran, highlights=a.search.matches if a.search else None,
         match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, cursor_width=s.cursor_width,
-        line_height=round(s.font_size * _settings.LINE_HEIGHTS[s.line_height]), scrollbar=s.scrollbar,
-        keymap=a.editor_keymap(), theme=et)
+        line_height=a.line_height, scrollbar=s.scrollbar, keymap=a.editor_keymap(),
+        on_hover=a.hovered if s.hover and not a.plain else None,
+        sticky_scroll=STICKY_LINES if s.sticky_scroll else 0, readonly=a.readonly, theme=et)
 
 
 def _bars(d: "Designer", t: Theme) -> List[Any]:
@@ -955,15 +1783,35 @@ def file_view(d: "Designer", t: Theme) -> Any:
         title = str(buffer.path)
     icon, _ = for_file(buffer.name)
     header = ui.panel_header(title, icon=icon, actions=[
+        _problems_button(a, t) if not a.plain else None,
         ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
         ui.button(tr("Save"), d.buffers.save, icon="save", variant="tinted", size="sm", disabled=not buffer.dirty,
                   theme=t),
         ui.icon_button("x", d.close_code, size="sm", tooltip=tr("Close"), theme=t),
     ], theme=t)
     et = a.editor_theme(t)
-    editor = _editor(d, buffer.text, buffer.language, {}, et)
-    area = _editor_area(a, editor, [], a.settings.font_size, buffer.text.count("\n") + 1, a.settings.line_numbers)
+    editor = _editor(d, buffer.text, buffer.language, a.annotations(et), et)
+    area = _editor_area(a, editor, _below(a, t), a.settings.font_size, buffer.text.count("\n") + 1,
+                        a.settings.line_numbers)
     return _core.column([header, *_bars(d, t), area], width="fill", height="fill")
+
+
+def _problems_button(a: CodeAssist, t: Theme) -> Any:
+    """The header's errors · warnings count, which shows or hides the problems list."""
+    diags = a.diagnostics()
+    errors = sum(1 for x in diags if x.severity == 1)
+    warnings = sum(1 for x in diags if x.severity == 2)
+    problems = ui.button(f"{errors}  ·  {warnings}", a.toggle_problems, icon="circle-x" if errors else "circle-check",
+                         variant="ghost", size="sm", selected=a.problems_open and bool(diags), theme=t)
+    return ui.tooltip(problems, tr("Problems"), theme=t)
+
+
+def _below(a: CodeAssist, t: Theme) -> List[Tuple[Any, float]]:
+    """What goes under the editor: the references list (Shift+F12) or the problems list."""
+    if a.references is not None:
+        return [references_list(a, a.references, t)]
+    diags = a.diagnostics()
+    return [problems_list(a, diags, t)] if diags and a.problems_open else []
 
 
 def form_code(d: "Designer", t: Theme) -> Any:
@@ -976,15 +1824,10 @@ def form_code(d: "Designer", t: Theme) -> Any:
     whole = handler == "*"
     path = d.doc.code_path.name if d.doc.code_path else f"{d.doc.form.name}.py"
     title = path if whole else f"{path} › {handler}()"
-    diags = a.diagnostics()
-    errors = sum(1 for x in diags if x.severity == 1)
-    warnings = sum(1 for x in diags if x.severity == 2)
-    problems = ui.button(f"{errors}  ·  {warnings}", a.toggle_problems, icon="circle-x" if errors else "circle-check",
-                         variant="ghost", size="sm", selected=a.problems_open and bool(diags), theme=t)
-    problems = ui.tooltip(problems, tr("Problems"), theme=t)
     header = ui.panel_header(title, icon="code", actions=[
-        problems,
-        ui.icon_button("sparkles", d.agent.open_inline, size="sm", tooltip=tr("Inline assist (Ctrl+Alt+I)"), theme=t),
+        _problems_button(a, t),
+        ui.icon_button("sparkles", d.agent.open_inline, size="sm", tooltip=tr("Inline assist"),
+                       keys=_keymap.shown_keys("inline_assist"), theme=t),
         ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
         ui.button(tr("Whole file") if not whole else tr("This handler"), d.toggle_whole_file, variant="ghost", size="sm",
                   theme=t),
@@ -995,8 +1838,7 @@ def form_code(d: "Designer", t: Theme) -> Any:
     if d.code_error:
         below.append((_core.container(ui.label(d.code_error, size="sm", color="error", mono=True, theme=t),
                                       padding=(4, 12), width="fill", height=26, bg=alpha(t.error, 0.1)), 26))
-    if diags and a.problems_open:
-        below.append(problems_list(a, diags, t))
+    below += _below(a, t)
     et = a.editor_theme(t)
     editor = _editor(d, text, "py", a.annotations(et), et)
     area = _editor_area(a, editor, below, s.font_size, text.count("\n") + 1, s.line_numbers)
@@ -1036,12 +1878,12 @@ def search_bar(a: CodeAssist, t: Theme) -> Any:
         option("word", "whole-word", "Match whole words"),
         option("regex", "regex", "Use regular expressions"),
         _core.container(count, width=74, align_x="center"),
-        ui.icon_button("arrow-up", lambda: a.next_match(-1), size="sm", tooltip=tr("Previous match") + "  ⇧F3",
+        ui.icon_button("arrow-up", lambda: a.next_match(-1), size="sm", tooltip=tr("Previous match"), keys="shift-f3",
                        theme=t),
-        ui.icon_button("arrow-down", lambda: a.next_match(1), size="sm", tooltip=tr("Next match") + "  F3", theme=t),
-        ui.icon_button("text-cursor", a.select_all_matches, size="sm", tooltip=tr("Select all matches") + "  Alt+Enter",
-                       theme=t),
-        ui.icon_button("x", a.close_search, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+        ui.icon_button("arrow-down", lambda: a.next_match(1), size="sm", tooltip=tr("Next match"), keys="f3", theme=t),
+        ui.icon_button("text-cursor", a.select_all_matches, size="sm", tooltip=tr("Select all matches"),
+                       keys="alt-enter", theme=t),
+        ui.icon_button("x", a.close_search, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=4, align="center")
     rows = [find]
     if s.replacing:
@@ -1066,7 +1908,7 @@ def goto_bar(a: CodeAssist, t: Theme) -> Any:
                  on_submit=a.submit_goto, size="sm", mono=True, width=180, theme=t),
         ui.label(hint, size="sm", color="text_muted", theme=t),
         _core.space(width="fill"),
-        ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+        ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=8, align="center"), padding=(4, 8), width="fill", bg=t.tab_bar)
 
 
@@ -1090,156 +1932,10 @@ def server_status_items(a: CodeAssist, t: Theme, on_press: Any = None) -> List[A
     return items
 
 
-def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any]]:
-    """The editor settings by section: ``{key: (title, icon, build)}``, in the order of the index."""
-    s = a.settings
-
-    def switch(key: str) -> Any:
-        return ui.switch(bool(getattr(s, key)), a.setter(key), theme=t)
-
-    def appearance() -> List[Any]:
-        from . import dialogs as _dialogs
-
-        theme_names = [tr("Same as the designer"), *themes.names()]
-        heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
-        return [ui.settings_group(tr("Appearance"), [
-            ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
-                                            lambda name: a.set("theme", "" if name == theme_names[0] else name),
-                                            width=200, theme=t), theme=t),
-            ui.field(tr("Font"), _dialogs.font_select(s.font_family, "IBM Plex Mono", a.setter("font_family"), t),
-                     theme=t),
-            ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1,
-                                                      width=110, theme=t),
-                     description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"), theme=t),
-            ui.field(tr("Line height"), ui.segmented(list(heights), tr(s.line_height.capitalize()),
-                                                     lambda name: a.set("line_height", heights[name]), theme=t),
-                     theme=t),
-            ui.field(tr("Line numbers"), switch("line_numbers"), theme=t),
-            ui.field(tr("Highlight current line"), switch("highlight_line"), theme=t),
-            ui.field(tr("Show whitespace"), switch("show_whitespace"), description=tr("Spaces as · and tabs as →"),
-                     theme=t),
-        ], theme=t)]
-
-    def cursor() -> List[Any]:
-        shapes = {tr(shape.capitalize()): shape for shape in _settings.CURSOR_SHAPES}
-        return [ui.settings_group(tr("Cursor"), [
-            ui.field(tr("Shape"), ui.segmented(list(shapes), tr(s.cursor_shape.capitalize()),
-                                               lambda name: a.set("cursor_shape", shapes[name]), theme=t), theme=t),
-            ui.field(tr("Blink"), switch("cursor_blink"), theme=t),
-            ui.field(tr("Width"), ui.number_field(s.cursor_width, a.setter("cursor_width"), min=1, max=4, step=1,
-                                                  width=110, theme=t),
-                     description=tr("Of the bar cursor, in pixels"), theme=t),
-        ], theme=t)]
-
-    def editing() -> List[Any]:
-        return [ui.settings_group(tr("Editing"), [
-            ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1,
-                                                     max=8, step=1, width=110, theme=t),
-                     description=tr("Columns of a level of indentation and of a tab; Enter keeps the indentation"),
-                     theme=t),
-            ui.field(tr("Indent with tabs"), switch("hard_tabs"),
-                     description=tr("Tab, Enter and Ctrl+] indent with tab characters instead of spaces"), theme=t),
-            ui.field(tr("Convert indentation on save"), switch("convert_indentation"),
-                     description=tr("Saving a Python file rewrites its indentation as set above, so they never mix"), theme=t),
-            ui.field(tr("Backspace removes a whole level"), switch("backspace_unindent"),
-                     description=tr("In the indentation; off: one space at a time"), theme=t),
-            ui.field(tr("Autocomplete while typing"), switch("autocomplete"),
-                     description=tr("Ctrl+Space opens it anytime"), theme=t),
-            ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
-                     description=tr("Also wraps the selection and steps over the closing one"), theme=t),
-            ui.field(tr("Code folding"), switch("folding"),
-                     description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"), theme=t),
-            ui.field(tr("Match brackets"), switch("match_brackets"),
-                     description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
-                     theme=t),
-            ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
-                     description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
-            ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
-        ], theme=t)]
-
-    def repeat() -> List[Any]:
-        return [ui.settings_group(tr("Deleting"), [
-            ui.field(tr("Delay before repeating"),
-                     ui.number_field(s.repeat_delay, a.setter("repeat_delay"), min=0,
-                                     max=_settings.MAX_REPEAT_DELAY, step=50, width=110, theme=t),
-                     description=tr("Milliseconds Backspace and Delete wait before repeating (0: the system's)"), theme=t),
-            ui.field(tr("Deletions per second"),
-                     ui.number_field(s.repeat_rate, a.setter("repeat_rate"), min=0, max=_settings.MAX_REPEAT_RATE,
-                                     step=1, width=110, theme=t),
-                     description=tr("At most, while held down (0: the system's pace, the fastest)"), theme=t),
-        ], theme=t)]
-
-    def scrolling() -> List[Any]:
-        return [ui.settings_group(tr("Scrolling and wrapping"), [
-            ui.field(tr("Wrap long lines"), switch("wrap"),
-                     description=tr("Off: long lines scroll sideways (Shift+wheel). Alt+Z toggles it"), theme=t),
-            ui.field(tr("Scrollbars"), switch("scrollbar"), theme=t),
-            ui.field(tr("Minimap"), switch("minimap"), description=tr("Click or drag it to scroll"), theme=t),
-        ], theme=t)]
-
-    def diagnostics() -> List[Any]:
-        return [ui.settings_group(tr("Code lens and diagnostics"), [
-            ui.field(tr("Code lens"), switch("code_lens"),
-                     description=tr("References, implementations and wired events"), theme=t),
-            ui.field(tr("Inline diagnostics"), switch("inline_diagnostics"),
-                     description=tr("Problems at the end of the line"), theme=t),
-        ], theme=t)]
-
-    def servers() -> List[Any]:
-        rows = []
-        for name, status, detail in a.intel.statuses():
-            color = STATUS_COLORS.get(status, "text_muted")
-            what = {"ty": tr("Types, completion and references"), "ruff": tr("Linting")}[name]
-            rows.append(_core.row([
-                _core.container(width=10, height=10, radius=5, bg=t.color(color)),
-                _core.column([ui.label(f"{name}  ·  {status}", theme=t),
-                              ui.label(detail or what, size="sm", color="text_muted", theme=t)], spacing=2,
-                             width="fill"),
-                switch(name),
-            ], spacing=10, align="center"))
-        env = a.intel.env
-        if env is not None:
-            rows.append(_core.column([
-                ui.label(f"{tr('Project')}  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
-                ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
-            ], spacing=2))
-        return [ui.settings_group(tr("Language servers"), rows, theme=t),
-                ui.button(tr("Restart servers"), a.restart_servers, icon="refresh-cw", variant="ghost", theme=t)]
-
-    return {
-        "appearance": (tr("Appearance"), "palette", appearance),
-        "cursor": (tr("Cursor"), "text-cursor", cursor),
-        "editing": (tr("Editing"), "pencil", editing),
-        "deleting": (tr("Deleting"), "delete", repeat),
-        "scrolling": (tr("Scrolling and wrapping"), "wrap-text", scrolling),
-        "diagnostics": (tr("Code lens and diagnostics"), "circle-alert", diagnostics),
-        "servers": (tr("Language servers"), "server", servers),
-    }
-
-
 def settings_dialog(d: "Designer", t: Theme) -> Any:
-    """Builds the editor settings dialog, like Zed's: an index of sections on the left and the chosen one
-    (appearance, cursor, editing, scrolling, diagnostics or language servers) on the right; Key bindings opens
-    the keymap editor."""
-    a = d.assist
-    sections = _settings_sections(a, t)
-    current = a.settings_section if a.settings_section in sections else SETTINGS_SECTIONS[0]
+    """The Settings dialog on the code editor's page (see ``settings_ui``)."""
+    from . import settings_ui
 
-    def item(key: str, title: str, icon: Optional[str] = None) -> Any:
-        return ui.list_item(title, lambda: a.show_settings_section(key), icon=icon, selected=key == current,
-                            inset=True, height=28, theme=t)
-
-    index = _core.column([
-        *(item(key, title, icon) for key, (title, icon, _) in sections.items()),
-        ui.list_item(tr("Key bindings"), d.open_keymap, icon="keyboard", inset=True, height=28,
-                     end=_icon("arrow-up-right", size=12, color=t.icon_muted), theme=t),
-    ], spacing=2, width=210)
-    _, _, build = sections[current]
-    content = _core.scrollable(_core.column(build(), spacing=14, padding=(0, 10, 0, 0)), height=520,
-                               scrollbar_width=4, width="fill")
-    body = _core.row([index, _core.rule(vertical=True, thickness=1, color=t.border_variant), content], spacing=14,
-                     height=520)
-    return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=820, footer=[
-        _core.space(width="fill"),
-        ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t),
-    ], theme=t)
+    if not d.settings_ui.page.startswith("editor."):
+        d.settings_ui.show(f"editor.{d.assist.settings_section}")
+    return settings_ui.dialog(d, t)

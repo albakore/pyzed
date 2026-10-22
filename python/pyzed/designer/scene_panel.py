@@ -2,9 +2,10 @@
 
 When the open document is a ``SceneDocument`` (a ``.pzcomp``), the property grid shows,
 with nothing selected, the component itself: its class, how it shows in the toolbox,
-its properties (public or private, with type and default), its custom events and its
-methods. With a control selected, a Bindings section links the control's properties
-to the component's. F5 opens the component in a window with an event log.
+its properties (public or private, with type and default) and its methods; its custom
+events live in the Events tab, below the built-in ones. With a control selected, a
+Bindings section links the control's properties to the component's. F5 opens the
+component in a window with an event log.
 
 Everything here edits the document through ``SceneDocument``, which writes the class
 code, so the designer and the code stay the same thing.
@@ -25,6 +26,7 @@ from ..theme import Theme
 from . import components as _components
 from . import scene_code, spacing
 from . import type_editor as _type_editor
+from .locale import tr
 from .scene import SceneDocument
 from .scene_runtime import SceneComponent, scenes
 
@@ -60,7 +62,7 @@ def _guard(d: "Designer", action: Callable[[], Any]) -> Any:
 # -- layout helpers ------------------------------------------------------------------
 
 LABEL = 84.0
-SECTIONS = ("class", "toolbox", "layout", "inherited", "properties", "events", "methods", "bindings")
+SECTIONS = ("class", "toolbox", "layout", "inherited", "properties", "methods", "bindings")
 
 
 def _open(d: "Designer") -> set:
@@ -123,7 +125,7 @@ def properties(d: "Designer", t: Theme, rows: List[Any]) -> List[Any]:
 
 def component_rows(d: "Designer", t: Theme) -> List[Any]:
     """Returns the property grid rows shown for the component itself (nothing selected): its class, toolbox
-    look, size, properties, events and base, with a warning while the class does not parse."""
+    look, size, properties, methods and base, with a warning while the class does not parse."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     scene = doc.scene
@@ -168,7 +170,6 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
         ]), icon="ruler"),
         inherited_section(d, t),
         member_section(d, t),
-        event_section(d, t),
         method_section(d, t),
     ]
     return [header, warning, _accordion(d, [s for s in sections if s is not None], t)]
@@ -263,8 +264,8 @@ CARD_INSET = CARD_PADDING + 1  # padding plus border: rows inside a card use it 
 MEMBER_LABEL = 116.0  # the name column of the property rows (icon, name and the settings arrow)
 
 #: The types the Type list offers; any other annotation can be typed in the Annotation field.
-PRESETS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "Choice", "Range", "int | None",
-           "list[str]", "dict[str, int]", "Any")
+PRESETS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "FilePath", "FolderPath", "Choice", "Range",
+           "int | None", "list[str]", "dict[str, int]", "Any")
 
 
 def type_context(d: "Designer", t: Theme) -> _type_editor.Context:
@@ -416,7 +417,8 @@ def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
         base, low, high, step = scene_code.range_of(m.type) if kind == "Range" else (
             kind, None, None, 1.0 if kind == "int" else 0.1)
         return Prop(m.name, "number", m.default, min=low, max=high, step=step)
-    simple = {"bool": "bool", "str": "text", "Color": "color", "Icon": "icon", "Multiline": "multiline"}
+    simple = {"bool": "bool", "str": "text", "Color": "color", "Icon": "icon", "Multiline": "multiline",
+              "FilePath": "file", "FolderPath": "folder"}
     if kind in simple:
         return Prop(m.name, simple[kind], m.default)
     if kind == "Choice":
@@ -424,9 +426,9 @@ def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
     return None
 
 
-def event_section(d: "Designer", t: Theme) -> Any:
-    """Builds the Events section: a card per declared custom event (name and description), and a button to add
-    one."""
+def custom_event_rows(d: "Designer", t: Theme) -> List[Any]:
+    """The custom events the component declares, for the Events tab: a card per event (name and description),
+    and a button to add one."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     events = doc.custom_events
@@ -437,16 +439,17 @@ def event_section(d: "Designer", t: Theme) -> Any:
                 _core.container(ui.input(name, lambda v, n=name: _guard(d, lambda: doc.update_event(n, new_name=v)),
                                          mono=True, icon="zap", theme=t), width="fill"),
                 ui.icon_button("trash-2", lambda n=name: _guard(d, lambda: doc.remove_event(n)), size="xs",
-                               tooltip="Remove", theme=t),
+                               tooltip=tr("Remove"), theme=t),
             ], spacing=4, align="center"),
-            field("Description", ui.input(description, lambda v, n=name: _guard(d, lambda: doc.update_event(
-                n, description=v)), placeholder="What it means", theme=t), t, inset=CARD_INSET),
+            field(tr("Description"), ui.input(description, lambda v, n=name: _guard(d, lambda: doc.update_event(
+                n, description=v)), placeholder=tr("What it means"), theme=t), t, inset=CARD_INSET),
         ], t))
     if not events:
-        rows.append(_hint("Raise them from a method with self.emit(\"name\", value); the parent handles them "
-                          "with on_name=..., or in the Events tab of a form.", t))
-    rows.append(_core.row([_add_button("Event", "plus", lambda: _guard(d, lambda: doc.add_event("changed")), t)]))
-    return ui.AccordionSection("events", f"Custom events ({len(events)})", _stack(rows), icon="zap")
+        rows.append(_hint(tr("Raise them from a method with self.emit(\"name\", value); the parent handles them "
+                             "with on_name=..., or in the Events tab of a form."), t))
+    rows.append(_core.row([_add_button(tr("Event"), "plus", lambda: _guard(d, lambda: doc.add_event("changed")),
+                                       t)]))
+    return rows
 
 
 def method_section(d: "Designer", t: Theme) -> Any:

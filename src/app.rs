@@ -114,6 +114,10 @@ pub enum Message {
         y: f32,
     },
     Scrolled(PyMsg, scrollable::Viewport),
+    /// The mouse rests on a word of a code editor (`None`: it left the word).
+    Hover(PyMsg, Option<crate::editor::Hit>),
+    /// A code editor laid out for the first time with its cursor set: scroll the cursor into view.
+    EditorReveal(Arc<str>),
     Key(String),
     /// A key was released (its name without modifiers, e.g. `"left"`).
     KeyUp(String),
@@ -138,6 +142,9 @@ pub enum Message {
     /// A window was opened (with its size) or moved to this screen position (`None` on Wayland).
     WindowPlaced(window::Id, Option<Point>, Option<Size>),
     SystemTheme(iced::theme::Mode),
+    /// Files dragged from the system over a window: the hook it calls (`on_file_hover`,
+    /// `on_file_drop` or `on_file_leave`) and the file's path (none when the drag leaves).
+    FileDrag(&'static str, Option<String>),
     /// What a callback already run by [`quiet`] returned: dispatched like any callback result.
     Done(PyMsg),
     Noop,
@@ -1408,6 +1415,20 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     None => return Task::none(),
                 }
             }
+            Message::FileDrag(hook, path) => {
+                let main = state.app.bind(py).clone();
+                let Ok(args) = PyTuple::new(py, path) else {
+                    return Task::none();
+                };
+                match call_hook(&target, hook, args.clone()) {
+                    Some(result) => result,
+                    None if !target.is(&main) => match call_hook(&main, hook, args) {
+                        Some(result) => result,
+                        None => return Task::none(),
+                    },
+                    None => return Task::none(),
+                }
+            }
             Message::KeyUp(name) => {
                 let main = state.app.bind(py).clone();
                 match call_hook(&target, "on_key_up", (name.clone(),)) {
@@ -1453,7 +1474,14 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 let Some(outcome) = state.caches.perform_editor(&id, action) else {
                     return Task::none();
                 };
-                return editor_outcome(py, state, &target, outcome, on_change, on_cursor);
+                // Ctrl+click names an action (go to definition) for `on_action`.
+                let on_action = outcome
+                    .action
+                    .and_then(|_| state.caches.editor_context(&id))
+                    .and_then(|ctx| ctx.on_action.clone());
+                return editor_outcome_with(
+                    py, state, &target, outcome, on_change, on_cursor, on_action,
+                );
             }
             Message::EditorIndent {
                 id,
@@ -1499,6 +1527,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 let ctx = (*ctx).clone();
                 return editor_outcome(py, state, &target, outcome, ctx.on_change, ctx.on_cursor);
             }
+            Message::EditorReveal(id) => return state.caches.center_editor(&id),
             Message::EditorScroll { id, y } => {
                 return iced::widget::operation::scroll_to(
                     id,
@@ -1533,6 +1562,20 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     }
                 };
             }
+            Message::Hover(cb, hit) => match hit {
+                Some(hit) => {
+                    let info = PyDict::new(py);
+                    let _ = info.set_item("line", hit.line + 1);
+                    let _ = info.set_item("column", hit.column + 1);
+                    let _ = info.set_item("start", hit.start + 1);
+                    let _ = info.set_item("end", hit.end + 1);
+                    let _ = info.set_item("x", hit.x);
+                    let _ = info.set_item("y", hit.y);
+                    let _ = info.set_item("height", hit.height);
+                    callback(&target, cb.0.bind(py), (info,))
+                }
+                None => callback(&target, cb.0.bind(py), (py.None(),)),
+            },
             Message::Scrolled(cb, viewport) => {
                 let info = PyDict::new(py);
                 let offset = viewport.absolute_offset();
@@ -2007,7 +2050,8 @@ pub fn pressed_keys() -> Vec<String> {
 }
 
 /// Where a window is on the screen and how big: reported when it opens, and each time it moves
-/// (positions are not reported on Wayland). Also whether it has the keyboard focus.
+/// (positions are not reported on Wayland). Also whether it has the keyboard focus, and the
+/// files dragged onto it from the system (one message per file).
 fn window_moved(
     event: iced::Event,
     _status: iced::event::Status,
@@ -2020,6 +2064,17 @@ fn window_moved(
         iced::Event::Window(window::Event::Moved(at)) => {
             Some(Message::WindowPlaced(window, Some(at), None))
         }
+        iced::Event::Window(window::Event::FileHovered(path)) => Some(
+            Message::FileDrag("on_file_hover", Some(path.to_string_lossy().into_owned()))
+                .in_window(window),
+        ),
+        iced::Event::Window(window::Event::FileDropped(path)) => Some(
+            Message::FileDrag("on_file_drop", Some(path.to_string_lossy().into_owned()))
+                .in_window(window),
+        ),
+        iced::Event::Window(window::Event::FilesHoveredLeft) => {
+            Some(Message::FileDrag("on_file_leave", None).in_window(window))
+        }
         iced::Event::Window(window::Event::Focused) => Some(Message::WindowFocused(window, true)),
         iced::Event::Window(window::Event::Unfocused) => {
             Some(Message::WindowFocused(window, false))
@@ -2028,12 +2083,28 @@ fn window_moved(
     }
 }
 
+/// Set by a focused control (a select, `focusable`) that used the key being pressed, so the
+/// key does not also reach `on_key`.
+static KEY_CLAIMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Marks the key being pressed as used by the focused control (see `KEY_CLAIMED`).
+pub fn claim_key() {
+    KEY_CLAIMED.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
 fn key_event(
     event: iced::Event,
     status: iced::event::Status,
     window: window::Id,
 ) -> Option<Message> {
     track_keys(&event);
+    if matches!(
+        event,
+        iced::Event::Keyboard(keyboard::Event::KeyPressed { .. })
+    ) && KEY_CLAIMED.swap(false, std::sync::atomic::Ordering::Relaxed)
+    {
+        return None;
+    }
     match event {
         // Tab that no widget used (a code editor indents with it) moves the focus.
         iced::Event::Keyboard(keyboard::Event::KeyPressed {

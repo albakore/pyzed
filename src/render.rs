@@ -74,6 +74,13 @@ impl Caches {
         }
     }
 
+    /// Scrolls an editor's cursor to the middle of its view.
+    pub fn center_editor(&self, id: &str) -> Task<Message> {
+        self.editors
+            .get(id)
+            .map_or_else(Task::none, |editor| editor.center_cursor(id))
+    }
+
     pub fn perform_editor(&mut self, id: &str, action: text_editor::Action) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
         Some(editor.perform(id, action))
@@ -196,6 +203,8 @@ impl Caches {
                 position,
                 selection: None,
             });
+            // Shown in the middle once the editor knows its size (see `EditorInput`).
+            state.reveal.set(position.line > 0);
         }
         for op in self
             .pending_folds
@@ -888,6 +897,18 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             s.into()
         }
         Kind::Opaque { child } => widget::opaque(build(py, child, ctx)),
+        Kind::Scrub {
+            child,
+            on_scrub,
+            on_start,
+            on_end,
+        } => crate::scrub::Scrub::new(
+            build(py, child, ctx),
+            on_scrub.clone(),
+            on_start.clone(),
+            on_end.clone(),
+        )
+        .into(),
         Kind::Styled(props) => {
             let inner = if props.defaults {
                 Ctx {
@@ -968,6 +989,22 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
         }
         Kind::Presence(props) => build_presence(py, props, ctx),
         Kind::Hover { base, top } => widget::hover(build(py, base, ctx), build(py, top, ctx)),
+        Kind::Popup {
+            child,
+            content,
+            on_dismiss,
+            side,
+            align,
+            gap,
+        } => crate::popup::Popup::new(
+            build(py, child, ctx),
+            content.as_ref().map(|c| build(py, c, ctx)),
+            on_dismiss.clone().map(Message::Py),
+            *side,
+            *align,
+            *gap,
+        )
+        .into(),
         Kind::Tooltip {
             child,
             tip,
@@ -1381,6 +1418,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 on_resize,
             )
             .into()
+        }
+        Kind::Focus { child, props } => {
+            crate::focus::KeyFocus::new(build(py, child, ctx), props).into()
         }
         Kind::WindowEdges { child, border } => {
             crate::frame::WindowEdges::new(build(py, child, ctx), *border).into()

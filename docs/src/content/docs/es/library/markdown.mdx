@@ -2,7 +2,7 @@
 title: "Markdown"
 description: "Muestra Markdown con los colores del tema. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 77
+  order: 78
   label: "Markdown"
 ---
 
@@ -191,7 +191,7 @@ def view(state, set_state):
 ### `ui.markdown`
 
 ```python
-markdown(source, *, size=None, on_link=None, width=None, theme=None)
+markdown(source, *, size=None, on_link=None, width=None, selectable=None, theme=None)
 ```
 
 `pz.markdown` con los colores de texto, enlaces y código del tema.
@@ -201,6 +201,7 @@ markdown(source, *, size=None, on_link=None, width=None, theme=None)
 | `source` | *obligatorio* | El texto Markdown. |
 | `size` | `None` | Tamaño. |
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | `None` | Igual que en `pz.markdown`; la selección usa el color `selection` del tema. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_link` ([eventos](#eventos)).
@@ -220,6 +221,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -234,6 +237,8 @@ Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces
 | `code_color` | `None` | Color del código. |
 | `code_bg` | `None` | Fondo del código. |
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | `None` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | `None` | Color detrás del texto seleccionado. |
 
 Eventos: `on_link` ([eventos](#eventos)).
 

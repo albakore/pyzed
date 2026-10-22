@@ -379,7 +379,7 @@ def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any 
     - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
     """
     ...
-def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ...) -> Any:
+def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
     Editors are *uncontrolled*: `text` is only the initial value for a given `id`.
@@ -394,7 +394,13 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
     - `on_zoom(step)`: Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and
       Ctrl+wheel.
     - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
-      `"select_next"`…).
+      `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+    - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
+      its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
+      `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.
+
+    `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
+    the top of the editor (0 turns it off); a click on one moves the cursor there.
     """
     ...
 def column(children: Any = ..., *, spacing: Any = ..., padding: Any = ..., width: Any = ..., height: Any = ..., align: Any = ..., max_width: Any = ..., clip: Any = ...) -> Any: ...
@@ -407,6 +413,17 @@ def event_names() -> Any:
     ...
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
+    ...
+def focusable(content: Any, on_key: Any = ..., *, keys: Any = ..., id: Any = ..., ring_color: Any = ..., ring_radius: Any = ..., ring_offset: Any = ...) -> Any:
+    """Lets ``content`` have the keyboard focus like a text field: a click or Tab focuses it
+    (``Command.focus(id)`` too) and, while focused, the key combos in ``keys`` (``"space"``,
+    ``"up"``, ``"shift-right"``...; ``"*"`` for every key) call ``on_key(combo)`` instead of
+    reaching the app's ``on_key``. A ring in ``ring_color`` is drawn ``ring_offset`` pixels
+    around it once the keyboard is used on it. Without ``on_key`` it is just ``content``.
+
+    Events:
+    - `on_key(combo)`: Callable that receives one of ``keys`` pressed while it has the focus.
+    """
     ...
 def font_families() -> Any:
     """The font families that can be used by name: the bundled ones, those loaded with `load_font` and the
@@ -488,8 +505,14 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
-def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ...) -> Any:
+def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ..., focus_border_color: Any = ..., id: Any = ...) -> Any:
     """A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
+
+    A click or Tab gives it the keyboard focus (``focus_border_color`` outlines it) and it keeps
+    it after a choice: ↑/↓ then pick the previous or next option without opening the menu,
+    Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open
+    the menu, where ↑/↓ move, Enter picks and Escape closes. ``id`` lets ``Command.focus(id)``
+    focus it.
 
     Events:
     - `on_select(item)`: Callable that receives the chosen item.
@@ -500,6 +523,16 @@ def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_ope
 def pin(content: Any, *, x: Any = ..., y: Any = ..., width: Any = ..., height: Any = ...) -> Any:
     """Places `content` at `(x, y)` inside a box of the given size (use it in a `stack`
     to position popovers and context menus).
+    """
+    ...
+def popup(base: Any, content: Any = ..., *, on_dismiss: Any = ..., side: Any = ..., align: Any = ..., gap: Any = ...) -> Any:
+    """Shows `content` over everything else next to `base` (below it by default), like the menu of a
+    drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does
+    not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls
+    `on_dismiss`. With `content=None` only `base` is shown.
+
+    `side` is ``"bottom"``, ``"top"``, ``"right"`` or ``"left"``; `align` lines it up with the start,
+    center or end of `base`; `gap` is the space between them.
     """
     ...
 def post(message: Any) -> Any:
@@ -572,6 +605,21 @@ def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: 
     Events:
     - `on_scroll(info)`: Callable that receives a dict with `x`, `y`, `relative_x`, `relative_y`,
       `width`, `height`, `content_width` and `content_height`.
+    """
+    ...
+def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any = ...) -> Any:
+    """Lets the mouse change a number field by dragging over it, like Figma's.
+
+    Pressing the left button over `content` and moving sideways calls `on_scrub(dx)` with the
+    pixels moved since the last call (even outside the window), between `on_start()` and
+    `on_end()`. A double click focuses the text input inside with its text selected, to type
+    a value; Enter, Escape or a click outside end the typing. While the input has the focus,
+    every event goes to it.
+
+    Events:
+    - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
+    - `on_start()`: A drag begins.
+    - `on_end()`: The button is released after a drag.
     """
     ...
 def set_fonts(ui: Any = ..., code: Any = ...) -> Any:

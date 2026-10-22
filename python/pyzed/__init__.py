@@ -48,6 +48,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
     column,
     container,
     every,
+    focusable,
     frames,
     grid,
     hover,
@@ -60,6 +61,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
     opaque,
     pick_list,
     pin,
+    popup,
     post,
     progress_bar,
     qr_code,
@@ -87,10 +89,11 @@ from ._core import (  # noqa: E402 - after the allocator options above
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
 from .splash import Splash
+from .rendering import Rendering
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
-from .hints import Color, Icon, Multiline, Range
+from .hints import Color, FilePath, FolderPath, Icon, Multiline, Range
 from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
                     stylesheet, viewport)
 from .animation import Animation, Trigger, define_animation, presence, set_reduced_motion, stagger
@@ -128,6 +131,11 @@ _LAZY = {
     "Shortcut": ("services", "Shortcut"),
     "Timer": ("services", "Timer"),
     "Worker": ("services", "Worker"),
+    "system": ("system", None),
+    "Launcher": ("system", "Launcher"),
+    "NetworkMonitor": ("system", "NetworkMonitor"),
+    "PowerMonitor": ("system", "PowerMonitor"),
+    "SystemInfo": ("system", "SystemInfo"),
 }
 
 
@@ -231,6 +239,8 @@ __all__ = [
     "Gradient",
     "Icon",
     "Multiline",
+    "FilePath",
+    "FolderPath",
     "Range",
     "Mask",
     "Paint",
@@ -247,6 +257,7 @@ __all__ = [
     "Widget",
     "Window",
     "Splash",
+    "Rendering",
     "Clipboard",
     "FileDialog",
     "FileWatcher",
@@ -258,6 +269,10 @@ __all__ = [
     "Shortcut",
     "Timer",
     "Worker",
+    "Launcher",
+    "NetworkMonitor",
+    "PowerMonitor",
+    "SystemInfo",
     "accessibility",
     "animation",
     "animation_player",
@@ -312,6 +327,8 @@ __all__ = [
     "opaque",
     "pick_list",
     "pin",
+    "focusable",
+    "popup",
     "post",
     "presence",
     "pressed",

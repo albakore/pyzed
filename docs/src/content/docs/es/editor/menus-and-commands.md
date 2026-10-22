@@ -149,7 +149,7 @@ Ocho paneles viven en cuatro docks alrededor del lienzo:
 
 | Panel | Dock por defecto | Muestra |
 | --- | --- | --- |
-| **Diseño** | Izquierdo | La caja de herramientas y la estructura. |
+| **Herramientas** | Izquierdo | La caja de herramientas y la estructura. |
 | **Proyecto** | Izquierdo | Los archivos del proyecto. |
 | **Dependencias** | Izquierdo | Dependencias, ruff y ty (solo con un proyecto abierto). |
 | **Propiedades** | Derecho | La grilla de propiedades. |
@@ -179,7 +179,7 @@ Guardar la distribución como…** los conserva como una distribución de trabaj
 ```mermaid
 flowchart LR
     subgraph Izquierdo
-        Diseño
+        Herramientas
         Proyecto
         Dependencias
     end

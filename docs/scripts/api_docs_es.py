@@ -389,6 +389,18 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                 "pyzed.opaque": {
                     "desc": "Hace que un widget bloquee el ratón para lo que está debajo en un `stack`.",
                 },
+                "pyzed.popup": {
+                    "desc": "Muestra `content` encima de todo junto a `base`, como el menú de un desplegable: no lo recortan los paneles donde está `base`, se pasa al otro lado cuando no cabe y se queda dentro de la ventana. Un clic fuera (y fuera de `base`) o Escape llama a `on_dismiss`. Con `content=None` solo se muestra `base`. Los selectores de fecha abren su calendario con él.",
+                    "params": {
+                        "base": "El widget al que pertenece (un campo, un botón).",
+                        "content": "Lo que se abre (un panel, un menú), o `None` mientras está cerrado.",
+                        "on_dismiss": "Mensaje o función que se envía con un clic fuera o Escape.",
+                        "side": '`"bottom"`, `"top"`, `"right"` o `"left"` de `base`.',
+                        "align": '`"start"`, `"center"` o `"end"`: cómo se alinea con `base`.',
+                        "gap": "Espacio entre `base` y el contenido.",
+                    },
+                    "example": 'pz.popup(field, panel if self.open else None, on_dismiss=self.close)',
+                },
                 "pyzed.tooltip": {
                     "desc": "Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo del tema.",
                     "params": {
@@ -461,6 +473,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción).',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
                         "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
+                        "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
+                        "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
+                        "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
                     },
                 },
             }),
@@ -536,6 +551,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                     "desc": 'Separa un atajo en etiquetas por acorde: `format_keys("ctrl-shift-p") == [["Ctrl", "Shift", "P"]]`. El estilo se controla con `pyzed.ui.base.KEY_STYLE` (`"auto"`, `"symbols"` o `"words"`).',
                     "params": {"keys": "El atajo."},
                 },
+                "pyzed.ui.keys_text": {
+                    "desc": 'Un atajo como texto plano para una etiqueta o una línea de estado: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` con los símbolos de macOS), los acordes separados por un espacio. Los tooltips, botones y menús toman `keys=` y dibujan las teclas, así que no escribas las teclas en su texto.',
+                    "params": {"keys": "El atajo."},
+                },
                 "pyzed.ui.avatar": {
                     "desc": "Un avatar redondo con iniciales.",
                     "params": {
@@ -577,6 +596,11 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                 "pyzed.ui.search_input": {
                     "desc": "Un `input` con icono de lupa.",
                     "params": {"value": "Texto actual.", "kwargs": "Los de `input`."},
+                },
+                "pyzed.ui.path_input": {
+                    "desc": "Un campo de texto para la ruta de un archivo o carpeta con un botón que abre el diálogo de archivos del sistema, para no tener que escribirla (aunque se puede).",
+                    "params": {"value": "Ruta actual.", "on_change": "Función que recibe la ruta escrita o elegida.", "folder": "Elige una carpeta en vez de un archivo.", "save": "Muestra el diálogo \"Guardar como\".", "filters": "Pares `(nombre, extensiones)`: `[(\"Imágenes\", [\"png\", \"jpg\"])]`.", "kind": 'Filtros comunes por nombre: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` o `"data"`.', "directory": "Carpeta donde se abre el diálogo (por defecto, la de la ruta actual).", "relative_to": "Una ruta elegida dentro de esta carpeta se da relativa a ella.", "title": "Título del diálogo.", "placeholder": "Texto que se ve mientras está vacío.", "size": '`"sm"`, `"md"` o `"lg"`.', "mono": "Texto monoespaciado.", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error."},
+                    "example": 'ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")',
                 },
                 "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa e ignora los clics."}},
                 "pyzed.ui.checkbox": {"desc": "Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "La atenúa e ignora los clics."}},
@@ -859,6 +883,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`.',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
                         "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
+                        "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
+                        "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
+                        "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -1038,6 +1065,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 | `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
+| `rendering` | `None` | Un [`Rendering`](#rendering): GPU o CPU, API gráfica, GPU y vsync. `None` lee `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto. |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) están en `Window`.
 
@@ -1092,6 +1120,7 @@ reenvía a `app.update()`.
 | `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
+| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 """,
         "no_signature": True,
     },
@@ -1110,6 +1139,19 @@ reenvía a `app.update()`.
         "example": """
             class Shop(pz.App):
                 splash = pz.Splash("assets/splash.png", duration=1.5, text="Cargando…")
+        """,
+    },
+    "pyzed.Rendering": {
+        "desc": "Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica, qué GPU y vsync. Cada campo es `\"auto\"` por defecto (decide Pyzed). Dásela a `App.rendering`, o pon las mismas claves en `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto, que leen `pz.run`, el diseñador y `pyzed build`. Ver [Renderizado](/pyzed/es/editor/settings/#renderizado).",
+        "params": {
+            "renderer": "`\"auto\"`, `\"gpu\"` (la necesitan los shaders) o `\"cpu\"` (tiny-skia: arranca antes, menos memoria, funciona en todas partes).",
+            "gpu_api": "`\"auto\"`, `\"vulkan\"`, `\"metal\"`, `\"dx12\"` o `\"gl\"`.",
+            "power": "`\"auto\"`, `\"high\"` (la GPU dedicada) o `\"low\"` (la integrada, ahorra batería).",
+            "vsync": "`\"auto\"`, `\"on\"` (sin cortes) u `\"off\"` (dibuja lo más rápido posible).",
+        },
+        "example": """
+            class Game(pz.App):
+                rendering = pz.Rendering(renderer="gpu", vsync="off")
         """,
     },
 })
@@ -1307,6 +1349,18 @@ dict(_w)["Layout"].update({
     "pyzed.anchors.snap_to": {"desc": "Una caja movida (y redimensionada en los ejes estirados) adonde apunta un anclaje: contra los bordes anclados, centrada o llenando el padre, a `margin` píxeles.", "params": {"anchor": "Un preset, palabras o bordes.", "rect": "La caja.", "parent": "El tamaño del padre.", "margin": "Distancia a los bordes."}},
     "pyzed.anchors.offsets": {"desc": "Las distancias `(izquierda, arriba, derecha, abajo)` de cada lado del padre a una caja.", "params": {"rect": "La caja.", "parent": "El tamaño del padre."}},
     "pyzed.anchors.pivot_offset": {"desc": "La traslación que hace que una rotación y una escala (que giran alrededor del centro de la caja) giren alrededor de `pivot`.", "params": {"size": "El tamaño de la caja.", "pivot": "`(x, y)` de `0` a `1`.", "rotate": "Grados en sentido horario.", "scale": "Factor de escala."}},
+    "pyzed.focusable": {
+        "desc": "Deja que cualquier widget tome el foco del teclado como un campo de texto: un clic o Tab lo enfocan (`Command.focus(id)` también) y, mientras lo tiene, las combinaciones de `keys` llaman a `on_key(combo)` en vez de llegar al `on_key` de la app. Al usar el teclado sobre él se dibuja un anillo alrededor. Los interruptores, casillas, deslizadores, segmentados y grupos de radios de la librería lo usan.",
+        "params": {
+            "content": "El control.",
+            "on_key": "Se llama con la combinación (`\"space\"`, `\"shift-right\"`…) de cada tecla de `keys` pulsada mientras tiene el foco. `None` deja `content` sin foco.",
+            "keys": "Las combinaciones que toma (por defecto Espacio, Enter, las flechas, Inicio y Fin); `\"*\"` toma todas. Tab queda libre para mover el foco.",
+            "ring_color": "Color del anillo de foco (ninguno por defecto).",
+            "ring_radius": "Radio de las esquinas del anillo.",
+            "ring_offset": "Píxeles entre el control y el anillo.",
+        },
+        "example": 'pz.focusable(estrellas, lambda combo: self.puntuar(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")',
+    },
     "pyzed.window_edges": {
         "desc": "Envuelve la vista entera de una ventana sin decoraciones del sistema para que pulsar cerca de sus bordes cambie el tamaño de la ventana (las esquinas ocupan el doble). `ui.window_frame` ya lo usa.",
         "params": {"content": "La vista entera de la ventana.", "border": "Ancho en píxeles de la zona que redimensiona.", "enabled": "`False` lo desactiva (para una ventana maximizada)."},
@@ -1404,7 +1458,7 @@ _section("widgets", "Imágenes y contenido", {
 dict(_w)["Controles"].update({
     "pyzed.vertical_slider": {"desc": "Un deslizador vertical (`slider(..., vertical=True)`).", "params": {"min": "Mínimo.", "max": "Máximo.", "kwargs": "Los de `slider`."}},
     "pyzed.pick_list": {
-        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.",
+        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`. Toma el foco del teclado como un campo de texto (un clic, Tab o `Command.focus(id)`) y lo mantiene después de elegir: ↑/↓ eligen la opción anterior o la siguiente sin abrirlo, Inicio/Fin la primera y la última y al escribir salta a una opción; Enter, Espacio, Alt+↓ o F4 abren el menú, donde ↑/↓ se mueven, Enter elige y Esc cierra.",
         "params": {
             "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
             "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
@@ -1412,6 +1466,7 @@ dict(_w)["Controles"].update({
             "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú.",
             "menu_bg": "Fondo del menú.", "menu_color": "Texto del menú.", "menu_border_color": "Borde del menú.",
             "selected_bg": "Fondo de la opción resaltada.", "selected_color": "Texto de la opción resaltada.",
+            "focus_border_color": "Color del borde mientras tiene el foco del teclado.",
         },
     },
     "pyzed.radio": {
@@ -1434,8 +1489,8 @@ _section("ui", "Controles", {
         "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna.", "disabled": "`True`, o los valores a desactivar.", "descriptions": "Asocia valores a una línea atenuada bajo su etiqueta."},
     },
     "pyzed.ui.number_field": {
-        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
-        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
+        "desc": "Un campo numérico con botones −/+ que también se puede arrastrar, como en Figma. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Mantén pulsado y mueve el ratón de lado a lado sobre el número para cambiarlo (sigue aunque salgas de la ventana); haz doble clic para escribir un valor, y Enter, Escape o un clic fuera para terminar. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
+        "params": {"steppers": "Muestra los botones −/+ (`False`: un campo compacto, como en una rejilla de propiedades).", "drag": "Deja cambiarlo arrastrando el ratón (`False`: un campo de texto normal).", "drag_step": "Cuánto suma cada píxel arrastrado (por defecto `step`, hasta 1; los pasos menores de 1 piden tres píxeles cada uno).", "min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
@@ -1702,6 +1757,14 @@ _section("app", "Eventos y componentes", {
         "desc": "Anotación para un prop de componente con texto largo: el diseñador muestra un área de texto. En ejecución es un `str` normal.",
         "example": 'notes: pz.Multiline = ""',
     },
+    "pyzed.FilePath": {
+        "desc": "Anotación para un prop de componente con la ruta de un archivo: el diseñador muestra la ruta con un botón que abre el diálogo de archivos del sistema (una anotación `pathlib.Path` hace lo mismo). En ejecución es un `str` normal.",
+        "example": 'logo: pz.FilePath = ""',
+    },
+    "pyzed.FolderPath": {
+        "desc": "Anotación para un prop de componente con una carpeta: el diseñador muestra la ruta con un botón que abre el diálogo de carpetas del sistema. En ejecución es un `str` normal.",
+        "example": 'output: pz.FolderPath = ""',
+    },
     "pyzed.Range": {
         "desc": "Límites de un prop numérico, con `typing.Annotated`: el diseñador muestra un campo numérico limitado a ellos. Ver [Componentes propios](/pyzed/es/guides/components/#en-el-diseñador).",
         "params": {"min": "Valor mínimo.", "max": "Valor máximo.", "step": "Paso de los botones + y -."},
@@ -1944,6 +2007,108 @@ _section("ui", "Selector de color", {
                               "params": {"value": "Qué mostrar.", "size": "Lado en píxeles.", "on_press": "Lo hace pulsable."}},
     "pyzed.ui.checkerboard": {"desc": "Un damero claro/oscuro para dibujar bajo colores translúcidos.",
                               "params": {"width": "Ancho.", "height": "Alto.", "size": "Tamaño de celda."}},
+})
+
+_section("ui", "Fechas y horas", {
+    "pyzed.ui.Calendar": {
+        "desc": "Un componente con un mes donde elegir un día (`mode=\"single\"`), un rango (`\"range\"`: el primer clic lo empieza y el segundo lo termina) o varios días (`\"multiple\"`). El título abre una cuadrícula de meses y después de años. Tras un clic recibe el teclado: las flechas mueven, Enter elige y Re Pág/Av Pág cambian de mes. Ver la página [Calendario](/pyzed/es/library/calendar/).",
+        "params": {"value": "Una fecha (`datetime.date` o `\"2026-10-22\"`), un par `(inicio, fin)` o una lista de fechas, según `mode`.",
+                   "mode": '`"single"`, `"range"` o `"multiple"`.', "min": "El primer día que se puede elegir.",
+                   "max": "El último día que se puede elegir.",
+                   "disabled": 'Días que no se pueden elegir: fechas, nombres de día en inglés (`"sunday"`) o `"weekends"`.',
+                   "first_weekday": '`"monday"`, `"sunday"` o `"saturday"`.', "months": "Meses que se ven uno al lado del otro.",
+                   "week_numbers": "Muestra el número de semana ISO de cada fila.", "show_outside": "Muestra los días de los meses vecinos.",
+                   "today_button": "Añade un enlace Hoy.", "on_change": "Recibe `event.value` (una fecha, una tupla o una lista).",
+                   "on_month": "Recibe `event.value`, el `(año, mes)` que se muestra."},
+        "members": False,
+        "example": """
+            ui.Calendar(self.day, on_change=lambda e: setattr(self, "day", e.value))
+            ui.Calendar(self.stay, mode="range", months=2, on_change=lambda e: setattr(self, "stay", e.value))
+        """,
+    },
+    "pyzed.ui.DatePicker": {
+        "desc": "Un componente: un campo de fecha que abre un calendario debajo, en una ventana emergente que ningún panel recorta. Se puede escribir en `format` (Enter o salir del campo lo lee); tras un clic, ↑/↓ mueven la fecha un día y Re Pág/Av Pág un mes sin abrir nada, Alt+↓ abre el calendario y Escape lo cierra. Ver la página [Selector de fecha](/pyzed/es/library/date-picker/).",
+        "params": {"value": "La fecha (`datetime.date`, texto ISO o `None`).", "format": 'Cómo se escribe: `"DD/MM/YYYY"`, `"MMM D, YYYY"`... (ver `format_date`).',
+                   "placeholder": "Pista mientras está vacío (por defecto, el formato).", "min": "La primera fecha.", "max": "La última fecha.",
+                   "disabled_dates": "Días que no se pueden elegir (como en `Calendar`).", "first_weekday": '`"monday"`, `"sunday"` o `"saturday"`.',
+                   "week_numbers": "Muestra los números de semana en el calendario.", "clearable": "Muestra una x que lo vacía.",
+                   "today_button": "Añade un enlace Hoy al calendario.", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.",
+                   "on_change": "Recibe `event.value`: un `datetime.date` o `None`.", "on_open": "Se abrió el calendario.", "on_close": "Se cerró el calendario."},
+        "members": False,
+        "example": """
+            ui.DatePicker(self.due, format="DD/MM/YYYY", on_change=lambda e: setattr(self, "due", e.value))
+        """,
+    },
+    "pyzed.ui.DateRangePicker": {
+        "desc": "Un componente: un campo para una fecha de inicio y otra de fin, con dos meses y rangos rápidos (Hoy, Últimos 7 días, Este mes...) en su ventana emergente. El texto escrito son dos fechas separadas por `separator`. Ver la página [Selector de rango de fechas](/pyzed/es/library/date-range-picker/).",
+        "params": {"value": "`(inicio, fin)`: fechas, texto ISO o `None`.", "format": "Cómo se escribe cada fecha.", "separator": "Texto entre las dos fechas.",
+                   "placeholder": "Pista mientras está vacío.", "min": "La primera fecha.", "max": "La última fecha.",
+                   "disabled_dates": "Días que no se pueden elegir.", "first_weekday": '`"monday"`, `"sunday"` o `"saturday"`.',
+                   "months": "Meses que se ven uno al lado del otro.", "presets": "Muestra los rangos rápidos.", "clearable": "Muestra una x que lo vacía.",
+                   "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.",
+                   "on_change": "Recibe `event.value`: `(inicio, fin)`.", "on_open": "Se abrió el calendario.", "on_close": "Se cerró el calendario."},
+        "members": False,
+        "example": """
+            ui.DateRangePicker(self.period, on_change=lambda e: setattr(self, "period", e.value))
+        """,
+    },
+    "pyzed.ui.TimePicker": {
+        "desc": "Un componente: un campo de hora con columnas de horas y minutos (y segundos, y AM/PM con un `format` de 12 horas) en una ventana emergente. Tras un clic, ↑/↓ la cambian `minute_step` minutos. Ver la página [Selector de hora](/pyzed/es/library/time-picker/).",
+        "params": {"value": "La hora (`datetime.time`, `\"14:30\"` o `None`).", "format": '`"HH:mm"`, `"HH:mm:ss"`, `"h:mm A"`...',
+                   "placeholder": "Pista mientras está vacío.", "minute_step": "Minutos entre los que se ofrecen.", "min": "La primera hora.",
+                   "max": "La última hora.", "clearable": "Muestra una x que lo vacía.", "disabled": "Lo atenúa.",
+                   "invalid": "Pinta el borde con el color de error.", "on_change": "Recibe `event.value`: un `datetime.time` o `None`.",
+                   "on_open": "Se abrió la lista.", "on_close": "Se cerró la lista."},
+        "members": False,
+        "example": """
+            ui.TimePicker(self.alarm, format="h:mm A", minute_step=15, on_change=lambda e: setattr(self, "alarm", e.value))
+        """,
+    },
+    "pyzed.ui.format_date": {
+        "desc": "Escribe una fecha con un patrón de marcas: `YYYY` 2026, `YY` 26, `MMMM` octubre, `MMM` oct, `MM` 10, `M` 10, `DD` 05, `D` 5, `dddd` lunes, `ddd` lun, `HH`/`hh` horas, `mm` minutos, `ss` segundos, `A` AM/PM y `[texto]` tal cual. Un patrón con `%` es de `strftime`. Los nombres de meses y días siguen el idioma de `pyzed.i18n`.",
+        "params": {"value": "Una fecha, un datetime, texto ISO o `None` (da `\"\"`).", "fmt": "El patrón.", "language": "Un idioma para los nombres en lugar del actual."},
+        "example": 'ui.format_date(day, "dddd, D [de] MMMM [de] YYYY")   # "lunes, 5 de octubre de 2026"',
+    },
+    "pyzed.ui.parse_date": {
+        "desc": "Lee una fecha escrita con un patrón de `format_date` (meses en el idioma actual o en inglés); el ISO `YYYY-MM-DD` siempre funciona. Devuelve `None` si el texto no es una fecha.",
+        "params": {"text": "El texto.", "fmt": "El patrón.", "language": "El idioma de los nombres."},
+    },
+    "pyzed.ui.format_time": {"desc": "Escribe una hora (o `\"14:30\"`) con un patrón como `\"h:mm A\"`.",
+                             "params": {"value": "Un `datetime.time` o texto.", "fmt": "El patrón."}},
+    "pyzed.ui.parse_time": {"desc": "Lee una hora: `\"14:30\"`, `\"2:30 PM\"`, `\"14:30:05\"`, primero con `fmt`. `None` si no lo es.",
+                            "params": {"text": "El texto.", "fmt": "El patrón."}},
+})
+
+_section("ui", "Sistema", {
+    "pyzed.ui.file_input": {
+        "desc": "Un campo de ruta con un botón que abre el diálogo de archivos del sistema, para que nadie escriba una ruta a mano. Ver la página [Selector de archivos](/pyzed/es/library/file-input/).",
+        "params": {"mode": '`"open"` (un archivo), `"open_many"` (una lista), `"save"` o `"folder"`.',
+                   "filters": 'Archivos que se muestran: `{"Imágenes": "png jpg"}` o `"Imágenes: png, jpg"`.', "title": "El título del diálogo.",
+                   "directory": "Dónde se abre el diálogo (por defecto, la carpeta de la ruta actual).", "file_name": "El nombre que propone al guardar.",
+                   "button": "Texto para el botón en lugar de un icono de carpeta.", "editable": "`False` impide escribir la ruta.",
+                   "invalid": "Pinta el borde con el color de error.", "on_change": "Recibe la ruta (una lista con `\"open_many\"`)."},
+        "example": 'ui.file_input(self.photo, self.set_photo, filters={"Imágenes": "png jpg"})',
+    },
+    "pyzed.ui.system.pick": {
+        "desc": "El diálogo de archivos del sistema como un `Command`: devuélvelo desde un callback y `then` recibe lo que eligió el usuario (una ruta, una lista de rutas con `\"open_many\"`, o `None` si cancela). `ui.file_input` lo usa.",
+        "params": {"then": "Se llama con el resultado.", "mode": '`"open"`, `"open_many"`, `"save"` o `"folder"`.',
+                   "title": "El título del diálogo.", "filters": 'Archivos que se muestran: `{"Imágenes": "png jpg"}` o `"Imágenes: png, jpg"`.',
+                   "directory": "Dónde se abre el diálogo.", "file_name": "El nombre que propone al guardar."},
+        "example": 'ui.button("Abrir…", lambda: ui.system.pick(self.cargar, filters="Texto: txt, md"))',
+    },
+    "pyzed.ui.DropZone": {
+        "desc": "Un componente que recibe archivos arrastrados desde el explorador de archivos del sistema y soltados en la ventana, y abre el diálogo de archivos con un clic. Se ilumina mientras se arrastran archivos sobre la ventana y guarda las rutas soltadas en `files`. El gancho `on_file_drop` de la ventana entrega cada archivo a la zona bajo el puntero, si no a una cuyo `accept` incluya su tipo. Ver la página [Zona para soltar](/pyzed/es/library/drop-zone/).",
+        "params": {"text": "El texto principal (por defecto: Suelta archivos aquí).", "hint": "La línea de debajo.", "icon_name": "Su icono.",
+                   "accept": 'Extensiones (`["png", "jpg"]`), patrones (`"*.tar.gz"`) o `"folder"`; vacío acepta todo.',
+                   "multiple": "`False` se queda solo con el último archivo.", "browse": "Un clic abre el diálogo de archivos.",
+                   "show_files": "Lista los archivos bajo el texto (cada uno con una x).", "files": "Las rutas soltadas.",
+                   "disabled": "No recibe nada.", "live": "`False` lo dibuja sin recibir archivos (el lienzo del diseñador).",
+                   "on_drop": "Recibe `event.value`: una ruta soltada (una vez por archivo).", "on_files": "Recibe `event.value`: la lista de archivos.",
+                   "on_reject": "Recibe una ruta que no acepta.", "on_enter": "Se arrastran archivos sobre la ventana.",
+                   "on_leave": "El arrastre salió sin soltar."},
+        "members": False,
+        "example": 'ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: self.photos.append(e.value))',
+    },
 })
 
 _section("ui", "Agente", {
@@ -2566,6 +2731,9 @@ MEMBERS = {
     "pyzed.Window.view": "Devuelve el widget raíz de la ventana; las subclases deben sobrescribirlo.",
     "pyzed.Window.update": "Gestiona un mensaje producido en esta ventana (por defecto lo reenvía a la app).",
     "pyzed.Window.on_close": "Se llama cuando el usuario pide cerrar la ventana. Devuelve `False` para mantenerla abierta.",
+    "pyzed.Window.on_file_hover": "Un archivo arrastrado desde el sistema está sobre la ventana: ilumina la `ui.DropZone` donde caería.",
+    "pyzed.Window.on_file_drop": "Se soltó un archivo del sistema en la ventana (una vez por archivo): va a una `ui.DropZone`.",
+    "pyzed.Window.on_file_leave": "Los archivos arrastrados sobre la ventana salieron sin soltarse.",
     "pyzed.Window.is_open": "Si la ventana está abierta ahora.",
     "pyzed.Window.open": "Un comando que abre esta ventana: `return settings.open()`.",
     "pyzed.Window.close": "Un comando que cierra esta ventana: `on_press=self.close`.",
@@ -2743,6 +2911,7 @@ MEMBERS = {
     "pyzed.designer.Document.can_contain": "Si el control `name` puede moverse dentro de `container` (`None` es el formulario, que admite cualquiera): debe ser un contenedor distinto del propio control y que no esté dentro de él.",
     "pyzed.designer.Document.reparent": "Mueve controles dentro de `parent` (o al formulario con `None`), dejándolos donde están.",
     "pyzed.designer.Document.wrap": "Mete controles (por defecto, la selección) dentro de un contenedor nuevo de tipo `type_` que los rodea.",
+    "pyzed.designer.Document.ungroup": "Saca los hijos de los contenedores seleccionados (donde están en pantalla) y quita los contenedores; los hijos quedan seleccionados. Devuelve los nombres de los contenedores quitados.",
     "pyzed.designer.Document.move_out": "Saca un control de su contenedor y lo pasa al padre de ese contenedor.",
     "pyzed.designer.Document.parent_size": "El tamaño del padre del control `name` (su contenedor o el formulario).",
     "pyzed.designer.Document.set_anchor": "Ancla el control `name` con un preset, palabras o bordes; con `move=True` también lo lleva a ese sitio, a `margin` píxeles del borde.",
@@ -2772,6 +2941,11 @@ MEMBERS = {
     "pyzed.designer.Document.set_rect": "Fija la posición y el tamaño del control `name` a partir de `rect` `(x, y, width, height)`, redondeados a píxeles enteros; las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_prop": "Fija la propiedad `key` del control `name` a `value` (las ediciones repetidas se unen en un paso de deshacer).",
     "pyzed.Trigger.fire": "Reproduce desde el principio las animaciones que usan este disparador.",
+    "pyzed.Rendering.from_table": "Crea los ajustes a partir de una tabla `[tool.pyzed.rendering]`, ignorando claves y valores desconocidos.",
+    "pyzed.Rendering.to_table": "Los ajustes que no son `\"auto\"`, tal como se escriben en `pyproject.toml`.",
+    "pyzed.Rendering.custom": "Si algún ajuste no es `\"auto\"`.",
+    "pyzed.Rendering.env": "Las variables de entorno que llevan estos ajustes a Iced y wgpu.",
+    "pyzed.Rendering.apply": "Define las variables de `env()` que aún no están definidas (las tuyas mandan); devuelve las que definió.",
     "pyzed.Animation.properties": "Las propiedades que cambian los keyframes, en orden de aparición.",
     "pyzed.Animation.total": "Milisegundos del principio al final (`inf` si se repite para siempre).",
     "pyzed.Animation.with_options": "Una copia con otro timing o disparador (`duration`, `easing`, `on`...).",
@@ -2848,6 +3022,7 @@ MEMBERS = {
     "pyzed.designer.Document.wire": "Conecta `event` a un handler (creando su esqueleto si hace falta) y devuelve el nombre de la función.",
     "pyzed.designer.Document.unwire": "Desconecta `event`; con `delete_code` también quita el esqueleto si no se ha tocado.",
     "pyzed.designer.Document.handler_source": "Devuelve el código de `handler`, o un esqueleto nuevo si aún no existe.",
+    "pyzed.designer.Document.rename_handler": "Hace que los eventos conectados al manejador `old` apunten a `new` (después de renombrar su función en el código); devuelve si algún evento lo usaba.",
     "pyzed.designer.Document.set_handler_source": "Reemplaza el código de un handler (lanza `SyntaxError` y no cambia nada si no es válido).",
     "pyzed.designer.Document.set_code": "Reemplaza todo el texto del módulo de handlers y marca el documento como modificado.",
     # designer: caja de herramientas
@@ -3053,6 +3228,12 @@ PAGES.append({
             "pyzed.Settings": {**_V, "desc": "Valores que se guardan entre ejecuciones: un diccionario guardado como JSON en la carpeta de ajustes del usuario en cada cambio, con `defaults`; lanza `change` con `(clave, valor)`."},
             "pyzed.FileDialog": {**_V, "desc": 'El diálogo de archivos del sistema: `show()` devuelve el comando que lo abre en el modo `"open"`, `"open_many"`, `"save"` o `"folder"`; lanza `chosen` o `cancelled`.'},
             "pyzed.Notification": {**_V, "desc": "Una notificación de escritorio: `show(text)` la muestra y devuelve si pudo; lanza `shown` o `failed`."},
+        }),
+        ("Sistema operativo (pyzed.system)", {
+            "pyzed.SystemInfo": {**_V, "desc": 'Qué es el equipo: `os` (`"Windows"`, `"macOS"`, `"Linux"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, más `memory_available`, `disk_free` y `disk_total`, que se leen al pedirlos. `env(name)` lee una variable de entorno y `folder("documents")` encuentra las carpetas del usuario. Con `interval` mayor que 0, `start()` lanza `update` con `snapshot()` cada cierto tiempo.'},
+            "pyzed.Launcher": {**_V, "desc": "Abre archivos, carpetas y enlaces con la aplicación que usa el sistema para ellos: `open(target)`, `reveal(path)` (seleccionado en el explorador de archivos) y `email(to, subject, body)`; lanza `opened` o `failed`."},
+            "pyzed.NetworkMonitor": {**_V, "desc": "Avisa cuando el equipo se conecta o se desconecta probando `host` cada `interval` milisegundos en segundo plano: `online`, `check()`, `start()`, `stop()`; lanza `change`, `online` y `offline`."},
+            "pyzed.PowerMonitor": {**_V, "desc": "La batería: `percent`, `plugged` y `has_battery`; cada `interval` milisegundos lanza `change`, `low` (por debajo de `low_level` sin enchufar), `plugged` y `unplugged`."},
         }),
     ],
 })

@@ -23,10 +23,12 @@ use iced::{
 };
 
 mod actions;
+mod ide;
 pub mod keymap;
 
 pub(crate) use actions::EditKind;
 pub use actions::{ActionContext, EditorAction};
+pub use ide::Hit;
 
 use crate::app::Message;
 use crate::editor_widgets::{self, Boxes, Caret, EditorInput, Minimap};
@@ -186,6 +188,10 @@ pub struct EditorState {
     pub(crate) repeat: Cell<bool>,
     /// When the held delete key went down and when its last repeat was kept (`KeyRepeat`).
     held: Cell<Option<(std::time::Instant, std::time::Instant)>>,
+    /// Height of the sticky scroll headers drawn over the top of the editor (0 without any).
+    pub(crate) sticky_height: Cell<f32>,
+    /// The cursor was placed before the editor was laid out: scroll to it once it is.
+    pub(crate) reveal: Cell<bool>,
 }
 
 impl EditorState {
@@ -207,6 +213,8 @@ impl EditorState {
             context: RefCell::new(None),
             repeat: Cell::new(false),
             held: Cell::new(None),
+            sticky_height: Cell::new(0.0),
+            reveal: Cell::new(false),
         }
     }
 
@@ -695,6 +703,10 @@ impl EditorState {
         let is_edit = action.is_edit();
         let follows = !matches!(action, Action::Scroll { .. });
         let mut edited = is_edit;
+        // Ctrl+click (Cmd+click) moves the cursor and asks the app to go to the definition.
+        let definition = matches!(action, Action::Click(_))
+            && self.modifiers.get().command()
+            && !self.modifiers.get().alt();
         match action {
             Action::Click(_) if self.modifiers.get().alt() => self.alt_click(action),
             Action::Click(_) | Action::SelectAll => {
@@ -726,7 +738,11 @@ impl EditorState {
             }
             action => self.content.perform(action),
         }
-        self.outcome(id, before, edited, follows)
+        let mut outcome = self.outcome(id, before, edited, follows);
+        if definition {
+            outcome.action = Some("go_to_definition");
+        }
+        outcome
     }
 
     /// Alt+click adds a cursor where it clicks, or removes the cursor that is there.
@@ -1048,6 +1064,32 @@ impl EditorState {
         }
     }
 
+    /// Scrolls the cursor's line to the middle of the view (a jump from elsewhere: go to definition).
+    pub fn center_cursor(&self, id: &str) -> Task<Message> {
+        let metrics = self.metrics.borrow();
+        let Some(viewport) = self.viewport.get() else {
+            return Task::none();
+        };
+        if !metrics.ready {
+            return Task::none();
+        }
+        let line = self.content.cursor().position.line;
+        let row = metrics.starts.get(line).copied().unwrap_or(line as u32);
+        let lh = metrics.line_height;
+        let top = PAD_Y + row as f32 * lh;
+        let y = (top + lh / 2.0 - viewport.height / 2.0).max(0.0);
+        let mut moved = viewport;
+        moved.y = y;
+        self.viewport.set(Some(moved));
+        iced::widget::operation::scroll_to(
+            scroll_id(id),
+            scrollable::AbsoluteOffset {
+                x: Some(0.0),
+                y: Some(y),
+            },
+        )
+    }
+
     /// Scrolls just enough to reveal the cursor (like Zed's autoscroll).
     fn autoscroll(&self, id: &str) -> Task<Message> {
         let metrics = self.metrics.borrow();
@@ -1085,8 +1127,10 @@ impl EditorState {
         let top = PAD_Y + (row_start + intra) as f32 * lh;
         let bottom = top + lh;
         let margin = lh;
-        let y = if top - margin < viewport.y {
-            Some((top - margin).max(0.0))
+        // Lines under the sticky headers are hidden: reveal the cursor below them.
+        let covered = self.sticky_height.get();
+        let y = if top - margin < viewport.y + covered {
+            Some((top - margin - covered).max(0.0))
         } else if bottom + margin > viewport.y + viewport.height {
             Some(bottom + margin - viewport.height)
         } else {
@@ -2395,40 +2439,56 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         .height(Length::Fill)
         .into();
 
-    let scroller: Element<'a, Message> =
-        EditorInput::new(scroller, state, props.on_zoom.clone()).into();
-    match props.minimap {
-        Some(minimap) => {
-            update_minimap(state, &lines, &token, theme_id, props);
-            // Over the right edge of the scrollable, just left of its vertical scrollbar (a `row`
-            // would give the scrollable finite limits and let the gutter fill them).
-            let bar = if props.wrap || !props.scrollbar {
-                0.0
-            } else {
-                SCROLLBAR
-            };
-            let height = (size.height - bar).max(0.0);
-            let minimap = Minimap {
-                state,
-                id: props.id.clone(),
-                width: minimap.width,
-                height,
-                line_height: lh,
-                thumb: minimap.thumb,
-                background: props.background,
-            };
-            widget::Stack::with_children([
-                scroller,
-                widget::pin(minimap)
-                    .x((size.width - minimap_width).max(0.0))
-                    .into(),
-            ])
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
-        }
-        None => scroller,
+    let scroller: Element<'a, Message> = EditorInput::new(
+        scroller,
+        props.id.clone(),
+        state,
+        props.on_zoom.clone(),
+        props.on_hover.clone(),
+        props.hover_delay,
+    )
+    .into();
+    // The minimap sits over the right edge of the scrollable, just left of its vertical
+    // scrollbar (a `row` would give the scrollable finite limits and let the gutter fill them).
+    let bar = if props.wrap || !props.scrollbar {
+        0.0
+    } else {
+        SCROLLBAR
+    };
+    let mut layers = vec![scroller];
+    if props.sticky_scroll > 0 {
+        let right = props.minimap.map_or(0.0, |m| m.width) + bar;
+        layers.push(
+            ide::StickyScroll::new(state, props.clone(), token.clone(), theme_id, right).into(),
+        );
+    } else {
+        state.sticky_height.set(0.0);
     }
+    if let Some(minimap) = props.minimap {
+        update_minimap(state, &lines, &token, theme_id, props);
+        let height = (size.height - bar).max(0.0);
+        let minimap = Minimap {
+            state,
+            id: props.id.clone(),
+            width: minimap.width,
+            height,
+            line_height: lh,
+            thumb: minimap.thumb,
+            background: props.background,
+        };
+        layers.push(
+            widget::pin(minimap)
+                .x((size.width - minimap_width).max(0.0))
+                .into(),
+        );
+    }
+    if layers.len() == 1 {
+        return layers.pop().expect("the scroller");
+    }
+    widget::Stack::with_children(layers)
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .into()
 }
 
 /// Recomputes the minimap's colored runs when the visible text or the theme changed.

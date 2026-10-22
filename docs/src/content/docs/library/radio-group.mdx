@@ -2,7 +2,7 @@
 title: "Radio group"
 description: "Mutually exclusive options as radio buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 68
+  order: 73
   label: "Radio group"
 ---
 
@@ -216,6 +216,12 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Tips
+
+:::tip
+Once clicked or reached with Tab the group has the keyboard focus: the arrows pick the previous or next choice (skipping disabled ones) and Home/End the first and last.
+:::
+
 ## Properties and API
 
 ### `ui.radio_group`
@@ -230,6 +236,7 @@ radio_group(
     spacing=8,
     disabled=False,
     descriptions=None,
+    id=None,
     theme=None,
 )
 ```
@@ -244,6 +251,7 @@ Mutually exclusive options as radio buttons.
 | `spacing` | `8` | Space between children, in pixels. |
 | `disabled` | `False` | `True`, or the values to disable. |
 | `descriptions` | `None` | Maps values to a muted line under their label. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_select` ([events](#events)).

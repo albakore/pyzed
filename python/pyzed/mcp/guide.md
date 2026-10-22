@@ -147,16 +147,37 @@ Run a form with `pyzed run login.pzform` (`--reload` for hot reload). `new_form`
 files from a list of controls and `validate_form` checks a `.pzform`. The designer's toolbox
 types (`button`, `input`, `label`...) are listed by `list_components(kind="designer")`.
 
+Layout in a `.pzform`, like Figma: a `row` or `column` is an auto layout frame (`direction`, `gap`,
+`padding` as one number, `[vertical, horizontal]` or `[top, right, bottom, left]`, `justify`
+`start|center|end|space-between|space-around|space-evenly`, `align` `stretch|start|center|end`);
+each child sets `"layout": {"grow": 1}` to fill the main axis and `{"align_self": "stretch"}` (or
+`start`/`center`/`end`) for its own cross-axis alignment. A `panel` with `"background":
+"transparent", "border": false` is an invisible group. Path properties (`image.source`,
+`shader.file`, `file_watcher.path`...) take a path relative to the project.
+
+Animations of a control are a list in `"animations"`: `{"preset": "shake", "on": "invalid"}`.
+`on` is `mount` (appears), `hover`, `press`, `focus` (while it lasts), `click`, `double_click`,
+`right_click`, `enter`, `leave` (the pointer), `change` (new value), `submit` (Enter), `invalid`
+(a validation rule fails), `manual` (`form.name.play_animation()` from code) or `event` with
+`"source"` (another control's name, `""` for the form) and `"event"` (one of its events:
+`{"preset": "tada", "on": "event", "source": "save", "event": "click"}`). Optional keys:
+`duration`, `delay` (ms), `easing`, `repeat` (a count or `"infinite"`). `form_animations` lists the
+triggers and presets; `validate_form` checks them.
+
 Non-visual components (`"visual": false`: `timer`, `shortcut`, `file_watcher`, `process`, `worker`,
-`http_request`, `clipboard`, `settings`, `file_dialog`, `notification`) have properties and events
+`http_request`, `clipboard`, `settings`, `file_dialog`, `notification`, `system_info`, `launcher`,
+`network_monitor`, `power_monitor`) have properties and events
 but no position: they sit in the tray under the form and draw nothing when it runs. Handlers call
 their methods: `form.process1.start()`, `return form.file_dialog1.show()`,
 `form.worker1.run(value)` (its `work` handler runs in a thread; use `progress` and `done` to change
 controls), `form.settings1["key"] = value`. In plain code the same objects are `pz.Timer`,
 `pz.Shortcut`, `pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`,
-`pz.Settings`, `pz.FileDialog` and `pz.Notification` (`on_<event>=` handlers, intervals in ms;
+`pz.Settings`, `pz.FileDialog`, `pz.Notification`, `pz.SystemInfo`, `pz.Launcher`, `pz.NetworkMonitor` and
+`pz.PowerMonitor` (`on_<event>=` handlers, intervals in ms;
 add `timer.subscriptions()` to the app's `subscriptions` and call `shortcut.handle(combo)` in
-`on_key`). Events from background threads reach handlers on the UI thread.
+`on_key`). Events from background threads reach handlers on the UI thread. The toolbox groups user
+input under Forms (`input`, `select`, `number`...) and Date & time (`date_picker`, `date_range`,
+`time_picker`, `calendar`); System holds `file_input`, `drop_zone` and the services of the operating system.
 
 ## Projects and the CLI
 
@@ -166,6 +187,9 @@ add `timer.subscriptions()` to the app's `subscriptions` and call `shortcut.hand
 - `pyzed add/remove/upgrade/sync/deps` manage dependencies through uv, `pyzed check` runs ruff and
   ty, `pyzed build` packages the app with PyInstaller.
 - `pyzed icons <filter>` lists the bundled Lucide icons (`search_icons` does the same).
+- `[tool.pyzed.rendering]` in `pyproject.toml` (or `App.rendering = pz.Rendering(...)`) picks the renderer:
+  `renderer = "gpu"` for shaders, `"cpu"` for virtual machines, `"auto"` by default. A project's shared editor
+  preferences (tab size...) live in `.pyzed/settings.json`; `project_settings` / `set_project_settings` edit both.
 
 ## Beyond the basics
 

@@ -551,10 +551,18 @@ Moves controls into `parent` (or onto the form with `None`), keeping them where 
 #### `Document.wrap`
 
 ```python
-Document.wrap(type_, names=None)
+Document.wrap(type_, names=None, props=None)
 ```
 
-Puts controls (the selection by default) inside a new container of `type_` around them.
+Puts controls (the selection by default) inside a new container of `type_` around them, with `props` set on it (an invisible panel for a group).
+
+#### `Document.ungroup`
+
+```python
+Document.ungroup(names=None)
+```
+
+Takes the children out of the selected containers (`names`), where they are on screen, and removes the emptied containers; the children become the selection. Returns the removed containers' names.
 
 #### `Document.move_out`
 
@@ -885,6 +893,14 @@ Document.unwire(name, event, *, delete_code=False)
 
 Disconnects `event`; with `delete_code` an untouched stub is removed too.
 
+#### `Document.rename_handler`
+
+```python
+Document.rename_handler(old, new)
+```
+
+Points the events wired to handler `old` at `new` (after its function was renamed in the code); returns whether any event used it.
+
 #### `Document.handler_source`
 
 ```python
@@ -1008,7 +1024,7 @@ The property each control type binds, and whether the user edits it (two-way): `
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=(), role=None)
 ```
 
 A toolbox entry: how a control of this `type` looks, behaves and is configured.
@@ -1059,15 +1075,17 @@ A new control of this type with default properties.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='', accept='')
 ```
 
 A property shown in the designer's property grid.
 
 `kind` picks the editor: text, multiline, number, bool, color, choice (from
 `choices`), list (one item per line), rows (comma-separated rows, the first one the
-header), icon (a Lucide icon name) or typed (any annotation in `type`: unions, optionals,
-dicts, tuples...).
+header), icon (a Lucide icon name), file or folder (a path with a button that opens the
+system's dialog; `accept` names the kind of file, like `"image"`, or its extensions,
+like `"wgsl pzshad"`) or typed (any annotation in `type`: unions, optionals, dicts,
+tuples...).
 
 **Methods and properties**
 
@@ -1231,13 +1249,14 @@ The class is imported once and reused until its code changes.
 ### `discover`
 
 ```python
-discover(root=None)
+discover(root=None, *, fresh=True)
 ```
 
 Imports every designed component under `root` (the current folder by default).
 
 Components may use each other, so a failed import is retried once the others
-loaded (`errors` keeps what still failed).
+loaded (`errors` keeps what still failed). With `fresh=False` a component whose code
+did not change since it was last imported is kept as it is.
 
 ### `SceneDocument`
 
@@ -1628,10 +1647,10 @@ The visual form editor.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True, keymap={})
+class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, ty=True, ruff=True, keymap={})
 ```
 
-EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
+EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, hover: 'bool' = True, sticky_scroll: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
 
 **Methods and properties**
 

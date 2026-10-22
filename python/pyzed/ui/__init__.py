@@ -17,6 +17,7 @@ from .base import (
     divider,
     format_keys,
     heading,
+    keys_text,
     icon_button,
     indicator,
     kbd,
@@ -26,6 +27,7 @@ from .base import (
 )
 from .agent import AuthPrompt, Catalog, EditsBar, Plan, ServiceRow, ThreadHistory, ToolCall, context_meter, diff_view, format_tokens
 from .color import ColorPicker, checkerboard, color_swatch
+from .dates import Calendar, DatePicker, DateRangePicker, TimePicker, format_date, format_time, parse_date, parse_time
 from .icon_picker import IconPicker, icon_grid, icon_picker_dialog
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, LogSelection, console
 from .errors import ErrorInfo, error_boundary, error_card, error_dialog
@@ -63,7 +65,7 @@ from .display import (
 from .frame import Menu, system_platform, window_controls, window_frame, window_title_bar
 from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
-from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
+from .inputs import checkbox, field, input, path_input, progress, search_input, segmented, slider, switch
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree, virtual_list
 from .navigation import Tab, breadcrumbs, tab, tab_bar, toolbar
 from .overlays import (
@@ -78,11 +80,22 @@ from .overlays import (
     toast,
     toasts,
 )
+from .system import DropZone, file_input
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 from . import audio, camera, rack  # noqa: E402  (namespaces: ui.audio.Knob, ui.camera.Webcam, ui.rack.Rack)
 
 __all__ = [
+    "Calendar",
     "ColorPicker",
+    "DatePicker",
+    "DateRangePicker",
+    "DropZone",
+    "TimePicker",
+    "file_input",
+    "format_date",
+    "format_time",
+    "parse_date",
+    "parse_time",
     "IconPicker",
     "icon_grid",
     "icon_picker_dialog",
@@ -140,6 +153,7 @@ __all__ = [
     "facepile",
     "field",
     "format_keys",
+    "keys_text",
     "fuzzy_filter",
     "fuzzy_match",
     "heading",
@@ -168,6 +182,7 @@ __all__ = [
     "progress",
     "radio_group",
     "search_input",
+    "path_input",
     "segmented",
     "select",
     "SEPARATOR",

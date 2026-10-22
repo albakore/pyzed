@@ -29,6 +29,7 @@ from .. import animation as _animation
 from .. import services as _services
 from ..app import App, Window
 from ..app import run as _run_app
+from .. import rendering as _rendering
 from ..theme import Theme, themes
 from . import binding as _binding
 from . import code as _code
@@ -419,6 +420,8 @@ class FormRuntime:
         self.theme = theme_for(form, self.preview_theme)
         #: What handlers played on each control (``form.title.play_animation()``), by name.
         self.played: Dict[str, motion.Played] = {}
+        #: The animations each event plays (``{(control, event): [(control, index)]}``, see ``motion``).
+        self.listeners = self._listen()
         self.ctx = LiveContext(self)
         self.proxy = FormProxy(self)
         self.error: Optional[str] = None
@@ -433,11 +436,33 @@ class FormRuntime:
         """The window's current ``(width, height)``, or the designed size before it is known."""
         return tuple(self.window.window_size or self.design_size)  # type: ignore[return-value]
 
+    def _listen(self) -> Dict[Tuple[str, str], list]:
+        """Finds the animations that play on events and makes sure those events are raised: an event no handler
+        is wired to gets ``motion.ANIMATION_ONLY``, so the controls report it (this form is a copy)."""
+        found = motion.listeners(self.form.controls)
+        for source, event in found:
+            events = self.form.get(source).events if source and self.form.get(source) is not None else (
+                None if source else self.form.events)
+            if events is not None and event != "invalid" and not events.get(event):
+                events[event] = motion.ANIMATION_ONLY
+        return found
+
+    def fire(self, source: str, event: str) -> bool:
+        """Plays the animations waiting for ``event`` of control ``source`` (``""``: the form); returns whether
+        there were any."""
+        targets = self.listeners.get((source, event), ())
+        for name, index in targets:
+            self.played.setdefault(name, motion.Played()).fire(index)
+        return bool(targets)
+
     def dispatch(self, control: Optional[Control], event: str, value: Any = None) -> Any:
-        """Calls the handler wired to ``event`` of ``control`` (or of the form when ``None``)."""
+        """Calls the handler wired to ``event`` of ``control`` (or of the form when ``None``), after playing the
+        animations that wait for that event."""
+        if self.listeners:
+            self.fire(control.name if control is not None else "", event)
         events = control.events if control is not None else self.form.events
         name = events.get(event)
-        if not name:
+        if not name or name == motion.ANIMATION_ONLY:
             return None
         handler = self.handlers.get(name)
         owner = control.name if control is not None else self.form.name
@@ -514,6 +539,8 @@ class FormRuntime:
             self.errors.pop(control.name, None)
             return True
         self.errors[control.name] = message
+        if self.listeners:
+            self.fire(control.name, "invalid")
         return False
 
     def validate(self, names: Optional[list] = None) -> bool:
@@ -728,6 +755,7 @@ class FormRuntime:
         self.ctx = LiveContext(self)
         self.window.theme = self.theme
         self.player = timeline.reload_player(self.player, form)
+        self.listeners = self._listen()
         self.services = nonvisual.build_all(self)
         if self.loaded:
             nonvisual.start(self)
@@ -908,6 +936,8 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None, splash: Any = 
     app = open_form(path)
     if splash is not None:
         app.splash = splash
+    if app.rendering is None:  # the [tool.pyzed.rendering] of the form's project, wherever it starts from
+        app.rendering = _rendering.find(Path(path).resolve().parent)
     _run_app(app, reload=reload)
     if os.environ.get("PYZED_DESIGNER_RUN"):
         # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still

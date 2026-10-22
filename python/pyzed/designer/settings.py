@@ -70,6 +70,10 @@ class EditorSettings:
     match_brackets: bool = True
     #: Highlight the other occurrences of the selected text.
     selection_highlight: bool = True
+    #: Show the documentation of the symbol under the mouse (and the problems there).
+    hover: bool = True
+    #: Pin the headers of the blocks being scrolled through (``class``, ``def``) to the top.
+    sticky_scroll: bool = True
     ty: bool = True
     ruff: bool = True
     #: Keys changed by the user: action name -> bindings separated by commas (``""``: no key).
@@ -144,9 +148,11 @@ def load() -> EditorSettings:
 
 def save(settings: EditorSettings, path: Optional[Path] = None) -> Optional[Path]:
     """Writes the settings (keeping other sections of the file); ``None`` if the folder is not writable."""
+    from . import profiles
+
     path = path or settings_path()
     data = _read()
-    data["editor"] = settings.to_dict()
+    data["editor"] = profiles.absorb("editor", settings.to_dict())  # a project's own settings stay in the project
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

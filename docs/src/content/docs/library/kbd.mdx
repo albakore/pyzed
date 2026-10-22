@@ -2,7 +2,7 @@
 title: "Kbd"
 description: "Keyboard shortcuts drawn as keys, with symbols on macOS. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 49
+  order: 54
   label: "Kbd"
 ---
 
@@ -151,6 +151,20 @@ Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl
 | `keys` | *required* | The shortcut. |
 
 [Full reference →](/pyzed/reference/ui/#format_keys)
+
+### `ui.keys_text`
+
+```python
+keys_text(keys)
+```
+
+A shortcut as plain text for a label or a status line: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` with macOS symbols), chords separated by a space. Tooltips, buttons and menus take `keys=` instead and draw key caps, so never write the keys into their text.
+
+| Property | Default | Description |
+| --- | --- | --- |
+| `keys` | *required* | The shortcut. |
+
+[Full reference →](/pyzed/reference/ui/#keys_text)
 
 ## Related
 

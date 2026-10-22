@@ -62,7 +62,7 @@ def test_style_section_edits_a_control_and_saves_it(tmp_path):
     assert control.style["weight"] == "bold" and control.style["radius"] == (0, 8, 0, 8)
     assert app.view() is not None
     rows = panels.control_properties(app, app.theme_obj)
-    assert any(isinstance(r, panels.Group) and r.title == "Style" for r in rows)
+    assert {"Text", "Fill", "Border", "Spacing"} <= {r.title for r in rows if isinstance(r, panels.Group)}
     app.save()
     saved = Form.from_json(app.doc.path.read_text())
     assert saved["nav1"].style["shadow"] == ["#0006", [0, 4], 12]
@@ -89,7 +89,7 @@ def test_global_style_reaches_the_theme_and_the_running_form(tmp_path):
     assert t.text.lower().startswith("#e5c07b") and t.ui_font_size == 16
     assert styling.background_layer(form.style, t) is not None
     assert app.view() is not None
-    assert any(isinstance(r, panels.Group) and r.title == "Style" for r in panels.form_properties(app, app.theme_obj))
+    assert any(isinstance(r, panels.Group) and r.title == "Text" for r in panels.form_properties(app, app.theme_obj))
     assert FormApp(form).view() is not None
     assert "style" not in Form().to_dict()["form"]
 

@@ -31,6 +31,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
 | `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |
+| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |
 
 The remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.
 
@@ -193,6 +194,7 @@ forwards them to `app.update()`.
 | `on_close()` | When the user asks to close it; return `False` to prevent it. |
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
+| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 
 **Methods and properties**
 
@@ -219,6 +221,30 @@ Window.on_close()
 ```
 
 Called when the user asks to close the window. Return `False` to keep it open.
+
+#### `Window.on_file_hover`
+
+```python
+Window.on_file_hover(path)
+```
+
+A file dragged from the system is over the window: lights up the `ui.DropZone` it would land on.
+
+#### `Window.on_file_drop`
+
+```python
+Window.on_file_drop(path)
+```
+
+A file was dropped on the window from the system (once per file): goes to a `ui.DropZone`.
+
+#### `Window.on_file_leave`
+
+```python
+Window.on_file_leave()
+```
+
+The files dragged over the window left it without being dropped.
 
 #### `Window.is_open`
 
@@ -315,6 +341,70 @@ A splash screen: a frameless window with an image, centered on the screen, shown
 class Shop(pz.App):
     splash = pz.Splash("assets/splash.png", duration=1.5, text="Loading…")
 ```
+
+### `Rendering`
+
+```python
+@dataclass
+class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto')
+```
+
+How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `"auto"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).
+
+| Parameter | Description |
+| --- | --- |
+| `renderer` | `"auto"`, `"gpu"` (needed by shaders) or `"cpu"` (tiny-skia: starts faster, less memory, works everywhere). |
+| `gpu_api` | `"auto"`, `"vulkan"`, `"metal"`, `"dx12"` or `"gl"`. |
+| `power` | `"auto"`, `"high"` (the dedicated GPU) or `"low"` (the integrated one, saves battery). |
+| `vsync` | `"auto"`, `"on"` (no tearing) or `"off"` (draws as fast as it can). |
+
+```python
+class Game(pz.App):
+    rendering = pz.Rendering(renderer="gpu", vsync="off")
+```
+
+**Methods and properties**
+
+#### `Rendering.from_table`
+
+```python
+@classmethod
+Rendering.from_table(table)
+```
+
+Builds the settings from a `[tool.pyzed.rendering]` table, ignoring unknown keys and values.
+
+#### `Rendering.to_table`
+
+```python
+Rendering.to_table()
+```
+
+The settings that are not `"auto"`, as written to `pyproject.toml`.
+
+#### `Rendering.custom`
+
+```python
+Rendering.custom  # property
+```
+
+Whether any setting is not `"auto"`.
+
+#### `Rendering.env`
+
+```python
+Rendering.env()
+```
+
+The environment variables that carry these settings to Iced and wgpu.
+
+#### `Rendering.apply`
+
+```python
+Rendering.apply(environ=None)
+```
+
+Sets the variables of `env()` that are not set yet (yours win); returns the ones it set.
 
 ## Async and subscriptions
 
@@ -781,7 +871,7 @@ Whether the parent passed a handler for the custom event `name`.
 Component.describe()
 ```
 
-The first paragraph of the docstring (shown in the designer).
+The first paragraph of the docstring on one line, in Markdown (shown in the designer).
 
 #### `Component.designer_spec`
 
@@ -826,6 +916,30 @@ Type hint for a component prop that holds long text: the designer shows a text a
 
 ```python
 notes: pz.Multiline = ""
+```
+
+### `FilePath`
+
+```python
+class FilePath
+```
+
+Type hint for a component prop that holds a file path: the designer shows the path with a button that opens the system's file dialog (a `pathlib.Path` annotation does the same). A plain `str` at run time.
+
+```python
+logo: pz.FilePath = ""
+```
+
+### `FolderPath`
+
+```python
+class FolderPath
+```
+
+Type hint for a component prop that holds a folder: the designer shows the path with a button that opens the system's folder dialog. A plain `str` at run time.
+
+```python
+output: pz.FolderPath = ""
 ```
 
 ### `Range`

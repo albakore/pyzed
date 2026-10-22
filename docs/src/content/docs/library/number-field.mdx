@@ -2,7 +2,7 @@
 title: "Number field"
 description: "A number with −/+ buttons, limits, step and suffix. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 59
+  order: 64
   label: "Number field"
 ---
 
@@ -244,11 +244,14 @@ number_field(
     invalid=False,
     id=None,
     on_submit=None,
+    steppers=True,
+    drag=True,
+    drag_step=None,
     theme=None,
 )
 ```
 
-A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
+A numeric field with −/+ buttons that you can also drag, like Figma's. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Press and move the mouse sideways over the number to change it (it keeps going outside the window); double-click it to type a value, and Enter, Escape or a click outside to finish. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
 
 | Property | Default | Description |
 | --- | --- | --- |
@@ -264,6 +267,9 @@ A numeric field with −/+ buttons. `on_change(value)` receives the number alrea
 | `disabled` | `False` | Greys it out. |
 | `invalid` | `False` | Paints the border in the error color. |
 | `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
+| `steppers` | `True` | Shows the −/+ buttons (`False`: a compact field, as in a property grid). |
+| `drag` | `True` | Lets the mouse change it by dragging (`False`: a plain text field). |
+| `drag_step` | `None` | How much each pixel dragged adds (by default `step`, up to 1; steps under 1 take three pixels each). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_change`, `on_submit` ([events](#events)).

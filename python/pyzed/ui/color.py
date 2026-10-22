@@ -72,7 +72,7 @@ class ColorPicker(Component):
     events = {"change": "A new color, gradient or paint was picked (``event.value``)."}
     icon = "palette"
     label = "Color picker"
-    category = "Common"
+    category = "Forms"
     size = (260, 390)
 
     def setup(self) -> None:

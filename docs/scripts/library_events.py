@@ -944,6 +944,265 @@ def view(state, set_state):
         ui.button("Launch", None, icon=state.icon),
     ], spacing=8)''')
 
+# ---------------------------------------------------------------------------- dates and times
+
+ex("date-picker", '''import datetime
+
+
+class Booking(pz.App):
+    def __init__(self):
+        self.day = datetime.date(2026, 10, 22)
+
+    def changed(self, event):            # on_change: event.value is a datetime.date (or None)
+        self.day = event.value
+
+    def view(self):
+        return pz.column([
+            ui.DatePicker(value=self.day, format="DD/MM/YYYY", on_change=self.changed),
+            ui.label(ui.format_date(self.day, "dddd D MMMM") or "No date"),
+        ], spacing=8, width=240)''', '''import datetime
+from dataclasses import dataclass
+
+
+@dataclass
+class Picked:
+    day: datetime.date
+
+
+class Booking(pz.App):
+    day = datetime.date(2026, 10, 22)
+
+    def update(self, message):
+        match message:
+            case Picked(day):
+                self.day = day
+
+    def view(self):
+        # DatePicker is a pz.Component: its handler gets a pz.Event
+        return ui.DatePicker(value=self.day, on_change=lambda e: Picked(e.value))''', '''import datetime
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    day: datetime.date = datetime.date(2026, 10, 22)
+
+
+def view(state, set_state):
+    return pz.column([
+        ui.DatePicker(value=state.day, format="MMM D, YYYY", on_change=lambda e: set_state(day=e.value)),
+        ui.label(f"Week {state.day.isocalendar().week}" if state.day else "No date"),
+    ], spacing=8, width=240)''')
+
+ex("date-range-picker", '''class Report(pz.App):
+    def __init__(self):
+        self.period = ("2026-10-05", "2026-10-14")
+
+    def changed(self, event):            # on_change: event.value is (start, end)
+        self.period = event.value
+
+    def view(self):
+        start, end = self.period
+        return pz.column([
+            ui.DateRangePicker(value=self.period, on_change=self.changed),
+            ui.label(f"From {ui.format_date(start, 'D MMM')} to {ui.format_date(end, 'D MMM')}"),
+        ], spacing=8, width=280)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Period:
+    days: tuple
+
+
+class Report(pz.App):
+    period = (None, None)
+
+    def update(self, message):
+        match message:
+            case Period(days):
+                self.period = days
+
+    def view(self):
+        return ui.DateRangePicker(value=self.period, on_change=lambda e: Period(e.value))''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    period: tuple = (None, None)
+
+
+def view(state, set_state):
+    return ui.DateRangePicker(value=state.period, months=1, presets=False,
+                              on_change=lambda e: set_state(period=e.value))''')
+
+ex("time-picker", '''import datetime
+
+
+class Alarm(pz.App):
+    def __init__(self):
+        self.at = datetime.time(7, 30)
+
+    def changed(self, event):            # on_change: event.value is a datetime.time
+        self.at = event.value
+
+    def view(self):
+        return pz.column([
+            ui.TimePicker(value=self.at, format="h:mm A", on_change=self.changed),
+            ui.label(f"Alarm at {ui.format_time(self.at, 'HH:mm')}"),
+        ], spacing=8, width=200)''', '''import datetime
+from dataclasses import dataclass
+
+
+@dataclass
+class At:
+    time: datetime.time
+
+
+class Alarm(pz.App):
+    at = datetime.time(7, 30)
+
+    def update(self, message):
+        match message:
+            case At(time):
+                self.at = time
+
+    def view(self):
+        return ui.TimePicker(value=self.at, on_change=lambda e: At(e.value))''', '''import datetime
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    at: datetime.time = datetime.time(7, 30)
+
+
+def view(state, set_state):
+    return ui.TimePicker(value=state.at, minute_step=15, on_change=lambda e: set_state(at=e.value))''')
+
+ex("calendar", '''class Planner(pz.App):
+    def __init__(self):
+        self.days = []
+
+    def changed(self, event):            # on_change: the list of days ("multiple" mode)
+        self.days = event.value
+
+    def view(self):
+        return pz.row([
+            ui.Calendar(value=self.days, mode="multiple", on_change=self.changed),
+            ui.label(f"{len(self.days)} days"),
+        ], spacing=16)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Day:
+    value: object
+
+
+class Planner(pz.App):
+    day = None
+
+    def update(self, message):
+        match message:
+            case Day(value):
+                self.day = value
+
+    def view(self):
+        return ui.Calendar(value=self.day, today_button=True, on_change=lambda e: Day(e.value))''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    stay: tuple = ("2026-10-05", "2026-10-09")
+
+
+def view(state, set_state):
+    return ui.Calendar(value=state.stay, mode="range", months=2, on_change=lambda e: set_state(stay=e.value))''')
+
+# ------------------------------------------------------------------------------------- system
+
+ex("file-input", '''class Export(pz.App):
+    def __init__(self):
+        self.folder = ""
+
+    def chosen(self, path):              # on_change: the path (a list with mode="open_many")
+        self.folder = path
+
+    def view(self):
+        return pz.column([
+            ui.file_input(self.folder, self.chosen, mode="folder", placeholder="Choose a folder"),
+            ui.label(f"Saving to {self.folder or '…'}"),
+        ], spacing=8, width=360)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Chosen:
+    path: str
+
+
+class Export(pz.App):
+    path = ""
+
+    def update(self, message):
+        match message:
+            case Chosen(path):
+                self.path = path
+
+    def view(self):
+        return ui.file_input(self.path, lambda path: Chosen(path), mode="save", file_name="report.pdf")''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    image: str = ""
+
+
+def view(state, set_state):
+    return ui.file_input(state.image, lambda path: set_state(image=path), filters="Images: png, jpg")''')
+
+ex("drop-zone", '''class Attach(pz.App):
+    def __init__(self):
+        self.files = []
+
+    def received(self, event):           # on_files: event.value is every file so far
+        self.files = list(event.value)
+
+    def view(self):
+        return pz.column([
+            ui.DropZone(text="Drop files to attach", on_files=self.received),
+            ui.label(f"{len(self.files)} files"),
+        ], spacing=8, width=320)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Dropped:
+    path: str
+
+
+class Attach(pz.App):
+    files = ()
+
+    def update(self, message):
+        match message:
+            case Dropped(path):
+                self.files = (*self.files, path)
+
+    def view(self):
+        # on_drop runs once per file
+        return ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: Dropped(e.value))''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    rejected: str = ""
+
+
+def view(state, set_state):
+    return pz.column([
+        ui.DropZone(text="Drop a CSV", accept=["csv"], multiple=False,
+                    on_reject=lambda e: set_state(rejected=e.value)),
+        ui.label(f"Not a CSV: {state.rejected}" if state.rejected else ""),
+    ], spacing=8, width=320)''')
+
 # --------------------------------------------------------------------------------- feedback
 
 ex("callout", '''class Updates(pz.App):

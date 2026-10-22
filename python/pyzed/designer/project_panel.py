@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from .. import project as _project
+from .. import rendering as _rendering
 from ..icons import icon as _icon
 from ..project import Dependency, Problem, Project, Result, Tool
 from ..theme import Theme, alpha
@@ -161,7 +162,12 @@ class ProjectController:
     def _read_dependencies(self, project: Project) -> None:
         self.deps = project.dependencies()
         self.problems = project.problems()
-        self._stamp = project.stamp()
+        stamp = project.stamp()
+        if self._stamp is not None and stamp != self._stamp:
+            assist = getattr(self.d, "assist", None)
+            if assist is not None:  # the code editor's servers see the new packages
+                assist.environment_changed()
+        self._stamp = stamp
         # a version found by Check for updates is no news once it is the locked one
         locked = {d.name: d.locked for d in self.deps}
         self.latest = {name: v for name, v in self.latest.items() if v and locked.get(name) != v}
@@ -407,6 +413,11 @@ class ProjectController:
         self.add_text = ""
         return self._uv(f"Adding {' '.join(specs)}", lambda p: p.add(*specs, dev=dev))
 
+    def add_package(self, spec: str, *, dev: bool = False) -> Any:
+        """Adds one package (``spec``) with ``uv add``, from the code editor's quick fix; returns the background
+        task."""
+        return self._uv(f"Adding {spec}", lambda p: p.add(spec, dev=dev))
+
     def remove(self, dep: Dependency) -> Any:
         """Removes dependency ``dep`` from its group with ``uv remove``; returns the background task."""
         return self._uv(f"Removing {dep.name}", lambda p: p.remove(dep.name, dev=dep.group == "dev",
@@ -473,8 +484,11 @@ class ProjectController:
     # -- running forms -------------------------------------------------------------------
     @property
     def runs_outside(self) -> bool:
-        """Forms of this project run through ``uv run`` (the designer lacks its dependencies)."""
-        return self.project is not None and not self.project.can_run_in_process
+        """Forms of this project run through ``uv run``: the designer lacks its dependencies, or the project picks
+        its own renderer (``[tool.pyzed.rendering]``), which only a new process can use."""
+        if self.project is None:
+            return False
+        return not self.project.can_run_in_process or _rendering.find(self.project.root).custom
 
     def run_form(self, form: Path, *, capture: bool = False, env: Optional[Dict[str, str]] = None) -> None:
         """Starts ``form`` with ``uv run pyzed run --reload`` in the project (``capture``: pipe its output;

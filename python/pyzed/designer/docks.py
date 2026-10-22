@@ -62,8 +62,7 @@ def _design(d: "Designer", t: Theme) -> Any:
 
     if shader_editor.is_shader(d):  # the Shading sidebar and the shader's variables
         return shader_editor.design_panel(d, t)
-    top = _core.column([ui.panel_header(tr("Toolbox"), icon="component", theme=t), panels.toolbox(d, t)],
-                       width="fill", height="fill")
+    top = panels.toolbox(d, t)  # the tab already says "Toolbox"
     outline = _nothing_open(t, "layers") if d.nothing_open else panels.outline(d, t)
     bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), outline],
                           width="fill", height="fill")
@@ -139,7 +138,8 @@ def _logs(d: "Designer", t: Theme) -> Any:
 
 
 PANELS: Dict[str, Panel] = {p.id: p for p in (
-    Panel("design", "Design", "component", "left", _design),
+    # the id stays "design" so saved layouts keep their place; the tab is named after what it holds
+    Panel("design", "Toolbox", "component", "left", _design),
     Panel("project", "Project", "folder-tree", "left", _project),
     Panel("dependencies", "Dependencies", "package", "left", _dependencies, lambda d: d.projects.project is not None),
     Panel("properties", "Properties", "settings-2", "right", _properties),

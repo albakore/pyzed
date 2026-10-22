@@ -2,7 +2,7 @@
 title: "Deslizador"
 description: "Elige un número de un rango arrastrando. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 40
+  order: 41
   label: "Deslizador"
 ---
 
@@ -249,6 +249,12 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Consejos
+
+:::tip
+Al pulsarlo o llegar con Tab tiene el foco del teclado: las flechas lo mueven un `step`, con Shift (o Re Pág/Av Pág) diez, e Inicio/Fin saltan a `min`/`max`.
+:::
+
 ## Propiedades y API
 
 ### `ui.slider`
@@ -267,6 +273,7 @@ slider(
     height=None,
     disabled=False,
     show_value=False,
+    id=None,
     theme=None,
 )
 ```
@@ -284,6 +291,7 @@ Un deslizador.
 | `height` | `None` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `disabled` | `False` | Lo atenúa. |
 | `show_value` | `False` | Muestra el número al lado: `True`, o un formato como `"{:.0%}"`. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_change`, `on_release` ([eventos](#eventos)).

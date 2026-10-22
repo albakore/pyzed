@@ -435,13 +435,13 @@
   {
    "slug": "editor/animations-and-effects",
    "title": "Animations and effects",
-   "description": "Give controls rotation, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them on appear, hover, press, focus or click.",
+   "description": "Give controls shadow, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them when they appear, on hover, click, a new value, a failed rule or another control's event.",
    "path": "docs/src/content/docs/editor/animations-and-effects.md"
   },
   {
    "slug": "editor/code-editor",
    "title": "Code editor",
-   "description": "The Python code editor inside Pyzed Design: completion, diagnostics, code lens, folding, minimap, ty and ruff language servers, keys and settings.",
+   "description": "The Python code editor inside Pyzed Design: completion, hover, go to definition, rename, quick fixes, diagnostics, code lens, sticky scroll, folding, minimap, ty and ruff language servers, keys and settings.",
    "path": "docs/src/content/docs/editor/code-editor.md"
   },
   {
@@ -531,7 +531,7 @@
   {
    "slug": "editor/non-visual-components",
    "title": "Non-visual components",
-   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications in Pyzed Design: components with properties and events that draw nothing.",
+   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing.",
    "path": "docs/src/content/docs/editor/non-visual-components.md"
   },
   {
@@ -555,7 +555,7 @@
   {
    "slug": "editor/settings",
    "title": "Settings",
-   "description": "The preferences of Pyzed Design and its code editor: themes, fonts, keys, where settings are saved and how to translate the visual designer.",
+   "description": "The preferences of Pyzed Design and its code editor: search, profiles, per-project settings, Reset to default, the project's renderer (GPU or CPU), where settings are saved and how to translate the visual designer.",
    "path": "docs/src/content/docs/editor/settings.md"
   },
   {
@@ -973,6 +973,12 @@
    "path": "docs/src/content/docs/library/button.mdx"
   },
   {
+   "slug": "library/calendar",
+   "title": "Calendar",
+   "description": "A month grid to pick a day, a range or several days, always on screen. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/calendar.mdx"
+  },
+  {
    "slug": "library/callout",
    "title": "Callout",
    "description": "An inline notice with a title, text and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1063,6 +1069,18 @@
    "path": "docs/src/content/docs/library/count-badge.mdx"
   },
   {
+   "slug": "library/date-picker",
+   "title": "Date picker",
+   "description": "A date field with a calendar that drops down, in the format you choose. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/date-picker.mdx"
+  },
+  {
+   "slug": "library/date-range-picker",
+   "title": "Date range picker",
+   "description": "Two dates in one field, with two months side by side and quick ranges. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/date-range-picker.mdx"
+  },
+  {
    "slug": "library/dialog-layer",
    "title": "Dialog layer",
    "description": "Centers a dialog over your view with a dimmed backdrop. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1097,6 +1115,12 @@
    "title": "Donut",
    "description": "A donut chart with a label in the middle. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/donut.mdx"
+  },
+  {
+   "slug": "library/drop-zone",
+   "title": "Drop zone",
+   "description": "An area that takes files dragged from the desktop or the file manager. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/drop-zone.mdx"
   },
   {
    "slug": "library/editor",
@@ -1151,6 +1175,12 @@
    "title": "Field",
    "description": "A settings row: title and description left, control right. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/field.mdx"
+  },
+  {
+   "slug": "library/file-input",
+   "title": "File picker",
+   "description": "A path field with a button that opens the system's file or folder dialog. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/file-input.mdx"
   },
   {
    "slug": "library/flex",
@@ -1499,6 +1529,12 @@
    "title": "Thread history",
    "description": "Past conversations, searchable and grouped by day. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/thread-history.mdx"
+  },
+  {
+   "slug": "library/time-picker",
+   "title": "Time picker",
+   "description": "A time field with columns of hours and minutes, in 24 or 12 hours. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/time-picker.mdx"
   },
   {
    "slug": "library/title-bar",
@@ -2923,7 +2959,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -2957,7 +2993,7 @@
     }
    },
    "pyzed.Window": {
-    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |\n| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n"
+    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |\n| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |\n"
    },
    "pyzed.Splash": {
     "desc": "A splash screen: a frameless window with an image, centered on the screen, shown while the app starts. Give it to `App.splash`; it stays up for `duration` seconds at least, then the main window opens and the splash closes. See [Splash screen](/pyzed/packaging/build/#splash-screen).",
@@ -2972,6 +3008,16 @@
      "icon": "Window icon."
     },
     "example": "\n            class Shop(pz.App):\n                splash = pz.Splash(\"assets/splash.png\", duration=1.5, text=\"Loading…\")\n        "
+   },
+   "pyzed.Rendering": {
+    "desc": "How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `\"auto\"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).",
+    "params": {
+     "renderer": "`\"auto\"`, `\"gpu\"` (needed by shaders) or `\"cpu\"` (tiny-skia: starts faster, less memory, works everywhere).",
+     "gpu_api": "`\"auto\"`, `\"vulkan\"`, `\"metal\"`, `\"dx12\"` or `\"gl\"`.",
+     "power": "`\"auto\"`, `\"high\"` (the dedicated GPU) or `\"low\"` (the integrated one, saves battery).",
+     "vsync": "`\"auto\"`, `\"on\"` (no tearing) or `\"off\"` (draws as fast as it can)."
+    },
+    "example": "\n            class Game(pz.App):\n                rendering = pz.Rendering(renderer=\"gpu\", vsync=\"off\")\n        "
    },
    "pyzed.every": {
     "desc": "A subscription that sends `message` to `update` every `seconds` seconds (like Iced's `time::every`). If `message` is a callable, it is called. Return it from `subscriptions()`.",
@@ -3093,6 +3139,14 @@
    "pyzed.Multiline": {
     "desc": "Type hint for a component prop that holds long text: the designer shows a text area for it. A plain `str` at run time.",
     "example": "notes: pz.Multiline = \"\""
+   },
+   "pyzed.FilePath": {
+    "desc": "Type hint for a component prop that holds a file path: the designer shows the path with a button that opens the system's file dialog (a `pathlib.Path` annotation does the same). A plain `str` at run time.",
+    "example": "logo: pz.FilePath = \"\""
+   },
+   "pyzed.FolderPath": {
+    "desc": "Type hint for a component prop that holds a folder: the designer shows the path with a button that opens the system's folder dialog. A plain `str` at run time.",
+    "example": "output: pz.FolderPath = \"\""
    },
    "pyzed.Range": {
     "desc": "Limits of a number prop, used with `typing.Annotated`: the designer shows a number box limited to them. See [Custom components](/pyzed/guides/components/#in-the-designer).",
@@ -3685,6 +3739,18 @@
      "scale": "Scale factor."
     }
    },
+   "pyzed.focusable": {
+    "desc": "Lets any widget take the keyboard focus like a text field: a click or Tab focuses it (`Command.focus(id)` too) and, while it has it, the combos in `keys` call `on_key(combo)` instead of reaching the app's `on_key`. A ring is drawn around it once the keyboard is used on it. The library's switches, check boxes, sliders, segmented controls and radio groups use it.",
+    "params": {
+     "content": "The control.",
+     "on_key": "Called with the combo (`\"space\"`, `\"shift-right\"`…) of each key in `keys` pressed while it has the focus. `None` leaves `content` unfocusable.",
+     "keys": "The combos it takes (by default Space, Enter, the arrows, Home and End); `\"*\"` takes every key. Tab is left to move the focus.",
+     "ring_color": "Color of the focus ring (none by default).",
+     "ring_radius": "Corner radius of the ring.",
+     "ring_offset": "Pixels between the control and the ring."
+    },
+    "example": "pz.focusable(stars, lambda combo: self.rate(+1 if combo == \"right\" else -1), keys=[\"left\", \"right\"], ring_color=\"#528bff\")"
+   },
    "pyzed.window_edges": {
     "desc": "Wraps the whole view of a window without system decorations so that pressing near its edges resizes the window (the corners take twice as much room). `ui.window_frame` already uses it.",
     "params": {
@@ -3905,6 +3971,18 @@
      "gap": "Distance from the content."
     }
    },
+   "pyzed.popup": {
+    "desc": "Shows `content` over everything else next to `base`, like the menu of a drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls `on_dismiss`. With `content=None` only `base` is shown. The date pickers open their calendars with it.",
+    "params": {
+     "base": "The widget it belongs to (a field, a button).",
+     "content": "What opens (a panel, a menu), or `None` while closed.",
+     "on_dismiss": "Message or callable sent on a press outside or Escape.",
+     "side": "`\"bottom\"`, `\"top\"`, `\"right\"` or `\"left\"` of `base`.",
+     "align": "`\"start\"`, `\"center\"` or `\"end\"`: how it lines up with `base`.",
+     "gap": "Space between `base` and the content."
+    },
+    "example": "pz.popup(field, panel if self.open else None, on_dismiss=self.close)"
+   },
    "pyzed.checkbox": {
     "desc": "A checkbox.",
     "params": {
@@ -3943,7 +4021,7 @@
     }
    },
    "pyzed.pick_list": {
-    "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.",
+    "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`. It takes the keyboard focus like a text field (a click, Tab or `Command.focus(id)`) and keeps it after a choice: ↑/↓ then pick the previous or next option without opening it, Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open the menu, where ↑/↓ move, Enter picks and Esc closes.",
     "params": {
      "selected": "Current option.",
      "handle": "Arrow icon character.",
@@ -3958,7 +4036,8 @@
      "menu_color": "Menu text.",
      "menu_border_color": "Menu border.",
      "selected_bg": "Background of the highlighted option.",
-     "selected_color": "Text of the highlighted option."
+     "selected_color": "Text of the highlighted option.",
+     "focus_border_color": "Border color while it has the keyboard focus."
     }
    },
    "pyzed.radio": {
@@ -4013,7 +4092,10 @@
      "selection_highlight": "Highlights the other occurrences of the selected text.",
      "keymap": "Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).",
      "scrollbar": "`False` hides the scrollbars.",
-     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
+     "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
+     "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
     }
    },
    "pyzed.Style": {
@@ -4236,6 +4318,12 @@
      "keys": "The shortcut."
     }
    },
+   "pyzed.ui.keys_text": {
+    "desc": "A shortcut as plain text for a label or a status line: `keys_text(\"ctrl-shift-p\") == \"Ctrl+Shift+P\"` (`\"⌃⇧P\"` with macOS symbols), chords separated by a space. Tooltips, buttons and menus take `keys=` instead and draw key caps, so never write the keys into their text.",
+    "params": {
+     "keys": "The shortcut."
+    }
+   },
    "pyzed.ui.avatar": {
     "desc": "A round avatar with initials.",
     "params": {
@@ -4294,6 +4382,26 @@
      "value": "Current text.",
      "kwargs": "Same as `input`."
     }
+   },
+   "pyzed.ui.path_input": {
+    "desc": "A text field for a file or folder path with a button that opens the system's file dialog, so the path never has to be typed (it still can be).",
+    "params": {
+     "value": "Current path.",
+     "on_change": "Callable that receives the typed or chosen path.",
+     "folder": "Picks a folder instead of a file.",
+     "save": "Shows the \"Save as\" dialog.",
+     "filters": "`(name, extensions)` pairs: `[(\"Images\", [\"png\", \"jpg\"])]`.",
+     "kind": "Common filters by name: `\"image\"`, `\"audio\"`, `\"video\"`, `\"font\"`, `\"shader\"` or `\"data\"`.",
+     "directory": "Folder the dialog opens in (by default, the current path's).",
+     "relative_to": "A chosen path inside this folder is given relative to it.",
+     "title": "Title of the dialog.",
+     "placeholder": "Text shown while it is empty.",
+     "size": "`\"sm\"`, `\"md\"` or `\"lg\"`.",
+     "mono": "Monospaced text.",
+     "disabled": "Greys it out.",
+     "invalid": "Paints the border in the error color."
+    },
+    "example": "ui.path_input(self.logo, self.set_logo, kind=\"image\", relative_to=\".\")"
    },
    "pyzed.ui.switch": {
     "desc": "An on/off switch.",
@@ -4433,8 +4541,11 @@
     }
    },
    "pyzed.ui.number_field": {
-    "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+    "desc": "A numeric field with −/+ buttons that you can also drag, like Figma's. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Press and move the mouse sideways over the number to change it (it keeps going outside the window); double-click it to type a value, and Enter, Escape or a click outside to finish. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
     "params": {
+     "steppers": "Shows the −/+ buttons (`False`: a compact field, as in a property grid).",
+     "drag": "Lets the mouse change it by dragging (`False`: a plain text field).",
+     "drag_step": "How much each pixel dragged adds (by default `step`, up to 1; steps under 1 take three pixels each).",
      "min": "Minimum.",
      "max": "Maximum.",
      "step": "Button step.",
@@ -5131,7 +5242,10 @@
      "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
      "keymap": "Zed-style `{binding: action}` dict (`{\"ctrl-shift-d\": \"duplicate_line_down\"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.",
      "scrollbar": "`False` hides the scrollbars.",
-     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
+     "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
+     "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
     }
    },
    "pyzed.ui.language_token": {
@@ -5177,6 +5291,164 @@
      "height": "Height.",
      "size": "Cell size."
     }
+   },
+   "pyzed.ui.Calendar": {
+    "desc": "A component with a month to pick a day on (`mode=\"single\"`), a range (`\"range\"`: the first click starts it, the second ends it) or several days (`\"multiple\"`). The title opens a grid of months, then of years. Once clicked it takes the keyboard: arrows move, Enter picks, Page Up/Down change month. See the [Calendar](/pyzed/library/calendar/) page.",
+    "params": {
+     "value": "A date (`datetime.date` or `\"2026-10-22\"`), a `(start, end)` pair or a list of dates, by `mode`.",
+     "mode": "`\"single\"`, `\"range\"` or `\"multiple\"`.",
+     "min": "The earliest day that can be picked.",
+     "max": "The latest day that can be picked.",
+     "disabled": "Days that cannot be picked: dates, weekday names (`\"sunday\"`) or `\"weekends\"`.",
+     "first_weekday": "`\"monday\"`, `\"sunday\"` or `\"saturday\"`.",
+     "months": "Months shown side by side.",
+     "week_numbers": "Shows the ISO week number of each row.",
+     "show_outside": "Shows the days of the months around.",
+     "today_button": "Adds a Today link.",
+     "on_change": "Receives `event.value` (a date, a tuple or a list).",
+     "on_month": "Receives `event.value`, the `(year, month)` shown."
+    },
+    "example": "\n            ui.Calendar(self.day, on_change=lambda e: setattr(self, \"day\", e.value))\n            ui.Calendar(self.stay, mode=\"range\", months=2, on_change=lambda e: setattr(self, \"stay\", e.value))\n        "
+   },
+   "pyzed.ui.DatePicker": {
+    "desc": "A component: a date field that opens a calendar below it, in a popup that panels never cut off. It can be typed in `format` (Enter or leaving the field reads it); once clicked, ↑/↓ move the date a day and Page Up/Down a month without opening anything, Alt+↓ opens the calendar and Escape closes it. See the [Date picker](/pyzed/library/date-picker/) page.",
+    "params": {
+     "value": "The date (`datetime.date`, ISO text or `None`).",
+     "format": "How it is written: `\"DD/MM/YYYY\"`, `\"MMM D, YYYY\"`... (see `format_date`).",
+     "placeholder": "Hint while empty (default: the format).",
+     "min": "The earliest date.",
+     "max": "The latest date.",
+     "disabled_dates": "Days that cannot be picked (as in `Calendar`).",
+     "first_weekday": "`\"monday\"`, `\"sunday\"` or `\"saturday\"`.",
+     "week_numbers": "Shows week numbers in the calendar.",
+     "clearable": "Shows an x that empties it.",
+     "today_button": "Adds a Today link to the calendar.",
+     "disabled": "Greys it out.",
+     "invalid": "Paints the border in the error color.",
+     "on_change": "Receives `event.value`: a `datetime.date` or `None`.",
+     "on_open": "The calendar opened.",
+     "on_close": "The calendar closed."
+    },
+    "example": "\n            ui.DatePicker(self.due, format=\"DD/MM/YYYY\", on_change=lambda e: setattr(self, \"due\", e.value))\n        "
+   },
+   "pyzed.ui.DateRangePicker": {
+    "desc": "A component: a field for a start and an end date, with two months and quick ranges (Today, Last 7 days, This month...) in its popup. Typed text is two dates separated by `separator`. See the [Date range picker](/pyzed/library/date-range-picker/) page.",
+    "params": {
+     "value": "`(start, end)`: dates, ISO text or `None`.",
+     "format": "How each date is written.",
+     "separator": "Text between the two dates.",
+     "placeholder": "Hint while empty.",
+     "min": "The earliest date.",
+     "max": "The latest date.",
+     "disabled_dates": "Days that cannot be picked.",
+     "first_weekday": "`\"monday\"`, `\"sunday\"` or `\"saturday\"`.",
+     "months": "Months shown side by side.",
+     "presets": "Shows the quick ranges.",
+     "clearable": "Shows an x that empties it.",
+     "disabled": "Greys it out.",
+     "invalid": "Paints the border in the error color.",
+     "on_change": "Receives `event.value`: `(start, end)`.",
+     "on_open": "The calendar opened.",
+     "on_close": "The calendar closed."
+    },
+    "example": "\n            ui.DateRangePicker(self.period, on_change=lambda e: setattr(self, \"period\", e.value))\n        "
+   },
+   "pyzed.ui.TimePicker": {
+    "desc": "A component: a time field with columns of hours and minutes (and seconds, and AM/PM with a 12-hour `format`) in a popup. Once clicked, ↑/↓ change it by `minute_step`. See the [Time picker](/pyzed/library/time-picker/) page.",
+    "params": {
+     "value": "The time (`datetime.time`, `\"14:30\"` or `None`).",
+     "format": "`\"HH:mm\"`, `\"HH:mm:ss\"`, `\"h:mm A\"`...",
+     "placeholder": "Hint while empty.",
+     "minute_step": "Minutes between the ones offered.",
+     "min": "The earliest time.",
+     "max": "The latest time.",
+     "clearable": "Shows an x that empties it.",
+     "disabled": "Greys it out.",
+     "invalid": "Paints the border in the error color.",
+     "on_change": "Receives `event.value`: a `datetime.time` or `None`.",
+     "on_open": "The list opened.",
+     "on_close": "The list closed."
+    },
+    "example": "\n            ui.TimePicker(self.alarm, format=\"h:mm A\", minute_step=15, on_change=lambda e: setattr(self, \"alarm\", e.value))\n        "
+   },
+   "pyzed.ui.format_date": {
+    "desc": "Writes a date with a pattern of tokens: `YYYY` 2026, `YY` 26, `MMMM` October, `MMM` Oct, `MM` 10, `M` 10, `DD` 05, `D` 5, `dddd` Monday, `ddd` Mon, `HH`/`hh` hours, `mm` minutes, `ss` seconds, `A` AM/PM and `[text]` kept as is. A pattern with `%` is a `strftime` one. Month and day names follow the language of `pyzed.i18n`.",
+    "params": {
+     "value": "A date, a datetime, ISO text or `None` (gives `\"\"`).",
+     "fmt": "The pattern.",
+     "language": "A language for the names instead of the current one."
+    },
+    "example": "ui.format_date(day, \"dddd, D MMMM YYYY\")   # \"Monday, 5 October 2026\""
+   },
+   "pyzed.ui.parse_date": {
+    "desc": "Reads a date written with a pattern of `format_date` (month names in the current language or English); ISO `YYYY-MM-DD` always works. Returns `None` when the text is not a date.",
+    "params": {
+     "text": "The text.",
+     "fmt": "The pattern.",
+     "language": "The language of the names."
+    }
+   },
+   "pyzed.ui.format_time": {
+    "desc": "Writes a time (or `\"14:30\"`) with a pattern such as `\"h:mm A\"`.",
+    "params": {
+     "value": "A `datetime.time` or text.",
+     "fmt": "The pattern."
+    }
+   },
+   "pyzed.ui.parse_time": {
+    "desc": "Reads a time: `\"14:30\"`, `\"2:30 PM\"`, `\"14:30:05\"`, with `fmt` first. `None` when it is not one.",
+    "params": {
+     "text": "The text.",
+     "fmt": "The pattern."
+    }
+   },
+   "pyzed.ui.file_input": {
+    "desc": "A path field with a button that opens the system's file dialog, so nobody types a path by hand. See the [File picker](/pyzed/library/file-input/) page.",
+    "params": {
+     "mode": "`\"open\"` (a file), `\"open_many\"` (a list), `\"save\"` or `\"folder\"`.",
+     "filters": "Files shown: `{\"Images\": \"png jpg\"}` or `\"Images: png, jpg\"`.",
+     "title": "The dialog's title.",
+     "directory": "Where the dialog opens (default: the folder of the current path).",
+     "file_name": "The name suggested when saving.",
+     "button": "Text for the button instead of a folder icon.",
+     "editable": "`False` keeps the path from being typed.",
+     "invalid": "Paints the border in the error color.",
+     "on_change": "Receives the path (a list with `\"open_many\"`)."
+    },
+    "example": "ui.file_input(self.photo, self.set_photo, filters={\"Images\": \"png jpg\"})"
+   },
+   "pyzed.ui.system.pick": {
+    "desc": "The system's file dialog as a `Command`: return it from a callback and `then` receives what the user chose (a path, a list of paths with `\"open_many\"`, or `None` when they cancel). `ui.file_input` uses it.",
+    "params": {
+     "then": "Called with the result.",
+     "mode": "`\"open\"`, `\"open_many\"`, `\"save\"` or `\"folder\"`.",
+     "title": "The dialog's title.",
+     "filters": "Files shown: `{\"Images\": \"png jpg\"}` or `\"Images: png, jpg\"`.",
+     "directory": "Where the dialog opens.",
+     "file_name": "The name suggested when saving."
+    },
+    "example": "ui.button(\"Open…\", lambda: ui.system.pick(self.load, filters=\"Text: txt, md\"))"
+   },
+   "pyzed.ui.DropZone": {
+    "desc": "A component that takes files dragged from the system's file manager and dropped on the window, and opens the file dialog on a click. It lights up while files are dragged over the window and keeps the dropped paths in `files`. The window's `on_file_drop` hook hands each file to the zone under the pointer, else to one whose `accept` lists its type. See the [Drop zone](/pyzed/library/drop-zone/) page.",
+    "params": {
+     "text": "The main text (default: Drop files here).",
+     "hint": "The line under it.",
+     "icon_name": "Its icon.",
+     "accept": "Extensions (`[\"png\", \"jpg\"]`), patterns (`\"*.tar.gz\"`) or `\"folder\"`; empty takes everything.",
+     "multiple": "`False` keeps only the last file.",
+     "browse": "A click opens the file dialog.",
+     "show_files": "Lists the files under the text (each with an x).",
+     "files": "The dropped paths.",
+     "disabled": "Takes nothing.",
+     "live": "`False` draws it without taking files (the designer's canvas).",
+     "on_drop": "Receives `event.value`: one dropped path (once per file).",
+     "on_files": "Receives `event.value`: the list of files.",
+     "on_reject": "Receives a path it does not accept.",
+     "on_enter": "Files are dragged over the window.",
+     "on_leave": "The drag left without dropping."
+    },
+    "example": "ui.DropZone(accept=[\"png\", \"jpg\"], on_drop=lambda e: self.photos.append(e.value))"
    },
    "pyzed.ui.ToolCall": {
     "desc": "A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `\"waiting\"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).",
@@ -5880,6 +6152,18 @@
    },
    "pyzed.Notification": {
     "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."
+   },
+   "pyzed.SystemInfo": {
+    "desc": "What the computer is: `os` (`\"Windows\"`, `\"macOS\"`, `\"Linux\"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, plus `memory_available`, `disk_free` and `disk_total` read when asked. `env(name)` reads a variable, `folder(\"documents\")` finds the user's folders. With `interval` above 0, `start()` raises `update` with `snapshot()` every so often."
+   },
+   "pyzed.Launcher": {
+    "desc": "Opens files, folders and links with the app the system uses for them: `open(target)`, `reveal(path)` (selected in the file manager) and `email(to, subject, body)`; raises `opened` or `failed`."
+   },
+   "pyzed.NetworkMonitor": {
+    "desc": "Notices when the computer goes online or offline by reaching `host` every `interval` milliseconds in the background: `online`, `check()`, `start()`, `stop()`; raises `change`, `online` and `offline`."
+   },
+   "pyzed.PowerMonitor": {
+    "desc": "The battery: `percent`, `plugged` and `has_battery`; every `interval` milliseconds raises `change`, `low` (under `low_level` while unplugged), `plugged` and `unplugged`."
    },
    "pyzed.shading.load": {
     "desc": "The `Shader` of a `.pzshad` file, cached by path (`fresh=True` reads it again). It reloads by itself when the file changes."

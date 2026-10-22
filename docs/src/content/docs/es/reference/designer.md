@@ -546,10 +546,18 @@ Mueve controles dentro de `parent` (o al formulario con `None`), dejándolos don
 #### `Document.wrap`
 
 ```python
-Document.wrap(type_, names=None)
+Document.wrap(type_, names=None, props=None)
 ```
 
 Mete controles (por defecto, la selección) dentro de un contenedor nuevo de tipo `type_` que los rodea.
+
+#### `Document.ungroup`
+
+```python
+Document.ungroup(names=None)
+```
+
+Saca los hijos de los contenedores seleccionados (donde están en pantalla) y quita los contenedores; los hijos quedan seleccionados. Devuelve los nombres de los contenedores quitados.
 
 #### `Document.move_out`
 
@@ -880,6 +888,14 @@ Document.unwire(name, event, *, delete_code=False)
 
 Desconecta `event`; con `delete_code` también quita el esqueleto si no se ha tocado.
 
+#### `Document.rename_handler`
+
+```python
+Document.rename_handler(old, new)
+```
+
+Hace que los eventos conectados al manejador `old` apunten a `new` (después de renombrar su función en el código); devuelve si algún evento lo usaba.
+
 #### `Document.handler_source`
 
 ```python
@@ -1000,7 +1016,7 @@ La propiedad que enlaza cada tipo de control y si el usuario la edita (en los do
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=(), role=None)
 ```
 
 Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`.
@@ -1051,7 +1067,7 @@ Un control nuevo de este tipo con las propiedades por defecto.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='', accept='')
 ```
 
 Una propiedad que se muestra en la rejilla de propiedades del diseñador.
@@ -1222,7 +1238,7 @@ La clase se importa una vez y se reutiliza hasta que cambia su código.
 ### `discover`
 
 ```python
-discover(root=None)
+discover(root=None, *, fresh=True)
 ```
 
 Importa todos los componentes diseñados bajo `root` (por defecto, la carpeta actual).
@@ -1614,7 +1630,7 @@ El editor visual de formularios.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True, keymap={})
+class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, ty=True, ruff=True, keymap={})
 ```
 
 Los ajustes del editor de código del diseñador (un dataclass): `theme`, `font_size`, `tab_size`, `hard_tabs`, `convert_indentation`, `backspace_unindent`, `repeat_delay`, `repeat_rate`, `show_whitespace`, `wrap`, `line_numbers`, `highlight_line`, `autocomplete`, `code_lens`, `inline_diagnostics`, `format_on_apply`, `auto_close`, `folding`, `minimap`, `cursor_shape`, `cursor_blink`, `ty` y `ruff`.

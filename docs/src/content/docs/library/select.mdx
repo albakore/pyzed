@@ -2,7 +2,7 @@
 title: "Select"
 description: "A dropdown to choose one option. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 77
+  order: 82
   label: "Select"
 ---
 
@@ -233,7 +233,7 @@ def view(state, set_state):
 ## Tips
 
 :::tip
-The menu opens on click; the preview shows the closed state.
+It takes the keyboard focus like a text field (a click or Tab) and keeps it after you pick an option: then ↓/↑ choose the next or previous option without opening the menu, Home/End the first and last, and typing jumps to the option that starts with those letters. Enter, Space, Alt+↓ or F4 open the menu; there ↑/↓ move, Enter picks and Esc closes. Pass `id=` to focus it with `pz.Command.focus(id)`.
 :::
 
 ## Properties and API
@@ -253,6 +253,7 @@ select(
     invalid=False,
     on_open=None,
     on_close=None,
+    id=None,
     theme=None,
 )
 ```
@@ -268,6 +269,7 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | `False` | Greys it out. |
 | `invalid` | `False` | Paints the border in the error color. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_select`, `on_open`, `on_close` ([events](#events)).
@@ -304,10 +306,12 @@ pick_list(
     menu_border_color=None,
     selected_bg=None,
     selected_color=None,
+    focus_border_color=None,
+    id=None,
 )
 ```
 
-A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.
+A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`. It takes the keyboard focus like a text field (a click, Tab or `Command.focus(id)`) and keeps it after a choice: ↑/↓ then pick the previous or next option without opening it, Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open the menu, where ↑/↓ move, Enter picks and Esc closes.
 
 | Property | Default | Description |
 | --- | --- | --- |
@@ -333,6 +337,8 @@ A dropdown to choose one of `options`. `on_select(option)` receives the chosen o
 | `menu_border_color` | `None` | Menu border. |
 | `selected_bg` | `None` | Background of the highlighted option. |
 | `selected_color` | `None` | Text of the highlighted option. |
+| `focus_border_color` | `None` | Border color while it has the keyboard focus. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 
 Events: `on_select`, `on_open`, `on_close` ([events](#events)).
 

@@ -26,7 +26,7 @@ from .components import Prop
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
-SCALARS = {"str", "int", "float", "bool", "bytes", "Color", "Icon", "Multiline"}
+SCALARS = {"str", "int", "float", "bool", "bytes", "Color", "Icon", "Multiline", "FilePath", "FolderPath"}
 _ALIASES = {"List": "list", "Sequence": "list", "MutableSequence": "list", "Iterable": "list", "Set": "set",
             "FrozenSet": "set", "frozenset": "set", "AbstractSet": "set", "MutableSet": "set", "Tuple": "tuple",
             "Dict": "dict", "Mapping": "dict", "MutableMapping": "dict", "DefaultDict": "dict",
@@ -91,7 +91,9 @@ def _type_of(node: ast.expr) -> Type:
         text = _name(node)
         last = text.rsplit(".", 1)[-1]
         last = _ALIASES.get(last, last)
-        if last in ("Color", "Icon", "Multiline") or (last in SCALARS and "." not in text):
+        if last == "Path":  # pathlib.Path
+            return Type("FilePath", name=last)
+        if last in ("Color", "Icon", "Multiline", "FilePath", "FolderPath") or (last in SCALARS and "." not in text):
             return Type("str" if last == "bytes" else last, name=last)
         if last in ("list", "set", "dict", "tuple"):
             return Type(last, (ANY, ANY) if last == "dict" else (ANY,) if last != "tuple" else ())
@@ -225,7 +227,7 @@ def class_resolver(*sources: Dict[str, List[Field]]) -> Classes:
 def default_source(t: Type) -> str:
     """The source of a new value of type ``t``: ``""``, ``0``, ``[]``, ``Point()``..."""
     kind = t.kind
-    if kind in ("str", "Multiline"):
+    if kind in ("str", "Multiline", "FilePath", "FolderPath"):
         return '""'
     if kind == "Color":
         return '"accent"'
@@ -291,7 +293,7 @@ def matches(t: Type, node: Optional[ast.expr]) -> bool:
         return (ok and value is None) or matches(t.args[0], node)
     if kind == "union":
         return any(matches(a, node) for a in t.args)
-    if kind in ("str", "Color", "Icon", "Multiline"):
+    if kind in ("str", "Color", "Icon", "Multiline", "FilePath", "FolderPath"):
         return ok and isinstance(value, str)
     if kind == "bool":
         return ok and isinstance(value, bool)
@@ -335,12 +337,12 @@ def _src(node: ast.expr) -> str:
 
 # -- the editor ----------------------------------------------------------------------
 
-ICONS = {"str": "type", "Multiline": "text", "int": "hash", "float": "percent", "range": "sliders-horizontal",
+ICONS = {"str": "type", "Multiline": "text", "FilePath": "file", "FolderPath": "folder", "int": "hash", "float": "percent", "range": "sliders-horizontal",
          "bool": "toggle-right", "Color": "palette", "Icon": "image", "choice": "list-checks", "union": "split",
          "list": "brackets", "set": "brackets", "tuple": "brackets", "dict": "braces", "class": "box",
          "none": "circle-off", "any": "asterisk"}
 #: Each kind takes a syntax color of the theme, like the colored pins of Unreal's variables.
-TOKENS = {"str": "string", "Multiline": "string", "int": "number", "float": "number", "range": "number",
+TOKENS = {"str": "string", "Multiline": "string", "FilePath": "string", "FolderPath": "string", "int": "number", "float": "number", "range": "number",
           "bool": "enum", "Color": "constant", "Icon": "keyword", "choice": "enum", "union": "keyword",
           "list": "property", "set": "property", "tuple": "property", "dict": "property", "class": "type",
           "none": "comment", "any": "comment"}
@@ -449,7 +451,8 @@ def _scalar(t: Type, node: Optional[ast.expr], source: Optional[str], on_change:
         options = {str(c): c for c in t.extra}
         return _choice(prop, value, lambda v: on_change(scene_code.literal(options.get(v, v))), th)
     else:
-        prop = Prop(key, {"Color": "color", "Icon": "icon", "Multiline": "multiline"}.get(kind, "text"), value)
+        prop = Prop(key, {"Color": "color", "Icon": "icon", "Multiline": "multiline", "FilePath": "file",
+                          "FolderPath": "folder"}.get(kind, "text"), value)
         cast = str
     return _editor(ctx, prop, value, lambda v: on_change(scene_code.literal(cast(v))), key)
 

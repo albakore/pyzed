@@ -1,11 +1,11 @@
 ---
 title: Animaciones y efectos
-description: "Da a los controles rotación, desenfoque, glow, bloom, glass y opacidad en Pyzed Design, y anímalos al aparecer, en hover, al pulsar o con foco."
+description: "Da a los controles sombra, desenfoque, glow, bloom, glass y opacidad en Pyzed Design, y anímalos al aparecer, con el ratón, al hacer clic, con un valor nuevo, una regla que falla o el evento de otro control."
 sidebar:
   order: 5.5
 ---
 
-Cada control visual tiene dos secciones en el panel **Propiedades**, debajo de **Estilo**: **Efectos** y
+Cada control visual tiene dos secciones al final del panel **Propiedades**, después de su estilo: **Efectos** y
 **Animación**. Lo que fijes ahí se guarda en el `.pzform` y se reproduce cuando el formulario se ejecuta. Es
 el mismo sistema que [`widget.animate()` y los efectos de estilo](/pyzed/es/animation/) de la biblioteca.
 
@@ -16,19 +16,24 @@ el mismo sistema que [`widget.animate()` y los efectos de estilo](/pyzed/es/anim
 | Campo | Qué hace |
 | --- | --- |
 | **Opacidad** | Cuánto se ve el control y todo lo que tiene dentro (1 es opaco). |
-| **Rotación** | Grados, en sentido horario, alrededor del centro. |
+| **Sombra** | Una sombra proyectada: elige un color y luego **Desplazamiento** (X e Y) y **Desenfoque**. |
 | **Desenfoque** | Desenfoca el control y todo lo que contiene, en píxeles. |
 | **Desenfoque del fondo** | Desenfoca lo que hay detrás de la caja, en píxeles. |
 | **Resplandor** | Un halo suave alrededor de la caja. Elige un color (o un token del tema como `accent`); **Tamaño del resplandor** fija cuánto se extiende. |
 | **Bloom** | Luz que desborda de las partes brillantes del control. **Intensidad** va de 0 a 1. |
 | **Cristal** | Un panel translúcido que desenfoca lo que tiene detrás, con un borde claro. **Matiz** lo colorea e **Intensidad del tinte** fija cuánto se nota el tinte. |
 
-Los subcampos solo aparecen mientras el efecto está activo. Borra el color (o apaga **Cristal**) para
-quitarlo. Los efectos son propiedades de estilo (`opacity`, `rotate`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), así que en el código
+La rotación está en la sección **Posición**. Los subcampos solo aparecen mientras el efecto está activo. Borra el color (o apaga **Cristal**) para
+quitarlo. Los efectos son propiedades de estilo (`opacity`, `shadow`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), así que en el código
 aparecen en `control.style` y **Restablecer el estilo** también los quita. El cristal luce mejor sobre un fondo
 colorido, como un panel con degradado.
 
 ## Animación
+
+Una animación son dos decisiones: **cuándo** se reproduce y **qué** se reproduce (un preset como *Aparecer
+subiendo*, *Latido* o *Sacudida*). Un control sin animaciones muestra algunas listas para añadir con un clic
+(**Aparecer al mostrarse**, **Elevar al pasar el ratón**, **Latir al hacer clic**, **Sacudir si el valor no es
+válido**...), solo las que encajan con el control, y **Añadir animación** para cualquier otra.
 
 Cada fila es una animación: un icono de lo que la reproduce, un resumen (**Aparecer subiendo · 280 ms**,
 con **+retardo** y **×repeticiones** si las tiene) y el disparador debajo. El botón **▶** la previsualiza y la
@@ -36,14 +41,28 @@ papelera la quita. Haz clic en una fila para abrir su editor:
 
 | Campo | Significado |
 | --- | --- |
-| **Cuándo** | Qué la reproduce: **Al aparecer**, **Con el ratón encima**, **Mientras se pulsa**, **Mientras tiene el foco**, **Al hacer clic** o **Al reproducirla desde el código**. Encima, pulsar y foco avanzan mientras se cumple la condición y vuelven atrás cuando termina. Debajo del campo, una línea explica cómo empieza la elegida. |
-| **Animación** | El preset. Primero salen los que encajan con el disparador (entradas para *al aparecer*, interacciones para encima y pulsar, de atención para el clic); el tooltip describe el elegido. |
+| **Cuándo** | Qué la reproduce (ver la tabla de abajo). Debajo del campo, una línea explica cómo empieza la elegida. |
+| **Control**, **Evento** | Solo con **Con un evento de otro control**: qué control (o el formulario) y cuál de sus eventos. |
+| **Animación** | El preset. Primero salen los que encajan con el disparador (entradas para *al aparecer*, interacciones para encima y pulsar, de atención para clics y eventos); el tooltip describe el elegido. |
 | **Duración**, **Retardo** | Milisegundos. Vacío mantiene el timing propio del preset. |
 | **Curva** | Cómo cambia la velocidad por el camino (suave, lineal, frenar cúbica, muelle...). |
 | **Repetir** | 1, 2, 3, 5 o infinito. |
 
-**Añadir animación** añade una fila (un *aparecer subiendo* al aparecer) y la abre. Elegir otro preset
-restablece el timing de la fila al del nuevo preset. Todos los cambios se pueden deshacer.
+| Cuándo | Se reproduce |
+| --- | --- |
+| **Al aparecer** | Una vez, al abrir el formulario o al mostrarse el control. |
+| **Con el ratón encima**, **Mientras se pulsa**, **Mientras tiene el foco** | Hacia delante mientras se cumple la condición, y hacia atrás cuando termina. |
+| **Al hacer clic**, **Al hacer doble clic**, **Al hacer clic derecho** | Una vez en cada clic. |
+| **Cuando entra el puntero**, **Cuando sale el puntero** | Una vez cada vez que el ratón entra o sale. |
+| **Cuando cambia su valor** | Una vez con cada valor nuevo (al escribir, al elegir otra opción, al cambiar un interruptor...). |
+| **Al pulsar Enter** | Una vez cuando el usuario envía un campo de texto. |
+| **Cuando su valor no es válido** | Una vez cada vez que falla una [regla de validación](/pyzed/es/editor/data-binding/): la clásica *sacudida* con una contraseña mal escrita. |
+| **Con un evento de otro control** | Una vez con cada evento de otro control o del formulario: una etiqueta que late al pulsar **Guardar**, una tarjeta que aparece al cargar el formulario. |
+| **Al reproducirla desde el código** | Solo cuando un manejador llama a `play_animation()` (ver abajo). |
+
+Los disparadores por evento funcionan aunque el control no tenga manejador para ese evento, y se reproducen antes de
+que corra el manejador. **Añadir animación** añade una fila (un *aparecer subiendo* al aparecer) y la abre. Elegir
+otro preset restablece el timing de la fila al del nuevo preset. Todos los cambios se pueden deshacer.
 
 ### Reproducirla desde tu código
 
@@ -91,7 +110,10 @@ Las animaciones se guardan como datos simples en el control:
 ]
 ```
 
-`"on": "manual"` es **Al reproducirla desde el código**. `Document.set_animations(name, animations)` las
+Los valores de `"on"` son `mount` (por defecto), `hover`, `press`, `focus`, `click`, `double_click`,
+`right_click`, `enter`, `leave`, `change`, `submit`, `invalid`, `event` y `manual` (**Al reproducirla desde el
+código**). Una entrada `event` nombra además su origen y su evento:
+`{"preset": "tada", "on": "event", "source": "save", "event": "click"}` (un `source` vacío es el formulario). `Document.set_animations(name, animations)` las
 cambia desde un script y `Control.animations` las lee. Para reproducir una desde un manejador, llama a
 `form.<control>.play_animation(...)` (ver arriba); para crear tus propios presets, usa `pz.Animation` y
 `define_animation` de la biblioteca (ver la [lista de presets](/pyzed/es/animation/presets/)).

@@ -2,7 +2,7 @@
 title: "Editor"
 description: "A full code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 32
+  order: 36
   label: "Editor"
 ---
 
@@ -210,7 +210,7 @@ pz.container(ui.editor("ws.py", "def greet(name):\n    return f'Hello, {name}'\n
 
 ## Events
 
-Editor has **5 events of its own**, listed below. Like every widget it also has the **18 common events** (`click`, `double_click`, `right_click`, `mouse_enter`, `drag`, `key_down`, `resize`…), attached with `.on(...)`: see [Events](/pyzed/guides/events/) and [Events of every component](/pyzed/library/events/).
+Editor has **6 events of its own**, listed below. Like every widget it also has the **18 common events** (`click`, `double_click`, `right_click`, `mouse_enter`, `drag`, `key_down`, `resize`…), attached with `.on(...)`: see [Events](/pyzed/guides/events/) and [Events of every component](/pyzed/library/events/).
 
 | Event | Of | Handler gets | When |
 | --- | --- | --- | --- |
@@ -219,6 +219,7 @@ Editor has **5 events of its own**, listed below. Like every widget it also has 
 | `on_scroll` | `ui.editor`, `pz.code_editor` | `(info)` | Called on scroll. |
 | `on_zoom` | `ui.editor`, `pz.code_editor` | `(step)` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
 | `on_action` | `ui.editor`, `pz.code_editor` | `(name)` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…), e.g. to count them. |
+| `on_hover` | `ui.editor`, `pz.code_editor` | `()` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
 
 **Handler gets** is what Pyzed passes to your callable: `()` means nothing. Any handler can also be a message (a value that is not callable), which goes to `update()`.
 
@@ -356,6 +357,9 @@ editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    on_hover=None,
+    hover_delay=500,
+    sticky_scroll=0,
     theme=None,
 )
 ```
@@ -398,9 +402,11 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `keymap` | `None` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `True` | `False` hides the scrollbars. |
 | `readonly` | `False` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
+| `hover_delay` | `500` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
-Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action` ([events](#events)).
+Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
 
 [Full reference →](/pyzed/reference/ui/#editor)
 
@@ -474,6 +480,9 @@ code_editor(
     backspace_unindent=True,
     repeat_delay=None,
     repeat_rate=None,
+    on_hover=None,
+    hover_delay=500.0,
+    sticky_scroll=0,
 )
 ```
 
@@ -530,8 +539,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `backspace_unindent` | `True` | With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space). |
 | `repeat_delay` | `None` | Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's). |
 | `repeat_rate` | `None` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
+| `hover_delay` | `500.0` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 
-Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action` ([events](#events)).
+Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
 
 [Full reference →](/pyzed/reference/widgets/#code_editor)
 

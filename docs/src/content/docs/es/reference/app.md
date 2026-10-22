@@ -31,6 +31,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 | `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
+| `rendering` | `None` | Un [`Rendering`](#rendering): GPU o CPU, API gráfica, GPU y vsync. `None` lee `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto. |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) están en `Window`.
 
@@ -193,6 +194,7 @@ reenvía a `app.update()`.
 | `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
+| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 
 **Métodos y propiedades**
 
@@ -219,6 +221,30 @@ Window.on_close()
 ```
 
 Se llama cuando el usuario pide cerrar la ventana. Devuelve `False` para mantenerla abierta.
+
+#### `Window.on_file_hover`
+
+```python
+Window.on_file_hover(path)
+```
+
+Un archivo arrastrado desde el sistema está sobre la ventana: ilumina la `ui.DropZone` donde caería.
+
+#### `Window.on_file_drop`
+
+```python
+Window.on_file_drop(path)
+```
+
+Se soltó un archivo del sistema en la ventana (una vez por archivo): va a una `ui.DropZone`.
+
+#### `Window.on_file_leave`
+
+```python
+Window.on_file_leave()
+```
+
+Los archivos arrastrados sobre la ventana salieron sin soltarse.
 
 #### `Window.is_open`
 
@@ -315,6 +341,70 @@ Una pantalla de inicio: una ventana sin marco con una imagen, centrada en la pan
 class Shop(pz.App):
     splash = pz.Splash("assets/splash.png", duration=1.5, text="Cargando…")
 ```
+
+### `Rendering`
+
+```python
+@dataclass
+class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto')
+```
+
+Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica, qué GPU y vsync. Cada campo es `"auto"` por defecto (decide Pyzed). Dásela a `App.rendering`, o pon las mismas claves en `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto, que leen `pz.run`, el diseñador y `pyzed build`. Ver [Renderizado](/pyzed/es/editor/settings/#renderizado).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `renderer` | `"auto"`, `"gpu"` (la necesitan los shaders) o `"cpu"` (tiny-skia: arranca antes, menos memoria, funciona en todas partes). |
+| `gpu_api` | `"auto"`, `"vulkan"`, `"metal"`, `"dx12"` o `"gl"`. |
+| `power` | `"auto"`, `"high"` (la GPU dedicada) o `"low"` (la integrada, ahorra batería). |
+| `vsync` | `"auto"`, `"on"` (sin cortes) u `"off"` (dibuja lo más rápido posible). |
+
+```python
+class Game(pz.App):
+    rendering = pz.Rendering(renderer="gpu", vsync="off")
+```
+
+**Métodos y propiedades**
+
+#### `Rendering.from_table`
+
+```python
+@classmethod
+Rendering.from_table(table)
+```
+
+Crea los ajustes a partir de una tabla `[tool.pyzed.rendering]`, ignorando claves y valores desconocidos.
+
+#### `Rendering.to_table`
+
+```python
+Rendering.to_table()
+```
+
+Los ajustes que no son `"auto"`, tal como se escriben en `pyproject.toml`.
+
+#### `Rendering.custom`
+
+```python
+Rendering.custom  # property
+```
+
+Si algún ajuste no es `"auto"`.
+
+#### `Rendering.env`
+
+```python
+Rendering.env()
+```
+
+Las variables de entorno que llevan estos ajustes a Iced y wgpu.
+
+#### `Rendering.apply`
+
+```python
+Rendering.apply(environ=None)
+```
+
+Define las variables de `env()` que aún no están definidas (las tuyas mandan); devuelve las que definió.
 
 ## Async y suscripciones
 
@@ -826,6 +916,30 @@ Anotación para un prop de componente con texto largo: el diseñador muestra un 
 
 ```python
 notes: pz.Multiline = ""
+```
+
+### `FilePath`
+
+```python
+class FilePath
+```
+
+Anotación para un prop de componente con la ruta de un archivo: el diseñador muestra la ruta con un botón que abre el diálogo de archivos del sistema (una anotación `pathlib.Path` hace lo mismo). En ejecución es un `str` normal.
+
+```python
+logo: pz.FilePath = ""
+```
+
+### `FolderPath`
+
+```python
+class FolderPath
+```
+
+Anotación para un prop de componente con una carpeta: el diseñador muestra la ruta con un botón que abre el diálogo de carpetas del sistema. En ejecución es un `str` normal.
+
+```python
+output: pz.FolderPath = ""
 ```
 
 ### `Range`

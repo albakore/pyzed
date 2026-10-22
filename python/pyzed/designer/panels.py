@@ -12,10 +12,12 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 from .. import _core, component as _component, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
+from ..ui.base import TEXT_SIZES
 from . import components as _components
 from . import help as _help
+from . import keymap as _keymap
 from . import scene_code as _scene_code
-from . import prop_editors, spacing
+from . import prop_editors, roles as _roles, spacing
 from .components import Prop
 from .locale import tr
 
@@ -28,7 +30,8 @@ ROW_HEIGHT = spacing.ROW_HEIGHT
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
                  "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket",
-                 "Effects": "sparkles", "Animation": "clapperboard"}
+                 "Effects": "sparkles", "Animation": "clapperboard", "Auto layout": "align-horizontal-space-around",
+                 "Text": "type", "Fill": "paint-bucket", "Border": "square-dashed", "Spacing": "box"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -41,6 +44,21 @@ def section(title: str, t: Theme, end: Any = None) -> Any:
         _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
         padding=(10, spacing.GUTTER, 4, spacing.GUTTER), width="fill")
+
+
+def doc_text(text: str, t: Theme, *, size: str = "xs", color: str = "text_muted") -> Any:
+    """A component's description: its Markdown ``code`` (and reST ````code````) in the editor's font on a tint."""
+    parts = re.split(r"``?([^`]+?)``?", " ".join(text.split()))
+    if len(parts) == 1:
+        return ui.label(text, size=size, color=color, theme=t)
+    spans = [_core.span(part, font="mono", color=t.editor_text, bg=alpha(t.text, 0.1), radius=3, padding=(0, 2))
+             if i % 2 else _core.span(part) for i, part in enumerate(parts) if part]
+    return _core.rich_text(spans, size=TEXT_SIZES[size], color=t.color(color), width="fill")
+
+
+def plain_doc(text: str) -> str:
+    """A component's description without its Markdown/reST code marks (for tooltips)."""
+    return re.sub(r"``?([^`]+?)``?", r"\1", " ".join(text.split()))
 
 
 def scroll_panel(content: Any) -> Any:
@@ -148,7 +166,58 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return prop_color_editor(d, value, on_change, key, t)
     if kind == "icon":
         return icon_editor(d, value, on_change, t)
+    if kind in ("file", "folder") or (kind == "text" and is_path_prop(prop)):
+        return path_editor(d, prop, value, on_change, t)
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
+
+
+#: Property names that hold a path even when their kind is plain text (a component from a library, say).
+PATH_NAMES = ("path", "file", "source", "src", "directory", "folder", "dir", "cwd", "image", "sound", "sample")
+PATH_SUFFIXES = ("_path", "_file", "_dir", "_folder", "_directory", "_image", "_sound")
+
+
+def is_path_prop(prop: Prop) -> bool:
+    """Whether a text property holds a path (by its kind, its name or its label), so it gets a browse button."""
+    if prop.kind in ("file", "folder"):
+        return True
+    name = prop.name.lower()
+    label = (prop.label or "").lower()
+    return name in PATH_NAMES or name.endswith(PATH_SUFFIXES) or any(w in label.split() for w in ("file", "folder",
+                                                                                                    "path"))
+
+
+def _is_folder(prop: Prop) -> bool:
+    if prop.kind in ("file", "folder"):
+        return prop.kind == "folder"
+    name = prop.name.lower()
+    return name in ("directory", "folder", "dir", "cwd") or name.endswith(("_dir", "_folder", "_directory"))
+
+
+def path_base(d: "Designer") -> Optional[str]:
+    """The folder chosen paths are kept relative to: the open project's, else the form's."""
+    project = getattr(getattr(d, "projects", None), "project", None)
+    if project is not None:
+        return str(project.root)
+    path = getattr(d.doc, "path", None)
+    return str(path.parent) if path else None
+
+
+def path_editor(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any], Any], t: Theme) -> Any:
+    """A path property: the path as text and a button that opens the system's file (or folder) dialog. A file
+    chosen inside the project (or the form's folder) is kept relative to it."""
+    accept = str(getattr(prop, "accept", "") or "")
+    filters = None
+    kind = None
+    if accept in ui.inputs.PATH_FILTERS:
+        kind = accept
+    elif accept:
+        extensions = [e.strip(". ") for e in accept.replace(",", " ").split() if e.strip(". ")]
+        filters = [(tr("Files"), extensions)] if extensions else None
+    elif prop.name in ("source", "image") or prop.name.endswith("_image"):
+        kind = "image"
+    folder = _is_folder(prop)
+    return ui.path_input("" if value is None else str(value), on_change, folder=folder, filters=filters, kind=kind,
+                         relative_to=path_base(d), title=tr(prop.title), size="sm", theme=t)
 
 
 TALL_KINDS = ("multiline", "list", "rows", "typed")
@@ -304,8 +373,10 @@ def rows_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
 def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], t: Theme, *, icon: Optional[str] = None,
               selected: bool = False, height: float = spacing.ITEM_HEIGHT, indent: float = 0, start: Any = None, end: Any = None,
               color: Optional[str] = None, on_right_press: Any = None, on_move: Any = None, on_exit: Any = None,
-              drop: Optional[str] = None) -> Any:
+              drop: Optional[str] = None, icon_color: Optional[str] = None) -> Any:
     """A list row that reacts on press (not on click, like ``ui.list_item``), so it can start a drag.
+
+    ``icon_color`` paints the icon (a component's role color, see ``roles``) instead of the muted icon color.
 
     ``drop`` marks where a dragged control would land: a line ``"before"`` or ``"after"`` the
     row, or a frame around it for ``"inside"``.
@@ -314,7 +385,7 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
     row = _core.row([
         _core.space(width=indent) if indent else None,
         start,
-        _icon(icon, size=14, color=t.icon_muted) if icon else None,
+        _icon(icon, size=14, color=icon_color or t.icon_muted) if icon else None,
         _core.container(_core.text(label, size=13.5, color=text_color, wrap=False), width="fill", clip=True),
         end,
     ], spacing=6, align="center")
@@ -360,20 +431,42 @@ def _toolbox(d: "Designer", t: Theme) -> Any:
         rows.append(section(tr(category), t))
         for spec in shown:
             # press and drag onto the form (or a container), or click to pick it and then click on the form
+            role = _roles.of(spec)
             rows.append(ui.tooltip(
                 press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
-                          icon=spec.icon, selected=d.tool == spec.type),
-                tr(spec.description) if spec.description else tr(spec.label), position="right", theme=t))
+                          icon=spec.icon, selected=d.tool == spec.type, icon_color=_roles.color(role, t)),
+                f"{_roles.name(role)} · {plain_doc(tr(spec.description)) if spec.description else tr(spec.label)}",
+                position="right", theme=t))
     if not query:  # a reusable component of your own joins the toolbox once it is created
         rows.append(ui.tooltip(press_row(d, "tool:+component", tr("New component…"), d.new_component, t,
                                          icon="plus", color="text_muted"),
                                tr("A reusable piece for forms and other components, not a window"), position="right",
                                theme=t))
+    search = ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"), size="sm",
+                             theme=t)
     return _core.column([
-        _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
-                                        size="sm", theme=t), padding=(spacing.BLOCK, spacing.GUTTER)),
+        _core.container(_core.row([_core.container(search, width="fill"), role_legend(t)], spacing=6, align="center"),
+                        padding=(spacing.BLOCK, spacing.GUTTER)),
         scroll_panel(_core.column(rows, width="fill", padding=(0, 0, spacing.BLOCK, 0))),
     ], width="fill", height="fill")
+
+
+def role_legend(t: Theme) -> Any:
+    """The palette icon next to the toolbox search: under the pointer it lists what each icon color means."""
+    return _core.tooltip(_core.container(_icon("palette", size=14, color=t.icon_muted), padding=4), legend_card(t),
+                         position="right", gap=6, bg=t.elevated, border_color=t.border, border_width=1.0,
+                         radius=t.radius, shadow=(t.shadow, (0, 2), 8))
+
+
+def legend_card(t: Theme) -> Any:
+    """The legend of the icon colors: a dot, the role's name and what it stands for, one line each."""
+    lines = [_core.row([_core.container(width=8, height=8, bg=_roles.color(role, t), radius=4),
+                        _core.text(_roles.name(role), size=12.5, color=t.text, wrap=False, width=92),
+                        _core.text(_roles.describe(role), size=12, color=t.text_muted, width=280)],
+                       spacing=8, align="center")
+             for role in _roles.ROLES]
+    return _core.container(_core.column([ui.label(tr("Icon colors"), size="xs", weight="semibold",
+                                                  color="text_muted", theme=t), *lines], spacing=5), padding=(8, 10))
 
 
 OUTLINE_ROW = 24
@@ -413,7 +506,7 @@ def outline(d: "Designer", t: Theme) -> Any:
                    doc.is_selected(c.name), drop, bool(members), opened)
             hit = drawn.get(c.name)
             row = hit[1] if hit is not None and hit[0] == key else \
-                _outline_row(d, c, spec.icon, depth, container, folded, bool(members), opened, drop, editor_eye, t)
+                _outline_row(d, c, spec, depth, container, folded, bool(members), opened, drop, editor_eye, t)
             kept[c.name] = (key, row)
             rows.append(row)
             if container and not folded:
@@ -428,15 +521,17 @@ def outline(d: "Designer", t: Theme) -> Any:
         rows.append(_core.container(ui.label(tr("Non-visual"), size="xs", color="text_muted", theme=t),
                                     padding=(6, spacing.GUTTER, 2, spacing.GUTTER + 4), width="fill"))
         for c in tray:
+            spec = _components.spec(c.type)
             rows.append(press_row(
                 d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t,
-                icon=_components.spec(c.type).icon, selected=doc.is_selected(c.name), indent=4, height=OUTLINE_ROW,
+                icon=spec.icon, icon_color=_roles.icon_color(spec, t), selected=doc.is_selected(c.name), indent=4,
+                height=OUTLINE_ROW,
                 start=_core.space(width=20), color=None if c.enabled else "text_muted",
                 on_right_press=lambda n=c.name: d.open_outline_menu(n)))
     return scroll_panel(_core.column(rows, width="fill"))
 
 
-def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, folded: bool, members: bool,
+def _outline_row(d: "Designer", c: Any, spec: Any, depth: int, container: bool, folded: bool, members: bool,
                  opened: bool, drop: Optional[str], editor_eye: bool, t: Theme) -> Any:
     """One control's row in the outline (``outline`` keeps it while what it shows stays the same)."""
     buttons = [
@@ -460,8 +555,8 @@ def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, 
         chevron = _core.space(width=20)
     # press to select, drag to reorder or to move into another container (or onto the form)
     return press_row(
-        d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=icon,
-        selected=d.doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
+        d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=spec.icon,
+        icon_color=_roles.icon_color(spec, t), selected=d.doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
         end=_core.row(buttons, spacing=0), color=None if c.visible and not c.hidden_in_editor else "text_muted",
         on_right_press=lambda n=c.name: d.open_outline_menu(n),
         on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
@@ -470,12 +565,11 @@ def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, 
 # -- properties ------------------------------------------------------------------
 
 
-def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
+def _position_rows(d: "Designer", c, t: Theme) -> List[Any]:
+    """The Position section: where the control is and how big, by its container's rules (free, flex, grid or
+    dock), first in the grid like Figma's."""
     from . import layout as _layout
-
-    def num(field: str):
-        return ui.number_field(round(getattr(c, field)), lambda v, f=field: d.set_field(c.name, f, v), step=1,
-                               width="fill", theme=t)
+    from . import layout_panel
 
     form = d.doc.form
     parent = form.get(c.parent) if c.parent else None
@@ -490,18 +584,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
                            theme=t),
         ], align="center"), t, tip="The container holding this control"))
     if kind in ("flex", "grid"):
-        if kind == "flex":
-            rows.append(prop_row(tr("Grow"), ui.number_field(float(c.layout.get("grow", 0)),
-                                                         lambda v: d.set_layout(c.name, "grow", v), min=0, step=1,
-                                                         width="fill", theme=t), t,
-                                 tip="Share of the free space this control takes (0 keeps its size)"))
-        else:
-            rows.append(prop_row(tr("Column span"), ui.number_field(float(c.layout.get("span", 1)),
-                                                                lambda v: d.set_layout(c.name, "span", int(v)), min=1,
-                                                                max=24, step=1, width="fill", theme=t), t))
-        rows += [prop_row("Width", num("width"), t), prop_row("Height", num("height"), t),
-                 _core.container(ui.label(f"Placed by {parent.name}: drag it to reorder.", size="xs",
-                                          color="text_muted", theme=t), padding=(2, 0))]
+        rows += layout_panel.child_rows(d, c, parent, t, prop_row)
     elif kind == "dock":
         rows.append(_core.container(ui.label(tr("Placed by its dock: change its Side, or the dock's sizes."),
                                              size="xs", color="text_muted", theme=t), padding=(2, 0)))
@@ -509,8 +592,12 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
         from . import anchor_panel
 
         rows += anchor_panel.position_rows(d, c, t, prop_row)
-    return rows + [
-        Group("Behavior"),
+    return rows
+
+
+def _behavior_rows(d: "Designer", c, t: Theme) -> List[Any]:
+    """Visible, Enabled and Locked (they join the control's own Behavior group)."""
+    return [
         prop_row("Visible", _core.container(ui.switch(c.visible, lambda v: d.set_field(c.name, "visible", v),
                                                       theme=t), width="fill", align_x="end"), t),
         prop_row("Enabled", _core.container(ui.switch(c.enabled, lambda v: d.set_field(c.name, "enabled", v),
@@ -524,7 +611,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
 def _help_button(d: "Designer", name: str, t: Theme) -> Any:
     """The "?" of a control's header: opens its page in the built-in reference (Shift+F1)."""
     return ui.icon_button("book-marked", lambda: d.open_reference(d.help_page_of(name)), size="sm",
-                          tooltip=tr("Help") + " (Shift+F1)", theme=t)
+                          tooltip=tr("Help"), keys=_keymap.shown_keys("reference"), theme=t)
 
 
 def control_properties(d: "Designer", t: Theme) -> List[Any]:
@@ -534,9 +621,9 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     assert c is not None
     spec = _components.spec(c.type)
     rows: List[Any] = [
-        _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
+        _core.container(_core.row([_icon(spec.icon, size=16, color=_roles.icon_color(spec, t)),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
-                                                 ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
+                                                 doc_text(tr(spec.description), t)],
                                                 width="fill"),
                                    _help_button(d, c.name, t)],
                                   spacing=10, align="center"), padding=spacing.HEADER_PADDING, width="fill"),
@@ -546,8 +633,18 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
                                  tip="Press Enter to rename (handlers are renamed too)"), padding=(0, spacing.GUTTER),
                         width="fill"),
     ]
+    from . import layout_panel
+
+    auto = spec.visual and layout_panel.is_auto(c)
+    if spec.visual:  # where it is and how big comes first, like Figma's
+        rows.extend(_position_rows(d, c, t))
+    if auto:
+        rows.append(Group("Auto layout"))
+        rows.extend(layout_panel.auto_layout_rows(d, c, t, prop_row))
     groups: dict = {}
     for prop in spec.props:
+        if auto and prop.name in layout_panel.EDITED:
+            continue
         groups.setdefault(prop.group, []).append(prop)
     # the binding and validation rows join the control's Data group (or make one)
     data = data_rows(d, c, t) if not getattr(d.doc, "is_scene", False) else []
@@ -569,12 +666,12 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             "Enabled", _core.container(ui.switch(c.enabled, lambda v: d.set_field(c.name, "enabled", v), theme=t),
                                        width="fill", align_x="end"), t,
             tip="A disabled component raises no events")]
+    rows += [Group("Behavior"), *_behavior_rows(d, c, t)]
     rows.extend(style_rows(d, c.name, c.style, t))
     from . import motion_panel
 
     rows.extend(motion_panel.effect_rows(d, c, t))
     rows.extend(motion_panel.animation_rows(d, c, t))
-    rows.extend(_layout_rows(d, c, t))
     return rows
 
 
@@ -726,11 +823,16 @@ def properties(d: "Designer", t: Theme) -> Any:
         rows = scene_panel.properties(d, t, rows)
     head: List[Any] = []
     groups: List[Any] = []
+    current: Optional[List[Any]] = None
     for row in rows:
-        if isinstance(row, Group):
-            groups.append((row.title, []))
-        elif groups:
-            groups[-1][1].append(row)
+        if isinstance(row, Group):  # a title seen before adds to that section (Behavior comes from two places)
+            found = next((g for g in groups if g[0] == row.title), None)
+            if found is None:
+                found = (row.title, [])
+                groups.append(found)
+            current = found[1]
+        elif current is not None:
+            current.append(row)
         else:
             head.append(row)
     sections = [(title, tr(title), _core.column(items, width="fill", spacing=spacing.ROW_GAP))
@@ -747,7 +849,8 @@ def properties(d: "Designer", t: Theme) -> Any:
 
 def events(d: "Designer", t: Theme) -> Any:
     """Builds the Events panel for the selected control (or the form): each event with its handler and buttons
-    to edit or disconnect it."""
+    to edit or disconnect it, the built-in events first and the custom ones (of a ``pz.Component``, or the
+    ones a component being designed declares) in a section of their own."""
     doc = d.doc
     target = None if len(doc.selection) != 1 else doc.selection[0]
     if len(doc.selection) > 1:
@@ -757,27 +860,31 @@ def events(d: "Designer", t: Theme) -> Any:
     control = doc.form.get(target) if target else None
     spec = _components.spec(control.type) if control is not None else None
     icon = spec.icon if spec is not None else "app-window"
-    kind = tr(spec.label) if spec is not None else tr("Form")
-    head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),
+    kind = tr(spec.label) if spec is not None else tr("Component") if getattr(doc, "is_scene", False) else tr("Form")
+    head = _core.container(_core.row([_icon(icon, size=16, color=_roles.icon_color(spec, t) if spec else t.accent),
                                       _core.column([ui.label(owner, weight="semibold", mono=True, theme=t),
                                                     ui.label(kind, size="xs", color="text_muted", theme=t)],
                                                    width="fill"),
                                       _help_button(d, control.name, t) if control is not None else None],
                                      spacing=10, align="center"),
                            padding=spacing.HEADER_PADDING, width="fill")
-    rows: List[Any] = []
-    for event in doc.events_of(target):
+    cls = _component.find(control.type) if control is not None else None
+    described = dict(cls.__events__) if cls is not None else {}
+    custom = [e for e in doc.events_of(target) if cls is not None and e in spec.events]
+
+    def row(event: str) -> Any:
         handler = wired.get(event)
-        doc_text = _help.event_doc(event, owner, control.type if control is not None else None).replace("``", "")
+        doc_text = described.get(event) or _help.event_doc(event, owner, control.type if control is not None
+                                                            else None)
         name = ui.label(handler or "—", size="sm", mono=True, color="text_accent" if handler else "text_muted",
                         wrap=False, theme=t)
         actions = _core.row([
-            ui.icon_button("code", lambda e=event: d.edit_event(target, e), size="xs",
+            ui.icon_button("code", lambda: d.edit_event(target, event), size="xs",
                            tooltip=tr("Edit code") if handler else tr("Create handler"), theme=t),
-            ui.icon_button("unlink", lambda e=event: d.unwire(target, e), size="xs", tooltip=tr("Disconnect"),
+            ui.icon_button("unlink", lambda: d.unwire(target, event), size="xs", tooltip=tr("Disconnect"),
                            theme=t) if handler else None,
         ], spacing=2)
-        rows.append(ui.tooltip(_core.mouse_area(
+        return ui.tooltip(_core.mouse_area(
             _core.container(_core.row([
                 _core.container(ui.label(event, size="sm", color="text_muted", wrap=False, theme=t), width=LABEL_WIDTH,
                                 clip=True),
@@ -786,11 +893,26 @@ def events(d: "Designer", t: Theme) -> Any:
             ], spacing=spacing.LABEL_GAP, align="center"), padding=(spacing.ROW_PAD, 0), width="fill",
                 height=ROW_HEIGHT + 2 * spacing.ROW_PAD, align_y="center",
                 radius=t.radius_sm, bg=alpha(t.accent, 0.08) if d.editing and d.editing[0] == handler else None),
-            on_double_click=lambda e=event: d.edit_event(target, e)), doc_text, position="left", theme=t))
-    rows.append(_core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
-                                         size="xs", color="text_muted", theme=t), padding=(6, 0)))
-    body = ui.accordion([("Events", tr("Events"), _core.column(rows, width="fill", spacing=spacing.ROW_GAP))],
-                        open={"Events"}, icons={"Events": "zap"}, padding=spacing.GROUP_PADDING, theme=t)
+            on_double_click=lambda: d.edit_event(target, event)), doc_text.replace("``", ""), position="left",
+            theme=t)
+
+    builtin = [row(e) for e in doc.events_of(target) if e not in custom]
+    builtin.append(_core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
+                                            size="xs", color="text_muted", theme=t), padding=(6, 0)))
+    sections = [("events:builtin", tr("Built-in events"), _core.column(builtin, width="fill",
+                                                                       spacing=spacing.ROW_GAP))]
+    if getattr(doc, "is_scene", False) and target is None:  # the events the component being designed raises
+        from . import scene_panel
+
+        rows = scene_panel.custom_event_rows(d, t)
+        sections.append(("events:custom", f"{tr('Custom events')} ({len(doc.custom_events)})",
+                         _core.column(rows, width="fill", spacing=8)))
+    elif custom:
+        sections.append(("events:custom", f"{tr('Custom events')} ({len(custom)})",
+                         _core.column([row(e) for e in custom], width="fill", spacing=spacing.ROW_GAP)))
+    body = ui.accordion(sections, open={key for key, _, _ in sections} - d.collapsed_sections,
+                        on_toggle=d.toggle_section, icons={"events:builtin": "zap", "events:custom": "sparkles"},
+                        padding=spacing.GROUP_PADDING, theme=t)
     # the same insets as the property grid, so both docks line up
     return scroll_panel(_core.column([head, _core.container(body, padding=(0, 0, 16, 0), width="fill")],
                                      width="fill"))
@@ -950,58 +1072,12 @@ def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -
 
 
 def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fields: Any = None) -> List[Any]:
-    """The Style section: background, text, border, corners, shadow, spacing and alignment.
+    """The style sections, like Figma's: Text, Fill, Border and Spacing (see ``style_panel``).
 
-    ``name`` is the control being edited, or ``None`` for the form's global style.
+    ``name`` is the control being edited, or ``None`` for the form's global style; ``fields`` limits them to
+    some style properties (``styling.GLOBAL_FIELDS`` for the form).
     """
-    from . import styling
+    from . import style_panel
 
-    fields = styling.FIELDS if fields is None else fields
-    rows: List[Any] = [Group("Style")]
-    rows.extend(_background_rows(d, name, style.get("background"), t))
-    for field in fields:
-        value = style.get(field.key)
-
-        def on_change(v: Any, key: str = field.key) -> None:
-            d.set_style(name, key, v)
-
-        if field.kind == "color":
-            rows.extend(_color_rows(d, name, field.key, field.title, value, on_change, t, tip=field.tip))
-            continue
-        if field.kind == "number":
-            number = float(value) if isinstance(value, (int, float)) else 0.0
-            editor = ui.number_field(number, on_change, min=field.min, max=field.max, step=field.step, width="fill",
-                                     theme=t)
-        elif field.kind == "choice":
-            editor = _style_choice_editor(field, styling.choice_of(field.key, value), on_change, t)
-        elif field.kind in ("box", "radius"):
-            box_key = f"{name}:{field.key}"
-            editor = prop_editors.box_editor(d, box_key, value, on_change, t, corners=field.kind == "radius")
-            if prop_editors.is_split(d, box_key, value):
-                rows.append(prop_row(field.title, editor, t, tip=field.tip, lines=2))
-                continue
-        elif field.kind == "shadow":
-            color, x, y, blur = styling.shadow_parts(value)
-
-            def shadow(part: int, v: Any, parts: tuple = (color, x, y, blur)) -> None:
-                values = list(parts)
-                values[part] = v
-                d.set_style_value(name, "shadow", styling.shadow_value(*values))
-
-            rows.extend(_color_rows(d, name, "shadow", field.title, color, lambda v: shadow(0, v), t, tip=field.tip,
-                                    placeholder="none"))
-            if color:
-                rows.append(prop_row("Offset", _core.row([
-                    ui.number_field(x, lambda v: shadow(1, v), min=-64, max=64, width="fill", theme=t),
-                    ui.number_field(y, lambda v: shadow(2, v), min=-64, max=64, width="fill", theme=t),
-                ], spacing=6), t, tip="Horizontal and vertical offset"))
-                rows.append(prop_row("Blur", ui.number_field(blur, lambda v: shadow(3, v), min=0, max=96, width="fill",
-                                                             theme=t), t))
-            continue
-        else:
-            editor = ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
-        rows.append(prop_row(field.title, editor, t, tip=field.tip))
-    if style:
-        rows.append(_core.container(ui.button(tr("Reset style"), lambda: d.clear_style(name), icon="rotate-ccw",
-                                              variant="ghost", size="sm", theme=t), padding=(4, 0)))
-    return rows
+    keys = None if fields is None else {f.key for f in fields}
+    return style_panel.sections(d, name, style, t, prop_row, Group, keys=keys)

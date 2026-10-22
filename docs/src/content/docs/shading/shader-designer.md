@@ -82,7 +82,7 @@ pixel coordinates); the Properties panel switches them between that and a fixed 
 
 ## The Shading sidebar
 
-The left dock's **Design** panel has the **Shading** sidebar instead of the form toolbox. Its entries are grouped
+The left dock's **Toolbox** panel has the **Shading** sidebar instead of the form toolbox. Its entries are grouped
 by category; click one to add it in the middle of the graph, or drag it onto the graph. The search field
 matches titles, categories and keywords in English and in the designer's language.
 

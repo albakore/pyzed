@@ -716,7 +716,7 @@ def _chain(file: Optional[Path]) -> List[Path]:
 
 #: The default value of a new property of each type.
 DEFAULTS: Dict[str, Any] = {"str": "", "int": 0, "float": 0.0, "bool": False, "list": [], "dict": {}, "Any": None,
-                            "Color": "accent", "Icon": "star", "Multiline": ""}
+                            "Color": "accent", "Icon": "star", "Multiline": "", "FilePath": "", "FolderPath": ""}
 
 
 def _typed_default(type_: str) -> Tuple[Any, Optional[str]]:
@@ -732,7 +732,7 @@ def _typed_default(type_: str) -> Tuple[Any, Optional[str]]:
 def convert(value: Any, type_: str) -> Any:
     """``value`` as ``type_`` when it can be converted, else that type's default."""
     kind = scene_code.kind_of(type_)
-    if kind in ("Color", "Icon", "Multiline"):
+    if kind in ("Color", "Icon", "Multiline", "FilePath", "FolderPath"):
         return value if isinstance(value, str) and value else DEFAULTS[kind]
     if kind == "Choice":
         options = scene_code.choices_of(type_)

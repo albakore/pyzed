@@ -8,7 +8,7 @@ from .. import _core
 from ..icons import glyph as _glyph
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
-from .base import _theme, button, label
+from .base import CHOICE_KEYS, _theme, button, key_focus, label, send, step_choice
 
 Option = Union[str, Tuple[Any, str]]
 
@@ -25,6 +25,7 @@ def select(
     invalid: bool = False,
     on_open: Any = None,
     on_close: Any = None,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A themed dropdown (Zed's ``DropdownMenu``) built on ``pz.pick_list``.
@@ -33,6 +34,12 @@ def select(
     so any value with a readable ``__str__`` works (strings, enums, dataclasses...).
     ``disabled`` greys it out, ``invalid`` paints the border red, and ``on_open`` /
     ``on_close`` run when the menu opens and closes.
+
+    It takes the keyboard focus like a text field (a click, Tab or ``Command.focus(id)``)
+    and keeps it after a choice closes the menu: ↑/↓ then pick the previous or next option
+    without opening it, Home/End the first and last, and typing jumps to an option by its
+    first letters. Enter, Space, Alt+↓ or F4 open the menu; there ↑/↓ move, Enter picks
+    and Escape closes.
 
     Events:
         ``on_select(item)``: Callable that receives the chosen item.
@@ -79,6 +86,8 @@ def select(
         menu_border_color=t.border,
         selected_bg=t.ghost_selected,
         selected_color=t.text,
+        focus_border_color=t.error if invalid else t.border_focused,
+        id=id,
     )
 
 
@@ -91,6 +100,7 @@ def radio_group(
     spacing: float = 8,
     disabled: Any = False,
     descriptions: Optional[Mapping[Any, str]] = None,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """Mutually exclusive choices shown as radio buttons.
@@ -98,15 +108,20 @@ def radio_group(
     ``options`` are strings or ``(value, label)`` pairs; ``on_select(value)`` is called
     when one is picked. ``disabled`` is ``True`` for all of them or a collection of the
     values to disable; ``descriptions`` maps values to a muted line under their label.
+    A click or Tab gives the group the keyboard focus; then the arrows pick the previous
+    or next choice and Home/End the first and last. ``id`` lets ``Command.focus(id)`` focus it.
 
     Events:
         ``on_select(value)``: Callable that receives the chosen value.
     """
     t = _theme(theme)
     items = []
+    enabled = []
     for option in options:
         value, text = option if isinstance(option, tuple) else (option, str(option))
         off = disabled is True or (not isinstance(disabled, bool) and value in disabled)
+        if not off:
+            enabled.append(value)
         item = _core.radio(
             text,
             value == selected,
@@ -125,7 +140,13 @@ def radio_group(
                                                        padding=(0, 0, 0, 23))], spacing=2)
         items.append(item)
     layout = _core.row if horizontal else _core.column
-    return layout(items, spacing=spacing * (2 if horizontal else 1))
+    group = layout(items, spacing=spacing * (2 if horizontal else 1))
+
+    def move(combo: str) -> Any:
+        target = step_choice(enabled, selected, combo)
+        return None if target is None else send(on_select, target)
+
+    return key_focus(group, move if on_select and enabled else None, keys=CHOICE_KEYS, id=id, theme=t)
 
 
 def _format(value: float, step: float) -> str:
@@ -133,6 +154,26 @@ def _format(value: float, step: float) -> str:
         return str(int(value))
     decimals = max(0, len(repr(float(step)).split(".")[1].rstrip("0")))
     return f"{value:.{decimals}f}"
+
+
+#: The number being dragged (``number_field``): its value when the drag started and the pixels moved since.
+_SCRUB: dict = {"start": 0.0, "dx": 0.0}
+
+
+def _scrubber(value: float, on_change: Any, clamp: Any, step: float, drag_step: Optional[float],
+              decimals: Optional[int]) -> Any:
+    """``on_scrub(dx)`` of a number field: the value it had when the drag started plus one ``drag_step`` per
+    pixel moved (one per three pixels for steps under 1, so small ranges stay controllable)."""
+    unit = float(drag_step) if drag_step else (step if step <= 1 else 1.0)
+    pixels = 3.0 if unit < 1 else 1.0
+    places = decimals if decimals is not None else max(0, len(repr(float(unit)).split(".")[1].rstrip("0")))
+
+    def scrub(dx: float) -> Any:
+        _SCRUB["dx"] = _SCRUB.get("dx", 0.0) + dx
+        new = clamp(round(float(_SCRUB.get("start", value)) + int(_SCRUB["dx"] / pixels) * unit, places))
+        return None if new == value else on_change(new)
+
+    return scrub
 
 
 def number_field(
@@ -151,15 +192,22 @@ def number_field(
     invalid: bool = False,
     id: Optional[str] = None,  # noqa: A002
     on_submit: Any = None,
+    steppers: bool = True,
+    drag: bool = True,
+    drag_step: Optional[float] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A numeric input with −/+ buttons (Zed's ``NumericStepper``).
+    """A numeric input with −/+ buttons (Zed's ``NumericStepper``) that you can also drag, like Figma's.
 
-    ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
-    accepted as long as it parses; anything else is ignored. The number is centered
-    between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the ↑/↓
-    keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
+    ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Press and move
+    the mouse sideways over the number to change it (``drag_step`` per pixel: ``step`` up to
+    1 by default); double-click it to type a value, and Enter, Escape or a click outside to
+    finish. Typing is accepted as long as it parses; anything else is ignored. The number is
+    centered between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the
+    ↑/↓ keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
     ``decimals`` fixes how many decimals it shows (by default, as many as ``step``).
+    ``steppers=False`` leaves out the −/+ buttons (a compact field, as in a property grid)
+    and ``drag=False`` makes it a plain text field.
 
     Events:
         ``on_change(value)``: Callable that receives the new value.
@@ -216,27 +264,31 @@ def number_field(
 
     text = f"{value:.{decimals}f}" if decimals is not None else _format(value, step)
     muted = "text_disabled" if disabled else "text_muted"
+    field = _core.text_input(
+        text,
+        on_input=typed if on_change else None,
+        on_submit=None if disabled else on_submit,
+        id=id,
+        width="fill",
+        size=13,
+        padding=(0, 2 if steppers else 4),
+        bg="transparent",
+        border_width=0.0,
+        color=t.text_disabled if disabled else t.text,
+        selection_color=t.selection,
+        align_x=align,
+    )
+    if drag and on_change is not None:
+        field = _core.scrub(field, _scrubber(value, on_change, clamp, step, drag_step, decimals),
+                            on_start=lambda: _SCRUB.update(start=value, dx=0.0))
     box = _core.container(
         _core.row(
             [
-                side("minus", -step, disabled or (min is not None and value <= min)),
+                side("minus", -step, disabled or (min is not None and value <= min)) if steppers else None,
                 label(prefix, size="sm", color=muted, theme=t) if prefix else None,
-                _core.text_input(
-                    text,
-                    on_input=typed if on_change else None,
-                    on_submit=None if disabled else on_submit,
-                    id=id,
-                    width="fill",
-                    size=13,
-                    padding=(0, 2),
-                    bg="transparent",
-                    border_width=0.0,
-                    color=t.text_disabled if disabled else t.text,
-                    selection_color=t.selection,
-                    align_x=align,
-                ),
+                field,
                 label(suffix, size="sm", color=muted, theme=t) if suffix else None,
-                side("plus", step, disabled or (max is not None and value >= max)),
+                side("plus", step, disabled or (max is not None and value >= max)) if steppers else None,
             ],
             align="center",
             spacing=2,

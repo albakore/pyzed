@@ -70,6 +70,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from .project import Project, Result, _uv, execute, iter_python_files, linux_path, module_name
+from . import rendering as _rendering
 
 PYINSTALLER = "pyinstaller>=6.10"
 NUITKA = "nuitka>=2.6"
@@ -551,6 +552,8 @@ def launcher(project: Project, folder: Path, opts: Optional[BuildOptions] = None
         setup.append(f"pz.Window.icon = str(ROOT / {icon!r})")
     if opts.identifier or icon:
         setup.append(f"pz.Window.app_id = {app_identifier(project, opts)!r}")
+    for name, value in _rendering.find(project.root).env().items():  # [tool.pyzed.rendering]
+        setup.append(f"os.environ.setdefault({name!r}, {value!r})")
     run_args = ""
     splash = opts.splash
     if splash is not None:

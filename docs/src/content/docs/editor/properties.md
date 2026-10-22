@@ -10,12 +10,25 @@ The **Properties** panel (right dock) edits whatever is selected. Its content ch
 | Selection | The panel shows |
 | --- | --- |
 | Nothing | The **form** itself: window, look, global style and designer settings. In a component, the [Component panel](/pyzed/editor/component-designer/#the-component-panel). |
-| One control | Its name, its own properties by group, **Style**, **Position** and **Behavior**. |
+| One control | Its name, **Position** first, then its own properties by group, **Behavior**, its style (**Text**, **Fill**, **Border**, **Spacing**), **Effects** and **Animation**. |
 | Several controls | Alignment, distribution and same-size tools. |
 
 Every section is collapsible: click its header to fold it. The folded sections are remembered while the editor is
 open, so you can keep only the ones you use. Every change is one undo step, and typing in a field merges into a
 single step.
+
+### Number fields
+
+Every number in the panel works like in Figma:
+
+- **Drag it sideways**: press on the number and move the mouse left or right to lower or raise it. Small steps
+  (opacity, line height) move slowly, so you can aim.
+- **Double-click it** to type a value; <kbd>Enter</kbd> keeps it. A single click puts the cursor in the field, and
+  <kbd>↑</kbd> / <kbd>↓</kbd> add or take one step.
+- The letter or unit inside the field (**X**, **W**, **px**, **°**) says what the number is.
+
+In your own apps the same field is [`ui.number_field`](/pyzed/library/number-field/): `drag=False` turns dragging
+off, `steppers=False` hides the `−`/`+` buttons.
 
 ## A control
 
@@ -34,14 +47,16 @@ methods. Hover a property's label for a one-line description.
 
 ### The component's own sections
 
-Each component groups its properties in **Appearance**, **Data**, **Layout** or **Behavior** sections. The kind of
+Each component groups its properties in **Appearance**, **Data**, **Layout** or **Behavior** sections (a section
+with the same name as one of the panel's own, like **Behavior**, is merged into it). The kind of
 a property decides its editor:
 
 | Kind | Editor | Example |
 | --- | --- | --- |
 | Text | A text field. | A button's `text`, a text box's `placeholder`. |
 | Multiline | A small code editor with wrapping. | A text area's `text`, a markdown's `text`. |
-| Number | A number box with `−`/`+` and limits. | A slider's `min`, `max`, `step`. |
+| Number | A number field you drag or type in, with limits. | A slider's `min`, `max`, `step`. |
+| File, folder | A field and a **folder** button that opens the system's file dialog (see below). | An image's `source`, a shader's `file`, a file watcher's `path`. |
 | Switch | An on/off switch. | `checked`, `secure`, `wrap`. |
 | Choice | Up to four short choices side by side as a segmented control; longer lists as a drop-down. | A button's `variant`, a label's `size`. |
 | Color | A swatch and a field for a theme token (`accent`, `text_muted`) or `#hex`. | A label's `color`. |
@@ -54,6 +69,18 @@ every property of every component.
 
 Controls that hold a value also show **Bind to** and their validation rules (**Required**, **Minimum length**,
 **Pattern**...) in the **Data** section: see [Data binding and validation](/pyzed/editor/data-binding/).
+
+### Files and folders
+
+Every property that holds a file or a folder has a **folder** button at its end. It opens the system's dialog
+(filtered by kind: images, sounds, fonts, shaders, data files...) and writes the path for you. A file inside your
+project is written **relative to the project** (`assets/logo.png`), so the project still works when you move it.
+Typing the path by hand still works.
+
+This covers the components' own properties (`source`, `file`, `path`, `directory`...), any text property whose name
+says it is a path (`icon_path`, `output_dir`, `cwd`...), the [properties of your own components](/pyzed/editor/component-designer/)
+typed `pz.FilePath` or `pz.FolderPath`, and the folder fields of the editor's dialogs. In your own apps the same
+field is `ui.path_input`.
 
 ### The icon dialog
 
@@ -82,41 +109,73 @@ A table's data is a small spreadsheet. The first row (marked **H**) is the heade
 removes the column (a table keeps at least one). It scrolls sideways when the table is wider than the panel.
 As with lists, the page icon switches to plain text: one row per line, cells separated by commas.
 
-### Style
+### Style: Text, Fill, Border, Spacing
 
-Every control has a **Style** section, the same set of properties as [`pz.Style`](/pyzed/theming/styles/):
-background (color, gradient or mask), text color, font, weight, italic, font size, line height, border, corner
-radius, shadow, padding, margin, maximum size, content alignment and clipping. Empty fields keep the component's
-own look and **Reset style** clears them all. See [Styles and themes](/pyzed/editor/styles-and-themes/).
+The control's style is split in four short sections, the same properties as [`pz.Style`](/pyzed/theming/styles/).
+Empty fields keep the component's own look, and **Reset style** at the end clears them all. See
+[Styles and themes](/pyzed/editor/styles-and-themes/).
 
-Each field has an editor made for its value: **Font**, **Italic**, **Clip** and the two alignments are segmented
-controls (the alignments show icons; hover them for their name), and **Padding**, **Margin** and **Corner radius**
-are one number for every side. Press the **link** button at its end to give each side (or corner) its own number;
-press it again to use one value everywhere.
+| Section | Fields |
+| --- | --- |
+| **Text** | **Font** (family and weight), **Size** (font size and line height), **Color**, **Italic**. |
+| **Fill** | The background: a color, a gradient or a mask. |
+| **Border** | **Color**, **Width** and **Corners** (one radius, or one per corner with the **link** button). |
+| **Spacing** | The **box model**, **Align content**, **Max size** and **Clip content**. |
 
-Below it, **Effects** (opacity, glow, bloom, glass) and **Animation** (what plays when the control appears, on
-hover, press, focus or click) are covered in [Animations and effects](/pyzed/editor/animations-and-effects/).
+The box model is drawn like the browser's: an outer amber ring for the **margin** (space outside the control)
+and an inner green ring for the **padding** (space between its border and its content), with one number per side.
+Drag or double-click any of them. **Align content** is a 3×3 box: click a dot to put the content in that corner,
+side or the center.
+
+The shadow lives in **Effects**, next to opacity, glow, bloom and glass; **Effects** and **Animation** are covered
+in [Animations and effects](/pyzed/editor/animations-and-effects/).
 
 ### Position
 
-For a control placed freely (on the form, or in a panel, group box or card):
+**Position** is always the first section. For a control placed freely (on the form, or in a panel, group box or
+card):
 
 | Field | Meaning |
 | --- | --- |
 | **Inside** | Only inside a container: the container's name (click it to select the container) and a button to **move out** of it. |
+| **Align** | Six buttons that put the control against the left edge, the center, the right edge, the top, the middle or the bottom of its container (or the form). |
+| **Position** | **X** and **Y**, relative to the form or the container. |
+| **Size** | **W** and **H** in pixels. |
+| **L · T**, **R · B** | Shown in Position and Size instead of X and W (or Y and H) when the control stretches on that axis: its distances to the sides of the container. Changing one keeps the opposite side where it is. |
+| **Rotation** | Degrees clockwise, around the pivot (the same value as the style's `rotate`). |
 | **Anchor** | The anchor preset, drawn as a box in a frame, and its name (`Top · Left`). Click it to open the 4×4 grid of presets (see below). |
-| **X · Width**, **Y · Height** | Position relative to the form or the container, and size in pixels. |
-| **Left · Right**, **Top · Bottom** | Instead of X and Width (or Y and Height) when the control stretches on that axis: its distances to the sides of the container. Changing one keeps the opposite side where it is. |
+
+**More options** at the end shows the fields you need less often:
+
+| Field | Meaning |
+| --- | --- |
 | **Min size**, **Max size** | Limits for the width and height when the control stretches (`0`: no limit), so a stretched panel stops at a readable width. |
 | **Pivot** | The point the control turns and scales around, and that stays put when a size limit stops it from stretching: `0 0` is the top-left corner, `0.5 0.5` (the default) the center, `1 1` the bottom-right corner. |
-| **Rotation** | Degrees clockwise, around the pivot (the same value as the style's `rotate`). |
 
 ![The Position section with the anchor presets open](../../../../screenshots/editor-anchors.png)
 
-For a child of a **flex row or column**: **Grow** (its share of the free space, 0 keeps its size), **Width** and
-**Height**. For a child of a **grid**: **Column span** (how many columns it takes), **Width** and **Height**.
-These children are placed by their container, so they have no X and Y: drag them to reorder them. See
+For a child of an **auto layout** (a flex row or column, or a grid) the section is different, because its container
+places it: **Width** and **Height** each say **Fixed** (keep this size) or **Fill** (take the room the container
+leaves), **Grow** shares the free space between children that fill, and in a grid **Column span** says how many
+cells it takes. These children have no X and Y: drag them to reorder them. See
 [Layouts and containers](/pyzed/editor/layouts/).
+
+### Auto layout
+
+A flex row, column or grid shows an **Auto layout** section, as in Figma:
+
+| Field | Meaning |
+| --- | --- |
+| **Direction** | Side by side (row) or one under the other (column). A grid shows **Columns** instead. |
+| **Align** | A 3×3 box: click where the children sit inside the container (left, center or right; top, middle or bottom). |
+| **Gap** | Space between the children, or **Space between**, **Space around** or **Space evenly** to spread them over the free space. A grid has a gap and a row height. |
+| **Padding** | Space between the container's border and its children: horizontal and vertical, or one per side with the **square** button. |
+| **Fill across** | Children stretch to the container's height (in a row) or width (in a column). |
+
+Select some controls and press <kbd>Shift</kbd>+<kbd>A</kbd> (**Add auto layout**) to wrap them in a row or a
+column, guessed from how they are placed. <kbd>Ctrl</kbd>+<kbd>G</kbd> groups them in an invisible panel without
+moving them, and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> takes the children out of a group or layout and
+removes it, keeping their place and size.
 
 The presets are the anchors of Unity, Unreal and Godot. The columns say how the control follows the width
 (**Left**, **Center**, **Right** or **Stretch**) and the rows how it follows the height (**Top**, **Middle**,

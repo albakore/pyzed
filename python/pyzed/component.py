@@ -87,6 +87,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import os
 import re
 import sys
 import types
@@ -745,9 +746,10 @@ class Component:
     # -- the designer ----------------------------------------------------------------
     @classmethod
     def describe(cls) -> str:
-        """The first paragraph of the docstring (shown in the designer)."""
-        doc = (cls.__doc__ or "").strip()
-        return doc.split("\n\n")[0].replace("\n", " ") if doc else ""
+        """The first paragraph of the docstring on one line, in Markdown (shown in the designer)."""
+        from .reference import first_paragraph
+
+        return " ".join(first_paragraph(cls.__doc__).split())
 
     @classmethod
     def designer_spec(cls) -> Any:
@@ -784,7 +786,22 @@ class Component:
             props=props,
             events=custom_events,
             description=cls.describe(),
+            # the library's own components get a role from what they are; the project's are its own
+            role=None if _in_library(cls) else "custom",
         )
+
+
+def _in_library(cls: type) -> bool:
+    """Whether ``cls`` is one of Pyzed's own components (its module file is inside this package), whatever
+    name its module was imported under."""
+    path = getattr(sys.modules.get(cls.__module__), "__file__", None)
+    if not path:
+        return False
+    folder = os.path.dirname(os.path.abspath(path))
+    return folder == _PACKAGE_DIR or folder.startswith(_PACKAGE_DIR + os.sep)
+
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
@@ -805,7 +822,8 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
             return prop_class(info.name, "number", default, min=limits.min, max=limits.max, step=step)
         annotation = base_type
         text = getattr(base_type, "__name__", str(base_type))
-    for hint, kind in ((_hints.Color, "color"), (_hints.Icon, "icon"), (_hints.Multiline, "multiline")):
+    for hint, kind in ((_hints.Color, "color"), (_hints.Icon, "icon"), (_hints.Multiline, "multiline"),
+                       (_hints.FilePath, "file"), (_hints.FolderPath, "folder")):
         if annotation is hint or text.rsplit(".", 1)[-1] == hint.__name__:
             return prop_class(info.name, kind, "" if default is None else default)
     base = text.split("[")[0].replace("typing.", "").lower()

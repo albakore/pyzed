@@ -2,7 +2,7 @@
 title: "Slider"
 description: "Pick a number in a range by dragging. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 83
+  order: 88
   label: "Slider"
 ---
 
@@ -249,6 +249,12 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Tips
+
+:::tip
+Once clicked or reached with Tab it has the keyboard focus: the arrows move it one `step`, with Shift (or Page Up/Down) ten, and Home/End jump to `min`/`max`.
+:::
+
 ## Properties and API
 
 ### `ui.slider`
@@ -267,6 +273,7 @@ slider(
     height=None,
     disabled=False,
     show_value=False,
+    id=None,
     theme=None,
 )
 ```
@@ -284,6 +291,7 @@ A slider.
 | `height` | `None` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `disabled` | `False` | Greys it out. |
 | `show_value` | `False` | Shows the number next to it: `True`, or a format such as `"{:.0%}"`. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_change`, `on_release` ([events](#events)).

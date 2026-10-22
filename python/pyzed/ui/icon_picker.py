@@ -89,7 +89,7 @@ class IconPicker(Component):
     events = {"change": "An icon was picked (``event.value`` is its name, ``\"\"`` when cleared)."}
     icon = "smile-plus"
     label = "Icon picker"
-    category = "Common"
+    category = "Forms"
     size = (300, 340)
 
     def setup(self) -> None:

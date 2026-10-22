@@ -7,23 +7,28 @@ sidebar:
 
 import Media from '../../../components/Media.astro';
 
-The **Design** panel (left dock) holds the **Toolbox** on top and the **Outline** below; drag the bar between them
+The **Toolbox** panel (left dock) holds the components on top and the **Outline** below; drag the bar between them
 to give one more room. The **canvas** in the center shows the document exactly as it will run, but inert: buttons
 do not click and text boxes do not type, so the mouse is free to edit.
 
 ## The toolbox
 
-Every component you can place, by category: **Common**, **Display**, **Containers**, **Layout**, **Navigation**,
-**Components** (the [non-visual ones](/pyzed/editor/non-visual-components/): timers, file watchers,
-processes... which go to the tray under the form) and one category per group of [designed components](/pyzed/editor/component-designer/)
-of your project. Hover a row for the component's description.
+Every component you can place, by category: **Common**, **Forms** (everything the user types or picks in),
+**Date & time**, **Display**, **Containers**, **Layout**, **Navigation**, **System** (what talks to the operating
+system), **Components** (the other [non-visual ones](/pyzed/editor/non-visual-components/), which go to the tray
+under the form) and one category per group of [designed components](/pyzed/editor/component-designer/) of your
+project. Hover a row for the component's role and description.
 
 | Category | Components |
 | --- | --- |
-| **Common** | Label, Button, Split button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box, Link, Search box, Segmented, Toggle group, Table, Color picker, Icon picker |
-| **Display** | Progress bar, Badge, Image, SVG image, Image viewer, Shader, Icon, Markdown, Spinner, Chip, Callout, Avatar, Facepile, Counter badge, Status dot, Key binding, Stat, Chart, Diff stat, Empty state, QR code, Terminal output |
+| **Common** | Label, Heading, Button, Link, Split button |
+| **Forms** | Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box, Search box, Segmented, Toggle group, Color picker, Icon picker |
+| **Date & time** | [Date picker](/pyzed/library/date-picker/), [Date range](/pyzed/library/date-range-picker/), [Time picker](/pyzed/library/time-picker/), [Calendar](/pyzed/library/calendar/) |
+| **Display** | Progress bar, Badge, Image, SVG image, Image viewer, Shader, Icon, Markdown, Spinner, Chip, Callout, Avatar, Facepile, Counter badge, Status dot, Key binding, Stat, Chart, Table, Diff stat, Empty state, QR code, Terminal output |
 | **Navigation** | Tab bar, Tree view, Breadcrumbs |
 | **Containers** and **Layout** | Panel, Group box, Card, Divider, Flex row, Flex column, Grid, Dock, Dock panel, Spacer |
+| **System** | [File picker](/pyzed/library/file-input/), [Drop zone](/pyzed/library/drop-zone/), and in the tray: Shortcut, File watcher, Process, Clipboard, File dialog, Notification, System info, Launcher, Network monitor, Battery monitor |
+| **Components** | Timer, Background worker, Web request, Settings |
 | **Media** and **Audio** | Webcam, and the [audio controls](/pyzed/audio/): knobs, faders, pads, piano, meters, waveforms, spectrum... |
 
 The [Project explorer](/pyzed/editor/examples/) example puts most of them on one form, with a handler for each of
@@ -31,6 +36,29 @@ their events.
 
 - **Search components…** filters the list by name (in English or in the editor's language) or by type.
 - **Pointer** (first row) is the normal selection tool. It is highlighted when no component is picked.
+
+### Icon colors
+
+Every component has a **role**, and its icon takes the role's color wherever it appears: the toolbox, the
+outline, the tray of non-visual components, the header of the **Properties** and **Events** panels and the chip
+that follows the pointer while you drag. A form's structure reads at a glance: blue boxes hold the rest, green
+fields take what the user types, yellow buttons run your code. The palette icon next to the search box shows the
+same legend.
+
+| Color | Role | What it is |
+| --- | --- | --- |
+| Blue | **Layout** | Holds and arranges other controls: panels, cards, group boxes, rows, columns, grids, docks, dividers, spacers. |
+| Green | **Input** | Takes a value from the user: text boxes, check boxes, switches, drop-downs, sliders, number boxes, pickers. |
+| Yellow | **Action** | Runs something when pressed: buttons and split buttons. |
+| Cyan | **Navigation** | Moves between views: tab bars, tree views, breadcrumbs, links. |
+| Neutral | **Display** | Shows content: labels, headings, images, tables, charts, badges. |
+| Red | **Media** | Sound and video: the audio controls and the webcam. |
+| Orange | **System** | Non-visual components: timers, processes, file watchers, web requests, the clipboard. |
+| Purple | **Custom** | Your own components, made with the [component designer](/pyzed/editor/component-designer/) or `pz.Component`. |
+
+The colors come from the theme's terminal palette, so they change with the theme and stay readable in light and
+dark themes. The role is worked out from the component (whether it holds controls, its category and its events);
+a component registered from Python can name its own with `Component(..., role="input")`.
 
 ### Placing a control
 

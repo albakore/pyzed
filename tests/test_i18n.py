@@ -114,14 +114,18 @@ def test_designer_menus_code_panel_and_color_picker_are_translated(tmp_path):
     import re
     from pathlib import Path
 
-    from pyzed.designer import code_panel, locale, new
+    from pyzed.designer import code_panel, locale, new, settings_ui
     from pyzed.designer.app import Designer
 
-    # Every text the code panel shows has a Spanish translation.
+    # Every text the code panel and the settings show has a Spanish translation.
     source = Path(code_panel.__file__).read_text(encoding="utf-8")
     texts = set(re.findall(r'tr\("([^"]+)"', source))
-    assert len(texts) > 30
-    assert [text for text in texts if text not in locale._ES] == []
+    assert len(texts) > 15
+    texts |= {text for s in settings_ui.SETTINGS for text in (s.title, s.description) if text}
+    texts |= {label for s in settings_ui.SETTINGS if not callable(s.options) for _, label in s.options}
+    texts |= {text for group, pages in settings_ui.PAGES for text in (group, *(title for _, title, _ in pages))}
+    assert len(texts) > 100
+    assert sorted(text for text in texts if text not in locale._ES and text not in ("ty", "ruff")) == []
 
     app = Designer(new.new_form(tmp_path / "shell", template="sidebar"), language_servers=False)
     app.window_size = (1440, 900)

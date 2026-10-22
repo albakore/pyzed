@@ -88,8 +88,12 @@ With nothing selected, the Properties tab shows the component itself, in collaps
 | **Layout** | **Width**, **Height**, **Background** (transparent when empty) and **Grid size** of the design surface. |
 | **Inherited** | Only with a base: what comes from each base class, read only. |
 | **Properties** | A row per property (type icon, name and value), and **Public** / **Private** buttons to add one. |
-| **Custom events** | A card per event (name and description), and **Event** to add one. |
 | **Methods** | The class's code, grouped, a field to add a method and **Edit the class**. |
+
+The **custom events** live in the **Events** tab, in a **Custom events** section below the **Built-in events**
+(`setup`, `mount`, `unmount`): a card per event (name and description), and **Event** to add one. They are the
+events the component raises with `self.emit("change", value)`. The parent handles them with `on_change=...` in
+code, or in the Events tab of a form, where they show apart from the built-in events of the control.
 
 - **Properties**: like Unreal's details panel, each property is one compact row: its type icon, its name (a lock
   marks a private one) and its default value. Lists, dicts and instances list their items below it. The arrow
@@ -98,8 +102,6 @@ With nothing selected, the Properties tab shows the component itself, in collaps
   declared with `pz.state`. Both are attributes in the code: `self.value`, `self.clicks`. The type decides the
   editor the property gets, here and in the Properties tab of the forms that use the component (see
   [Property types](#property-types)).
-- **Custom events**: the events the component raises with `self.emit("change", value)`, with a description.
-  The parent handles them with `on_change=...` in code, or in the Events tab of a form.
 - **Methods**: every method of the class, grouped in **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
   added when you click them), **Event handlers** (the code of the controls' events) and your own **Methods** (a
   name starting with `_` is marked private). Click one to open it in the code editor. Type a name and press
@@ -120,6 +122,7 @@ its own colored icon. Pick a common type in the **Type** list of the property's 
 | Color | `pz.Color` | Color swatch with a theme token or `#rrggbb`. |
 | Icon | `pz.Icon` | Icon picker. |
 | Multiline | `pz.Multiline` | Text area. |
+| File, folder | `pz.FilePath`, `pz.FolderPath` (or `pathlib.Path`) | A path field with a button that opens the file or folder dialog. |
 | Choice | `Literal["fast", "slow"]` | Drop-down; the card has an **Options** field. |
 | Range | `Annotated[int, pz.Range(0, 5)]` | Number box with limits; the card has **Min**, **Max** and **Step**. |
 | Optional | `float \| None`, `Optional[float]` | **None** with **+** to set a value, or the value's editor with **×** to empty it. |

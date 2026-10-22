@@ -125,6 +125,16 @@ _CODE_PANEL: Tuple[Tuple[str, str, Tuple[str, ...]], ...] = (
     ("replace", "Find and replace", ("ctrl-h",)),
     ("go_to_line", "Go to line", ("ctrl-g",)),
     ("toggle_soft_wrap", "Toggle soft wrap", ("alt-z",)),
+    ("go_to_definition", "Go to definition", ("f12",)),
+    ("go_to_type_definition", "Go to type definition", ("ctrl-f12",)),
+    ("find_all_references", "Find all references", ("shift-f12", "alt-shift-f12")),
+    ("rename_symbol", "Rename symbol", ("f2",)),
+    ("code_actions", "Quick fixes and refactorings", ("ctrl-.",)),
+    ("organize_imports", "Organize imports", ("alt-shift-o",)),
+    ("fix_all", "Fix all auto-fixable problems", ()),
+    ("go_back", "Go back", ("alt-left",)),
+    ("go_forward", "Go forward", ("alt-right",)),
+    ("toggle_sticky_scroll", "Toggle sticky scroll", ()),
 )
 
 #: The code editor's actions by group (their keys are ``ui.editor.DEFAULT_KEYS``).
@@ -523,7 +533,9 @@ class Keymap:
         type or use (Alt+Z), so it hands them over (function keys reach the designer anyway)."""
         out = []
         for b in self.active:
-            if b.context in contexts and " " not in b.keys and not b.keys.startswith("ctrl-") \
+            # Ctrl with a letter never types, but Ctrl with punctuation does (Ctrl+.)
+            typing = not b.keys.startswith("ctrl-") or re.fullmatch(r"ctrl-[^a-z0-9\s]", b.keys) is not None
+            if b.context in contexts and " " not in b.keys and typing \
                     and not re.search(r"(^|-)f\d+$", b.keys) \
                     and not (b.action or "").startswith("editor::") and b.keys not in out:
                 out.append(b.keys)
@@ -545,6 +557,15 @@ def get() -> Keymap:
     if _KEYMAP is None or _KEYMAP.path != path:
         _KEYMAP = Keymap(path)
     return _KEYMAP
+
+
+def shown_keys(action: str, default: Optional[str] = None) -> Optional[str]:
+    """The keys a tooltip or a menu shows for ``action`` (``"run"`` means ``"workspace::run"``): the first
+    ones in force, which the user may have changed or removed, or ``default`` for keys outside the keymap."""
+    action = action if "::" in action else f"workspace::{action}"
+    if action not in actions():
+        return default
+    return get().keys_for(action)
 
 
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:

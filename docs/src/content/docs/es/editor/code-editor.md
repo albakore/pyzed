@@ -1,6 +1,6 @@
 ---
 title: Editor de código
-description: "El editor de Python de Pyzed Design: autocompletado, diagnósticos, code lens, plegado, minimapa, servidores de lenguaje ty y ruff, teclas y ajustes."
+description: "El editor de Python de Pyzed Design: autocompletado, información al pasar el ratón, ir a la definición, renombrar, arreglos rápidos, diagnósticos, code lens, sticky scroll, plegado, minimapa, servidores de lenguaje ty y ruff, teclas y ajustes."
 sidebar:
   order: 7
 ---
@@ -63,6 +63,9 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
   letra; <kbd>Ctrl</kbd>+<kbd>0</kbd> lo restablece. El tamaño se guarda.
 - **Desplazamiento**: la rueda del ratón desplaza el código (<kbd>Mayús</kbd>+rueda, de lado) y las barras de
   desplazamiento quedan a la derecha del minimapa. La vista también sigue al cursor.
+- **Desplazamiento fijo** (sticky scroll): mientras te desplazas, las líneas que abren los bloques en los que estás (`class`, `def`,
+  `for`, `if`, `with`...) quedan fijas arriba del editor, la más interna al final, así siempre sabes dónde estás.
+  Haz clic en una para ir a ella. Se fijan hasta cinco líneas; se desactiva con *Desplazamiento fijo* en los ajustes.
 - **Líneas largas**: por defecto se desplazan de lado; <kbd>Alt</kbd>+<kbd>Z</kbd> (o *Ajustar líneas largas* en los
   ajustes) las ajusta al ancho del editor.
 
@@ -81,6 +84,11 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>X</kbd> / <kbd>V</kbd> | Copiar, cortar, pegar. |
 | <kbd>Tab</kbd> | Sangrar (insertar espacios). |
 | <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> | Abrir la lista de sugerencias. |
+| <kbd>F12</kbd>, <kbd>Ctrl</kbd>+clic | Ir a la definición. |
+| <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Volver atrás / adelante después de un salto. |
+| <kbd>Shift</kbd>+<kbd>F12</kbd> | Buscar todas las referencias. |
+| <kbd>F2</kbd> | Renombrar el símbolo. |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Arreglos rápidos y refactorizaciones. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Plegar / desplegar en el cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Letra más grande, más pequeña, por defecto. |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer, rehacer (lo escrito seguido es un solo paso). |
@@ -177,6 +185,39 @@ completa por su cuenta:
 
 ![form. completa los controles del propio formulario](../../../../../screenshots/designer-completion-form.png)
 
+## Información, navegación y refactorización
+
+![La tarjeta de información de una función: su firma y su docstring](../../../../../screenshots/designer-code-hover.png)
+
+Funcionan como en VS Code o Zed: responde ty donde puede y el editor completa lo que solo sabe el diseñador (los
+controles del formulario).
+
+- **Información al pasar el ratón**: deja el ratón medio segundo sobre un nombre y una tarjeta muestra su tipo o
+  su firma y su docstring (como Markdown), junto con los problemas de ese punto. `form.email` y `form.email.text`
+  describen el control y su propiedad. La tarjeta se queda mientras el ratón está encima, así puedes desplazarla y
+  seleccionar su texto. Se desactiva con *Información al pasar el ratón* en los ajustes.
+- **Ir a la definición**: <kbd>F12</kbd> o <kbd>Ctrl</kbd>+clic en un nombre abre donde está definido: más abajo en
+  el mismo código, otro manejador del formulario (el editor cambia a él), un archivo de tu proyecto o una librería
+  del `.venv` (se abre de solo lectura en una pestaña). <kbd>Ctrl</kbd>+<kbd>F12</kbd> va a la definición de su
+  **tipo**. En `form.email` selecciona el control en el lienzo. Sin ty sigue encontrando los `def` y `class` del
+  archivo.
+- **Atrás y adelante**: <kbd>Alt</kbd>+<kbd>←</kbd> vuelve a donde estabas antes del salto y
+  <kbd>Alt</kbd>+<kbd>→</kbd> avanza de nuevo.
+- **Buscar referencias**: <kbd>Shift</kbd>+<kbd>F12</kbd> lista bajo el editor cada uso del nombre, con el archivo,
+  la línea y el texto; haz clic en uno para ir allí.
+- **Renombrar**: <kbd>F2</kbd> abre un campo sobre el nombre; escribe el nuevo y pulsa <kbd>Enter</kbd>. Cambia cada
+  uso, en este archivo y en los demás archivos del proyecto que lo usan (se abren como pestañas sin guardar para que
+  los revises y guardes). Al renombrar un manejador sus eventos siguen conectados a él (`on sign_in.click`), y un
+  <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshace el cambio.
+- **Arreglos rápidos** (<kbd>Ctrl</kbd>+<kbd>.</kbd>, o **Arreglo rápido…** en la tarjeta de información): los
+  arreglos que ofrecen ruff y ty para la línea, como quitar un import sin usar, y además:
+  - **Importar** un nombre que no está definido, desde el módulo que lo tiene.
+  - **Instalar un paquete que falta**: en `import httpx` sin httpx instalado, *Instalar httpx en el proyecto
+    (uv add)* lo añade a `pyproject.toml` y al `.venv`, y el error desaparece en cuanto se instala. Los nombres
+    conocidos se traducen a su paquete (`cv2` → `opencv-python`, `PIL` → `pillow`, `yaml` → `pyyaml`).
+- **Organizar imports** (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>) ordena y agrupa los imports con ruff, y
+  **Arreglar todos los problemas que se arreglan solos** (paleta de comandos) aplica todos los arreglos seguros de ruff.
+
 ## Ayuda contextual
 
 <kbd>Shift</kbd>+<kbd>F1</kbd> abre la [referencia integrada](/pyzed/es/editor/reference/) en el nombre bajo el
@@ -215,6 +256,12 @@ myapp/
     └── helpers.py
 ```
 
+Si el proyecto aún no tiene `.venv` (un formulario que acabas de abrir, o un proyecto antes de su primer
+`uv sync`), ty usa el Python con el que corre el diseñador, así `import pyzed` y la librería estándar se resuelven
+en vez de marcarse como que faltan. En cuanto aparece el `.venv`, o cambian `pyproject.toml` o `uv.lock` (al añadir
+una dependencia en la [pestaña Proyecto](/pyzed/es/editor/projects/)), los servidores se reinician con él, así los
+paquetes nuevos se resuelven sin volver a abrir el proyecto.
+
 El editor busca `ty` y `ruff` primero en el `.venv` del proyecto, luego junto al editor y luego en el `PATH`.
 Instálalos con `uv add --dev ty ruff` en el proyecto, o con `pip install "pyzed-ui[designer]"` junto al editor. Ruff
 lee sus reglas de `[tool.ruff]` en `pyproject.toml`.
@@ -244,10 +291,10 @@ sequenceDiagram
 
 ## Ajustes del editor
 
-Los abren el **engranaje** de la cabecera del panel de código, los puntos de los servidores en la barra de estado o
-**Ajustes → Editor de código → Ajustes del editor…**. Se guardan por usuario, en el mismo `designer.json` que los
-[ajustes del editor](/pyzed/es/editor/settings/). Un índice a la izquierda lista las secciones y a la
-derecha se ve la que eliges.
+Los abren el **engranaje** de la cabecera del panel de código y los puntos de los servidores en la barra de estado:
+son las páginas *Editor de código* del [diálogo de Ajustes](/pyzed/es/editor/settings/), con su buscador, sus
+perfiles, **↺** para devolver un ajuste a su valor por defecto y el ámbito *Proyecto* para que un proyecto tenga
+los suyos (su tabulación, por ejemplo).
 
 ![Ajustes del editor con el índice de secciones](../../../../assets/editor/editor-settings-appearance.png)
 
@@ -277,8 +324,10 @@ derecha se ve la que eliges.
 | Desplazamiento y ajuste de línea | **Ajustar líneas largas** | Apagado por defecto: las líneas largas se desplazan de lado. <kbd>Alt</kbd>+<kbd>Z</kbd> lo alterna. |
 | | **Barras de desplazamiento** | Muestra u oculta las barras. |
 | | **Minimapa** | El código en miniatura a la derecha. |
+| | **Desplazamiento fijo** | Mantiene fijas arriba las líneas de los bloques que te rodean mientras te desplazas. |
 | Code lens y diagnósticos | **Code lens** | Referencias, implementaciones y eventos conectados al final de las definiciones. |
 | | **Diagnósticos en línea** | Los problemas al final de la línea. |
+| | **Información al pasar el ratón** | La tarjeta con el tipo, la documentación y los problemas del nombre bajo el ratón. |
 | Servidores de lenguaje | **ty**, **ruff** | Enciende o apaga cada servidor. Cada fila muestra su estado y versión. Debajo: la raíz del proyecto y el Python en uso. |
 | | **Reiniciar servidores** | Reinicia los dos; úsalo después de `uv sync` o de instalarlos. |
 

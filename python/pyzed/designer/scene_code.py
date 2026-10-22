@@ -343,7 +343,10 @@ def ensure_typing(source: str, names: Sequence[str]) -> str:
 # -- property kinds (like Godot's export hints) --------------------------------------
 
 #: What the type drop-down offers: plain types and the hints that pick an editor.
-KINDS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "Choice", "Range", "list", "dict", "Any")
+KINDS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "FilePath", "FolderPath", "Choice", "Range",
+         "list", "dict", "Any")
+#: The hints of ``pyzed.hints`` that pick an editor for a ``str`` (written ``pz.<name>``).
+STR_HINTS = ("Color", "Icon", "Multiline", "FilePath", "FolderPath")
 
 
 def kind_of(type_: str) -> str:
@@ -354,8 +357,10 @@ def kind_of(type_: str) -> str:
     if text.startswith("Annotated[") and "Range(" in text:
         return "Range"
     last = text.rsplit(".", 1)[-1]
-    if last in ("Color", "Icon", "Multiline"):
+    if last in STR_HINTS:
         return last
+    if last == "Path":  # pathlib.Path
+        return "FilePath"
     return text
 
 
@@ -410,8 +415,8 @@ def type_for(kind: str, previous: str = "") -> str:
         return "pz.Color"
     if kind == "Icon":
         return "pz.Icon"
-    if kind == "Multiline":
-        return "pz.Multiline"
+    if kind in ("Multiline", "FilePath", "FolderPath"):
+        return f"pz.{kind}"
     if kind == "Choice":
         return previous if kind_of(previous) == "Choice" else choice_type(["first", "second"])
     if kind == "Range":

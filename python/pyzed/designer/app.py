@@ -17,7 +17,7 @@ import re
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
@@ -31,11 +31,14 @@ from . import spacing
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, file_scan, geometry, panels, preferences, project_panel, surface
+from . import profiles as _profiles
+from . import settings_ui
 from . import commands as _commands
 from . import export_panel as _export
 from . import keymap as _keymap
 from . import files as _files
 from . import layout as _layout
+from . import roles as _roles
 from . import new as _new
 from .console import ConsoleController
 from . import logs as _logs
@@ -196,6 +199,8 @@ class Designer(App):
         self.key_prefix: Optional[str] = None
         # preferences and view options
         self.prefs = preferences.load()
+        #: The user's and the open project's preferences, and the user's profiles (see ``profiles``).
+        self.profile_store = _profiles.use(_profiles.Store())
         # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
         self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
@@ -262,6 +267,8 @@ class Designer(App):
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.projects.on_change(self.agent.project_changed)  # the agents work on the active project
+        self.settings_ui = settings_ui.SettingsController(self)
+        self.projects.on_change(self._project_settings)  # a project may set its own preferences
         # File → Export app…: package the project for each platform (pyzed build)
         self.exporter = _export.ExportController(self)
         self.updates = UpdateController(self)
@@ -1028,12 +1035,13 @@ class Designer(App):
             return None
         if carry.kind == "tool":
             spec = _components.get(carry.names[0])
-            icon, text = spec.icon, tr(spec.label)
+            text = tr(spec.label)
         else:
             control = self.doc.form.get(carry.names[0])
-            icon = _components.spec(control.type).icon if control is not None else "box"
+            spec = _components.spec(control.type) if control is not None else None
             text = carry.names[0] if len(carry.names) == 1 else f"{carry.names[0]} +{len(carry.names) - 1}"
-        return _core.container(_core.row([_icon(icon, size=13, color=t.accent),
+        icon = spec.icon if spec is not None else "box"
+        return _core.container(_core.row([_icon(icon, size=13, color=_roles.icon_color(spec, t)),
                                           _core.text(text, size=12.5, color=t.text, wrap=False)],
                                          spacing=6, align="center"),
                                padding=(4, 8), bg=t.elevated, border_color=t.border_focused,
@@ -1449,10 +1457,88 @@ class Designer(App):
         preferences.save(self.prefs)
         _locale.apply(code)
 
-    def open_settings(self) -> None:
-        """Opens the Settings dialog."""
+    def open_settings(self, page: Optional[str] = None) -> Any:
+        """Opens the Settings dialog (on ``page``, such as "canvas" or "editor.cursor") and focuses its search."""
         self.app_menu = None
+        self.settings_ui.open(page)
         self.dialog = "settings"
+        return _core.Command.focus(settings_ui.SEARCH_ID)
+
+    # -- settings: scopes and profiles -------------------------------------------
+    def change_setting(self, section: str, key: str, value: Any, scope: str = "user") -> None:
+        """Sets preference ``key`` of ``section`` ("designer" or "editor") in ``scope`` ("user": the active profile,
+        "project": the open project's ``.pyzed/settings.json``), saves it and applies what changes."""
+        value = self.profile_store.set(section, key, value, scope)
+        _logs.event("designer", "Setting %s.%s = %r (%s)", section, key, value, scope)
+        self.apply_settings(section, notify=True)
+
+    def reset_setting(self, section: str, key: str, scope: str = "user") -> None:
+        """Puts ``key`` back to its default (``scope="user"``) or drops the project's own value."""
+        self.profile_store.reset(section, key, scope)
+        self.apply_settings(section, notify=True)
+
+    def reset_all_settings(self, scope: str = "user") -> None:
+        """Every preference back to its default in the active profile, or every project setting removed."""
+        self.profile_store.reset_all(scope)
+        self.apply_settings(notify=True)
+        self.notify(tr("Settings reset"), tr("The project uses the user's settings again") if scope == "project"
+                    else tr("Every setting of this profile is back to its default"), seconds=3)
+
+    def switch_profile(self, name: str) -> None:
+        """Makes profile ``name`` the active one and applies its preferences."""
+        self.profile_store.switch(name)
+        self.apply_settings(notify=True)
+
+    def create_profile(self, name: str) -> str:
+        """Adds a profile with the current preferences and switches to it; returns its name."""
+        name = self.profile_store.create(name)
+        self.apply_settings(notify=True)
+        return name
+
+    def delete_profile(self, name: str) -> None:
+        """Deletes profile ``name`` (the default one stays); deleting the active one goes back to the default."""
+        if self.profile_store.delete(name):
+            self.apply_settings(notify=True)
+
+    def _project_settings(self, project: Optional[Project]) -> None:
+        self.profile_store.open_project(project.root if project is not None else None)
+        if project is None and self.settings_ui.scope == "project":
+            self.settings_ui.scope = "user"
+        self.apply_settings()
+
+    def apply_settings(self, section: Optional[str] = None, *, notify: bool = False) -> None:
+        """Makes the designer use the preferences of the store (the user's, overlaid with the project's) where they
+        differ from the ones in use: theme, language, fonts, scale, view options and the code editor."""
+        if section in (None, "editor"):
+            values = self.profile_store.effective("editor")
+            current = self.assist.settings
+            changed = {k: v for k, v in values.items() if getattr(current, k) != v}
+            if changed:
+                self.assist.settings = replace(current, **changed)
+                self.assist.intel.apply_settings(self.assist.settings)
+                if "font_family" in changed:
+                    self.apply_fonts()
+                if changed.get("code_lens"):
+                    self.assist.intel.refresh_lenses(self.doc.form)
+        if section in (None, "designer"):
+            values = self.profile_store.effective("designer")
+            changed = {k: v for k, v in values.items() if getattr(self.prefs, k) != v}
+            for key, value in changed.items():
+                setattr(self.prefs, key, value)
+                if key in ("show_grid", "snap", "smart_guides", "show_all_hidden"):
+                    setattr(self, key, value)
+            if "theme" in changed:
+                self.theme = themes.get(changed["theme"]) if changed["theme"] in themes.names() else type(self).theme
+            if "language" in changed:
+                _locale.apply(changed["language"])
+            if "ui_font" in changed:
+                self.apply_fonts()
+            if "ui_scale" in changed:
+                self.scale = changed["ui_scale"]
+            if "preview_frame" in changed:
+                self.preview_frame = changed["preview_frame"] or None
+            if "window_frame" in changed and notify:
+                self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 
     def open_dialog_named(self, name: str) -> Any:
         """Opens the dialog ``name`` with an empty search and the first row highlighted; returns ``None``."""
@@ -1627,10 +1713,9 @@ class Designer(App):
         self.focus = "code"
         return self.assist.moved(line, column)
 
-    def open_editor_settings(self) -> None:
-        """Opens the code editor settings dialog."""
-        self.app_menu = None
-        self.dialog = "editor_settings"
+    def open_editor_settings(self) -> Any:
+        """Opens the Settings dialog on the code editor's pages."""
+        return self.open_settings(f"editor.{self.assist.settings_section}")
 
     def _code_scope(self) -> str:
         """The document's text of what the code editor shows: the whole file or one handler."""
@@ -1739,6 +1824,22 @@ class Designer(App):
         """Shows the form's code (its tab in the Code panel) instead of an open file."""
         if self.editing is not None:
             self.buffers.select(None)
+
+    def edit_code(self, handler: str) -> bool:
+        """Shows function ``handler`` of the form's code (``"*"``: the whole file) in the code editor; ``False``
+        if the code open now does not parse."""
+        if not self._flush_code():
+            return False
+        self.buffers.active = None
+        self.editing = (handler, self.doc.code if handler == "*" else self.doc.handler_source(handler))
+        if handler != "*":
+            self.last_handler = handler
+        self.code_revision += 1
+        self.code_error = None
+        self.layout.show("code")
+        self.focus = "code"
+        self.assist.opened()
+        return True
 
     def edit_whole_file(self) -> None:
         """Opens the form's whole code file in the code editor (F7)."""
@@ -2820,16 +2921,16 @@ class Designer(App):
                 _icon("search", size=14, color=t.icon_muted),
                 _core.text(tr("Search commands, settings…"), size=13, color=t.text_muted, wrap=False),
                 _core.space(width="fill"),
-                ui.kbd("ctrl-shift-p", size="xs", theme=t),
+                ui.kbd(_keymap.shown_keys("palette") or "ctrl-shift-p", size="xs", theme=t),
             ], spacing=8, align="center"), height="fill", align_y="center", clip=True),
             self.open_palette, padding=(0, 6, 0, 10), width=320, height=24, bg=t.element,
             border_color=t.border_variant, border_width=1.0, hover_bg=t.element_hover,
             hover_border_color=t.border, radius=t.radius_sm,
         )
         return _core.row([
-            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
-                      theme=t),
-            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm",
+                      keys=_keymap.shown_keys("run"), theme=t),
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=tr("Stop"), keys=_keymap.shown_keys("stop"),
                            disabled=self.console.running is None, theme=t),
             _core.space(width=6),
             search,
@@ -2858,7 +2959,8 @@ class Designer(App):
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
                            tooltip=None if self.app_menu else tr("Help"), theme=t),
-            ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
+            ui.icon_button("settings", self.open_settings, tooltip=tr("Settings"), keys=_keymap.shown_keys("settings"),
+                           theme=t),
         ]
         return start, end
 
@@ -2883,19 +2985,19 @@ class Designer(App):
         count = len(doc.selection)
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
-                 keys: Optional[str] = None) -> Any:
-            tip = tr(tip)
-            label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
-            return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
+                 command: Optional[str] = None) -> Any:
+            keys = _keymap.shown_keys(command) if command else None
+            return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=tr(tip), keys=keys,
+                                  theme=t)
 
         def group(*items: Any) -> Any:
             return _core.row([i for i in items if i is not None], spacing=2, align="center")
 
         sep = _core.container(ui.divider(vertical=True, theme=t), height=16, padding=(0, 6))
         groups = [
-            group(tool("file-plus", self.new, "New form, component or shader…", keys="ctrl-n"),
-                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
-                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z")),
+            group(tool("file-plus", self.new, "New form, component or shader…", command="new"),
+                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, command="undo"),
+                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, command="redo")),
         ]
         if count:
             groups += [
@@ -2915,7 +3017,7 @@ class Designer(App):
                       tool("stretch-vertical", lambda: self.same_size("height"), "Same height") if count > 1 else None),
                 group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front"),
                       tool("send-to-back", lambda: self.reorder("back"), "Send to back"),
-                      tool("trash-2", self.delete, "Delete", keys="delete")),
+                      tool("trash-2", self.delete, "Delete", command="delete")),
             ]
         else:
             groups.append(ui.label(tr("Select controls to align, size and order them"), size="xs",
@@ -2924,14 +3026,14 @@ class Designer(App):
         for g in groups:
             start += [sep, g] if start else [g]
         end = [
-            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
+            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, command="grid"),
                   tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
                   tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
                   tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
                        selected=doc.follow_anchors),
                   tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
-            tool("code", self.edit_whole_file, "Edit code file", keys="f7"),
+            tool("code", self.edit_whole_file, "Edit code file", command="code_file"),
         ]
         # The editing tools scroll sideways when the window is too narrow; the canvas toggles stay at the end.
         tools = _core.row([
@@ -3064,7 +3166,8 @@ class Designer(App):
         if self.dialog == "icon_picker":
             return ui.icon_picker_dialog(self.icon_value, self.pick_icon, on_close=self.close_dialog,
                                          theme=t)
-        if self.dialog == "editor_settings":
+        if self.dialog == "editor_settings":  # the old name of the editor's pages
+            self.dialog = "settings"
             return code_panel.settings_dialog(self, t)
         if self.dialog == "export":
             return _export.dialog(self, t)

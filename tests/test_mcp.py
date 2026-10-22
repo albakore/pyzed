@@ -196,6 +196,21 @@ pz.run(Bad)
     assert not validate.check_code("def f(:\n")["ok"]
 
 
+def test_check_code_warns_about_shortcuts_written_in_tooltips():
+    source = '''
+import pyzed as pz
+from pyzed import ui
+
+a = ui.icon_button("save", print, tooltip="Save (Ctrl+S)")
+b = ui.icon_button("plus", print, tooltip=f"New ({ui.format_keys('ctrl-n')})")
+c = ui.icon_button("save", print, tooltip="Save", keys="ctrl-s")
+d = ui.icon_button("play", print, tooltip="Run (fast)")
+'''
+    result = validate.check_code(source, lint=False)
+    warned = [i["line"] for i in result["issues"] if "keys=" in i["message"]]
+    assert warned == [5, 6] and result["ok"]  # a warning, not an error
+
+
 def test_check_code_accepts_the_examples():
     for name in ("todo.py", "components.py", "mini_editor.py"):
         path = ROOT / "examples" / name
@@ -227,12 +242,13 @@ def test_server_registers_everything(tmp_path):
     server = create(root=str(tmp_path))
     project_tools = {"project_info", "list_files", "read_file", "write_files", "create_project", "add_dependency",
                      "check_project", "run_tests", "screenshot_project", "start_live_preview",
-                     "live_preview_status", "stop_live_preview"}
+                     "live_preview_status", "stop_live_preview", "project_settings", "set_project_settings"}
 
     async def check():
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
-                "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
+                "read_reference", "editor_keymap", "new_component", "new_form", "form_animations", "validate_code",
+                "validate_form",
                 "screenshot", "read_docs", "list_examples", "plan_app", "animation_properties", "new_animation",
                 "check_animation", "list_shader_nodes", "check_shader",
                 "new_shader"} | project_tools <= tools
@@ -411,3 +427,41 @@ def test_cli_without_the_sdk_explains_how_to_install(tmp_path):
     result = subprocess.run([sys.executable, "-c", "import sys; from pyzed.cli import main; sys.exit(main(['mcp']))"],
                             capture_output=True, text=True, env={**os.environ, "PYTHONPATH": str(tmp_path)}, timeout=60)
     assert result.returncode == 1 and "pyzed-ui[mcp]" in result.stderr
+
+
+def test_project_settings(tmp_path):
+    (tmp_path / "shop").mkdir()
+    (tmp_path / "shop" / "pyproject.toml").write_text('[project]\nname = "shop"\n\n[tool.pyzed]\nui = "ui"\n')
+    found = projects.settings(tmp_path, "shop")
+    assert found["rendering"]["renderer"] == "auto" and found["editor"] == {} and "tab_size" in found["editor_keys"]
+    changed = projects.set_settings(tmp_path, "shop", rendering={"renderer": "cpu"}, editor={"tab_size": 2},
+                                    designer={"grid": 4})
+    assert changed["rendering"]["renderer"] == "cpu" and changed["editor"] == {"tab_size": 2}
+    assert '[tool.pyzed.rendering]\nrenderer = "cpu"' in (tmp_path / "shop" / "pyproject.toml").read_text()
+    assert json.loads((tmp_path / "shop" / ".pyzed" / "settings.json").read_text())["designer"] == {"grid": 4}
+    changed = projects.set_settings(tmp_path, "shop", rendering={"renderer": "auto"}, editor={"tab_size": None})
+    assert changed["rendering"]["renderer"] == "auto" and changed["editor"] == {}
+    with pytest.raises(KeyError, match="no setting"):
+        projects.set_settings(tmp_path, "shop", editor={"tabsize": 2})
+    with pytest.raises(ValueError, match="renderer"):
+        projects.set_settings(tmp_path, "shop", rendering={"renderer": "fast"})
+
+
+def test_validate_form_checks_animations():
+    from pyzed.mcp import validate
+
+    form = json.dumps({"controls": [
+        {"name": "save", "type": "button"},
+        {"name": "status", "type": "label", "animations": [
+            {"preset": "tada", "on": "event", "source": "save", "event": "click"},
+            {"preset": "nope"},
+            {"preset": "pulse", "on": "sometimes"},
+            {"preset": "pulse", "on": "event", "source": "ghost", "event": "click"},
+            {"preset": "pulse", "on": "event", "source": "save", "event": "melt"}]}]})
+    issues = " ".join(i["message"] for i in validate.check_form(form)["issues"])
+    assert "animations[0]" not in issues
+    for part in ("unknown preset 'nope'", "unknown trigger on='sometimes'", "'ghost' is not a control",
+                 "no event 'melt'"):
+        assert part in issues
+    triggers = validate.animation_triggers()
+    assert "invalid" in json.dumps(triggers) and "event" in json.dumps(triggers)

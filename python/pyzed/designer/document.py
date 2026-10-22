@@ -245,8 +245,10 @@ class Document:
             self.commit()
         return moved
 
-    def wrap(self, type_: str, names: Optional[Sequence[str]] = None) -> Optional[Control]:
-        """Puts controls (the selection by default) inside a new container of ``type_`` around them."""
+    def wrap(self, type_: str, names: Optional[Sequence[str]] = None,
+             props: Optional[Dict[str, Any]] = None) -> Optional[Control]:
+        """Puts controls (the selection by default) inside a new container of ``type_`` around them, with
+        ``props`` set on it (an invisible panel for a group)."""
         form = self.form
         picked = [form[n] for n in (names if names is not None else self.selection) if form.get(n) is not None]
         picked = [c for c in picked if not any(a in picked for a in form.ancestors(c.name))
@@ -263,6 +265,9 @@ class Document:
         spec = _components.get(type_)
         container = spec.create(form.unique_name(type_), x1 - ox, y1 - oy, max(x2 - x1, 8), max(y2 - y1, 8))
         container.parent = parent
+        container.props.update(props or {})
+        # children keep their place on screen: they are measured from where the new container is
+        rects[container.name] = (x1, y1, container.width, container.height)
         # the new container takes the place of the first wrapped control in the z-order
         index = form.controls.index(picked[0])
         form.controls.insert(index, container)
@@ -275,6 +280,36 @@ class Document:
         self.selection = [container.name]
         self.commit()
         return container
+
+    def ungroup(self, names: Optional[Sequence[str]] = None) -> List[str]:
+        """Takes the children out of the selected containers (``names``), where they are on screen, and removes
+        the emptied containers; the children become the selection. Returns the removed containers' names."""
+        form = self.form
+        picked = [form[n] for n in (names if names is not None else self.selection) if form.get(n) is not None]
+        picked = [c for c in picked if _layout.kind(c) is not None]
+        if not picked:
+            return []
+        freed: List[str] = []
+        rects = self.rects()
+        for container in picked:
+            children = [c.name for c in form.children(container.name)]
+            if children:
+                if _layout.kind(container) in _layout.MANAGED:  # keep the size the layout gave them
+                    for n in children:
+                        if n in rects:
+                            form[n].width, form[n].height = round(rects[n][2]), round(rects[n][3])
+                index = form.controls.index(container)
+                self.reparent(children, container.parent, rects=rects, commit=False)
+                # they take the container's place in the z-order
+                moved = [form[n] for n in children]
+                rest = [c for c in form.controls if c.name not in children]
+                at = rest.index(container) if container in rest else min(index, len(rest))
+                form.controls = rest[:at] + moved + rest[at:]
+            freed.extend(children)
+        removed = [c.name for c in form.remove([c.name for c in picked])]
+        self.selection = [n for n in freed if form.get(n) is not None]
+        self.commit()
+        return removed
 
     def move_out(self, name: str) -> None:
         """Moves a control out of its container, into the container's own parent."""
@@ -687,6 +722,19 @@ class Document:
                 self.code = _code.replace_function(self.code, handler, "", strict=False).rstrip() + "\n"
                 self.code = self.code.replace("\n\n\n\n", "\n\n\n")
         self.commit()
+
+    def rename_handler(self, old: str, new: str) -> bool:
+        """Points the events wired to handler ``old`` at ``new`` (after its function was renamed in the code);
+        returns whether any event used it."""
+        changed = False
+        for events in (self.form.events, *(c.events for c in self.form.controls)):
+            for event, handler in list(events.items()):
+                if handler == old:
+                    events[event] = new
+                    changed = True
+        if changed:
+            self.commit()
+        return changed
 
     def handler_source(self, handler: str) -> str:
         """Returns the source of ``handler`` in the code, or a new stub if it is not there yet."""

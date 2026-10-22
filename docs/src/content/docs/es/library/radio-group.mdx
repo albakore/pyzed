@@ -2,7 +2,7 @@
 title: "Grupo de radios"
 description: "Opciones excluyentes como botones de radio. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 64
+  order: 65
   label: "Grupo de radios"
 ---
 
@@ -216,6 +216,12 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Consejos
+
+:::tip
+Al pulsarlo o llegar con Tab el grupo tiene el foco del teclado: las flechas eligen la opción anterior o la siguiente (saltando las desactivadas) e Inicio/Fin la primera y la última.
+:::
+
 ## Propiedades y API
 
 ### `ui.radio_group`
@@ -230,6 +236,7 @@ radio_group(
     spacing=8,
     disabled=False,
     descriptions=None,
+    id=None,
     theme=None,
 )
 ```
@@ -244,6 +251,7 @@ Opciones mutuamente excluyentes como botones de radio.
 | `spacing` | `8` | Separación entre hijos, en píxeles. |
 | `disabled` | `False` | `True`, o los valores a desactivar. |
 | `descriptions` | `None` | Asocia valores a una línea atenuada bajo su etiqueta. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_select` ([eventos](#eventos)).

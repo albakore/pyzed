@@ -113,3 +113,37 @@ class Notification
 ```
 
 Una notificación de escritorio: `show(text)` la muestra y devuelve si pudo; lanza `shown` o `failed`.
+
+## Sistema operativo (pyzed.system)
+
+### `SystemInfo`
+
+```python
+class SystemInfo
+```
+
+Qué es el equipo: `os` (`"Windows"`, `"macOS"`, `"Linux"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, más `memory_available`, `disk_free` y `disk_total`, que se leen al pedirlos. `env(name)` lee una variable de entorno y `folder("documents")` encuentra las carpetas del usuario. Con `interval` mayor que 0, `start()` lanza `update` con `snapshot()` cada cierto tiempo.
+
+### `Launcher`
+
+```python
+class Launcher
+```
+
+Abre archivos, carpetas y enlaces con la aplicación que usa el sistema para ellos: `open(target)`, `reveal(path)` (seleccionado en el explorador de archivos) y `email(to, subject, body)`; lanza `opened` o `failed`.
+
+### `NetworkMonitor`
+
+```python
+class NetworkMonitor
+```
+
+Avisa cuando el equipo se conecta o se desconecta probando `host` cada `interval` milisegundos en segundo plano: `online`, `check()`, `start()`, `stop()`; lanza `change`, `online` y `offline`.
+
+### `PowerMonitor`
+
+```python
+class PowerMonitor
+```
+
+La batería: `percent`, `plugged` y `has_battery`; cada `interval` milisegundos lanza `change`, `low` (por debajo de `low_level` sin enchufar), `plugged` y `unplugged`.

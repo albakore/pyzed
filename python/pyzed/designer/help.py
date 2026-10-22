@@ -139,7 +139,8 @@ FIELD_DOCS = (
 )
 
 _KIND_TYPES = {"text": "str", "multiline": "str", "number": "float", "bool": "bool", "color": "str",
-               "choice": "str", "list": "str", "rows": "str", "icon": "str"}
+               "choice": "str", "list": "str", "rows": "str", "icon": "str", "file": "str (path)",
+               "folder": "str (path)"}
 
 
 def prop_doc(type_: str, name: str) -> str:

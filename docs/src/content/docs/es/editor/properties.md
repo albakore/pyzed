@@ -10,12 +10,25 @@ El panel **Propiedades** (dock derecho) edita lo que esté seleccionado. Su cont
 | Selección | El panel muestra |
 | --- | --- |
 | Nada | El propio **formulario**: ventana, aspecto, estilo global y ajustes del diseñador. En un componente, el [panel Component](/pyzed/es/editor/component-designer/#el-panel-component). |
-| Un control | Su nombre, sus propiedades por grupo, **Estilo**, **Posición** y **Comportamiento**. |
+| Un control | Su nombre, **Posición** primero, luego sus propiedades por grupo, **Comportamiento**, su estilo (**Texto**, **Relleno**, **Borde**, **Espaciado**), **Efectos** y **Animación**. |
 | Varios controles | Herramientas para alinear, distribuir e igualar tamaños. |
 
 Cada sección se pliega: haz clic en su cabecera. Las secciones plegadas se recuerdan mientras el editor está
 abierto, así que puedes dejar solo las que usas. Cada cambio es un paso de deshacer, y escribir en un campo se junta
 en un solo paso.
+
+### Campos numéricos
+
+Todos los números del panel funcionan como en Figma:
+
+- **Arrástralo de lado**: pulsa sobre el número y mueve el ratón a la izquierda o a la derecha para bajarlo o
+  subirlo. Los pasos pequeños (opacidad, interlineado) avanzan despacio, para que puedas afinar.
+- **Doble clic** para escribir un valor; <kbd>Enter</kbd> lo confirma. Un solo clic pone el cursor en el campo, y
+  <kbd>↑</kbd> / <kbd>↓</kbd> suman o restan un paso.
+- La letra o unidad dentro del campo (**X**, **W**, **px**, **°**) dice qué es el número.
+
+En tus propias apps es el mismo [`ui.number_field`](/pyzed/es/library/number-field/): `drag=False` desactiva el
+arrastre y `steppers=False` oculta los botones `−`/`+`.
 
 ## Un control
 
@@ -36,13 +49,15 @@ métodos. Pasa el ratón por la etiqueta de una propiedad para ver una descripci
 ### Las secciones propias del componente
 
 Cada componente agrupa sus propiedades en secciones **Apariencia**, **Datos**, **Disposición** o
-**Comportamiento**. El tipo de una propiedad decide su editor:
+**Comportamiento** (una sección con el mismo nombre que una del propio panel, como **Comportamiento**, se junta con
+ella). El tipo de una propiedad decide su editor:
 
 | Tipo | Editor | Ejemplo |
 | --- | --- | --- |
 | Texto | Un campo de texto. | El `text` de un botón, el `placeholder` de un campo. |
 | Multilínea | Un pequeño editor de código con ajuste de línea. | El `text` de un área de texto o de un markdown. |
-| Número | Un campo numérico con `−`/`+` y límites. | `min`, `max`, `step` de un deslizador. |
+| Número | Un campo numérico que se arrastra o se escribe, con límites. | `min`, `max`, `step` de un deslizador. |
+| Archivo, carpeta | Un campo y un botón de **carpeta** que abre el diálogo de archivos del sistema (ver abajo). | El `source` de una imagen, el `file` de un shader, el `path` de un vigilante de archivos. |
 | Interruptor | Un switch de encendido y apagado. | `checked`, `secure`, `wrap`. |
 | Opción | Hasta cuatro opciones cortas lado a lado como un control segmentado; las listas más largas, como desplegable. | El `variant` de un botón, el `size` de una etiqueta. |
 | Color | Una muestra y un campo para un token del tema (`accent`, `text_muted`) o `#hex`. | El `color` de una etiqueta. |
@@ -56,6 +71,18 @@ Pasa el ratón por el nombre de una propiedad para leer qué hace, cuando tiene 
 Los controles que guardan un valor muestran además **Enlazar a** y sus reglas de validación (**Obligatorio**,
 **Longitud mínima**, **Patrón**...) en la sección **Datos**: consulta
 [Enlace de datos y validación](/pyzed/es/editor/data-binding/).
+
+### Archivos y carpetas
+
+Toda propiedad que guarda un archivo o una carpeta tiene un botón de **carpeta** al final. Abre el diálogo del
+sistema (filtrado por tipo: imágenes, sonidos, fuentes, shaders, archivos de datos...) y escribe la ruta por ti. Un
+archivo dentro de tu proyecto se escribe **relativo al proyecto** (`assets/logo.png`), así el proyecto sigue
+funcionando si lo mueves. También puedes escribir la ruta a mano.
+
+Vale para las propiedades de los componentes (`source`, `file`, `path`, `directory`...), para cualquier propiedad de
+texto cuyo nombre indique una ruta (`icon_path`, `output_dir`, `cwd`...), para las
+[propiedades de tus componentes](/pyzed/es/editor/component-designer/) de tipo `pz.FilePath` o `pz.FolderPath`, y
+para los campos de carpeta de los diálogos del editor. En tus propias apps el mismo campo es `ui.path_input`.
 
 ### El diálogo de iconos
 
@@ -87,43 +114,73 @@ demás están numeradas. **Añadir fila** y **Añadir columna** la amplían, la 
 más ancha que el panel. Como con las listas, el icono de página cambia a texto plano: una fila por línea y las celdas
 separadas por comas.
 
-### Estilo
+### Estilo: Texto, Relleno, Borde, Espaciado
 
-Cada control tiene una sección **Estilo**, el mismo conjunto de propiedades que [`pz.Style`](/pyzed/es/theming/styles/):
-fondo (color, degradado o máscara), color del texto, fuente, peso, cursiva, tamaño de letra, interlineado, borde,
-radio de esquina, sombra, relleno, margen, tamaño máximo, alineación del contenido y recorte. Los campos vacíos
-mantienen el aspecto propio del componente y **Restablecer el estilo** los borra todos. Ver
-[Estilos y temas](/pyzed/es/editor/styles-and-themes/).
+El estilo del control se reparte en cuatro secciones cortas, con las mismas propiedades que
+[`pz.Style`](/pyzed/es/theming/styles/). Los campos vacíos mantienen el aspecto propio del componente, y
+**Restablecer el estilo** al final los borra todos. Ver [Estilos y temas](/pyzed/es/editor/styles-and-themes/).
 
-Cada campo tiene un editor hecho para su valor: **Fuente**, **Cursiva**, **Recortar** y las dos alineaciones son
-controles segmentados (las alineaciones muestran iconos; pasa el ratón para ver su nombre), y **Relleno**,
-**Margen** y **Radio de esquina** son un solo número para todos los lados. Pulsa el botón de **enlace** al final
-para dar a cada lado (o esquina) su propio número; púlsalo otra vez para usar un valor en todos.
+| Sección | Campos |
+| --- | --- |
+| **Texto** | **Fuente** (familia y peso), **Tamaño** (tamaño de letra e interlineado), **Color**, **Cursiva**. |
+| **Relleno** | El fondo: un color, un degradado o una máscara. |
+| **Borde** | **Color**, **Ancho** y **Esquinas** (un radio, o uno por esquina con el botón de **enlace**). |
+| **Espaciado** | El **modelo de caja**, **Alinear contenido**, **Tamaño máximo** y **Recortar contenido**. |
 
-Debajo, **Efectos** (opacidad, resplandor, bloom, cristal) y **Animación** (lo que se reproduce cuando el control
-aparece, con el ratón encima, al pulsarlo, con el foco o al hacer clic) se explican en
-[Animaciones y efectos](/pyzed/es/editor/animations-and-effects/).
+El modelo de caja se dibuja como en el navegador: un anillo exterior ámbar para el **margen** (espacio fuera del
+control) y uno interior verde para el **relleno** o padding (espacio entre su borde y su contenido), con un número
+por lado. Arrastra o haz doble clic en cualquiera. **Alinear contenido** es una caja de 3×3: haz clic en un punto
+para llevar el contenido a esa esquina, a ese lado o al centro.
+
+La sombra está en **Efectos**, junto a la opacidad, el resplandor, el bloom y el cristal; **Efectos** y **Animación**
+se explican en [Animaciones y efectos](/pyzed/es/editor/animations-and-effects/).
 
 ### Posición
 
-Para un control colocado libremente (en el formulario, o en un panel, un group box o una tarjeta):
+**Posición** es siempre la primera sección. Para un control colocado libremente (en el formulario, o en un panel,
+un group box o una tarjeta):
 
 | Campo | Significado |
 | --- | --- |
 | **Dentro de** | Solo dentro de un contenedor: el nombre del contenedor (clic para seleccionarlo) y un botón para **sacarlo**. |
+| **Alineación** | Seis botones que llevan el control al borde izquierdo, al centro, al borde derecho, arriba, al medio o abajo de su contenedor (o del formulario). |
+| **Posición** | **X** e **Y**, respecto al formulario o al contenedor. |
+| **Tamaño** | **W** (ancho) y **H** (alto) en píxeles. |
+| **L · T**, **R · B** | Aparecen en Posición y Tamaño en lugar de X y W (o Y y H) cuando el control se estira en ese eje: sus distancias a los lados del contenedor. Al cambiar una, el lado opuesto se queda donde está. |
+| **Rotación** | Grados en sentido horario, alrededor del pivote (el mismo valor que el `rotate` del estilo). |
 | **Anclaje** | El preset de anclaje, dibujado como una caja en un marco, y su nombre (`Arriba · Izquierda`). Púlsalo para abrir la cuadrícula de 4×4 presets (ver abajo). |
-| **X · Ancho**, **Y · Alto** | Posición respecto al formulario o al contenedor, y tamaño en píxeles. |
-| **Izquierda · Derecha**, **Arriba · Abajo** | En lugar de X y Ancho (o Y y Alto) cuando el control se estira en ese eje: sus distancias a los lados del contenedor. Al cambiar una, el lado opuesto se queda donde está. |
+
+**Más opciones** al final muestra los campos que se usan menos:
+
+| Campo | Significado |
+| --- | --- |
 | **Tamaño mínimo**, **Tamaño máximo** | Límites del ancho y el alto cuando el control se estira (`0`: sin límite), para que un panel estirado se detenga en un ancho legible. |
 | **Pivote** | El punto alrededor del que el control gira y escala, y que queda fijo cuando un límite de tamaño frena el estiramiento: `0 0` es la esquina de arriba a la izquierda, `0.5 0.5` (por defecto) el centro, `1 1` la esquina de abajo a la derecha. |
-| **Rotación** | Grados en sentido horario, alrededor del pivote (el mismo valor que el `rotate` del estilo). |
 
 ![La sección Posición con los presets de anclaje abiertos](../../../../../screenshots/editor-anchors.png)
 
-Para un hijo de una **fila o columna flex**: **Crecer** (su parte del espacio libre; 0 mantiene su tamaño),
-**Ancho** y **Alto**. Para un hijo de una **grilla**: **Columnas** (cuántas columnas ocupa), **Ancho** y
-**Alto**. Estos hijos los coloca su contenedor, así que no tienen X ni Y: arrástralos para reordenarlos. Ver
+Para un hijo de un **auto layout** (una fila o columna flex, o una grilla) la sección cambia, porque lo coloca su
+contenedor: **Ancho** y **Alto** dicen cada uno **Fijo** (mantiene ese tamaño) o **Llenar** (ocupa el sitio que deja
+el contenedor), **Crecer** reparte el espacio libre entre los hijos que llenan, y en una grilla **Columnas** dice
+cuántas celdas ocupa. Estos hijos no tienen X ni Y: arrástralos para reordenarlos. Ver
 [Disposición y contenedores](/pyzed/es/editor/layouts/).
+
+### Auto layout
+
+Una fila, columna flex o grilla muestra una sección **Auto layout**, como en Figma:
+
+| Campo | Significado |
+| --- | --- |
+| **Dirección** | Uno al lado del otro (fila) o uno debajo del otro (columna). Una grilla muestra **Columnas** en su lugar. |
+| **Alineación** | Una caja de 3×3: haz clic donde quieres los hijos dentro del contenedor (izquierda, centro o derecha; arriba, medio o abajo). |
+| **Separación** | Espacio entre los hijos, o **Espacio entre**, **Espacio alrededor** o **Espacio uniforme** para repartirlos en el sitio libre. Una grilla tiene separación y alto de fila. |
+| **Relleno** | Espacio entre el borde del contenedor y sus hijos: horizontal y vertical, o uno por lado con el botón del **cuadrado**. |
+| **Llenar a lo ancho** | Los hijos se estiran al alto del contenedor (en una fila) o a su ancho (en una columna). |
+
+Selecciona algunos controles y pulsa <kbd>Shift</kbd>+<kbd>A</kbd> (**Añadir auto layout**) para envolverlos en una
+fila o una columna, deducida de cómo están colocados. <kbd>Ctrl</kbd>+<kbd>G</kbd> los agrupa en un panel invisible
+sin moverlos, y <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> saca los hijos de un grupo o layout y lo quita,
+manteniendo su sitio y su tamaño.
 
 Los presets son los anclajes de Unity, Unreal y Godot. Las columnas dicen cómo sigue el control al ancho
 (**Izquierda**, **Centro**, **Derecha** o **Estirar**) y las filas cómo sigue al alto (**Arriba**, **Centro**,

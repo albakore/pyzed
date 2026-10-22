@@ -1,6 +1,6 @@
 ---
 title: Code editor
-description: "The Python code editor inside Pyzed Design: completion, diagnostics, code lens, folding, minimap, ty and ruff language servers, keys and settings."
+description: "The Python code editor inside Pyzed Design: completion, hover, go to definition, rename, quick fixes, diagnostics, code lens, sticky scroll, folding, minimap, ty and ruff language servers, keys and settings."
 sidebar:
   order: 7
 ---
@@ -61,6 +61,9 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
   <kbd>Ctrl</kbd>+<kbd>0</kbd> resets it. The size is saved.
 - **Scrolling**: the mouse wheel scrolls the code (<kbd>Shift</kbd>+wheel sideways) and the scrollbars sit right of
   the minimap. The view also follows the cursor.
+- **Sticky scroll**: while you scroll, the lines that open the blocks you are in (`class`, `def`, `for`, `if`,
+  `with`...) stay pinned at the top of the editor, the innermost one last, so you always know where you are. Click
+  one to jump to it. Up to five lines are pinned; turn it off with *Sticky scroll* in the settings.
 - **Long lines** scroll sideways by default; <kbd>Alt</kbd>+<kbd>Z</kbd> (or *Wrap long lines* in the settings) wraps
   them at the editor's width instead.
 
@@ -79,6 +82,11 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>X</kbd> / <kbd>V</kbd> | Copy, cut, paste. |
 | <kbd>Tab</kbd> | Indent (insert spaces). |
 | <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Open the completion list. |
+| <kbd>F12</kbd>, <kbd>Ctrl</kbd>+click | Go to the definition. |
+| <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Go back / forward after a jump. |
+| <kbd>Shift</kbd>+<kbd>F12</kbd> | Find every reference. |
+| <kbd>F2</kbd> | Rename the symbol. |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Quick fixes and refactorings. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Fold / unfold at the cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Font bigger, smaller, default. |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo, redo (typing is grouped into one step). |
@@ -171,6 +179,39 @@ A handler's `form` and `event` have no type the servers could read, so the edito
 
 ![form. completes the form's own controls](../../../../screenshots/designer-completion-form.png)
 
+## Hover, navigation and refactoring
+
+![The hover card of a function: its signature and docstring](../../../../screenshots/designer-code-hover.png)
+
+These work like in VS Code or Zed, with ty answering where it can and the editor filling in what only the designer
+knows (the controls of the form).
+
+- **Hover**: rest the mouse on a name for half a second and a card shows its type or signature and its docstring
+  (as Markdown), plus the problems at that spot. `form.email` and `form.email.text` describe the control and its
+  property. The card stays while the mouse is over it, so you can scroll it and select its text. Turn it off with
+  *Information on hover* in the settings.
+- **Go to definition**: <kbd>F12</kbd> or <kbd>Ctrl</kbd>+click on a name opens where it is defined: further down
+  the same code, another handler of the form (the editor switches to it), a file of your project or a library in
+  the `.venv` (opened read-only in a tab). <kbd>Ctrl</kbd>+<kbd>F12</kbd> goes to the definition of its **type**.
+  On `form.email`, it selects the control on the canvas. Without ty it still finds the `def` and `class` of the
+  file.
+- **Back and forward**: <kbd>Alt</kbd>+<kbd>←</kbd> returns to where you were before the jump, and
+  <kbd>Alt</kbd>+<kbd>→</kbd> goes forward again.
+- **Find references**: <kbd>Shift</kbd>+<kbd>F12</kbd> lists every use of the name under the editor, with the file,
+  line and text; click one to go there.
+- **Rename**: <kbd>F2</kbd> opens a field on the name; type the new one and press <kbd>Enter</kbd>. Every use
+  changes, in this file and in the other files of the project that use it (they open as unsaved tabs for you to
+  check and save). Renaming a handler keeps its events wired to it (`on sign_in.click`), and one
+  <kbd>Ctrl</kbd>+<kbd>Z</kbd> takes the rename back.
+- **Quick fixes** (<kbd>Ctrl</kbd>+<kbd>.</kbd>, or **Quick fix…** in the hover card): the fixes ruff and ty offer
+  for the line, such as removing an unused import, plus:
+  - **Import** a name that is not defined, from the module that has it.
+  - **Install a missing package**: on `import httpx` with httpx not installed, *Install httpx in the project
+    (uv add)* adds it to `pyproject.toml` and the `.venv`, and the error goes away once it is installed. Known
+    names are translated to their package (`cv2` → `opencv-python`, `PIL` → `pillow`, `yaml` → `pyyaml`).
+- **Organize imports** (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>) sorts and groups the imports with ruff, and
+  **Fix all auto-fixable problems** (command palette) applies every safe ruff fix.
+
 ## Contextual help
 
 <kbd>Shift</kbd>+<kbd>F1</kbd> opens the [built-in reference](/pyzed/editor/reference/) on the name under the
@@ -207,6 +248,12 @@ myapp/
     └── helpers.py
 ```
 
+When the project has no `.venv` yet (a form you just opened, or a project before its first `uv sync`), ty uses the
+Python the designer runs on, so `import pyzed` and the standard library resolve instead of being reported as
+missing. As soon as the `.venv` appears, or `pyproject.toml` or `uv.lock` change (adding a dependency in the
+[Project tab](/pyzed/editor/projects/)), the servers restart with it, so new packages resolve without reopening the
+project.
+
 The editor looks for `ty` and `ruff` in the project's `.venv` first, then next to the editor, then on `PATH`.
 Install them with `uv add --dev ty ruff` in the project, or with `pip install "pyzed-ui[designer]"` next to the
 editor. Ruff reads its rules from `[tool.ruff]` in `pyproject.toml`.
@@ -235,10 +282,9 @@ sequenceDiagram
 
 ## Editor settings
 
-The **gear** in the code panel header, the server dots in the status bar, or **Settings → Code editor → Editor
-settings…** open them. They are saved per user, in the same `designer.json` as the
-[editor's settings](/pyzed/editor/settings/). An index on the left lists the sections and
-the right side shows the one you pick.
+The **gear** in the code panel header and the server dots in the status bar open them: they are the *Code editor*
+pages of the [Settings dialog](/pyzed/editor/settings/), with its search, its profiles, **↺** to put a setting back
+to its default, and the *Project* scope to give a project its own (its tab size, say).
 
 ![Editor settings with the index of sections](../../../assets/editor/editor-settings-appearance.png)
 
@@ -268,8 +314,10 @@ the right side shows the one you pick.
 | Scrolling and wrapping | **Wrap long lines** | Off by default: long lines scroll sideways. <kbd>Alt</kbd>+<kbd>Z</kbd> toggles it. |
 | | **Scrollbars** | Shows or hides the scrollbars. |
 | | **Minimap** | The zoomed-out code on the right. |
+| | **Sticky scroll** | Keeps the lines of the enclosing blocks pinned at the top while you scroll. |
 | Code lens and diagnostics | **Code lens** | References, implementations and wired events at the end of definitions. |
 | | **Inline diagnostics** | Problems at the end of the line. |
+| | **Information on hover** | The card with the type, documentation and problems of the name under the mouse. |
 | Language servers | **ty**, **ruff** | Turn each server on or off. Each row shows its state and version. Below: the project root and the Python in use. |
 | | **Restart servers** | Restarts both; use it after `uv sync` or after installing them. |
 
