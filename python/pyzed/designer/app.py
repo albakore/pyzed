@@ -30,7 +30,7 @@ from . import binding as _binding
 from . import spacing
 from . import code as _code
 from . import components as _components
-from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
+from . import agent_panel, code_panel, dialogs, docks, file_scan, geometry, panels, preferences, project_panel, surface
 from . import commands as _commands
 from . import export_panel as _export
 from . import keymap as _keymap
@@ -71,7 +71,6 @@ from . import help as _help
 
 Rect = Tuple[float, float, float, float]
 TITLE_HEIGHT = 34.0
-SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build"}
 
 #: Files the designer opens: forms and components designed visually.
 DOCUMENT_SUFFIXES = (SUFFIX, _scene.SUFFIX, _shader_doc.SUFFIX)
@@ -2016,7 +2015,7 @@ class Designer(App):
     def base_components(self) -> List[Path]:
         """The designed components of the project, to inherit from."""
         root = self.projects.project.root if self.projects.project else Path.cwd()
-        return _scene.component_files(root)
+        return file_scan.files(root, (_scene.SUFFIX,))
 
     def create_new_component(self) -> None:
         """Creates the component described in the "New" dialog, saves it and opens it."""
@@ -2294,9 +2293,7 @@ class Designer(App):
         found: List[Path] = []
         here = Path.cwd()
         root = self.projects.project.root if self.projects.project is not None else here
-        for path in sorted(p for suffix in PYZED_SUFFIXES for p in root.rglob(f"*{suffix}")):
-            if any(part in SKIP_DIRS for part in path.relative_to(root).parts):
-                continue
+        for path in file_scan.files(root, tuple(PYZED_SUFFIXES)):  # read in the background, not on each view
             try:
                 found.append(path.resolve().relative_to(here.resolve()))
             except ValueError:

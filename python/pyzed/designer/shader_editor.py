@@ -27,7 +27,7 @@ from ..shading import nodes as N
 from ..shading.locale import tr as str_
 from ..shading.types import COLORS, LABELS, SIZE, components, describe, to_hex
 from ..theme import Theme, alpha
-from . import spacing
+from . import file_scan, spacing
 from .locale import tr
 from .shader_doc import ShaderDocument
 
@@ -1497,10 +1497,8 @@ def _shader_files(d: "Designer") -> List[str]:
         return []
     out = []
     try:
-        for p in sorted(root.rglob(f"*{shading.SUFFIX}"))[:200]:
+        for p in file_scan.files(root, (shading.SUFFIX,), 200):  # read in the background, not on each view
             if doc.path is not None and p.resolve() == doc.path.resolve():
-                continue
-            if any(part.startswith(".") or part in ("node_modules", ".venv", "target") for part in p.parts):
                 continue
             try:
                 out.append(str(p.relative_to(base)).replace("\\", "/") if base else str(p))
