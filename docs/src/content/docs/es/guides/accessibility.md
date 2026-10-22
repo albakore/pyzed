@@ -14,8 +14,10 @@ sistema. Los lectores de pantalla todavía no están soportados: en
 <kbd>Tab</kbd> mueve el foco del teclado al siguiente campo de la ventana y
 <kbd>Shift</kbd>+<kbd>Tab</kbd> al anterior, en el orden en que aparecen en `view()`. Tras el
 último vuelve al primero. Los campos son los `text_input`, `text_editor` y `code_editor` (y los
-componentes construidos con ellos, como `ui.input` o `ui.search`); cada ventana recorre solo
-sus propios campos.
+componentes construidos con ellos, como `ui.input` o `ui.search`), los desplegables
+(`pz.pick_list` y `ui.select`) y los controles envueltos en `pz.focusable`: `ui.switch`,
+`ui.checkbox`, `ui.slider`, `ui.segmented` y `ui.radio_group` de la librería. Cada ventana recorre
+solo sus propios campos.
 
 Un `code_editor` con `tab_size` se queda con <kbd>Tab</kbd> para indentar, como un editor de código. Los
 editores sin él dejan pasar la tecla, así que <kbd>Tab</kbd> sale de ellos.
@@ -34,12 +36,46 @@ class App(pz.App):
 ```
 
 `Command.focus_next()` y `Command.focus_previous()` hacen lo mismo desde código, y
-`Command.focus(id)` salta a un campo concreto.
+`Command.focus(id)` salta a un campo concreto (pasa `id=` al control).
+
+## Controles con el foco del teclado
+
+Un clic o <kbd>Tab</kbd> le dan el foco a un control, y lo mantiene después de usarlo, como un
+campo de texto. Al usar las teclas aparece a su alrededor un anillo del color de foco del tema (un
+clic solo no lo dibuja, como el `:focus-visible` de un navegador); un desplegable ilumina su borde.
+
+| Control | Teclas mientras tiene el foco |
+| --- | --- |
+| `ui.select`, `pz.pick_list` | <kbd>↓</kbd>/<kbd>↑</kbd> (y <kbd>→</kbd>/<kbd>←</kbd>) eligen la opción siguiente o la anterior **sin abrir el menú**, <kbd>Inicio</kbd>/<kbd>Fin</kbd> la primera y la última, y las letras saltan a la opción que empieza por ellas. <kbd>Enter</kbd>, <kbd>Espacio</kbd>, <kbd>Alt</kbd>+<kbd>↓</kbd> o <kbd>F4</kbd> abren el menú; ahí <kbd>↑</kbd>/<kbd>↓</kbd> se mueven, <kbd>Enter</kbd> elige y <kbd>Esc</kbd> cierra. |
+| `ui.switch` | <kbd>Espacio</kbd> o <kbd>Enter</kbd> lo cambian. |
+| `ui.checkbox` | <kbd>Espacio</kbd> la marca o desmarca (una mixta queda marcada). |
+| `ui.segmented`, `ui.radio_group` | Las flechas eligen la opción anterior o la siguiente, saltando las desactivadas; <kbd>Inicio</kbd>/<kbd>Fin</kbd> la primera y la última. |
+| `ui.slider` | Las flechas lo mueven un `step`, con <kbd>Shift</kbd> (o <kbd>Re Pág</kbd>/<kbd>Av Pág</kbd>) diez; <kbd>Inicio</kbd>/<kbd>Fin</kbd> van a `min`/`max`. |
+| `ui.number_field` | <kbd>↑</kbd>/<kbd>↓</kbd> lo cambian un paso (diez con <kbd>Shift</kbd>), <kbd>Inicio</kbd>/<kbd>Fin</kbd> van a `min`/`max`. |
+
+Las teclas que usa un control con foco no llegan al `on_key` de la app, así que <kbd>↓</kbd> en
+un desplegable no desplaza también una lista ni mueve otra selección. El resto de teclas (atajos
+como <kbd>Ctrl</kbd>+<kbd>S</kbd>) siguen llegando.
+
+Tus propios controles tienen lo mismo con `pz.focusable(contenido, on_key, keys=[...])`: mientras
+tiene el foco, las combinaciones de `keys` llaman a `on_key(combo)` y nadie más las ve.
+
+```python
+def estrellas(self):
+    t = self.theme
+    fila = pz.row([pz.icon("star", color=t.warning if i < self.puntos else t.text_muted)
+                   for i in range(5)], spacing=2)
+
+    def puntuar(combo):
+        self.puntos = max(0, min(5, self.puntos + (1 if combo == "right" else -1)))
+
+    return pz.focusable(fila, puntuar, keys=["left", "right"], id="puntos",
+                        ring_color=self.theme.border_focused)
+```
 
 :::note
-En Iced 0.14 solo los campos de texto pueden tomar el foco del teclado. Botones, casillas y
-sliders se usan con el ratón o con atajos desde `on_key`; dale un atajo a las acciones
-importantes (ver [Teclado y atajos](/pyzed/es/guides/keyboard/)).
+Los botones normales aún no toman el foco: úsalos con el ratón o dale un atajo a las acciones
+importantes (mira [Teclado y atajos](/pyzed/es/guides/keyboard/)).
 :::
 
 ## Reducir movimiento

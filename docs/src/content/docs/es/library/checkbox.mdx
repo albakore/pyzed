@@ -239,12 +239,27 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Consejos
+
+:::tip
+Al pulsarla o llegar con Tab tiene el foco del teclado (un anillo aparece al usar las teclas): Espacio la marca o desmarca.
+:::
+
 ## Propiedades y API
 
 ### `ui.checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+checkbox(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.
@@ -255,6 +270,7 @@ Una casilla de verificación. `checked=None` muestra el estado mixto (parte de u
 | `label` | `None` | Texto de la etiqueta. |
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
 | `disabled` | `False` | La atenúa e ignora los clics. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_toggle` ([eventos](#eventos)).

@@ -233,7 +233,7 @@ def view(state, set_state):
 ## Consejos
 
 :::tip
-El menú se abre al pulsar; la vista previa muestra el estado cerrado.
+Toma el foco del teclado como un campo de texto (con un clic o Tab) y lo mantiene después de elegir: entonces ↓/↑ eligen la opción siguiente o la anterior sin abrir el menú, Inicio/Fin la primera y la última, y al escribir salta a la opción que empieza por esas letras. Enter, Espacio, Alt+↓ o F4 abren el menú; ahí ↑/↓ se mueven, Enter elige y Esc lo cierra. Pasa `id=` para enfocarlo con `pz.Command.focus(id)`.
 :::
 
 ## Propiedades y API
@@ -253,6 +253,7 @@ select(
     invalid=False,
     on_open=None,
     on_close=None,
+    id=None,
     theme=None,
 )
 ```
@@ -268,6 +269,7 @@ Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, as�
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
 | `disabled` | `False` | Lo atenúa. |
 | `invalid` | `False` | Pinta el borde con el color de error. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_select`, `on_open`, `on_close` ([eventos](#eventos)).
@@ -304,10 +306,12 @@ pick_list(
     menu_border_color=None,
     selected_bg=None,
     selected_color=None,
+    focus_border_color=None,
+    id=None,
 )
 ```
 
-Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.
+Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`. Toma el foco del teclado como un campo de texto (un clic, Tab o `Command.focus(id)`) y lo mantiene después de elegir: ↑/↓ eligen la opción anterior o la siguiente sin abrirlo, Inicio/Fin la primera y la última y al escribir salta a una opción; Enter, Espacio, Alt+↓ o F4 abren el menú, donde ↑/↓ se mueven, Enter elige y Esc cierra.
 
 | Propiedad | Por defecto | Descripción |
 | --- | --- | --- |
@@ -333,6 +337,8 @@ Un desplegable para elegir una de `options`. `on_select(opción)` recibe la eleg
 | `menu_border_color` | `None` | Borde del menú. |
 | `selected_bg` | `None` | Fondo de la opción resaltada. |
 | `selected_color` | `None` | Texto de la opción resaltada. |
+| `focus_border_color` | `None` | Color del borde mientras tiene el foco del teclado. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 
 Eventos: `on_select`, `on_open`, `on_close` ([eventos](#eventos)).
 

@@ -616,6 +616,37 @@ La traslación que hace que una rotación y una escala (que giran alrededor del 
 | `rotate` | Grados en sentido horario. |
 | `scale` | Factor de escala. |
 
+### `focusable`
+
+```python
+focusable(
+    content,
+    on_key=None,
+    *,
+    keys=None,
+    id=None,
+    ring_color=None,
+    ring_radius=4.0,
+    ring_offset=2.0,
+)
+```
+
+Deja que cualquier widget tome el foco del teclado como un campo de texto: un clic o Tab lo enfocan (`Command.focus(id)` también) y, mientras lo tiene, las combinaciones de `keys` llaman a `on_key(combo)` en vez de llegar al `on_key` de la app. Al usar el teclado sobre él se dibuja un anillo alrededor. Los interruptores, casillas, deslizadores, segmentados y grupos de radios de la librería lo usan.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | El control. |
+| `on_key` | Se llama con la combinación (`"space"`, `"shift-right"`…) de cada tecla de `keys` pulsada mientras tiene el foco. `None` deja `content` sin foco. |
+| `keys` | Las combinaciones que toma (por defecto Espacio, Enter, las flechas, Inicio y Fin); `"*"` toma todas. Tab queda libre para mover el foco. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `ring_color` | Color del anillo de foco (ninguno por defecto). |
+| `ring_radius` | Radio de las esquinas del anillo. |
+| `ring_offset` | Píxeles entre el control y el anillo. |
+
+```python
+pz.focusable(estrellas, lambda combo: self.puntuar(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")
+```
+
 ### `window_edges`
 
 ```python
@@ -1474,10 +1505,12 @@ pick_list(
     menu_border_color=None,
     selected_bg=None,
     selected_color=None,
+    focus_border_color=None,
+    id=None,
 )
 ```
 
-Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.
+Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`. Toma el foco del teclado como un campo de texto (un clic, Tab o `Command.focus(id)`) y lo mantiene después de elegir: ↑/↓ eligen la opción anterior o la siguiente sin abrirlo, Inicio/Fin la primera y la última y al escribir salta a una opción; Enter, Espacio, Alt+↓ o F4 abren el menú, donde ↑/↓ se mueven, Enter elige y Esc cierra.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1506,6 +1539,8 @@ Un desplegable para elegir una de `options`. `on_select(opción)` recibe la eleg
 | `menu_border_color` | Borde del menú. |
 | `selected_bg` | Fondo de la opción resaltada. |
 | `selected_color` | Texto de la opción resaltada. |
+| `focus_border_color` | Color del borde mientras tiene el foco del teclado. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 
 ### `radio`
 

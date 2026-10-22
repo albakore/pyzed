@@ -1562,6 +1562,7 @@ pub struct PickListProps {
     font: Option<Font>,
     handle: Option<(char, f32)>,
     menu_height: Option<Length>,
+    id: Option<String>,
     style: PickStyle,
 }
 
@@ -1579,9 +1580,16 @@ struct PickStyle {
     menu_border: Option<Color>,
     selected_bg: Option<Color>,
     selected_text: Option<Color>,
+    focus_border: Option<Color>,
 }
 
 /// A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
+///
+/// A click or Tab gives it the keyboard focus (``focus_border_color`` outlines it) and it keeps
+/// it after a choice: ↑/↓ then pick the previous or next option without opening the menu,
+/// Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open
+/// the menu, where ↑/↓ move, Enter picks and Escape closes. ``id`` lets ``Command.focus(id)``
+/// focus it.
 ///
 /// Events:
 /// - `on_select(item)`: Callable that receives the chosen item.
@@ -1592,7 +1600,7 @@ struct PickStyle {
     padding=None, text_size=None, font=None, handle=None, handle_size=12.0, menu_height=None,
     bg=None, color=None, placeholder_color=None, handle_color=None, border_color=None,
     hover_border_color=None, radius=None, menu_bg=None, menu_color=None, menu_border_color=None,
-    selected_bg=None, selected_color=None))]
+    selected_bg=None, selected_color=None, focus_border_color=None, id=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn pick_list(
     py: Python<'_>,
@@ -1621,6 +1629,8 @@ pub fn pick_list(
     menu_border_color: Any<'_>,
     selected_bg: Any<'_>,
     selected_color: Any<'_>,
+    focus_border_color: Any<'_>,
+    id: Option<String>,
 ) -> PyResult<Py<Widget>> {
     let options = options
         .try_iter()?
@@ -1643,6 +1653,7 @@ pub fn pick_list(
                 .and_then(|h| h.chars().next())
                 .map(|c| (c, handle_size)),
             menu_height: style::opt_length(&menu_height)?,
+            id,
             style: PickStyle {
                 bg: style::opt_color(&bg)?,
                 text: style::opt_color(&color)?,
@@ -1656,30 +1667,23 @@ pub fn pick_list(
                 menu_border: style::opt_color(&menu_border_color)?,
                 selected_bg: style::opt_color(&selected_bg)?,
                 selected_text: style::opt_color(&selected_color)?,
+                focus_border: style::opt_color(&focus_border_color)?,
             },
         })),
     )
 }
 
 pub fn render_pick_list<'a>(props: &PickListProps) -> Element<'a, Message> {
-    let cb = props.on_select.clone();
-    let mut p = widget::pick_list(
+    let mut p = crate::select::Select::new(
         props.options.clone(),
         props.selected.clone(),
-        move |value: String| match &cb {
-            Some(cb) => Message::Input(cb.clone(), value),
-            None => Message::Noop,
-        },
-    );
-    if let Some(ph) = &props.placeholder {
-        p = p.placeholder(ph.clone());
-    }
-    if let Some(cb) = &props.on_open {
-        p = p.on_open(Message::Py(cb.clone()));
-    }
-    if let Some(cb) = &props.on_close {
-        p = p.on_close(Message::Py(cb.clone()));
-    }
+        props.on_select.clone(),
+    )
+    .placeholder(props.placeholder.clone())
+    .on_open(props.on_open.clone())
+    .on_close(props.on_close.clone())
+    .id(props.id.clone())
+    .focus_border(props.style.focus_border);
     if let Some(w) = props.width {
         p = p.width(w);
     }
@@ -1696,13 +1700,7 @@ pub fn render_pick_list<'a>(props: &PickListProps) -> Element<'a, Message> {
         p = p.menu_height(h);
     }
     if let Some((code_point, size)) = props.handle {
-        p = p.handle(pl::Handle::Static(pl::Icon {
-            font: Font::with_name(ICONS),
-            code_point,
-            size: Some(Pixels(size)),
-            line_height: text::LineHeight::Relative(1.0),
-            shaping: text::Shaping::Basic,
-        }));
+        p = p.handle(Font::with_name(ICONS), code_point, size);
     }
     let st = props.style.clone();
     let menu = props.style.clone();

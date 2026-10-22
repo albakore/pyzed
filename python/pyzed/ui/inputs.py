@@ -8,7 +8,7 @@ from .. import _core
 from ..icons import glyph
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
-from .base import _theme, label
+from .base import CHOICE_KEYS, _theme, key_focus, label, send, step_choice
 
 
 SIZES = {"sm": (12.5, (3, 6)), "md": (13.5, (5, 8)), "lg": (15.0, (8, 10))}
@@ -118,16 +118,20 @@ def switch(
     label: Optional[str] = None,  # noqa: F811
     size: str = "md",
     disabled: bool = False,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """An on/off toggle. ``on_toggle`` receives the new ``bool``; ``size`` is ``"sm"``, ``"md"`` or ``"lg"``.
+
+    A click or Tab gives it the keyboard focus; then Space or Enter flips it. ``id`` lets
+    ``Command.focus(id)`` focus it.
 
     Events:
         ``on_toggle(checked)``: Callable that receives the new ``bool`` (or a message to send).
     """
     t = _theme(theme)
     box, text = TOGGLE_SIZES[size]
-    return _core.toggler(
+    widget = _core.toggler(
         checked,
         label,
         on_toggle=None if disabled else on_toggle,
@@ -138,6 +142,8 @@ def switch(
         knob_color=t.text_disabled if disabled else (t.text if t.is_dark else "#ffffff"),
         color=t.text_disabled if disabled else t.text,
     )
+    flip = None if disabled or on_toggle is None else (lambda _combo: send(on_toggle, not checked))
+    return key_focus(widget, flip, keys=("space", "enter"), id=id, theme=t)
 
 
 def checkbox(
@@ -147,11 +153,14 @@ def checkbox(
     label: Optional[str] = None,  # noqa: F811
     size: str = "md",
     disabled: bool = False,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A themed checkbox with an optional ``label``; ``on_toggle`` receives the new state.
 
     ``checked=None`` shows the mixed state (some of a group checked); toggling it checks it.
+    A click or Tab gives it the keyboard focus; then Space toggles it. ``id`` lets
+    ``Command.focus(id)`` focus it.
 
     Events:
         ``on_toggle(checked)``: Callable that receives the new ``bool`` (or a message to send).
@@ -160,6 +169,7 @@ def checkbox(
     box, text = TOGGLE_SIZES[size]
     accent = alpha(t.accent, 0.4) if disabled else t.accent
     handler = None if disabled else on_toggle
+    toggle = None if handler is None else (lambda _combo: send(handler, checked is None or not checked))
     if checked is None:
         mark = _core.container(_core.container(None, width=box / 2, height=2, bg=t.on_accent, radius=1),
                                width=box, height=box, align_x="center", align_y="center", bg=accent,
@@ -168,8 +178,9 @@ def checkbox(
         body = _core.row(parts, spacing=8, align="center")
         if handler is None:
             return body
-        return body.on(click=lambda: handler(True), cursor="pointer")
-    return _core.checkbox(
+        body = body.on(click=lambda: send(handler, True), cursor="pointer")
+        return key_focus(body, toggle, keys=("space",), id=id, theme=t)
+    widget = _core.checkbox(
         checked,
         label,
         on_toggle=handler,
@@ -181,6 +192,7 @@ def checkbox(
         check_color=t.on_accent,
         color=t.text_disabled if disabled else t.text,
     )
+    return key_focus(widget, toggle, keys=("space",), id=id, theme=t)
 
 
 def slider(
@@ -196,12 +208,16 @@ def slider(
     height: Any = None,
     disabled: bool = False,
     show_value: Any = False,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A themed slider from ``min`` to ``max`` in ``step`` increments; ``on_change`` receives the value.
 
     ``on_release`` runs when the drag ends (save or apply there); ``vertical`` stands it
     up; ``show_value`` adds the number next to it (``True``, or a format like ``"{:.0%}"``).
+    A click or Tab gives it the keyboard focus; then the arrows move it a step (ten with
+    Shift, or Page Up/Down) and Home/End jump to ``min``/``max``. ``id`` lets
+    ``Command.focus(id)`` focus it.
 
     Events:
         ``on_change(value)``: Callable that receives the new value.
@@ -219,6 +235,28 @@ def slider(
         bg=t.element if disabled else t.element_active,
         knob_color=t.text_disabled if disabled else t.text, border_color=t.border,
     )
+
+    def nudge(combo: str) -> Any:
+        big = combo.startswith("shift-") or combo in ("pageup", "pagedown")
+        key = combo.removeprefix("shift-")
+        if key == "home":
+            new = min
+        elif key == "end":
+            new = max
+        else:
+            sign = 1 if key in ("right", "up", "pageup") else -1
+            new = round(value + sign * step * (10 if big else 1), 10)
+        new = min if new < min else max if new > max else new
+        if new == value:
+            return None
+        result = send(on_change, new)
+        if callable(on_release):
+            on_release()
+        return result
+
+    keys = ("left", "right", "up", "down", "home", "end", "pageup", "pagedown",
+            "shift-left", "shift-right", "shift-up", "shift-down")
+    bar = key_focus(bar, None if disabled or on_change is None else nudge, keys=keys, id=id, radius=4, theme=t)
     if not show_value:
         return bar
     text = show_value.format(value) if isinstance(show_value, str) else _number(value, step)
@@ -292,6 +330,7 @@ def segmented(
     size: str = "md",
     width: Any = None,
     disabled: Any = False,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A group of mutually exclusive toggle buttons (Zed's ``ToggleButtonGroup``).
@@ -299,6 +338,8 @@ def segmented(
     ``options`` are strings, ``(value, label)`` or ``(value, label, icon)``; ``on_select``
     is called with the chosen value. ``width="fill"`` stretches the buttons evenly.
     ``disabled`` is ``True`` for all of them or a collection of the values to disable.
+    A click or Tab gives it the keyboard focus; then the arrows pick the previous or next
+    option and Home/End the first and last. ``id`` lets ``Command.focus(id)`` focus it.
 
     Events:
         ``on_select(item)``: Callable that receives the chosen item.
@@ -307,9 +348,12 @@ def segmented(
     height = {"sm": 20, "md": 24, "lg": 28}[size]
     text_size = "sm" if size != "lg" else "md"
     buttons = []
+    enabled = []
     for value, text, icon_name in _options(options):
         is_selected = value == selected
         off = disabled is True or (not isinstance(disabled, bool) and value in disabled)
+        if not off:
+            enabled.append(value)
         color = "text_disabled" if off else ("text" if is_selected else "text_muted")
         content = _core.row([
             _icon(icon_name, size=13, color=t.color(color)) if icon_name else None,
@@ -328,7 +372,7 @@ def segmented(
                 radius=t.radius_sm - 1,
             )
         )
-    return _core.container(
+    group = _core.container(
         _core.row(buttons, spacing=2, width="fill" if width is not None else None),
         padding=2,
         width=width,
@@ -337,6 +381,13 @@ def segmented(
         border_width=1.0,
         radius=t.radius_sm + 1,
     )
+
+    def move(combo: str) -> Any:
+        target = step_choice(enabled, selected, combo)
+        return None if target is None else send(on_select, target)
+
+    return key_focus(group, move if on_select is not None and enabled else None, keys=CHOICE_KEYS, id=id,
+                     radius=t.radius_sm + 1, theme=t)
 
 
 def field(title: str, control: Any, *, description: Optional[str] = None, error: Optional[str] = None,

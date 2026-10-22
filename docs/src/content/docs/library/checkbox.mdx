@@ -239,12 +239,27 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Tips
+
+:::tip
+Once clicked or reached with Tab it has the keyboard focus (a ring shows when you use the keys): Space toggles it.
+:::
+
 ## Properties and API
 
 ### `ui.checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+checkbox(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.
@@ -255,6 +270,7 @@ A checkbox. `checked=None` shows the mixed state (part of a group checked); clic
 | `label` | `None` | Label text. |
 | `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | `False` | Greys it out and ignores clicks. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_toggle` ([events](#events)).

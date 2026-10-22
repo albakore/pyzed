@@ -42,20 +42,76 @@ def test_input_clear_button(tree):
 
 def test_switch_and_checkbox(tree):
     assert ui.switch(True, print, disabled=True, theme=T).props["on_toggle"] is None
-    assert ui.switch(True, print, size="lg", theme=T).props["size"] == 20
-    small = ui.checkbox(False, print, size="sm", theme=T)
+    assert ui.switch(True, print, size="lg", theme=T).find("toggler").props["size"] == 20
+    small = ui.checkbox(False, print, size="sm", theme=T).find("checkbox")
     assert small.props["size"] == 14 and small.props["text_size"] == 12.5
     assert ui.checkbox(True, print, disabled=True, theme=T).props["on_toggle"] is None
     got = []
     mixed = ui.checkbox(None, got.append, label="Some", theme=T)
-    assert mixed.kind == "events" and "Some" in mixed.texts()
-    mixed.props["click"]()
+    assert mixed.kind == "focusable" and "Some" in mixed.texts()
+    mixed.find("events").props["click"]()
     assert got == [True]
+
+
+def test_toggles_take_the_keyboard_focus(tree):
+    got = []
+    switch = ui.switch(False, got.append, id="wifi", theme=T)
+    assert switch.kind == "focusable" and switch.props["id"] == "wifi"
+    assert switch.props["ring_color"] == T.border_focused and "space" in switch.props["keys"]
+    switch.args[1]("space")
+    ui.checkbox(True, got.append, theme=T).args[1]("space")
+    ui.checkbox(None, got.append, theme=T).args[1]("space")  # mixed checks
+    assert got == [True, False, True]
+    assert ui.switch(False, None, theme=T).kind == "toggler"  # nothing to toggle: no focus
+
+
+def test_choices_move_with_the_arrows(tree):
+    got = []
+    seg = ui.segmented(["a", "b", "c", "d"], "b", got.append, disabled={"c"}, theme=T)
+    assert seg.kind == "focusable"
+    for combo in ("right", "left", "end", "home", "x"):
+        seg.args[1](combo)
+    assert got == ["d", "a", "d", "a"]  # skips the disabled one; other keys do nothing
+    got.clear()
+    radios = ui.radio_group(["x", "y"], "y", got.append, theme=T)
+    radios.args[1]("down")  # already the last one
+    radios.args[1]("up")
+    assert got == ["x"]
+
+
+def test_slider_keys(tree):
+    got, released = [], []
+    bar = ui.slider(5, got.append, min=0, max=10, step=1, on_release=lambda: released.append(1), theme=T)
+    assert bar.kind == "focusable"
+    for combo in ("right", "shift-left", "pageup", "home", "end", "down"):
+        bar.args[1](combo)
+    assert got == [6, 0, 10, 0, 10, 4] and len(released) == 6
+    assert ui.slider(10, got.append, max=10, step=1, theme=T).args[1]("right") is None  # already at max
+
+
+def test_select_keyboard_props(tree):
+    select = ui.select(["x", "y"], "x", print, id="mode", theme=T)
+    assert select.props["id"] == "mode" and select.props["focus_border_color"] == T.border_focused
+    assert ui.select(["x"], None, print, invalid=True, theme=T).props["focus_border_color"] == T.error
+
+
+def test_keys_text():
+    from pyzed.ui import base
+
+    old = base.KEY_STYLE
+    try:
+        base.KEY_STYLE = "words"
+        assert ui.keys_text("ctrl-shift-p") == "Ctrl+Shift+P"
+        assert ui.keys_text("ctrl-k ctrl-s") == "Ctrl+K Ctrl+S"
+        base.KEY_STYLE = "symbols"
+        assert ui.keys_text("cmd-n") == "⌘N"
+    finally:
+        base.KEY_STYLE = old
 
 
 def test_slider_options(tree):
     released = []
-    bar = ui.slider(0.5, print, on_release=lambda: released.append(1), theme=T)
+    bar = ui.slider(0.5, print, on_release=lambda: released.append(1), theme=T).find("slider")
     assert bar.props["on_release"] is not None and bar.props["width"] == "fill"
     vertical = ui.slider(3, print, min=0, max=10, step=1, vertical=True, show_value=True, height=100, theme=T)
     assert vertical.kind == "column" and vertical.texts() == ["3"]

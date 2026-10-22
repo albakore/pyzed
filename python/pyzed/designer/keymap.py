@@ -559,6 +559,15 @@ def get() -> Keymap:
     return _KEYMAP
 
 
+def shown_keys(action: str, default: Optional[str] = None) -> Optional[str]:
+    """The keys a tooltip or a menu shows for ``action`` (``"run"`` means ``"workspace::run"``): the first
+    ones in force, which the user may have changed or removed, or ``default`` for keys outside the keymap."""
+    action = action if "::" in action else f"workspace::{action}"
+    if action not in actions():
+        return default
+    return get().keys_for(action)
+
+
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:
     """The keyboard shortcut reference from the keymap, by group: ``[(title, [(label, keys), ...])]``,
     translated, with the keys in force (the first ones of each action)."""

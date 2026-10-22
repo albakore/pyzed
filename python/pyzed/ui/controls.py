@@ -8,7 +8,7 @@ from .. import _core
 from ..icons import glyph as _glyph
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
-from .base import _theme, button, label
+from .base import CHOICE_KEYS, _theme, button, key_focus, label, send, step_choice
 
 Option = Union[str, Tuple[Any, str]]
 
@@ -25,6 +25,7 @@ def select(
     invalid: bool = False,
     on_open: Any = None,
     on_close: Any = None,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A themed dropdown (Zed's ``DropdownMenu``) built on ``pz.pick_list``.
@@ -33,6 +34,12 @@ def select(
     so any value with a readable ``__str__`` works (strings, enums, dataclasses...).
     ``disabled`` greys it out, ``invalid`` paints the border red, and ``on_open`` /
     ``on_close`` run when the menu opens and closes.
+
+    It takes the keyboard focus like a text field (a click, Tab or ``Command.focus(id)``)
+    and keeps it after a choice closes the menu: ↑/↓ then pick the previous or next option
+    without opening it, Home/End the first and last, and typing jumps to an option by its
+    first letters. Enter, Space, Alt+↓ or F4 open the menu; there ↑/↓ move, Enter picks
+    and Escape closes.
 
     Events:
         ``on_select(item)``: Callable that receives the chosen item.
@@ -79,6 +86,8 @@ def select(
         menu_border_color=t.border,
         selected_bg=t.ghost_selected,
         selected_color=t.text,
+        focus_border_color=t.error if invalid else t.border_focused,
+        id=id,
     )
 
 
@@ -91,6 +100,7 @@ def radio_group(
     spacing: float = 8,
     disabled: Any = False,
     descriptions: Optional[Mapping[Any, str]] = None,
+    id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """Mutually exclusive choices shown as radio buttons.
@@ -98,15 +108,20 @@ def radio_group(
     ``options`` are strings or ``(value, label)`` pairs; ``on_select(value)`` is called
     when one is picked. ``disabled`` is ``True`` for all of them or a collection of the
     values to disable; ``descriptions`` maps values to a muted line under their label.
+    A click or Tab gives the group the keyboard focus; then the arrows pick the previous
+    or next choice and Home/End the first and last. ``id`` lets ``Command.focus(id)`` focus it.
 
     Events:
         ``on_select(value)``: Callable that receives the chosen value.
     """
     t = _theme(theme)
     items = []
+    enabled = []
     for option in options:
         value, text = option if isinstance(option, tuple) else (option, str(option))
         off = disabled is True or (not isinstance(disabled, bool) and value in disabled)
+        if not off:
+            enabled.append(value)
         item = _core.radio(
             text,
             value == selected,
@@ -125,7 +140,13 @@ def radio_group(
                                                        padding=(0, 0, 0, 23))], spacing=2)
         items.append(item)
     layout = _core.row if horizontal else _core.column
-    return layout(items, spacing=spacing * (2 if horizontal else 1))
+    group = layout(items, spacing=spacing * (2 if horizontal else 1))
+
+    def move(combo: str) -> Any:
+        target = step_choice(enabled, selected, combo)
+        return None if target is None else send(on_select, target)
+
+    return key_focus(group, move if on_select and enabled else None, keys=CHOICE_KEYS, id=id, theme=t)
 
 
 def _format(value: float, step: float) -> str:

@@ -26,6 +26,16 @@ hold for people too.
 - Split large views into methods (`self.sidebar()`, `self.toolbar()`) or functions that take data
   and callbacks and return widgets, like `pz.ui` does.
 
+## Keyboard
+
+- Show shortcuts with `keys=` (`ui.icon_button("save", self.save, tooltip="Save", keys="ctrl-s")`,
+  `ui.button(..., keys=...)`, `ui.MenuItem(..., keys=...)`), never inside the text: they are drawn as
+  key caps in the platform's style. `ui.keys_text(keys)` gives plain text for a label.
+- `ui.select`, `ui.switch`, `ui.checkbox`, `ui.slider`, `ui.segmented` and `ui.radio_group` take the
+  keyboard focus (click or Tab) and keep it: a select then picks the next option with ↓ without
+  opening. The keys they use do not reach `on_key`. Pass `id=` to focus one with `Command.focus(id)`.
+- Make a custom control keyboard-friendly with `pz.focusable(content, on_key, keys=[...])`.
+
 ## State and messages
 
 - Keep all state on the app (or on a component). Initialize it in `__init__` (or `setup()` for

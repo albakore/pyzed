@@ -226,6 +226,18 @@ Separa un atajo en etiquetas por acorde: `format_keys("ctrl-shift-p") == [["Ctrl
 | --- | --- |
 | `keys` | El atajo. |
 
+### `keys_text`
+
+```python
+keys_text(keys)
+```
+
+Un atajo como texto plano para una etiqueta o una línea de estado: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` con los símbolos de macOS), los acordes separados por un espacio. Los tooltips, botones y menús toman `keys=` y dibujan las teclas, así que no escribas las teclas en su texto.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `keys` | El atajo. |
+
 ### `avatar`
 
 ```python
@@ -389,7 +401,16 @@ Un `input` con icono de lupa.
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+switch(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 Un interruptor encendido/apagado.
@@ -401,12 +422,22 @@ Un interruptor encendido/apagado.
 | `label` | Texto de la etiqueta. |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
 | `disabled` | Lo atenúa e ignora los clics. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+checkbox(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.
@@ -418,6 +449,7 @@ Una casilla de verificación. `checked=None` muestra el estado mixto (parte de u
 | `label` | Texto de la etiqueta. |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
 | `disabled` | La atenúa e ignora los clics. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `slider`
@@ -436,6 +468,7 @@ slider(
     height=None,
     disabled=False,
     show_value=False,
+    id=None,
     theme=None,
 )
 ```
@@ -455,6 +488,7 @@ Un deslizador.
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `disabled` | Lo atenúa. |
 | `show_value` | Muestra el número al lado: `True`, o un formato como `"{:.0%}"`. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `progress`
@@ -497,6 +531,7 @@ segmented(
     size='md',
     width=None,
     disabled=False,
+    id=None,
     theme=None,
 )
 ```
@@ -511,6 +546,7 @@ Un grupo de botones mutuamente excluyentes.
 | `size` | `"sm"`, `"md"` o `"lg"`. |
 | `width` | `"fill"` reparte el ancho entre los botones. |
 | `disabled` | `True`, o los valores a desactivar. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `field`
@@ -701,6 +737,7 @@ select(
     invalid=False,
     on_open=None,
     on_close=None,
+    id=None,
     theme=None,
 )
 ```
@@ -719,6 +756,7 @@ Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, as�
 | `invalid` | Pinta el borde con el color de error. |
 | `on_open` | Se envía al abrir el menú. |
 | `on_close` | Se envía al cerrar el menú. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -733,6 +771,7 @@ radio_group(
     spacing=8,
     disabled=False,
     descriptions=None,
+    id=None,
     theme=None,
 )
 ```
@@ -748,6 +787,7 @@ Opciones mutuamente excluyentes como botones de radio.
 | `spacing` | Separación entre hijos, en píxeles. |
 | `disabled` | `True`, o los valores a desactivar. |
 | `descriptions` | Asocia valores a una línea atenuada bajo su etiqueta. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `number_field`

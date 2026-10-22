@@ -196,6 +196,21 @@ pz.run(Bad)
     assert not validate.check_code("def f(:\n")["ok"]
 
 
+def test_check_code_warns_about_shortcuts_written_in_tooltips():
+    source = '''
+import pyzed as pz
+from pyzed import ui
+
+a = ui.icon_button("save", print, tooltip="Save (Ctrl+S)")
+b = ui.icon_button("plus", print, tooltip=f"New ({ui.format_keys('ctrl-n')})")
+c = ui.icon_button("save", print, tooltip="Save", keys="ctrl-s")
+d = ui.icon_button("play", print, tooltip="Run (fast)")
+'''
+    result = validate.check_code(source, lint=False)
+    warned = [i["line"] for i in result["issues"] if "keys=" in i["message"]]
+    assert warned == [5, 6] and result["ok"]  # a warning, not an error
+
+
 def test_check_code_accepts_the_examples():
     for name in ("todo.py", "components.py", "mini_editor.py"):
         path = ROOT / "examples" / name

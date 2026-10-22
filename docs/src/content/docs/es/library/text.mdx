@@ -170,6 +170,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -189,6 +191,8 @@ Un texto.
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | `None` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `wrap` | `True` | Ajuste de línea. Con `False` el texto no se parte. |
+| `selectable` | `None` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | `None` | Color detrás del texto seleccionado. |
 
 [Referencia completa →](/pyzed/es/reference/widgets/#text)
 

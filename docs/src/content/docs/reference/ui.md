@@ -226,6 +226,18 @@ Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl
 | --- | --- |
 | `keys` | The shortcut. |
 
+### `keys_text`
+
+```python
+keys_text(keys)
+```
+
+A shortcut as plain text for a label or a status line: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` with macOS symbols), chords separated by a space. Tooltips, buttons and menus take `keys=` instead and draw key caps, so never write the keys into their text.
+
+| Parameter | Description |
+| --- | --- |
+| `keys` | The shortcut. |
+
 ### `avatar`
 
 ```python
@@ -389,7 +401,16 @@ An `input` with a magnifying glass icon.
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+switch(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 An on/off switch.
@@ -401,12 +422,22 @@ An on/off switch.
 | `label` | Label text. |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | Greys it out and ignores clicks. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+checkbox(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.
@@ -418,6 +449,7 @@ A checkbox. `checked=None` shows the mixed state (part of a group checked); clic
 | `label` | Label text. |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `disabled` | Greys it out and ignores clicks. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `slider`
@@ -436,6 +468,7 @@ slider(
     height=None,
     disabled=False,
     show_value=False,
+    id=None,
     theme=None,
 )
 ```
@@ -455,6 +488,7 @@ A slider.
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `disabled` | Greys it out. |
 | `show_value` | Shows the number next to it: `True`, or a format such as `"{:.0%}"`. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `progress`
@@ -497,6 +531,7 @@ segmented(
     size='md',
     width=None,
     disabled=False,
+    id=None,
     theme=None,
 )
 ```
@@ -511,6 +546,7 @@ A group of mutually exclusive buttons.
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `width` | `"fill"` stretches the buttons evenly. |
 | `disabled` | `True`, or the values to disable. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `field`
@@ -701,6 +737,7 @@ select(
     invalid=False,
     on_open=None,
     on_close=None,
+    id=None,
     theme=None,
 )
 ```
@@ -719,6 +756,7 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `invalid` | Paints the border in the error color. |
 | `on_open` | Sent when the menu opens. |
 | `on_close` | Sent when the menu closes. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -733,6 +771,7 @@ radio_group(
     spacing=8,
     disabled=False,
     descriptions=None,
+    id=None,
     theme=None,
 )
 ```
@@ -748,6 +787,7 @@ Mutually exclusive options as radio buttons.
 | `spacing` | Space between children, in pixels. |
 | `disabled` | `True`, or the values to disable. |
 | `descriptions` | Maps values to a muted line under their label. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `number_field`

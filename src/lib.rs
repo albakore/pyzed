@@ -18,6 +18,7 @@ mod layout;
 mod min_size;
 mod recorder;
 mod render;
+mod select;
 mod selectable;
 mod shader;
 mod sticky;
@@ -48,6 +49,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     shader::register(m)?;
     layout::register(m)?;
     frame::register(m)?;
+    focus::register(m)?;
     audio::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;

@@ -1391,6 +1391,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             )
             .into()
         }
+        Kind::Focus { child, props } => {
+            crate::focus::KeyFocus::new(build(py, child, ctx), props).into()
+        }
         Kind::WindowEdges { child, border } => {
             crate::frame::WindowEdges::new(build(py, child, ctx), *border).into()
         }

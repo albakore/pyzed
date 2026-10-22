@@ -191,7 +191,7 @@ def view(state, set_state):
 ### `ui.markdown`
 
 ```python
-markdown(source, *, size=None, on_link=None, width=None, theme=None)
+markdown(source, *, size=None, on_link=None, width=None, selectable=None, theme=None)
 ```
 
 `pz.markdown` with the theme's text, link and code colors.
@@ -201,6 +201,7 @@ markdown(source, *, size=None, on_link=None, width=None, theme=None)
 | `source` | *required* | The Markdown text. |
 | `size` | `None` | Size. |
 | `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `selectable` | `None` | Same as in `pz.markdown`; the selection uses the theme's `selection` color. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_link` ([events](#events)).
@@ -220,6 +221,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -234,6 +237,8 @@ Renders Markdown (headings, lists, code blocks, quotes, tables, links…). For t
 | `code_color` | `None` | Code color. |
 | `code_bg` | `None` | Code background. |
 | `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `selectable` | `None` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
+| `selection_color` | `None` | Color behind the selected text. |
 
 Events: `on_link` ([events](#events)).
 

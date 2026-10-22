@@ -414,6 +414,17 @@ def event_names() -> Any:
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
     ...
+def focusable(content: Any, on_key: Any = ..., *, keys: Any = ..., id: Any = ..., ring_color: Any = ..., ring_radius: Any = ..., ring_offset: Any = ...) -> Any:
+    """Lets ``content`` have the keyboard focus like a text field: a click or Tab focuses it
+    (``Command.focus(id)`` too) and, while focused, the key combos in ``keys`` (``"space"``,
+    ``"up"``, ``"shift-right"``...; ``"*"`` for every key) call ``on_key(combo)`` instead of
+    reaching the app's ``on_key``. A ring in ``ring_color`` is drawn ``ring_offset`` pixels
+    around it once the keyboard is used on it. Without ``on_key`` it is just ``content``.
+
+    Events:
+    - `on_key(combo)`: Callable that receives one of ``keys`` pressed while it has the focus.
+    """
+    ...
 def font_families() -> Any:
     """The font families that can be used by name: the bundled ones, those loaded with `load_font` and the
     system's, sorted and without repeats.
@@ -494,8 +505,14 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
-def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ...) -> Any:
+def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ..., focus_border_color: Any = ..., id: Any = ...) -> Any:
     """A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
+
+    A click or Tab gives it the keyboard focus (``focus_border_color`` outlines it) and it keeps
+    it after a choice: ↑/↓ then pick the previous or next option without opening the menu,
+    Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open
+    the menu, where ↑/↓ move, Enter picks and Escape closes. ``id`` lets ``Command.focus(id)``
+    focus it.
 
     Events:
     - `on_select(item)`: Callable that receives the chosen item.
