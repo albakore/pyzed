@@ -473,6 +473,46 @@ fn build_presence<'a>(
     Presence::new(leaving, current).into()
 }
 
+/// `text(..., selectable=...)`: the text as one block of its selection group (alignment is left/top).
+fn selectable_text<'a>(
+    t: &crate::widget::TextProps,
+    name: &str,
+    font: Option<Font>,
+    size: Option<f32>,
+    color: Option<Color>,
+    line_height: Option<f32>,
+) -> Element<'a, Message> {
+    let group = if name.is_empty() {
+        crate::selectable::own_group()
+    } else {
+        crate::selectable::group(name)
+    };
+    let span: iced::advanced::text::Span<'a, (), Font> =
+        iced::advanced::text::Span::new(t.content.clone());
+    let mut w = crate::selectable::Selectable::<(), Message>::new(vec![span], &group)
+        .color(color)
+        .highlight(t.selection_color);
+    if let Some(font) = font {
+        w = w.font(font);
+    }
+    if let Some(size) = size {
+        w = w.size(size);
+    }
+    if let Some(lh) = line_height {
+        w = w.line_height(LineHeight::Relative(lh));
+    }
+    if let Some(width) = t.width {
+        w = w.width(width);
+    }
+    if let Some(height) = t.height {
+        w = w.height(height);
+    }
+    if !t.wrap {
+        w = w.wrapping(Wrapping::None);
+    }
+    w.into()
+}
+
 pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a, Message> {
     let node = node_ref.bind(py).get();
 
@@ -486,6 +526,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 .line_height
                 .or(t.line_height)
                 .or(ctx.text_defaults.line_height);
+            if let Some(name) = &t.selectable {
+                return selectable_text(t, name, font, size, color, line_height);
+            }
             let content = t.content.clone();
             let (align_x, align_y, width, height, wrap) =
                 (t.align_x, t.align_y, t.width, t.height, t.wrap);

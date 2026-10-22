@@ -325,6 +325,8 @@ If `view()` raises an exception, the window shows the traceback instead of closi
                         "italic": "Italic.",
                         "line_height": "Line height relative to the size (1.0, 1.5…).",
                         "wrap": "Line wrapping. With `False` the text doesn't wrap.",
+                        "selectable": "`True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat).",
+                        "selection_color": "Color behind the selected text.",
                     },
                 },
                 "pyzed.icon": {
@@ -1349,7 +1351,7 @@ _section("widgets", "Images and content", {
     },
     "pyzed.markdown": {
         "desc": "Renders Markdown (headings, lists, code blocks, quotes, tables, links…). For the theme colors use `ui.markdown`.",
-        "params": {"source": "The Markdown text.", "link_color": "Link color.", "code_color": "Code color.", "code_bg": "Code background.", "on_link": "Callable that receives the URL when a link is clicked."},
+        "params": {"source": "The Markdown text.", "link_color": "Link color.", "code_color": "Code color.", "code_bg": "Code background.", "on_link": "Callable that receives the URL when a link is clicked.", "selectable": "`True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat).", "selection_color": "Color behind the selected text."},
     },
     "pyzed.rich_text": {
         "desc": "Text made of spans with different styles. Plain strings are unstyled spans.",
@@ -1520,7 +1522,7 @@ _section("ui", "Data and feedback", {
     },
     "pyzed.ui.markdown": {
         "desc": "`pz.markdown` with the theme's text, link and code colors.",
-        "params": {"source": "The Markdown text.", "on_link": "Callable that receives the URL when a link is clicked."},
+        "params": {"source": "The Markdown text.", "on_link": "Callable that receives the URL when a link is clicked.", "selectable": "Same as in `pz.markdown`; the selection uses the theme's `selection` color."},
     },
     "pyzed.ui.split": {
         "desc": "`pz.split` with the divider in the theme's border color (accent while dragging).",

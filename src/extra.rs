@@ -1288,16 +1288,23 @@ pub struct MarkdownProps {
     code_bg: Option<Color>,
     on_link: Option<PyMsg>,
     width: Option<Length>,
+    /// The selection group of its text (`""`: a group of its own), when it can be selected.
+    selectable: Option<String>,
+    selection_color: Option<Color>,
 }
 
 /// Renders Markdown (headings, lists, code blocks, quotes, tables, links...).
 /// `on_link(url)` is called when a link is clicked.
 ///
+/// With `selectable=True` its text can be selected with the mouse and copied (Ctrl+C); a string
+/// names a selection group instead: texts and Markdown of the same group form one selection
+/// area, in the order they are drawn (the messages of a chat). `selection_color` paints it.
+///
 /// Events:
 /// - `on_link(url)`: Callable that receives the URL when a link is clicked.
 #[pyfunction]
 #[pyo3(signature = (source, *, size=14.0, color=None, link_color=None, code_color=None,
-    code_bg=None, on_link=None, width=None))]
+    code_bg=None, on_link=None, width=None, selectable=None, selection_color=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn markdown(
     py: Python<'_>,
@@ -1309,6 +1316,8 @@ pub fn markdown(
     code_bg: Any<'_>,
     on_link: Any<'_>,
     width: Any<'_>,
+    selectable: Any<'_>,
+    selection_color: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     new(
         py,
@@ -1322,6 +1331,8 @@ pub fn markdown(
             code_bg: style::opt_color(&code_bg)?,
             on_link: PyMsg::maybe(&on_link),
             width: style::opt_length(&width)?,
+            selectable: style::selection_group(&selectable)?,
+            selection_color: style::opt_color(&selection_color)?,
         })),
     )
 }
@@ -1350,7 +1361,21 @@ pub fn render_markdown<'a>(props: &MarkdownProps, items: &'a [md::Item]) -> Elem
     let mut settings = md::Settings::with_text_size(props.size, style);
     settings.code_size = Pixels(props.size * 0.9);
     let on_link = props.on_link.clone();
-    let view = md::view(items, settings).map(move |url: md::Uri| match &on_link {
+    let view = match &props.selectable {
+        Some(name) => {
+            let viewer = SelectableViewer {
+                group: if name.is_empty() {
+                    crate::selectable::own_group()
+                } else {
+                    crate::selectable::group(name)
+                },
+                color: props.selection_color,
+            };
+            md::view_with(items, settings, &viewer)
+        }
+        None => md::view(items, settings),
+    };
+    let view = view.map(move |url: md::Uri| match &on_link {
         Some(cb) => Python::attach(|py| match url.into_pyobject(py) {
             Ok(value) => Message::Call(cb.clone(), PyMsg::new(value.as_any())),
             Err(_) => Message::Noop,
@@ -1371,6 +1396,102 @@ pub fn render_markdown<'a>(props: &MarkdownProps, items: &'a [md::Item]) -> Elem
         c = c.width(w);
     }
     c.into()
+}
+
+/// Draws the paragraphs, headings and code blocks of Markdown as selectable text of one group.
+struct SelectableViewer {
+    group: std::rc::Rc<str>,
+    color: Option<Color>,
+}
+
+impl SelectableViewer {
+    fn text<'a>(
+        &self,
+        spans: impl Into<std::sync::Arc<[iced::advanced::text::Span<'a, md::Uri, Font>]>>,
+    ) -> crate::selectable::Selectable<'a, md::Uri, md::Uri> {
+        crate::selectable::Selectable::new(spans, &self.group)
+            .joiner("\n\n")
+            .highlight(self.color)
+            .on_link_click(|url| url)
+    }
+}
+
+impl<'a> md::Viewer<'a, md::Uri> for SelectableViewer {
+    fn on_link_click(url: md::Uri) -> md::Uri {
+        url
+    }
+
+    fn heading(
+        &self,
+        settings: md::Settings,
+        level: &'a md::HeadingLevel,
+        text: &'a md::Text,
+        index: usize,
+    ) -> Element<'a, md::Uri> {
+        use md::HeadingLevel as H;
+        let size = match level {
+            H::H1 => settings.h1_size,
+            H::H2 => settings.h2_size,
+            H::H3 => settings.h3_size,
+            H::H4 => settings.h4_size,
+            H::H5 => settings.h5_size,
+            H::H6 => settings.h6_size,
+        };
+        let top = if index > 0 {
+            settings.text_size.0 / 2.0
+        } else {
+            0.0
+        };
+        widget::container(self.text(text.spans(settings.style)).size(size))
+            .padding(iced::Padding::ZERO.top(top))
+            .into()
+    }
+
+    fn paragraph(&self, settings: md::Settings, text: &md::Text) -> Element<'a, md::Uri> {
+        self.text(text.spans(settings.style))
+            .size(settings.text_size)
+            .into()
+    }
+
+    fn code_block(
+        &self,
+        settings: md::Settings,
+        _language: Option<&'a str>,
+        _code: &'a str,
+        lines: &'a [md::Text],
+    ) -> Element<'a, md::Uri> {
+        let mut spans = Vec::new();
+        for (i, line) in lines.iter().enumerate() {
+            if i > 0 {
+                spans.push(iced::advanced::text::Span::new("\n"));
+            }
+            // plain lines come in the text font: code blocks use the code font
+            spans.extend(
+                line.spans(settings.style)
+                    .iter()
+                    .cloned()
+                    .map(|span| span.font(settings.style.code_block_font)),
+            );
+        }
+        let code = self
+            .text(spans)
+            .font(settings.style.code_block_font)
+            .size(settings.code_size)
+            .wrapping(iced::widget::text::Wrapping::None);
+        widget::container(
+            widget::scrollable(widget::container(code).padding(settings.code_size)).direction(
+                widget::scrollable::Direction::Horizontal(
+                    widget::scrollable::Scrollbar::default()
+                        .width(settings.code_size / 2)
+                        .scroller_width(settings.code_size / 2),
+                ),
+            ),
+        )
+        .width(Length::Fill)
+        .padding(settings.code_size / 4)
+        .class(<Theme as md::Catalog>::code_block())
+        .into()
+    }
 }
 
 // ---------------------------------------------------------------------------

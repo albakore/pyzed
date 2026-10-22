@@ -327,7 +327,7 @@ class LogCenter:
         self.selection.clear()
 
     def copy(self) -> Any:
-        return _core.Command.copy(self.log.text())
+        return copy_lines(self)
 
     def open_folder(self) -> None:
         """Opens the folder with the log files in the file manager."""
@@ -465,7 +465,25 @@ def shown_entries(view: Any) -> List[ui.LogEntry]:
 
 def copy_selection(view: Any) -> Any:
     """The command that copies the selected lines of ``view``."""
+    copied(view, len(view.selection))
     return _core.Command.copy(view.log.text(view.selection.ids))
+
+
+def copy_lines(view: Any) -> Any:
+    """The Copy button of ``view`` (the console or the logs): the selected lines, or every line shown."""
+    if len(view.selection):
+        return copy_selection(view)
+    shown = [e.id for e in shown_entries(view)]
+    copied(view, len(shown))
+    return _core.Command.copy(view.log.text(shown))
+
+
+def copied(view: Any, lines: int) -> None:
+    """Says how many lines were copied (a short toast)."""
+    designer = getattr(view, "d", None)
+    if designer is not None:
+        title = tr("Copied 1 line") if lines == 1 else tr("Copied {count} lines", count=lines)
+        designer.notify(title, kind="success", seconds=2, log=False)
 
 
 def view(d: "Designer", t: Theme) -> Any:

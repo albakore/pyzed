@@ -541,15 +541,19 @@ def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Option
 
 
 def markdown(source: str, *, size: Optional[float] = None, on_link: Any = None, width: Any = None,
-             theme: Optional[Theme] = None) -> _core.Widget:
+             selectable: Any = None, theme: Optional[Theme] = None) -> _core.Widget:
     """``pz.markdown`` with the theme's text, link and code colors.
+
+    ``selectable=True`` lets the mouse select its text (Ctrl+C copies); a string names a selection
+    group shared with other texts (the messages of a chat), so one drag can cross them.
 
     Events:
         ``on_link(url)``: Callable that receives the URL when a link is clicked.
     """
     t = _theme(theme)
     return _core.markdown(source, size=size or t.ui_font_size, color=t.text, link_color=t.text_accent,
-                          code_color=t.editor_text, code_bg=t.element, on_link=on_link, width=width)
+                          code_color=t.editor_text, code_bg=t.element, on_link=on_link, width=width,
+                          selectable=selectable, selection_color=t.selection if selectable else None)
 
 
 def split(first: Any, second: Any, *, ratio: float = 0.5, on_resize: Any = None, vertical: bool = False,

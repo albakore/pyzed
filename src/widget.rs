@@ -68,6 +68,9 @@ pub struct TextProps {
     pub width: Option<Length>,
     pub height: Option<Length>,
     pub wrap: bool,
+    /// The selection group (`""`: one of its own) when the mouse can select the text.
+    pub selectable: Option<String>,
+    pub selection_color: Option<Color>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -742,6 +745,8 @@ fn plain_text(py: Python<'_>, content: String) -> PyResult<Py<Widget>> {
             width: None,
             height: None,
             wrap: true,
+            selectable: None,
+            selection_color: None,
         }),
     )
 }
@@ -850,7 +855,8 @@ fn icon_char(value: &Any<'_>) -> PyResult<Option<char>> {
 
 #[pyfunction]
 #[pyo3(signature = (content, *, size=None, color=None, font=None, weight=None, italic=false,
-    line_height=None, align_x=None, align_y=None, width=None, height=None, wrap=true))]
+    line_height=None, align_x=None, align_y=None, width=None, height=None, wrap=true,
+    selectable=None, selection_color=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn text(
     py: Python<'_>,
@@ -866,6 +872,8 @@ pub fn text(
     width: Any<'_>,
     height: Any<'_>,
     wrap: bool,
+    selectable: Any<'_>,
+    selection_color: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     let content = match content.cast::<PyString>() {
         Ok(s) => s.to_cow()?.into_owned(),
@@ -884,6 +892,8 @@ pub fn text(
             width: style::opt_length(&width)?,
             height: style::opt_length(&height)?,
             wrap,
+            selectable: style::selection_group(&selectable)?,
+            selection_color: style::opt_color(&selection_color)?,
         }),
     )
 }

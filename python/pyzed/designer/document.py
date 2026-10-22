@@ -43,6 +43,8 @@ class Document:
         self.revision = 0
         #: Whether resizing the form or a container moves and sizes what is inside it the way the anchors say.
         self.follow_anchors = True
+        #: A stand-in for "nothing open" (the main window's last tab was closed): no tab, an empty area.
+        self.blank = False
 
     @property
     def clipboard(self) -> List[Dict[str, Any]]:

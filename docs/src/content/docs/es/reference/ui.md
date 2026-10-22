@@ -1716,7 +1716,7 @@ Una pista atenuada como «Abrir archivo Ctrl P» para pies y estados vacíos.
 ### `markdown`
 
 ```python
-markdown(source, *, size=None, on_link=None, width=None, theme=None)
+markdown(source, *, size=None, on_link=None, width=None, selectable=None, theme=None)
 ```
 
 `pz.markdown` con los colores de texto, enlaces y código del tema.
@@ -1727,6 +1727,7 @@ markdown(source, *, size=None, on_link=None, width=None, theme=None)
 | `size` | Tamaño. |
 | `on_link` | Callable que recibe la URL al pulsar un enlace. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | Igual que en `pz.markdown`; la selección usa el color `selection` del tema. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `split`

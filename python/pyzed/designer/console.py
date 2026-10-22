@@ -102,8 +102,10 @@ class ConsoleController:
         self.selection.clear()
 
     def copy(self) -> Any:
-        """Returns the command that copies the whole log, as text, to the clipboard."""
-        return _core.Command.copy(self.log.text())
+        """Returns the command that copies the selected lines (or every line shown) to the clipboard."""
+        from .logs import copy_lines
+
+        return copy_lines(self)
 
     def poll(self) -> None:
         """Ends the session when the form's window was closed."""

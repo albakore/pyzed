@@ -167,3 +167,33 @@ def test_event_screen_point():
     assert Event("drag_end", window_x=5, window_y=6).screen is None
     event = Event("drag_end", window_x=5, window_y=6, screen_x=105.0, screen_y=206.0)
     assert event.screen == (105.0, 206.0) and "screen_x" in repr(event)
+
+
+def test_closing_every_tab_leaves_the_main_window_empty():
+    d = designer_with("a", "b")
+    for doc in d.docs:
+        doc.dirty = False
+    d.close_doc()
+    d.close_doc()
+    assert d.nothing_open and len(d.panes.main.docs) == 1  # a hidden blank form stands in
+    tabs, _, _ = d.doc_tab_items(d.panes.main, d.theme_obj)
+    assert tabs == [] and d.window_title() == "Pyzed Design"
+    assert d.close_doc() is None and d.nothing_open  # nothing left to close
+    assert d.save() is None and d.dialog is None  # nothing to save
+    assert d.run_form() is None and d.toasts[-1].title == "Nothing to run"
+    d.view()  # the empty area and the form panels' empty states draw
+
+    doc = Document()
+    doc.form.name = "c"
+    d.doc = doc  # opening a document takes the blank one's place
+    assert not d.nothing_open and names(d.panes.main) == ["c"]
+
+
+def test_a_control_added_with_nothing_open_makes_a_new_form():
+    d = designer_with("a")
+    d.doc.dirty = False
+    d.close_doc()
+    assert d.nothing_open
+    d.doc.add("button", 10, 10)
+    d.doc.dirty = True
+    assert not d.nothing_open and len(d.doc_tab_items(d.panes.main, d.theme_obj)[0]) == 1

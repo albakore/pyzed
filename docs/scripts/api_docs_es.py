@@ -325,6 +325,8 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                         "italic": "Cursiva.",
                         "line_height": "Alto de línea relativo al tamaño (1.0, 1.5…).",
                         "wrap": "Ajuste de línea. Con `False` el texto no se parte.",
+                        "selectable": "`True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat).",
+                        "selection_color": "Color detrás del texto seleccionado.",
                     },
                 },
                 "pyzed.icon": {
@@ -1349,7 +1351,7 @@ _section("widgets", "Imágenes y contenido", {
     },
     "pyzed.markdown": {
         "desc": "Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces…). Para los colores del tema usa `ui.markdown`.",
-        "params": {"source": "El texto Markdown.", "link_color": "Color de los enlaces.", "code_color": "Color del código.", "code_bg": "Fondo del código.", "on_link": "Callable que recibe la URL al pulsar un enlace."},
+        "params": {"source": "El texto Markdown.", "link_color": "Color de los enlaces.", "code_color": "Color del código.", "code_bg": "Fondo del código.", "on_link": "Callable que recibe la URL al pulsar un enlace.", "selectable": "`True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat).", "selection_color": "Color detrás del texto seleccionado."},
     },
     "pyzed.rich_text": {
         "desc": "Texto hecho de fragmentos con estilos distintos. Los textos sueltos son fragmentos sin estilo.",
@@ -1520,7 +1522,7 @@ _section("ui", "Datos y feedback", {
     },
     "pyzed.ui.markdown": {
         "desc": "`pz.markdown` con los colores de texto, enlaces y código del tema.",
-        "params": {"source": "El texto Markdown.", "on_link": "Callable que recibe la URL al pulsar un enlace."},
+        "params": {"source": "El texto Markdown.", "on_link": "Callable que recibe la URL al pulsar un enlace.", "selectable": "Igual que en `pz.markdown`; la selección usa el color `selection` del tema."},
     },
     "pyzed.ui.split": {
         "desc": "`pz.split` con el divisor del color de borde del tema (acento al arrastrarlo).",

@@ -9,7 +9,8 @@
 ``Log`` is plain data with a lock, so other threads may write to it (call ``pz.post``
 afterwards if the window should redraw right away).
 
-Lines can be selected like in a list (click, Shift+click for a range, Ctrl+click to add one) when the
+Their text can be selected by dragging (across lines) and copied with Ctrl+C. Whole lines can be
+selected like in a list (click, Shift+click for a range, Ctrl+click to add one) when the
 console gets a ``LogSelection``; ``on_context`` opens a menu on right click (copy the line, the
 selection or everything...) and a selected entry with ``detail`` (a traceback) shows it under the line.
 Entries may carry a ``source`` ("project", "agent"...) that ``ui.console`` can filter on.
@@ -308,8 +309,9 @@ def console(
     ``hidden`` are levels not shown; ``on_toggle_level(level)`` flips one. The list keeps
     scrolling to the newest entry while it is at the bottom.
 
-    With a ``selection`` (a ``LogSelection``) the lines can be selected with the mouse; a selected
-    line with ``detail`` shows it below. ``on_context(entry)`` runs on right click (``None`` over
+    The text of the lines can be selected by dragging over it (across lines, like a terminal) and
+    copied with Ctrl+C. With a ``selection`` (a ``LogSelection``) a click also selects whole lines; a
+    selected line with ``detail`` shows it below. ``on_context(entry)`` runs on right click (``None`` over
     the empty space): open a menu there. ``on_open(entry)`` runs on double click.
     ``sources`` (``(value, label)`` pairs) adds a dropdown that shows only the entries of one
     ``source`` (``None`` for all; ``on_source`` gets the choice), and ``show_source`` tags each line
@@ -319,7 +321,7 @@ def console(
         ``on_query(text)``: Receives each edit of the filter.
         ``on_toggle_level(level)``: Called with the level of the clicked toggle.
         ``on_clear()``: Adds a Clear button.
-        ``on_copy()``: Adds a Copy button.
+        ``on_copy()``: Adds a Copy button (copy the selected lines, or every line shown).
         ``on_context(line)``: Called with the line right-clicked (``None`` under the lines): open a menu there
             (copy, go to source, clear...).
         ``on_open(line)``: Called with the line double-clicked.
@@ -360,7 +362,8 @@ def console(
         *toggles,
         _core.space(width="fill"),
         *actions,
-        icon_button("copy", on_copy, size="sm", tooltip=_t("pyzed.console.copy_all"), theme=t)
+        icon_button("copy", on_copy, size="sm", tooltip=_t("pyzed.console.copy_selected" if selection
+                                                            else "pyzed.console.copy_all"), theme=t)
         if on_copy is not None else None,
         icon_button("trash-2", on_clear, size="sm", tooltip=_t("pyzed.console.clear"), theme=t)
         if on_clear is not None else None,
@@ -368,6 +371,7 @@ def console(
     bar = _core.container(tools, padding=(4, 8), width="fill", clip=True)
 
     visible = shown[-1000:]  # drawing tens of thousands of rows would be slow; the newest matter
+    group = f"console:{id or 'log'}"  # one drag selects text across lines, like a terminal
     order = [e.id for e in visible]
     rows: List[Any] = []
     for e in visible:
@@ -381,13 +385,15 @@ def console(
             _icon(icon, size=12, color=t.color(color)),
             _core.container(_core.text(e.source, size=11, color=t.text_muted, wrap=False), padding=(0, 6),
                             bg=t.element, radius=t.radius_sm) if show_source and e.source else None,
-            _core.text(e.text, size=font_size, font="mono", color=fg, wrap=True, width="fill"),
+            _core.text(e.text, size=font_size, font="mono", color=fg, wrap=True, width="fill", selectable=group,
+                       selection_color=t.selection),
             _icon("chevron-down" if picked else "chevron-right", size=12, color=t.icon_muted) if e.detail else None,
             _core.container(_core.text(f"×{e.count}", size=11, color=t.text_muted), padding=(0, 6), bg=t.element,
                             radius=8) if e.count > 1 else None,
         ], spacing=8, align="start")
         detail = _core.container(_core.text(e.detail, size=font_size - 1, font="mono", color=t.text_muted,
-                                            wrap=True, width="fill"), padding=(4, 0, 2, 20), width="fill") \
+                                            wrap=True, width="fill", selectable=group, selection_color=t.selection),
+                                 padding=(4, 0, 2, 20), width="fill") \
             if picked and e.detail else None
         row = _core.container(_core.column([line, detail], width="fill"), padding=(2, 10), width="fill", bg=bg)
         handlers: Dict[str, Any] = {}
