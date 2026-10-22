@@ -605,8 +605,11 @@ class Project:
         """``ruff``/``ty`` installed in the project's ``.venv``, else on ``PATH``."""
         windows = self._windows_venv
         exe = self.venv / ("Scripts" if windows else "bin") / (name + (".exe" if windows else ""))
-        if exe.is_file():
-            return str(exe)
+        try:
+            if exe.is_file():
+                return str(exe)
+        except OSError:  # a WSL project whose distro is stopped or missing: Windows can't reach \\wsl.localhost
+            pass
         return None if self.environment.remote else shutil.which(name)
 
     def site_packages(self) -> Optional[Path]:
