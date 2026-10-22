@@ -200,7 +200,7 @@ class Document:
         if container is None:
             return True
         control = self.form.get(name)
-        if control is not None and not _components.get(control.type).visual:
+        if control is not None and not _components.spec(control.type).visual:
             return False  # a timer, a watcher... belongs to the form, not to a container
         target = self.form.get(container)
         if target is not None and _layout.kind(target) == "dock" and (control is None or control.type != "dock_panel"):
@@ -250,7 +250,7 @@ class Document:
         form = self.form
         picked = [form[n] for n in (names if names is not None else self.selection) if form.get(n) is not None]
         picked = [c for c in picked if not any(a in picked for a in form.ancestors(c.name))
-                  and _components.get(c.type).visual]
+                  and _components.spec(c.type).visual]
         if not picked:
             return None
         parent = picked[0].parent
@@ -658,7 +658,7 @@ class Document:
         """Returns the events of control ``name``, or the form's events when ``name`` is ``None``."""
         if name is None:
             return _components.FORM_EVENTS
-        return _components.get(self.form[name].type).all_events
+        return _components.spec(self.form[name].type).all_events
 
     def wire(self, name: Optional[str], event: str) -> str:
         """Connects ``event`` to a handler (creating its stub if needed) and returns the function name."""

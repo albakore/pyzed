@@ -131,7 +131,7 @@ class ControlProxy:
                 return getattr(service, name)
         if key in control.props:
             return control.props[key]
-        default = _components.get(control.type).defaults()
+        default = _components.spec(control.type).defaults()
         if key in default:
             return default[key]
         instance = self.instance
@@ -149,7 +149,7 @@ class ControlProxy:
         if service is not None and not key.startswith("_") \
                 and hasattr(service, nonvisual.attribute(self._control, key)):
             nonvisual.apply(service, self._control, key, value)
-            if key not in _components.get(self._control.type).defaults():
+            if key not in _components.spec(self._control.type).defaults():
                 return  # only the service has it
         if key == "error":
             self._runtime.set_error(self._control.name, value)
@@ -479,7 +479,7 @@ class FormRuntime:
         for control in bound:
             if not _binding.has(self.data, control.bind):
                 prop = _binding.bound_prop(control.type)
-                spec = _components.get(control.type)
+                spec = _components.spec(control.type)
                 try:
                     _binding.write(self.data, control.bind, control.props.get(prop, spec.defaults().get(prop)))
                 except (AttributeError, TypeError):
@@ -508,7 +508,7 @@ class FormRuntime:
         prop = _binding.bound_prop(control.type)
         if prop is None:
             return True
-        value = control.props.get(prop, _components.get(control.type).defaults().get(prop))
+        value = control.props.get(prop, _components.spec(control.type).defaults().get(prop))
         message = _binding.check(value, control.rules, control.type)
         if message is None:
             self.errors.pop(control.name, None)
@@ -627,7 +627,7 @@ class FormRuntime:
         hidden: set = set()
         docks: set = set()
         for control, _depth in form.walk(parent.name if parent is not None else None):
-            spec = _components.get(control.type)
+            spec = _components.spec(control.type)
             if not control.visible or (control.parent and control.parent in hidden):
                 hidden.add(control.name)
                 continue
@@ -683,7 +683,7 @@ class FormRuntime:
 
         center = [p for p in panels if _layout.dock_side(p) == "center"]
         docked = [p for p in panels if _layout.dock_side(p) != "center"]
-        props = {**_components.get(control.type).defaults(), **control.props}
+        props = {**_components.spec(control.type).defaults(), **control.props}
         saved = dict(props.get("layout") or {})
         # the top-most panel of each side is its tab shown first, as in the designer
         active = {_layout.dock_side(p): p.name for p in docked}
@@ -839,10 +839,10 @@ def open_form(path: Union[str, Path]) -> FormApp:
     """
     from ..project import activate_for
 
-    from .scene import discover
+    from .scene import discover_project
 
     project = activate_for(path)
-    discover(project.root if project is not None else Path(path).resolve().parent)  # designed components
+    discover_project(path, fresh=True)  # designed components and the project's pz.Component classes
     form = load(path)
     return FormApp(form, load_handlers(path, form), path)
 

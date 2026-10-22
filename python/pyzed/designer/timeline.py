@@ -151,7 +151,7 @@ def track_paths(control: Control) -> List[Tuple[str, str]]:
     """``[(path, label), ...]`` a control can animate: its widget properties, then its own."""
     out = [(f"{control.name}:{prop}", prop.replace("_", " ")) for prop in PROPERTIES]
     try:
-        spec = _components.get(control.type)
+        spec = _components.spec(control.type)
     except KeyError:
         return out
     for prop in spec.props:
@@ -177,7 +177,7 @@ def current_value(form: Form, path: str) -> Any:
         if attribute in control.props:
             return control.props[attribute]
         try:
-            return _components.get(control.type).defaults().get(attribute)
+            return _components.spec(control.type).defaults().get(attribute)
         except KeyError:
             return None
     if prop in REST:

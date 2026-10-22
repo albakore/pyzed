@@ -123,6 +123,13 @@ callbacks so the same code works in both. Every `pz.Component` subclass of your 
 too (see [Components](/pyzed/guides/components/)), and so do the components you draw in the
 [component designer](/pyzed/editor/component-designer/).
 
+They are loaded whenever a project opens (at start, from the project picker or from a recent folder) and when you
+open a form of another folder. Pyzed imports a module for its components only if its top level just defines
+things: a module that calls `pz.run(...)` outside `if __name__ == "__main__":` is skipped. A control whose
+component cannot be found (its module fails to import, or the form comes from a newer Pyzed) shows as a yellow
+**Component not found** box with its type: the rest of the form still opens, and its properties and events are
+kept when you save.
+
 ## Your own templates
 
 The New form templates are data, not code. Each one is a folder:

@@ -190,7 +190,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     raised: List[Any] = []
     hidden: set = set()
     for c, _depth in form.walk():
-        if not _components.get(c.type).visual:
+        if not _components.spec(c.type).visual:
             continue  # in the tray under the form
         if d.hidden_on_canvas(c):
             hidden.add(c.name)
@@ -236,7 +236,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x, y=y))
 
     # 4. selection, handles, rubber band
-    selected = [c for c in doc.selected if _components.get(c.type).visual and d.on_canvas(c)]
+    selected = [c for c in doc.selected if _components.spec(c.type).visual and d.on_canvas(c)]
     for c in selected:
         primary = c is doc.primary
         x, y, cw, ch = rects.get(c.name, c.rect)
@@ -309,13 +309,13 @@ def tray(d: "Designer", width: float, t: Theme) -> Any:
     """The component tray under the form: a chip for each non-visual component (press to select it,
     double-click to open its main event, right-click for its menu). ``None`` when there is none."""
     doc = d.doc
-    names = [c.name for c in doc.form.controls if not _components.get(c.type).visual]
+    names = [c.name for c in doc.form.controls if not _components.spec(c.type).visual]
     if not names:
         return None
 
     def chip(name: str) -> Any:
         control = doc.form[name]
-        spec = _components.get(control.type)
+        spec = _components.spec(control.type)
         selected = doc.is_selected(name)
         color = t.text if control.enabled else t.text_muted
         body = _core.container(

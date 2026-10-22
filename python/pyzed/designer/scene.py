@@ -894,18 +894,20 @@ def component_files(root: Union[str, Path], limit: int = 500) -> List[Path]:
     return found[:limit]
 
 
-def discover(root: Union[str, Path, None] = None) -> List[type]:
+def discover(root: Union[str, Path, None] = None, *, fresh: bool = True) -> List[type]:
     """Imports every designed component under ``root`` (the current folder by default).
 
     Components may use each other, so a failed import is retried once the others
-    loaded (``errors`` keeps what still failed).
+    loaded (``errors`` keeps what still failed). With ``fresh=False`` a component whose code
+    did not change since it was last imported is kept as it is.
     """
     pending = component_files(root or Path.cwd())
     loaded: List[type] = []
     for _ in range(2):
         retry = []
         for path in pending:
-            cls = load_component(path)
+            cls = None if fresh else _unchanged(path)
+            cls = cls or load_component(path)
             if cls is None:
                 retry.append(path)
             else:
@@ -914,3 +916,184 @@ def discover(root: Union[str, Path, None] = None) -> List[type]:
             break
         pending = retry
     return loaded
+
+
+def _unchanged(path: Path) -> Optional[type]:
+    """The class imported for ``path`` if its code did not change since, and it is still in the toolbox."""
+    path = path.resolve()
+    cached = _classes.get(path)
+    if cached is None or not _components.is_known(getattr(cached[1], "type_name", "")):
+        return None
+    try:
+        stamp = code_path(path, load(path)).stat().st_mtime
+    except (OSError, ValueError):
+        return None
+    return cached[1] if cached[0] == stamp else None
+
+
+# -- pz.Component classes written by hand ----------------------------------------------
+
+#: Statements a module may run on import to be imported for its components (anything that does no work).
+_SAFE = (ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Assign,
+         ast.AnnAssign, ast.Pass)
+#: The modification time and dotted name each module defining components had when it was imported, by path.
+_modules: Dict[Path, Tuple[float, str]] = {}
+
+
+def _main_guard(node: ast.stmt) -> bool:
+    """Whether ``node`` is ``if __name__ == "__main__":`` (its body does not run on import)."""
+    test = getattr(node, "test", None)
+    return isinstance(node, ast.If) and isinstance(test, ast.Compare) and isinstance(test.left, ast.Name) \
+        and test.left.id == "__name__"
+
+
+def _safe_body(body: Iterable[ast.stmt]) -> bool:
+    """Whether importing a module with this top level only defines things: no calls such as ``pz.run(App)``."""
+    for node in body:
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue  # docstring
+        if _main_guard(node):
+            continue
+        if isinstance(node, (ast.If, ast.Try)):
+            handlers = [h.body for h in getattr(node, "handlers", [])]
+            if not all(_safe_body(b) for b in (node.body, node.orelse, *handlers)):
+                return False
+            continue
+        if not isinstance(node, _SAFE):
+            return False
+        value = getattr(node, "value", None)
+        if value is not None and any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                                     and n.func.attr in ("run", "run_app", "mainloop") for n in ast.walk(value)):
+            return False
+    return True
+
+
+def _defines_components(source: str) -> bool:
+    """Whether a module defines ``pz.Component`` subclasses (or registers designer components) and is safe to
+    import for them."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+    found = False
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            for base in node.bases:
+                name = base.attr if isinstance(base, ast.Attribute) else getattr(base, "id", "")
+                if name == "Component":
+                    found = True
+    found = found or any(isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", "")) == "register"
+                         for n in ast.walk(tree))
+    return found and _safe_body(tree.body)
+
+
+def _module_name(path: Path, roots: Iterable[Path]) -> Optional[str]:
+    """The dotted name ``path`` is imported as from the first of ``roots`` holding it (``None`` if none can)."""
+    for root in roots:
+        try:
+            parts = path.with_suffix("").relative_to(root).parts
+        except ValueError:
+            continue
+        if parts and all(p.isidentifier() for p in parts):
+            return ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+    return None
+
+
+def discover_classes(root: Union[str, Path], roots: Optional[Iterable[Path]] = None, limit: int = 500) -> List[str]:
+    """Imports the modules under ``root`` that define ``pz.Component`` classes, so they join the toolbox.
+
+    Modules are imported by their dotted name from ``roots`` (the project's import folders, by default
+    ``root``), the same way the app imports them, and only when their top level just defines things.
+    A module is imported again when it changed. Returns the names of the modules imported; failures
+    go to ``errors``.
+    """
+    root = Path(root).resolve()
+    roots = [Path(r).resolve() for r in (roots or [root])]
+    imported: List[str] = []
+    if not root.is_dir():
+        return imported
+    added = [str(r) for r in roots if str(r) not in sys.path]
+    sys.path[:0] = added  # importable while they load, as a project's folders are once it is activated
+    try:
+        _import_components(root, roots, limit, imported)
+    finally:
+        for entry in added:
+            if entry in sys.path:
+                sys.path.remove(entry)
+    return imported
+
+
+def _import_components(root: Path, roots: List[Path], limit: int, imported: List[str]) -> None:
+    import importlib
+
+    seen = 0
+    for folder, dirs, files in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith("."))
+        for name in sorted(files):
+            path = Path(folder) / name
+            if not name.endswith(".py") or path.with_suffix(SUFFIX).exists():
+                continue  # the class of a designed component: ``discover`` imports it
+            seen += 1
+            if seen > limit:
+                return
+            module = _module_name(path, roots)
+            try:
+                stamp = path.stat().st_mtime
+                if module is None or _modules.get(path) == (stamp, module):
+                    continue
+                source = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "Component" not in source and "register" not in source or not _defines_components(source):
+                continue
+            errors.pop(path, None)
+            try:
+                loaded = sys.modules.get(module)
+                if loaded is not None and Path(getattr(loaded, "__file__", "") or "").resolve() == path:
+                    importlib.reload(loaded)
+                else:
+                    _forget_other(module, path)
+                    importlib.import_module(module)
+            except Exception as err:  # noqa: BLE001 - shown in the designer, the rest still loads
+                errors[path] = f"{type(err).__name__}: {err}"
+                continue
+            finally:
+                _modules[path] = (stamp, module)
+            imported.append(module)
+
+
+def _forget_other(module: str, path: Path) -> None:
+    """Drops ``module`` and its packages from ``sys.modules`` when they were imported from another folder
+    (another project with a module of the same name), so it is imported from ``path``."""
+    parts = module.split(".")
+    for depth in range(1, len(parts) + 1):
+        name = ".".join(parts[:depth])
+        loaded = sys.modules.get(name)
+        if loaded is None:
+            continue
+        folder = path.parents[len(parts) - depth]  # where this package (or the module) lives
+        places = [Path(p).resolve() for p in getattr(loaded, "__path__", None) or []]
+        here = folder if depth < len(parts) else path
+        if here not in places and Path(getattr(loaded, "__file__", "") or "").resolve() != here:
+            for other in [n for n in sys.modules if n == name or n.startswith(name + ".")]:
+                sys.modules.pop(other, None)
+            return
+
+
+def discover_project(path: Union[str, Path, None] = None, *, fresh: bool = False) -> List[type]:
+    """Brings the components of the project at ``path`` (a folder or a file in it) to the toolbox.
+
+    Imports its designed components (``.pzcomp``, see ``discover``) and the ``pz.Component`` classes its
+    modules define (see ``discover_classes``), from the project root or, outside a project, the folder.
+    Returns the designed component classes.
+    """
+    from .. import project as _project
+
+    here = Path(path or Path.cwd()).resolve()
+    folder = here if here.is_dir() else here.parent
+    found = _project.find(folder)
+    root = found.root if found is not None else folder
+    designed = discover(root, fresh=fresh)
+    if found is not None or path is not None:  # not every module of whatever folder Pyzed started in
+        discover_classes(root, found.paths() if found is not None else [folder])
+    return designed

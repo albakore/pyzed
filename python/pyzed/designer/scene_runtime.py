@@ -270,7 +270,7 @@ class SceneComponent(Component):
         _rendering.append(cls)
         try:
             for control, _depth in view.walk():
-                spec = _components.get(control.type)
+                spec = _components.spec(control.type)
                 if not control.visible or (control.parent and control.parent in hidden):
                     hidden.add(control.name)
                     continue

@@ -398,9 +398,9 @@ def outline(d: "Designer", t: Theme) -> Any:
         children = form.children(parent)
         holder = form.get(parent) if parent else None
         # top-most first, like layers in a drawing app; flex rows and grids list them in reading order
-        flowing = holder is not None and _components.get(holder.type).container in ("flex", "grid")
+        flowing = holder is not None and _components.spec(holder.type).container in ("flex", "grid")
         for c in (children if flowing else reversed(children)):
-            spec = _components.get(c.type)
+            spec = _components.spec(c.type)
             if not spec.visual:
                 continue  # listed at the end, with the other non-visual components
             container = spec.container is not None
@@ -423,14 +423,14 @@ def outline(d: "Designer", t: Theme) -> Any:
 
     add(None, 0)
     d._outline_rows = kept
-    tray = [c for c in form.controls if not _components.get(c.type).visual]
+    tray = [c for c in form.controls if not _components.spec(c.type).visual]
     if tray:  # timers, watchers... belong to the form but have no place on it
         rows.append(_core.container(ui.label(tr("Non-visual"), size="xs", color="text_muted", theme=t),
                                     padding=(6, spacing.GUTTER, 2, spacing.GUTTER + 4), width="fill"))
         for c in tray:
             rows.append(press_row(
                 d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t,
-                icon=_components.get(c.type).icon, selected=doc.is_selected(c.name), indent=4, height=OUTLINE_ROW,
+                icon=_components.spec(c.type).icon, selected=doc.is_selected(c.name), indent=4, height=OUTLINE_ROW,
                 start=_core.space(width=20), color=None if c.enabled else "text_muted",
                 on_right_press=lambda n=c.name: d.open_outline_menu(n)))
     return scroll_panel(_core.column(rows, width="fill"))
@@ -483,7 +483,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
     rows: List[Any] = [Group("Position")]
     if parent is not None:
         rows.append(prop_row(tr("Inside"), _core.row([
-            ui.button(parent.name, lambda: d.select_from_outline(parent.name), icon=_components.get(parent.type).icon,
+            ui.button(parent.name, lambda: d.select_from_outline(parent.name), icon=_components.spec(parent.type).icon,
                       variant="ghost", size="sm", theme=t),
             _core.space(width="fill"),
             ui.icon_button("arrow-up-left", lambda: d.move_out(c.name), size="sm", tooltip="Move out of the container",
@@ -532,7 +532,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     its style and layout rows."""
     c = d.doc.primary
     assert c is not None
-    spec = _components.get(c.type)
+    spec = _components.spec(c.type)
     rows: List[Any] = [
         _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
@@ -755,7 +755,7 @@ def events(d: "Designer", t: Theme) -> Any:
                               icon="zap", theme=t)
     owner, wired = doc.owner(target)
     control = doc.form.get(target) if target else None
-    spec = _components.get(control.type) if control is not None else None
+    spec = _components.spec(control.type) if control is not None else None
     icon = spec.icon if spec is not None else "app-window"
     kind = tr(spec.label) if spec is not None else tr("Form")
     head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),

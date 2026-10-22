@@ -535,7 +535,7 @@ def binding_section(d: "Designer", t: Theme) -> Any:
     assert isinstance(doc, SceneDocument)
     control = doc.primary
     assert control is not None
-    spec = _components.get(control.type)
+    spec = _components.spec(control.type)
     if not spec.props:
         return None
     bound = doc.scene.bound(control.name)
