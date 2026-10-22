@@ -717,6 +717,8 @@ add(
     def view(self):
         return ui.checkbox(self.accepted, lambda value: setattr(self, "accepted", value),
                            label="I accept the terms")""",
+    notes=T("Once clicked or reached with Tab it has the keyboard focus (a ring shows when you use the keys): Space toggles it.",
+            "Al pulsarla o llegar con Tab tiene el foco del teclado (un anillo aparece al usar las teclas): Espacio la marca o desmarca."),
     related=["switch", "radio-group", "field"],
 )
 
@@ -746,6 +748,8 @@ add(
 
     def view(self):
         return ui.switch(self.autosave, lambda on: setattr(self, "autosave", on), label="Autosave")""",
+    notes=T("Once clicked or reached with Tab it has the keyboard focus (a ring shows when you use the keys): Space or Enter flips it.",
+            "Al pulsarlo o llegar con Tab tiene el foco del teclado (un anillo aparece al usar las teclas): Espacio o Enter lo cambian."),
     related=["checkbox", "field", "settings-group"],
 )
 
@@ -780,6 +784,8 @@ add(
             ui.slider(self.volume, lambda v: setattr(self, "volume", v), min=0, max=100, step=1),
             ui.label(f"{self.volume:.0f}%"),
         ], spacing=12, align="center")""",
+    notes=T("Once clicked or reached with Tab it has the keyboard focus: the arrows move it one `step`, with Shift (or Page Up/Down) ten, and Home/End jump to `min`/`max`.",
+            "Al pulsarlo o llegar con Tab tiene el foco del teclado: las flechas lo mueven un `step`, con Shift (o Re Pág/Av Pág) diez, e Inicio/Fin saltan a `min`/`max`."),
     related=["number-field", "progress"],
 )
 
@@ -849,8 +855,16 @@ add(
     def view(self):
         return ui.select(["Python", "Rust", "TypeScript"], self.language,
                          lambda value: setattr(self, "language", value), width=180)""",
-    notes=T("The menu opens on click; the preview shows the closed state.",
-            "El menú se abre al pulsar; la vista previa muestra el estado cerrado."),
+    notes=T("It takes the keyboard focus like a text field (a click or Tab) and keeps it after you pick an "
+            "option: then ↓/↑ choose the next or previous option without opening the menu, Home/End the first "
+            "and last, and typing jumps to the option that starts with those letters. Enter, Space, Alt+↓ or F4 "
+            "open the menu; there ↑/↓ move, Enter picks and Esc closes. Pass `id=` to focus it with "
+            "`pz.Command.focus(id)`.",
+            "Toma el foco del teclado como un campo de texto (con un clic o Tab) y lo mantiene después de elegir: "
+            "entonces ↓/↑ eligen la opción siguiente o la anterior sin abrir el menú, Inicio/Fin la primera y la "
+            "última, y al escribir salta a la opción que empieza por esas letras. Enter, Espacio, Alt+↓ o F4 abren "
+            "el menú; ahí ↑/↓ se mueven, Enter elige y Esc lo cierra. Pasa `id=` para enfocarlo con "
+            "`pz.Command.focus(id)`."),
     related=["segmented", "radio-group", "picker"],
 )
 
@@ -883,6 +897,8 @@ add(
     def view(self):
         return ui.radio_group([("spaces", "Spaces"), ("tabs", "Tabs")], self.indent,
                               lambda value: setattr(self, "indent", value))""",
+    notes=T("Once clicked or reached with Tab the group has the keyboard focus: the arrows pick the previous or next choice (skipping disabled ones) and Home/End the first and last.",
+            "Al pulsarlo o llegar con Tab el grupo tiene el foco del teclado: las flechas eligen la opción anterior o la siguiente (saltando las desactivadas) e Inicio/Fin la primera y la última."),
     related=["segmented", "select", "checkbox"],
 )
 
@@ -914,6 +930,8 @@ add(
 
     def view(self):
         return ui.segmented(["Day", "Week", "Month"], self.mode, lambda m: setattr(self, "mode", m))""",
+    notes=T("Once clicked or reached with Tab it has the keyboard focus: ←/→ pick the previous or next option (skipping disabled ones) and Home/End the first and last.",
+            "Al pulsarlo o llegar con Tab tiene el foco del teclado: ←/→ eligen la opción anterior o la siguiente (saltando las desactivadas) e Inicio/Fin la primera y la última."),
     related=["toggle-group", "radio-group", "tab-bar"],
 )
 

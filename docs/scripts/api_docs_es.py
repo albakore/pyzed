@@ -536,6 +536,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                     "desc": 'Separa un atajo en etiquetas por acorde: `format_keys("ctrl-shift-p") == [["Ctrl", "Shift", "P"]]`. El estilo se controla con `pyzed.ui.base.KEY_STYLE` (`"auto"`, `"symbols"` o `"words"`).',
                     "params": {"keys": "El atajo."},
                 },
+                "pyzed.ui.keys_text": {
+                    "desc": 'Un atajo como texto plano para una etiqueta o una línea de estado: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` con los símbolos de macOS), los acordes separados por un espacio. Los tooltips, botones y menús toman `keys=` y dibujan las teclas, así que no escribas las teclas en su texto.',
+                    "params": {"keys": "El atajo."},
+                },
                 "pyzed.ui.avatar": {
                     "desc": "Un avatar redondo con iniciales.",
                     "params": {
@@ -1307,6 +1311,18 @@ dict(_w)["Layout"].update({
     "pyzed.anchors.snap_to": {"desc": "Una caja movida (y redimensionada en los ejes estirados) adonde apunta un anclaje: contra los bordes anclados, centrada o llenando el padre, a `margin` píxeles.", "params": {"anchor": "Un preset, palabras o bordes.", "rect": "La caja.", "parent": "El tamaño del padre.", "margin": "Distancia a los bordes."}},
     "pyzed.anchors.offsets": {"desc": "Las distancias `(izquierda, arriba, derecha, abajo)` de cada lado del padre a una caja.", "params": {"rect": "La caja.", "parent": "El tamaño del padre."}},
     "pyzed.anchors.pivot_offset": {"desc": "La traslación que hace que una rotación y una escala (que giran alrededor del centro de la caja) giren alrededor de `pivot`.", "params": {"size": "El tamaño de la caja.", "pivot": "`(x, y)` de `0` a `1`.", "rotate": "Grados en sentido horario.", "scale": "Factor de escala."}},
+    "pyzed.focusable": {
+        "desc": "Deja que cualquier widget tome el foco del teclado como un campo de texto: un clic o Tab lo enfocan (`Command.focus(id)` también) y, mientras lo tiene, las combinaciones de `keys` llaman a `on_key(combo)` en vez de llegar al `on_key` de la app. Al usar el teclado sobre él se dibuja un anillo alrededor. Los interruptores, casillas, deslizadores, segmentados y grupos de radios de la librería lo usan.",
+        "params": {
+            "content": "El control.",
+            "on_key": "Se llama con la combinación (`\"space\"`, `\"shift-right\"`…) de cada tecla de `keys` pulsada mientras tiene el foco. `None` deja `content` sin foco.",
+            "keys": "Las combinaciones que toma (por defecto Espacio, Enter, las flechas, Inicio y Fin); `\"*\"` toma todas. Tab queda libre para mover el foco.",
+            "ring_color": "Color del anillo de foco (ninguno por defecto).",
+            "ring_radius": "Radio de las esquinas del anillo.",
+            "ring_offset": "Píxeles entre el control y el anillo.",
+        },
+        "example": 'pz.focusable(estrellas, lambda combo: self.puntuar(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")',
+    },
     "pyzed.window_edges": {
         "desc": "Envuelve la vista entera de una ventana sin decoraciones del sistema para que pulsar cerca de sus bordes cambie el tamaño de la ventana (las esquinas ocupan el doble). `ui.window_frame` ya lo usa.",
         "params": {"content": "La vista entera de la ventana.", "border": "Ancho en píxeles de la zona que redimensiona.", "enabled": "`False` lo desactiva (para una ventana maximizada)."},
@@ -1404,7 +1420,7 @@ _section("widgets", "Imágenes y contenido", {
 dict(_w)["Controles"].update({
     "pyzed.vertical_slider": {"desc": "Un deslizador vertical (`slider(..., vertical=True)`).", "params": {"min": "Mínimo.", "max": "Máximo.", "kwargs": "Los de `slider`."}},
     "pyzed.pick_list": {
-        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.",
+        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`. Toma el foco del teclado como un campo de texto (un clic, Tab o `Command.focus(id)`) y lo mantiene después de elegir: ↑/↓ eligen la opción anterior o la siguiente sin abrirlo, Inicio/Fin la primera y la última y al escribir salta a una opción; Enter, Espacio, Alt+↓ o F4 abren el menú, donde ↑/↓ se mueven, Enter elige y Esc cierra.",
         "params": {
             "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
             "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
@@ -1412,6 +1428,7 @@ dict(_w)["Controles"].update({
             "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú.",
             "menu_bg": "Fondo del menú.", "menu_color": "Texto del menú.", "menu_border_color": "Borde del menú.",
             "selected_bg": "Fondo de la opción resaltada.", "selected_color": "Texto de la opción resaltada.",
+            "focus_border_color": "Color del borde mientras tiene el foco del teclado.",
         },
     },
     "pyzed.radio": {

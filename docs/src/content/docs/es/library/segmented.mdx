@@ -212,6 +212,12 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Consejos
+
+:::tip
+Al pulsarlo o llegar con Tab tiene el foco del teclado: ←/→ eligen la opción anterior o la siguiente (saltando las desactivadas) e Inicio/Fin la primera y la última.
+:::
+
 ## Propiedades y API
 
 ### `ui.segmented`
@@ -225,6 +231,7 @@ segmented(
     size='md',
     width=None,
     disabled=False,
+    id=None,
     theme=None,
 )
 ```
@@ -238,6 +245,7 @@ Un grupo de botones mutuamente excluyentes.
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
 | `width` | `None` | `"fill"` reparte el ancho entre los botones. |
 | `disabled` | `False` | `True`, o los valores a desactivar. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_select` ([eventos](#eventos)).

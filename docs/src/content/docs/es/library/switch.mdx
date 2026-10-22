@@ -210,12 +210,27 @@ def view(state, set_state):
 </TabItem>
 </Tabs>
 
+## Consejos
+
+:::tip
+Al pulsarlo o llegar con Tab tiene el foco del teclado (un anillo aparece al usar las teclas): Espacio o Enter lo cambian.
+:::
+
 ## Propiedades y API
 
 ### `ui.switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
+switch(
+    checked,
+    on_toggle=None,
+    *,
+    label=None,
+    size='md',
+    disabled=False,
+    id=None,
+    theme=None,
+)
 ```
 
 Un interruptor encendido/apagado.
@@ -226,6 +241,7 @@ Un interruptor encendido/apagado.
 | `label` | `None` | Texto de la etiqueta. |
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
 | `disabled` | `False` | Lo atenúa e ignora los clics. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_toggle` ([eventos](#eventos)).

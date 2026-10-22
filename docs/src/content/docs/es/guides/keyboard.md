@@ -44,6 +44,10 @@ class App(pz.App):
 escribes en un `input`). Responde solo a los combos que te interesen, y comprueba el estado si un
 atajo solo tiene sentido en cierto contexto (`if self.palette_open and combo == "escape"`).
 
+Las teclas que usa un desplegable, interruptor, casilla, deslizador, segmentado o grupo de radios
+con foco (las flechas, <kbd>Espacio</kbd>…) **no** llegan a `on_key`; ver
+[Controles con el foco del teclado](/pyzed/es/guides/accessibility/#controles-con-el-foco-del-teclado).
+
 <kbd>Tab</kbd> y <kbd>Shift</kbd>+<kbd>Tab</kbd> además mueven el foco entre campos cuando
 ningún widget las usó; ver [Accesibilidad](/pyzed/es/guides/accessibility/#moverse-entre-campos-con-tab).
 :::
@@ -77,6 +81,9 @@ los muestra en un bucle de fotogramas, junto con ayudas de `pyzed.game` como `ax
 ## Mostrar atajos
 
 - `ui.kbd("ctrl-shift-p")` dibuja las teclas. En macOS usa símbolos (⌃⇧P) y en el resto palabras.
-- `ui.button(..., keys="ctrl-s")`, `ui.MenuItem(..., keys=...)`, `ui.PaletteItem(..., keys=...)`
-  y `ui.tooltip(..., keys=...)` muestran el atajo junto a la acción.
+- `ui.button(..., keys="ctrl-s")`, `ui.icon_button(..., tooltip="Guardar", keys="ctrl-s")`,
+  `ui.MenuItem(..., keys=...)`, `ui.PaletteItem(..., keys=...)` y `ui.tooltip(..., keys=...)`
+  muestran el atajo junto a la acción, dibujado como teclas. Pasa `keys=` en vez de escribir las
+  teclas en el texto: `f"Guardar ({keys})"` queda desfasado cuando el usuario cambia el atajo.
+- `ui.keys_text("ctrl-shift-p")` da `"Ctrl+Shift+P"` para una etiqueta o línea de estado en texto plano.
 - Fija el estilo con `pyzed.ui.base.KEY_STYLE = "symbols"` o `"words"`.

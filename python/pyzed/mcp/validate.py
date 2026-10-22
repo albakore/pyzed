@@ -3,7 +3,7 @@
 ``check_code`` reads Python source without running it and reports names that do not exist in
 ``pyzed`` or ``pyzed.ui``, keyword arguments a function does not take, apps without ``view`` and
 components without ``render``, side effects in ``view()``/``render()`` and lambdas in loops that do
-not capture the loop variable. ``check_form`` validates a ``.pzform`` against the designer's
+not capture the loop variable, and tooltips that spell out their shortcut instead of ``keys=``. ``check_form`` validates a ``.pzform`` against the designer's
 components. Both return ``{"ok": bool, "issues": [...]}``; ``ok`` is ``False`` only for errors.
 """
 
@@ -13,6 +13,7 @@ import ast
 import importlib.util
 import inspect
 import json
+import re
 import shutil
 import subprocess
 from typing import Any, Dict, List, Optional, Sequence, Set
@@ -50,6 +51,19 @@ def _accepted(func: Any) -> Optional[Set[str]]:
     if any(p.kind is p.VAR_KEYWORD for p in params):
         return None
     return {p.name for p in params if p.kind in (p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY)}
+
+
+_KEYS_TEXT = re.compile(r"\((ctrl|shift|alt|cmd|super|f\d+)\b|\b(ctrl|shift|alt|cmd)\+", re.IGNORECASE)
+
+
+def _keys_in_text(node: ast.AST) -> bool:
+    """Whether a tooltip's text spells out a shortcut ("Save (Ctrl+S)", ``format_keys(...)`` in an f-string)."""
+    for part in ast.walk(node):
+        if isinstance(part, ast.Constant) and isinstance(part.value, str) and _KEYS_TEXT.search(part.value):
+            return True
+        if isinstance(part, ast.Call) and getattr(part.func, "attr", getattr(part.func, "id", "")) == "format_keys":
+            return True
+    return False
 
 
 class _Checker(ast.NodeVisitor):
@@ -129,6 +143,10 @@ class _Checker(ast.NodeVisitor):
                     if kw.arg is not None and kw.arg not in accepted:
                         self.issues.append(_issue(kw, "error", f"{name}() has no parameter {kw.arg!r}; it takes: "
                                                                 f"{', '.join(sorted(accepted)) or 'no keywords'}"))
+        for kw in node.keywords:
+            if kw.arg == "tooltip" and _keys_in_text(kw.value):
+                self.issues.append(_issue(kw, "warning", "the tooltip writes its shortcut into the text; pass "
+                                                         "keys=\"ctrl-s\" instead, which draws key caps"))
         self.generic_visit(node)
 
     # -- classes ------------------------------------------------------------------------------------

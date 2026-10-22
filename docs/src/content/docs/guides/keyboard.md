@@ -44,6 +44,10 @@ class App(pz.App):
 type in an `input`). Only respond to the combos you care about, and check the state when a
 shortcut only makes sense in a given context (`if self.palette_open and combo == "escape"`).
 
+Keys used by a focused dropdown, switch, check box, slider, segmented control or radio group (the
+arrows, <kbd>Space</kbd>…) do **not** reach `on_key`; see
+[Controls with the keyboard focus](/pyzed/guides/accessibility/#controls-with-the-keyboard-focus).
+
 <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd> also move the focus between fields when no
 widget used them; see [Accessibility](/pyzed/guides/accessibility/#moving-between-fields-with-tab).
 :::
@@ -76,6 +80,9 @@ with `pyzed.game` helpers such as `axis` and `vector`.
 ## Showing shortcuts
 
 - `ui.kbd("ctrl-shift-p")` draws the keys. On macOS it uses symbols (⌃⇧P), elsewhere words.
-- `ui.button(..., keys="ctrl-s")`, `ui.MenuItem(..., keys=...)`, `ui.PaletteItem(..., keys=...)`
-  and `ui.tooltip(..., keys=...)` show the shortcut next to the action.
+- `ui.button(..., keys="ctrl-s")`, `ui.icon_button(..., tooltip="Save", keys="ctrl-s")`,
+  `ui.MenuItem(..., keys=...)`, `ui.PaletteItem(..., keys=...)` and `ui.tooltip(..., keys=...)`
+  show the shortcut next to the action, drawn as key caps. Pass `keys=` rather than writing the
+  keys into the text: `f"Save ({keys})"` goes stale when the user changes the binding.
+- `ui.keys_text("ctrl-shift-p")` gives `"Ctrl+Shift+P"` for a plain-text label or status line.
 - Force the style with `pyzed.ui.base.KEY_STYLE = "symbols"` or `"words"`.

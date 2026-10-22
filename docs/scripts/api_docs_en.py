@@ -536,6 +536,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                     "desc": 'Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl", "Shift", "P"]]`. The style is controlled by `pyzed.ui.base.KEY_STYLE` (`"auto"`, `"symbols"` or `"words"`).',
                     "params": {"keys": "The shortcut."},
                 },
+                "pyzed.ui.keys_text": {
+                    "desc": 'A shortcut as plain text for a label or a status line: `keys_text("ctrl-shift-p") == "Ctrl+Shift+P"` (`"⌃⇧P"` with macOS symbols), chords separated by a space. Tooltips, buttons and menus take `keys=` instead and draw key caps, so never write the keys into their text.',
+                    "params": {"keys": "The shortcut."},
+                },
                 "pyzed.ui.avatar": {
                     "desc": "A round avatar with initials.",
                     "params": {
@@ -1307,6 +1311,18 @@ dict(_w)["Layout"].update({
     "pyzed.anchors.snap_to": {"desc": "A box moved (and sized, on stretched axes) to sit where an anchor points: against the anchored edges, centered or filling the parent, `margin` pixels in.", "params": {"anchor": "A preset, words or edges.", "rect": "The box.", "parent": "The parent's size.", "margin": "Distance to the edges."}},
     "pyzed.anchors.offsets": {"desc": "The distances `(left, top, right, bottom)` from each side of the parent to a box.", "params": {"rect": "The box.", "parent": "The parent's size."}},
     "pyzed.anchors.pivot_offset": {"desc": "The translation that makes a rotation and a scale (which turn around a box's center) turn around `pivot` instead.", "params": {"size": "The box's size.", "pivot": "`(x, y)` from `0` to `1`.", "rotate": "Degrees clockwise.", "scale": "Scale factor."}},
+    "pyzed.focusable": {
+        "desc": "Lets any widget take the keyboard focus like a text field: a click or Tab focuses it (`Command.focus(id)` too) and, while it has it, the combos in `keys` call `on_key(combo)` instead of reaching the app's `on_key`. A ring is drawn around it once the keyboard is used on it. The library's switches, check boxes, sliders, segmented controls and radio groups use it.",
+        "params": {
+            "content": "The control.",
+            "on_key": "Called with the combo (`\"space\"`, `\"shift-right\"`…) of each key in `keys` pressed while it has the focus. `None` leaves `content` unfocusable.",
+            "keys": "The combos it takes (by default Space, Enter, the arrows, Home and End); `\"*\"` takes every key. Tab is left to move the focus.",
+            "ring_color": "Color of the focus ring (none by default).",
+            "ring_radius": "Corner radius of the ring.",
+            "ring_offset": "Pixels between the control and the ring.",
+        },
+        "example": 'pz.focusable(stars, lambda combo: self.rate(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")',
+    },
     "pyzed.window_edges": {
         "desc": "Wraps the whole view of a window without system decorations so that pressing near its edges resizes the window (the corners take twice as much room). `ui.window_frame` already uses it.",
         "params": {"content": "The window's whole view.", "border": "Width in pixels of the area that resizes.", "enabled": "`False` turns it off (for a maximized window)."},
@@ -1404,7 +1420,7 @@ _section("widgets", "Images and content", {
 dict(_w)["Controls"].update({
     "pyzed.vertical_slider": {"desc": "A vertical slider (`slider(..., vertical=True)`).", "params": {"min": "Minimum.", "max": "Maximum.", "kwargs": "Same as `slider`."}},
     "pyzed.pick_list": {
-        "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.",
+        "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`. It takes the keyboard focus like a text field (a click, Tab or `Command.focus(id)`) and keeps it after a choice: ↑/↓ then pick the previous or next option without opening it, Home/End the first and last and typing jumps to an option; Enter, Space, Alt+↓ or F4 open the menu, where ↑/↓ move, Enter picks and Esc closes.",
         "params": {
             "selected": "Current option.", "handle": "Arrow icon character.", "handle_size": "Arrow size.",
             "menu_height": "Maximum menu height.", "font": "Font family.",
@@ -1412,6 +1428,7 @@ dict(_w)["Controls"].update({
             "on_open": "Sent when the menu opens.", "on_close": "Sent when the menu closes.",
             "menu_bg": "Menu background.", "menu_color": "Menu text.", "menu_border_color": "Menu border.",
             "selected_bg": "Background of the highlighted option.", "selected_color": "Text of the highlighted option.",
+            "focus_border_color": "Border color while it has the keyboard focus.",
         },
     },
     "pyzed.radio": {
