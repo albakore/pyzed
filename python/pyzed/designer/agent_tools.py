@@ -561,6 +561,8 @@ def project_info(d: "Designer") -> Dict[str, Any]:
         "forms": [p.relative_to(root).as_posix() for p in project.forms()],
         "package": project.src_dir.relative_to(root).as_posix() if project.src_dir else None,
         "dependencies": [str(dep.name) + (" (dev)" if dep.dev else "") for dep in project.dependencies()],
+        # an old pyzed-ui or packages not installed: fix them before blaming the forms
+        "problems": [problem.message for problem in project.problems()],
         "files": files,
     }
 

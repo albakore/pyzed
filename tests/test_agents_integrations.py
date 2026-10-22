@@ -1215,7 +1215,8 @@ def test_the_agents_follow_the_active_project(tmp_path, monkeypatch):
     c.thread.model = c.settings.model = "ollama:llama3"
     monkeypatch.setattr(providers, "is_ready", lambda *a, **k: True)
     environment = lambda: types.SimpleNamespace(describe=lambda: "This computer (Linux).", is_wsl=False)  # noqa: E731
-    project = lambda root: types.SimpleNamespace(root=root, environment=environment(), name=root.name)  # noqa: E731
+    project = lambda root: types.SimpleNamespace(root=root, environment=environment(), name=root.name,  # noqa: E731
+                                                 stamp=lambda: None)
 
     def run(text):
         c.send(text)

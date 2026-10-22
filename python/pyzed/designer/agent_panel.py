@@ -640,6 +640,9 @@ class AgentController:
             self.live_plan = []
             self._agent = None
             self._keep()
+            projects = getattr(self.d, "projects", None)
+            if projects is not None:  # it may have run uv in a terminal: the Dependencies tab reads it again
+                projects.poll(force=True)
 
     # -- the active project ---------------------------------------------------------------------------
     def project_key(self) -> str:

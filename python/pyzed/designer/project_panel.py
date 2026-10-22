@@ -13,13 +13,14 @@ import os
 import re
 import subprocess
 import threading
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from .. import project as _project
 from ..icons import icon as _icon
-from ..project import Dependency, Project, Result, Tool
+from ..project import Dependency, Problem, Project, Result, Tool
 from ..theme import Theme, alpha
 from . import logs as _logs
 from . import workspace as _workspace
@@ -39,6 +40,12 @@ class ProjectController:
         self.project: Optional[Project] = None
         self.deps: List[Dependency] = []
         self.latest: Dict[str, str] = {}
+        #: What keeps the project from running with this Pyzed (an old pyzed-ui, packages not installed...).
+        self.problems: List[Problem] = []
+        #: The projects whose problems were dismissed for this session.
+        self.dismissed: set = set()
+        self._stamp: Optional[tuple] = None
+        self._polled = 0.0
         self.tools: Dict[str, Tool] = {}
         self.branch: Optional[str] = None
         #: The linked git worktree the project is in (``None`` in the repository's main folder).
@@ -87,7 +94,9 @@ class ProjectController:
         """Makes ``project`` the open one (activated, remembered, its folder the working one)."""
         before = self.project.root if self.project is not None else None
         self.project = project
-        if (project.root if project is not None else None) != before:
+        changed = (project.root if project is not None else None) != before
+        if changed:
+            self.latest = {}
             if project is not None:
                 _logs.event("project", "Opened the project %s", project.root)
             else:
@@ -106,6 +115,10 @@ class ProjectController:
         except OSError:
             pass
         self.refresh()
+        if changed and self.problems:
+            first = self.problems[0]
+            self.d.notify(tr(first.title, **first.values), tr("See the Dependencies tab to fix it"), kind="warning",
+                          seconds=8)
         return None
 
     def load_tools(self) -> Any:
@@ -121,7 +134,7 @@ class ProjectController:
         if project is None:
             return
         project.reload()
-        self.deps = project.dependencies()
+        self._read_dependencies(project)
         self.files.refresh()
         self._git_reads += 1
         read = self._git_reads
@@ -140,6 +153,45 @@ class ProjectController:
         else:
             self._git_root = project.root
             work()
+
+    def _read_dependencies(self, project: Project) -> None:
+        self.deps = project.dependencies()
+        self.problems = project.problems()
+        self._stamp = project.stamp()
+        # a version found by Check for updates is no news once it is the locked one
+        locked = {d.name: d.locked for d in self.deps}
+        self.latest = {name: v for name, v in self.latest.items() if v and locked.get(name) != v}
+
+    def poll(self, force: bool = False) -> None:
+        """Rereads the dependencies when ``pyproject.toml``, ``uv.lock`` or ``.venv`` changed since they were read
+        (a terminal or the agent ran uv); looks at most once a second unless ``force``."""
+        project = self.project
+        now = time.monotonic()
+        if project is None or self.busy or (not force and now - self._polled < 1.0):
+            return
+        self._polled = now
+        if project.stamp() != self._stamp:
+            project.reload()
+            self._read_dependencies(project)
+
+    def fix(self, problem: Problem) -> Any:
+        """Fixes ``problem``: updates ``pyzed-ui`` to the editor's version or syncs the environment; returns the
+        background task."""
+        if problem.kind in ("pyzed-old", "pyzed-missing"):
+            return self._uv(tr("Updating pyzed-ui"), lambda p: p.update_pyzed())
+        return self.sync()
+
+    def dismiss_problems(self) -> None:
+        """Hides the problems banner of the active project until it is opened again."""
+        if self.project is not None:
+            self.dismissed.add(self.project.root)
+
+    @property
+    def shown_problems(self) -> List[Problem]:
+        """The problems the banner shows (none once dismissed for this project)."""
+        if self.project is None or self.project.root in self.dismissed:
+            return []
+        return self.problems
 
     @property
     def loading(self) -> bool:
@@ -563,10 +615,17 @@ def _empty(p: ProjectController, t: Theme) -> Any:
 
 def _dep_row(p: ProjectController, dep: Dependency, t: Theme) -> Any:
     newer = p.latest.get(dep.name)
-    version = ui.label(f"↑{newer}" if newer else dep.locked or "—", size="xs", mono=True,
-                       color="success" if newer else "text_muted", theme=t)
+    if newer and newer == dep.locked:
+        newer = None
+    unsynced = p.project is not None and p.project.venv.is_dir() and dep.locked is not None \
+        and dep.installed != dep.locked
+    version = ui.label(f"↑{newer}" if newer else dep.installed or dep.locked or "—", size="xs", mono=True,
+                       color="success" if newer else "warning" if unsynced else "text_muted", theme=t)
     if newer:
         version = ui.tooltip(version, f"{dep.locked} → {newer}: press Upgrade", theme=t)
+    elif unsynced:
+        version = ui.tooltip(version, tr("Installed {installed}, uv.lock says {locked}: press Sync",
+                                         installed=dep.installed or tr("nothing"), locked=dep.locked), theme=t)
     end = _core.row([
         version,
         ui.icon_button("pencil", lambda: p.start_change(dep), size="sm", tooltip="Change version", theme=t),
@@ -625,6 +684,34 @@ def _header(d: "Designer", p: ProjectController, project: Project, t: Theme) -> 
     ], spacing=2), padding=(10, 12, 4, 12), width="fill")
 
 
+def _problems(p: ProjectController, t: Theme) -> Any:
+    """The banner that says the project needs a newer pyzed-ui or a sync, with the buttons that do it."""
+    problems = p.shown_problems
+    if not problems:
+        return None
+    first = problems[0]
+    details = [tr(first.detail, **first.values)] + [tr(x.title, **x.values) for x in problems[1:]]
+    actions = []
+    if any(x.kind in ("pyzed-old", "pyzed-missing") for x in problems):
+        actions.append(ui.button(tr("Update pyzed-ui"), lambda: p.fix(first), icon="arrow-up-circle",
+                                 variant="solid", size="sm", theme=t))
+    elif any(x.kind in ("no-environment", "not-installed") for x in problems):
+        actions.append(ui.button(tr("Sync"), p.sync, icon="refresh-cw", variant="solid", size="sm", theme=t))
+    # stacked rather than a ui.callout row: the dock is too narrow for the text and the button side by side
+    close = ui.icon_button("x", p.dismiss_problems, size="sm", tooltip=tr("Hide until the project opens again"),
+                           theme=t)
+    box = _core.container(_core.column([
+        _core.row([_icon("triangle-alert", size=14, color=t.warning),
+                   _core.container(ui.label(tr(first.title, **first.values), size="sm", weight="medium", theme=t),
+                                   width="fill"),
+                   close], spacing=8, align="center"),
+        *[ui.label(detail, size="xs", color="text_muted", theme=t) for detail in details if detail],
+        _core.row(actions, spacing=6) if actions else None,
+    ], spacing=6, width="fill"), padding=(8, 10), width="fill", bg=alpha(t.warning, 0.1), radius=t.radius,
+        border_color=alpha(t.warning, 0.35), border_width=1.0)
+    return _core.container(box, padding=(6, 8), width="fill")
+
+
 def _busy(p: ProjectController, t: Theme) -> Any:
     if not p.busy:
         return None
@@ -643,6 +730,7 @@ def view(d: "Designer", t: Theme) -> Any:
                             on_press=p.files.focus, on_right_press=lambda: p.files.open_menu(""))
     return _core.column([
         _header(d, p, project, t),
+        _problems(p, t),
         _busy(p, t),
         _workspace.toolbar_view(p.files, t),
         _core.scrollable(tree, height="fill"),
@@ -671,6 +759,7 @@ def dependencies_view(d: "Designer", t: Theme) -> Any:
         ui.tooltip(ui.button("Types", p.typecheck, icon="shield-check", size="sm", theme=t), "ty check", theme=t),
     ], spacing=4), padding=(4, 8), width="fill")
     body = _core.column([
+        _problems(p, t),
         _busy(p, t),
         _section(tr("Dependencies"), t, dep_actions),
         add,

@@ -326,6 +326,9 @@ class Designer(App):
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
         elif self.projects.loading:  # shows the files and branch of a WSL project once they are read
             subs.append(_core.every(0.2, lambda: None, key="designer-loading"))
+        elif self.projects.project is not None and self.layout.is_showing("dependencies", self):
+            # notices packages added, removed or upgraded outside the editor (a terminal, the agent)
+            subs.append(_core.every(1.0, self.projects.poll, key="designer-dependencies"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread
