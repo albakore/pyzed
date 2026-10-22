@@ -1007,7 +1007,7 @@ The property each control type binds, and whether the user edits it (two-way): `
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
 ```
 
 A toolbox entry: how a control of this `type` looks, behaves and is configured.
@@ -1098,6 +1098,14 @@ RenderContext.on(control, event, prop=None)
 ```
 
 A callback for `event`; when `prop` is given the value is also stored there.
+
+#### `RenderContext.set`
+
+```python
+RenderContext.set(control, prop, value)
+```
+
+Stores `value` in `prop` of a running control without raising an event (a tree's open folders).
 
 #### `RenderContext.key`
 

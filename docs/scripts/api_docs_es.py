@@ -2847,6 +2847,7 @@ MEMBERS = {
     "pyzed.designer.Component.create": "Un control nuevo de este tipo con las propiedades por defecto.",
     "pyzed.designer.Prop.title": "La etiqueta que se muestra en la rejilla de propiedades: `label`, o el nombre con espacios en lugar de guiones bajos.",
     "pyzed.designer.RenderContext.on": "Un callback para `event`; si se da `prop`, el valor también se guarda ahí.",
+    "pyzed.designer.RenderContext.set": "Guarda `value` en `prop` de un control en ejecución sin lanzar ningún evento (las carpetas abiertas de un árbol).",
     "pyzed.designer.RenderContext.key": "Un id estable para widgets con estado interno (editores, campos de texto).",
     # designer: componentes diseñados
     "pyzed.designer.SceneDocument.scene": "La escena del componente (el `form` del documento, tipado como `Scene`).",
