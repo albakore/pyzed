@@ -46,6 +46,8 @@ What to do for each kind of request:
 Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
 describe_component, search_icons, list_themes, list_examples / read_example (blocks are whole screens).
 Checks: validate_code, validate_form, check_project; pictures: screenshot, screenshot_project.
+Settings: project_settings / set_project_settings (the renderer, GPU or CPU, and the editor preferences the
+project shares, like its tab size).
 Project tools work in the folder the server runs in and in the project's own environment (its .venv through
 uv run; project_info shows it, WSL included). Code goes in the project's files: the entry is its script
 (`script` in [tool.pyzed]) or its main form; forms, components and shaders are files of the project."""
@@ -297,6 +299,21 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         """The Pyzed project in path (relative to the folder this server works in): name, version, main
         form, forms, components, package, dependencies and files. Says so when there is none yet."""
         return _json(projects.info(base, path))
+
+    @gated()
+    def project_settings(path: str = ".") -> str:
+        """The project's own settings: its renderer ([tool.pyzed.rendering]: renderer auto/gpu/cpu, gpu_api,
+        power, vsync) and the code editor and designer preferences it sets for everyone who opens it
+        (.pyzed/settings.json), with every key and its default."""
+        return _json(projects.settings(base, path))
+
+    @gated()
+    def set_project_settings(rendering: Optional[Dict[str, str]] = None, editor: Optional[Dict[str, Any]] = None,
+                             designer: Optional[Dict[str, Any]] = None, path: str = ".") -> str:
+        """Changes the project's settings. rendering, e.g. {"renderer": "cpu"} for virtual machines or
+        {"renderer": "gpu"} for shaders ("auto" lets Pyzed decide); editor and designer, e.g.
+        {"tab_size": 2, "hard_tabs": false} or {"grid": 4} (null removes a key, so the user's own value applies)."""
+        return _json(projects.set_settings(base, path, rendering=rendering, editor=editor, designer=designer))
 
     @gated()
     def list_files(pattern: str = "*", path: str = ".", limit: int = 300) -> str:

@@ -12,6 +12,7 @@ import fnmatch
 import platform
 import sys
 import tempfile
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -223,6 +224,53 @@ def create_project(root: Path, name: str, *, folder: str = ".", package: bool = 
         raise FileExistsError(f"{_rel(root, target)} exists and is not empty")
     _project.init(target, package=package, git=git, sync=sync)
     return info(root, _rel(root, target))
+
+
+def settings(root: Path, path: str = ".") -> Dict[str, Any]:
+    """The project's own settings: its renderer (``[tool.pyzed.rendering]``) and the editor and designer
+    preferences it sets for everyone who opens it (``.pyzed/settings.json``), with the values each one takes."""
+    from .. import rendering
+    from ..designer import profiles
+
+    project = _project(root, path)
+    store = profiles.Store(Path(project.root), user=False)  # the user's own file stays unread
+    return {
+        "project": project.name,
+        "rendering": asdict(rendering.find(project.root)),
+        "rendering_options": {"renderer": rendering.RENDERERS, "gpu_api": rendering.GPU_APIS,
+                              "power": rendering.POWER, "vsync": rendering.VSYNC},
+        "editor": store.project["editor"], "designer": store.project["designer"],
+        "editor_keys": profiles.defaults("editor"), "designer_keys": profiles.defaults("designer"),
+        "files": {"rendering": "pyproject.toml", "preferences": profiles.PROJECT_FILE.as_posix()},
+        "error": store.project_error,
+    }
+
+
+def set_settings(root: Path, path: str = ".", *, rendering: Optional[Dict[str, str]] = None,
+                 editor: Optional[Dict[str, Any]] = None, designer: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Changes the project's settings: ``rendering`` keys are merged into ``[tool.pyzed.rendering]`` ("auto"
+    removes one); ``editor`` and ``designer`` keys into ``.pyzed/settings.json`` (``None`` removes one, so the
+    user's own value applies). Unknown keys and values are an error. Returns ``settings``."""
+    from .. import rendering as _rendering
+    from ..designer import profiles
+
+    project = _project(root, path)
+    if rendering:
+        current = _rendering.find(project.root).to_table()
+        current.update(rendering)
+        _rendering.save(project.root, _rendering.Rendering(**current))  # raises on unknown keys and values
+    if editor or designer:
+        store = profiles.Store(Path(project.root), user=False)
+        for section, values in (("editor", editor), ("designer", designer)):
+            for key, value in (values or {}).items():
+                if key not in profiles.keys(section):
+                    raise KeyError(f"{section} has no setting {key!r}; see editor_keys and designer_keys")
+                if value is None:
+                    store.project[section].pop(key, None)
+                else:
+                    store.project[section][key] = profiles.clean(section, {key: value})[key]
+        store.save_project()
+    return settings(root, path)
 
 
 def add_dependency(root: Path, packages: Sequence[str], *, dev: bool = False, path: str = ".") -> Dict[str, Any]:

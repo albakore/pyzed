@@ -36,7 +36,7 @@ os.environ["PYZED_CONFIG_DIR"] = tempfile.mkdtemp(prefix="pyzed-shots-")
 
 import pyzed as pz
 from pyzed import _core, shading, ui
-from pyzed.designer import dialogs, shader_editor
+from pyzed.designer import shader_editor
 from pyzed.designer.app import Designer
 
 ui.base.KEY_STYLE = "words"
@@ -188,30 +188,43 @@ def component_view():
 
 
 # -- settings --------------------------------------------------------------------------------------
-class _NoScroll:
-    """Stands in for ``_core`` while the settings dialog is built: its scrollable shows everything."""
-
-    def __getattr__(self, name):
-        return getattr(_core, name)
-
-    @staticmethod
-    def scrollable(content, **_):
-        return content
-
-
 @shot
 def settings():
     app = make()
     app.open_settings()
     save(app, EDITOR / "settings.png")
-    real = dialogs._core
-    dialogs._core = _NoScroll()
-    try:
-        out = EDITOR / "settings-all.png"
-        save(app, out, size=(1440, 1500))
-        _crop_to_modal(out)
-    finally:
-        dialogs._core = real
+    app.settings_ui.set_query("font")
+    save(app, EDITOR / "settings-search.png")
+    app.settings_ui.set_query("")
+    # a profile with a few changes: the dots, the counts in the index and the Reset buttons
+    app.create_profile("Presentation")
+    app.change_setting("editor", "font_size", 16)
+    app.change_setting("editor", "line_height", "comfortable")
+    app.open_settings("fonts")
+    save(app, EDITOR / "settings-profiles.png")
+    app.switch_profile("Default")
+    app.delete_profile("Presentation")
+    app.close_dialog()
+
+    # a project's own settings and its renderer
+    project = Path(tempfile.mkdtemp(prefix="pyzed-shots-project-")) / "shop"
+    (project / "ui").mkdir(parents=True)
+    (project / "pyproject.toml").write_text('[project]\nname = "shop"\nversion = "0.1.0"\n\n[tool.pyzed]\n'
+                                            'ui = "ui"\nmain = "ui/main.pzform"\n')
+    from pyzed.project import Project
+
+    app.projects.attach(Project.open(project))
+    app.toasts.clear()
+    app.open_settings("editor.editing")
+    app.settings_ui.set_scope("project")
+    app.change_setting("editor", "tab_size", 2, "project")
+    save(app, EDITOR / "settings-project.png")
+    app.settings_ui.set_scope("user")
+    app.settings_ui.show("project.rendering")
+    app.settings_ui.set_rendering("renderer", "gpu")
+    save(app, EDITOR / "settings-rendering.png")
+    app.reset_all_settings("project")
+    app.projects.attach(None)
     app.close_dialog()
 
     app.open_editor_settings()
@@ -272,31 +285,6 @@ def keymap_editor(app):
     km.reset_all()
     km.save()
     app.close_dialog()
-
-
-def _crop_to_modal(path, width=560):
-    """Crops a full-window shot to the centred modal of ``width``: its rows are the run of its own
-    background color down a column just inside its left edge."""
-    from PIL import Image
-
-    with Image.open(path) as im:
-        rgb = im.convert("RGB")
-        w, h = rgb.size
-        left = (w / SCALE - width) / 2
-        x = int((left + 5) * SCALE)
-        y0 = y1 = h // 2
-        bg = rgb.getpixel((x, y0))
-
-        def same(y):
-            return sum(abs(a - b) for a, b in zip(rgb.getpixel((x, y)), bg)) < 10
-
-        while y0 > 0 and same(y0 - 1):
-            y0 -= 1
-        while y1 < h - 1 and same(y1 + 1):
-            y1 += 1
-        pad = 16 * SCALE
-        im.crop((int(left * SCALE) - pad, max(0, y0 - pad), int((left + width) * SCALE) + pad,
-                 min(h, y1 + pad))).save(path, optimize=True)
 
 
 # -- the Export dialog ----------------------------------------------------------------------------

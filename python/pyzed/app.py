@@ -10,6 +10,7 @@ from . import animation as _animation
 from . import component as _component
 from . import style as _style
 from . import hot_reload as _hot_reload
+from . import rendering as _rendering
 from . import theme as _theme
 
 ThemeLike = Union[_theme.Theme, _theme.AutoTheme, str, None]
@@ -217,6 +218,10 @@ class App(Window):
     ``splash`` shows a window before the main one: a ``pz.Splash`` (an image without a
     frame, centered on the screen) or any ``Window``. It stays up for its ``duration`` in
     seconds, then the main window opens, ``on_start`` runs and the splash closes.
+
+    ``rendering`` (a ``pz.Rendering``) picks the GPU or CPU renderer, the graphics API,
+    the GPU and vsync; ``None`` reads ``[tool.pyzed.rendering]`` of the project's
+    ``pyproject.toml`` (see ``pyzed.rendering``).
     """
 
     size: Tuple[float, float] = (1280, 800)
@@ -229,6 +234,8 @@ class App(Window):
     tab_focus: bool = True
     #: A window shown while the app starts (see ``pz.Splash``); ``None`` for none.
     splash: Optional[Window] = None
+    #: How the windows are drawn (GPU or CPU...); ``None`` follows the project's ``pyproject.toml``.
+    rendering: Optional[_rendering.Rendering] = None
 
     def subscriptions(self) -> List[Any]:
         """Timers and streams that should run right now (re-evaluated after every update)."""
@@ -259,6 +266,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     """
     if _hot_reload.is_reloading():
         return  # the main script is being re-executed by a reload; the app already runs
+    (getattr(app, "rendering", None) or _rendering.find()).apply()
     if _platform.is_wsl():  # under WSL the window opens as a Windows program (see pyzed._wsl_windows)
         from . import _wsl_windows
 

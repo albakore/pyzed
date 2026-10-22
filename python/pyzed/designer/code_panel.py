@@ -428,8 +428,9 @@ class CodeAssist:
         return _keymap.get().editor_keymap()
 
     def show_settings_section(self, section: str) -> None:
-        """Shows ``section`` of the editor settings."""
+        """Shows ``section`` of the editor settings (a page of the Settings dialog)."""
         self.settings_section = section
+        self.d.settings_ui.show(f"editor.{section}")
 
     def setter(self, key: str) -> Any:
         """Returns a callback that sets editor setting ``key`` to the value it receives (for settings
@@ -1090,156 +1091,10 @@ def server_status_items(a: CodeAssist, t: Theme, on_press: Any = None) -> List[A
     return items
 
 
-def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any]]:
-    """The editor settings by section: ``{key: (title, icon, build)}``, in the order of the index."""
-    s = a.settings
-
-    def switch(key: str) -> Any:
-        return ui.switch(bool(getattr(s, key)), a.setter(key), theme=t)
-
-    def appearance() -> List[Any]:
-        from . import dialogs as _dialogs
-
-        theme_names = [tr("Same as the designer"), *themes.names()]
-        heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
-        return [ui.settings_group(tr("Appearance"), [
-            ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
-                                            lambda name: a.set("theme", "" if name == theme_names[0] else name),
-                                            width=200, theme=t), theme=t),
-            ui.field(tr("Font"), _dialogs.font_select(s.font_family, "IBM Plex Mono", a.setter("font_family"), t),
-                     theme=t),
-            ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1,
-                                                      width=110, theme=t),
-                     description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"), theme=t),
-            ui.field(tr("Line height"), ui.segmented(list(heights), tr(s.line_height.capitalize()),
-                                                     lambda name: a.set("line_height", heights[name]), theme=t),
-                     theme=t),
-            ui.field(tr("Line numbers"), switch("line_numbers"), theme=t),
-            ui.field(tr("Highlight current line"), switch("highlight_line"), theme=t),
-            ui.field(tr("Show whitespace"), switch("show_whitespace"), description=tr("Spaces as · and tabs as →"),
-                     theme=t),
-        ], theme=t)]
-
-    def cursor() -> List[Any]:
-        shapes = {tr(shape.capitalize()): shape for shape in _settings.CURSOR_SHAPES}
-        return [ui.settings_group(tr("Cursor"), [
-            ui.field(tr("Shape"), ui.segmented(list(shapes), tr(s.cursor_shape.capitalize()),
-                                               lambda name: a.set("cursor_shape", shapes[name]), theme=t), theme=t),
-            ui.field(tr("Blink"), switch("cursor_blink"), theme=t),
-            ui.field(tr("Width"), ui.number_field(s.cursor_width, a.setter("cursor_width"), min=1, max=4, step=1,
-                                                  width=110, theme=t),
-                     description=tr("Of the bar cursor, in pixels"), theme=t),
-        ], theme=t)]
-
-    def editing() -> List[Any]:
-        return [ui.settings_group(tr("Editing"), [
-            ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1,
-                                                     max=8, step=1, width=110, theme=t),
-                     description=tr("Columns of a level of indentation and of a tab; Enter keeps the indentation"),
-                     theme=t),
-            ui.field(tr("Indent with tabs"), switch("hard_tabs"),
-                     description=tr("Tab, Enter and Ctrl+] indent with tab characters instead of spaces"), theme=t),
-            ui.field(tr("Convert indentation on save"), switch("convert_indentation"),
-                     description=tr("Saving a Python file rewrites its indentation as set above, so they never mix"), theme=t),
-            ui.field(tr("Backspace removes a whole level"), switch("backspace_unindent"),
-                     description=tr("In the indentation; off: one space at a time"), theme=t),
-            ui.field(tr("Autocomplete while typing"), switch("autocomplete"),
-                     description=tr("Ctrl+Space opens it anytime"), theme=t),
-            ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
-                     description=tr("Also wraps the selection and steps over the closing one"), theme=t),
-            ui.field(tr("Code folding"), switch("folding"),
-                     description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"), theme=t),
-            ui.field(tr("Match brackets"), switch("match_brackets"),
-                     description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
-                     theme=t),
-            ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
-                     description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
-            ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
-        ], theme=t)]
-
-    def repeat() -> List[Any]:
-        return [ui.settings_group(tr("Deleting"), [
-            ui.field(tr("Delay before repeating"),
-                     ui.number_field(s.repeat_delay, a.setter("repeat_delay"), min=0,
-                                     max=_settings.MAX_REPEAT_DELAY, step=50, width=110, theme=t),
-                     description=tr("Milliseconds Backspace and Delete wait before repeating (0: the system's)"), theme=t),
-            ui.field(tr("Deletions per second"),
-                     ui.number_field(s.repeat_rate, a.setter("repeat_rate"), min=0, max=_settings.MAX_REPEAT_RATE,
-                                     step=1, width=110, theme=t),
-                     description=tr("At most, while held down (0: the system's pace, the fastest)"), theme=t),
-        ], theme=t)]
-
-    def scrolling() -> List[Any]:
-        return [ui.settings_group(tr("Scrolling and wrapping"), [
-            ui.field(tr("Wrap long lines"), switch("wrap"),
-                     description=tr("Off: long lines scroll sideways (Shift+wheel). Alt+Z toggles it"), theme=t),
-            ui.field(tr("Scrollbars"), switch("scrollbar"), theme=t),
-            ui.field(tr("Minimap"), switch("minimap"), description=tr("Click or drag it to scroll"), theme=t),
-        ], theme=t)]
-
-    def diagnostics() -> List[Any]:
-        return [ui.settings_group(tr("Code lens and diagnostics"), [
-            ui.field(tr("Code lens"), switch("code_lens"),
-                     description=tr("References, implementations and wired events"), theme=t),
-            ui.field(tr("Inline diagnostics"), switch("inline_diagnostics"),
-                     description=tr("Problems at the end of the line"), theme=t),
-        ], theme=t)]
-
-    def servers() -> List[Any]:
-        rows = []
-        for name, status, detail in a.intel.statuses():
-            color = STATUS_COLORS.get(status, "text_muted")
-            what = {"ty": tr("Types, completion and references"), "ruff": tr("Linting")}[name]
-            rows.append(_core.row([
-                _core.container(width=10, height=10, radius=5, bg=t.color(color)),
-                _core.column([ui.label(f"{name}  ·  {status}", theme=t),
-                              ui.label(detail or what, size="sm", color="text_muted", theme=t)], spacing=2,
-                             width="fill"),
-                switch(name),
-            ], spacing=10, align="center"))
-        env = a.intel.env
-        if env is not None:
-            rows.append(_core.column([
-                ui.label(f"{tr('Project')}  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
-                ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
-            ], spacing=2))
-        return [ui.settings_group(tr("Language servers"), rows, theme=t),
-                ui.button(tr("Restart servers"), a.restart_servers, icon="refresh-cw", variant="ghost", theme=t)]
-
-    return {
-        "appearance": (tr("Appearance"), "palette", appearance),
-        "cursor": (tr("Cursor"), "text-cursor", cursor),
-        "editing": (tr("Editing"), "pencil", editing),
-        "deleting": (tr("Deleting"), "delete", repeat),
-        "scrolling": (tr("Scrolling and wrapping"), "wrap-text", scrolling),
-        "diagnostics": (tr("Code lens and diagnostics"), "circle-alert", diagnostics),
-        "servers": (tr("Language servers"), "server", servers),
-    }
-
-
 def settings_dialog(d: "Designer", t: Theme) -> Any:
-    """Builds the editor settings dialog, like Zed's: an index of sections on the left and the chosen one
-    (appearance, cursor, editing, scrolling, diagnostics or language servers) on the right; Key bindings opens
-    the keymap editor."""
-    a = d.assist
-    sections = _settings_sections(a, t)
-    current = a.settings_section if a.settings_section in sections else SETTINGS_SECTIONS[0]
+    """The Settings dialog on the code editor's page (see ``settings_ui``)."""
+    from . import settings_ui
 
-    def item(key: str, title: str, icon: Optional[str] = None) -> Any:
-        return ui.list_item(title, lambda: a.show_settings_section(key), icon=icon, selected=key == current,
-                            inset=True, height=28, theme=t)
-
-    index = _core.column([
-        *(item(key, title, icon) for key, (title, icon, _) in sections.items()),
-        ui.list_item(tr("Key bindings"), d.open_keymap, icon="keyboard", inset=True, height=28,
-                     end=_icon("arrow-up-right", size=12, color=t.icon_muted), theme=t),
-    ], spacing=2, width=210)
-    _, _, build = sections[current]
-    content = _core.scrollable(_core.column(build(), spacing=14, padding=(0, 10, 0, 0)), height=520,
-                               scrollbar_width=4, width="fill")
-    body = _core.row([index, _core.rule(vertical=True, thickness=1, color=t.border_variant), content], spacing=14,
-                     height=520)
-    return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=820, footer=[
-        _core.space(width="fill"),
-        ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t),
-    ], theme=t)
+    if not d.settings_ui.page.startswith("editor."):
+        d.settings_ui.show(f"editor.{d.assist.settings_section}")
+    return settings_ui.dialog(d, t)

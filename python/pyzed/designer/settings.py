@@ -144,9 +144,11 @@ def load() -> EditorSettings:
 
 def save(settings: EditorSettings, path: Optional[Path] = None) -> Optional[Path]:
     """Writes the settings (keeping other sections of the file); ``None`` if the folder is not writable."""
+    from . import profiles
+
     path = path or settings_path()
     data = _read()
-    data["editor"] = settings.to_dict()
+    data["editor"] = profiles.absorb("editor", settings.to_dict())  # a project's own settings stay in the project
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

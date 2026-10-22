@@ -235,10 +235,9 @@ sequenceDiagram
 
 ## Editor settings
 
-The **gear** in the code panel header, the server dots in the status bar, or **Settings → Code editor → Editor
-settings…** open them. They are saved per user, in the same `designer.json` as the
-[editor's settings](/pyzed/editor/settings/). An index on the left lists the sections and
-the right side shows the one you pick.
+The **gear** in the code panel header and the server dots in the status bar open them: they are the *Code editor*
+pages of the [Settings dialog](/pyzed/editor/settings/), with its search, its profiles, **↺** to put a setting back
+to its default, and the *Project* scope to give a project its own (its tab size, say).
 
 ![Editor settings with the index of sections](../../../assets/editor/editor-settings-appearance.png)
 

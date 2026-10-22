@@ -72,7 +72,9 @@ button per row, Xvfb without a GPU, medians of 5 launches) on the same machine:
 :::note
 `WGPU_BACKEND=gl` (or `vulkan`, `metal`, `dx12`) still picks a GPU backend yourself,
 `ICED_BACKEND=wgpu` keeps the GPU renderer even on an emulated GPU (what [shaders](/pyzed/shading/shaders/)
-need), and `ICED_BACKEND=tiny-skia` always uses the CPU renderer.
+need), and `ICED_BACKEND=tiny-skia` always uses the CPU renderer. A project can set them for good in
+`[tool.pyzed.rendering]` of its `pyproject.toml`, or in **Settings → Project → Rendering**
+([Rendering](/pyzed/editor/settings/#rendering)).
 :::
 
 ## Virtual lists and tables
