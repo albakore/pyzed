@@ -227,7 +227,7 @@ def test_server_registers_everything(tmp_path):
     server = create(root=str(tmp_path))
     project_tools = {"project_info", "list_files", "read_file", "write_files", "create_project", "add_dependency",
                      "check_project", "run_tests", "screenshot_project", "start_live_preview",
-                     "live_preview_status", "stop_live_preview"}
+                     "live_preview_status", "stop_live_preview", "project_settings", "set_project_settings"}
 
     async def check():
         tools = {t.name for t in await server.list_tools()}
@@ -411,3 +411,21 @@ def test_cli_without_the_sdk_explains_how_to_install(tmp_path):
     result = subprocess.run([sys.executable, "-c", "import sys; from pyzed.cli import main; sys.exit(main(['mcp']))"],
                             capture_output=True, text=True, env={**os.environ, "PYTHONPATH": str(tmp_path)}, timeout=60)
     assert result.returncode == 1 and "pyzed-ui[mcp]" in result.stderr
+
+
+def test_project_settings(tmp_path):
+    (tmp_path / "shop").mkdir()
+    (tmp_path / "shop" / "pyproject.toml").write_text('[project]\nname = "shop"\n\n[tool.pyzed]\nui = "ui"\n')
+    found = projects.settings(tmp_path, "shop")
+    assert found["rendering"]["renderer"] == "auto" and found["editor"] == {} and "tab_size" in found["editor_keys"]
+    changed = projects.set_settings(tmp_path, "shop", rendering={"renderer": "cpu"}, editor={"tab_size": 2},
+                                    designer={"grid": 4})
+    assert changed["rendering"]["renderer"] == "cpu" and changed["editor"] == {"tab_size": 2}
+    assert '[tool.pyzed.rendering]\nrenderer = "cpu"' in (tmp_path / "shop" / "pyproject.toml").read_text()
+    assert json.loads((tmp_path / "shop" / ".pyzed" / "settings.json").read_text())["designer"] == {"grid": 4}
+    changed = projects.set_settings(tmp_path, "shop", rendering={"renderer": "auto"}, editor={"tab_size": None})
+    assert changed["rendering"]["renderer"] == "auto" and changed["editor"] == {}
+    with pytest.raises(KeyError, match="no setting"):
+        projects.set_settings(tmp_path, "shop", editor={"tabsize": 2})
+    with pytest.raises(ValueError, match="renderer"):
+        projects.set_settings(tmp_path, "shop", rendering={"renderer": "fast"})

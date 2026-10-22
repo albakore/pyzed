@@ -166,6 +166,9 @@ add `timer.subscriptions()` to the app's `subscriptions` and call `shortcut.hand
 - `pyzed add/remove/upgrade/sync/deps` manage dependencies through uv, `pyzed check` runs ruff and
   ty, `pyzed build` packages the app with PyInstaller.
 - `pyzed icons <filter>` lists the bundled Lucide icons (`search_icons` does the same).
+- `[tool.pyzed.rendering]` in `pyproject.toml` (or `App.rendering = pz.Rendering(...)`) picks the renderer:
+  `renderer = "gpu"` for shaders, `"cpu"` for virtual machines, `"auto"` by default. A project's shared editor
+  preferences (tab size...) live in `.pyzed/settings.json`; `project_settings` / `set_project_settings` edit both.
 
 ## Beyond the basics
 
