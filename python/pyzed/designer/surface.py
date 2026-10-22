@@ -9,6 +9,11 @@ Layers, bottom to top (one ``stack`` sized like the form):
 5. a grip tab on containers that hold controls, to select and drag the container itself
    (its own area is mostly covered by its children's hit boxes).
 
+Hidden controls (dialogs, drawers, pages that code shows) are left out, so they do not pile up on the
+form. Selecting one, here or in the outline, draws it in front of the dimmed form with a chip that
+names it (``hidden_chip``); Esc or a click outside goes back. **View → Show all hidden controls** draws
+them all, dimmed, as before.
+
 Non-visual components (timers, file watchers, processes...) are not drawn on the form: they sit in
 the component tray under it, as in Visual Basic and Qt Designer (``tray``).
 
@@ -120,7 +125,7 @@ def grips(d: "Designer") -> List[Tuple[str, float, float]]:
     for c, _depth in form.walk():
         if c.name not in wanted or c.name not in rects or _layout.kind(c) is None or not form.children(c.name):
             continue
-        if not c.visible and not d.show_hidden:
+        if not d.on_canvas(c):
             continue
         x, y, _w, _h = rects[c.name]
         out.append((c.name, x + HANDLE, y - GRIP_HEIGHT - 1 if y >= GRIP_HEIGHT + 1 else y + 1))
@@ -138,6 +143,19 @@ def _grip(d: "Designer", name: str, t: Theme) -> Any:
     )
     return _core.mouse_area(chip, on_press=lambda: d.press_control(name),
                             on_right_press=lambda: d.open_context_menu(name), cursor="move")
+
+
+def hidden_chip(d: "Designer", name: str, t: Theme) -> Any:
+    """The chip over a revealed hidden control: its name, that it is hidden when the form runs, and a
+    button back to the whole form."""
+    return _core.container(
+        _core.row([_icon("eye-off", size=12, color=t.accent),
+                   ui.label(name, size="xs", weight="medium", theme=t, wrap=False),
+                   ui.label(tr("hidden until code shows it"), size="xs", color="text_muted", theme=t, wrap=False),
+                   ui.icon_button("x", d.select_form, size="xs", tooltip=tr("Back to the form (Esc)"), theme=t)],
+                  spacing=6, align="center"),
+        padding=(2, 2, 2, 8), radius=t.radius, bg=t.elevated, border_color=t.accent, border_width=1,
+    )
 
 
 def form_surface(d: "Designer", t: Theme) -> Any:
@@ -163,15 +181,20 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     rects = d.rects
     # the Animation panel's playhead: control properties its tracks change, and the player of the rest
     animated = d.timeline.canvas_overrides()
+    # A hidden control (a dialog, a drawer, a page that code shows) stays off the canvas, so they do not
+    # pile up on the form; selecting it, or something inside it, brings it up in front of the dimmed form.
+    front, revealed = d.revealed
+    in_front = {front, *(c.name for c in form.descendants(front))} if front else set()
     shown = []
     drawn: List[Any] = []
+    raised: List[Any] = []
     hidden: set = set()
     for c, _depth in form.walk():
         if not _components.get(c.type).visual:
             continue  # in the tray under the form
-        if not c.visible or (c.parent and c.parent in hidden):
+        if (not c.visible and c.name not in revealed) or (c.parent and c.parent in hidden):
             hidden.add(c.name)
-            if not d.show_hidden:
+            if not d.show_all_hidden:
                 continue
         x, y, cw, ch = rects[c.name]
         placed = Control(**{**c.__dict__, "width": cw, "height": ch})
@@ -183,10 +206,15 @@ def form_surface(d: "Designer", t: Theme) -> Any:
             widget = widget.animate(*played)
         if c.name in hidden:
             widget = _core.container(widget, width=cw, height=ch, bg=alpha(ft.background, 0.5))
-        drawn.append(_core.pin(widget, x=x, y=y))
+        (raised if c.name in in_front else drawn).append(_core.pin(widget, x=x, y=y))
         shown.append(c)
     # the form's global style: texts inside take its font, color and size
     layers.append(styling.apply_global(_core.stack(drawn, width=w, height=h), form.style, ft, background=False))
+    if raised:
+        layers.append(_core.container(width="fill", height="fill", bg=alpha("#000000", 0.4)))
+        layers.append(styling.apply_global(_core.stack(raised, width=w, height=h), form.style, ft,
+                                           background=False))
+        shown.sort(key=lambda c: c.name in in_front)  # its hit boxes above the dimmed form's
 
     # the container a dragged control (or the one being placed) will drop into
     target = d.drop_target
@@ -235,6 +263,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         gx1, gy1, gx2, gy2 = guide
         layers.append(_core.pin(_core.container(width=max(gx2 - gx1, 1), height=max(gy2 - gy1, 1),
                                                 bg=t.color("error")), x=gx1, y=gy1))
+    if raised:  # centered at the top of the form (the width is a guess: pin needs a point)
+        text = len(front) + len(tr("hidden until code shows it"))
+        layers.append(_core.pin(hidden_chip(d, front, t), x=max((w - (text * 6.5 + 64)) / 2, 4), y=6))
 
     client = _core.mouse_area(
         _core.container(_core.stack(layers, width=w, height=h), width=w, height=h, clip=True, color=ft.text),

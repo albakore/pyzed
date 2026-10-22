@@ -19,7 +19,7 @@ both draw from it, so a layout looks the same while designing and at run time. L
 
 from __future__ import annotations
 
-from typing import Any, Collection, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Collection, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from . import components as _components
 from .geometry import MIN_SIZE, anchored, contains
@@ -312,16 +312,17 @@ def origin(form: Form, rects: Dict[str, Rect], parent: Optional[str]) -> Tuple[f
 
 
 def container_at(form: Form, rects: Dict[str, Rect], x: float, y: float,
-                 exclude: Iterable[str] = ()) -> Optional[Control]:
-    """The innermost visible container under ``(x, y)``, skipping ``exclude`` and what is inside them."""
+                 exclude: Iterable[str] = (), revealed: Iterable[str] = ()) -> Optional[Control]:
+    """The innermost visible container under ``(x, y)``, skipping ``exclude`` and what is inside them.
+
+    Hidden controls named in ``revealed`` count as visible (a hidden dialog being edited, see ``reveal``)."""
+    shown = set(revealed)
     banned = set(exclude)
     for name in list(banned):
         banned.update(c.name for c in form.descendants(name))
     found: Optional[Control] = None
     for control, _depth in form.walk():
-        if control.name in banned or not control.visible or kind(control) is None:
-            continue
-        if any(not a.visible for a in form.ancestors(control.name)):
+        if control.name in banned or kind(control) is None or not visible(form, control, shown):
             continue
         rect = rects.get(control.name)
         if rect and contains(rect, x, y):
@@ -346,6 +347,27 @@ def drop_index(form: Form, rects: Dict[str, Rect], container: Control, x: float,
     return len(siblings)
 
 
-def visible(form: Form, control: Control) -> bool:
-    """``True`` when the control and every container holding it are visible."""
-    return control.visible and all(a.visible for a in form.ancestors(control.name))
+def visible(form: Form, control: Control, revealed: Iterable[str] = ()) -> bool:
+    """``True`` when the control and every container holding it are visible (or in ``revealed``)."""
+    shown = revealed if isinstance(revealed, (set, frozenset)) else set(revealed)
+    return all(c.visible or c.name in shown for c in (control, *form.ancestors(control.name)))
+
+
+def reveal(form: Form, selection: Iterable[str]) -> Tuple[Optional[str], Set[str]]:
+    """The hidden controls the canvas shows anyway because they are, or hold, a selected control.
+
+    Dialogs, drawers and pages that only appear when code shows them stay out of the canvas; selecting one
+    (or something inside it) brings it up on its own. Returns the outermost hidden control holding the first
+    selected one (``None`` if it is not hidden), drawn above the rest of the form, and every revealed name.
+    """
+    revealed: Set[str] = set()
+    front: Optional[str] = None
+    for i, name in enumerate(selection):
+        control = form.get(name)
+        if control is None:
+            continue
+        hidden = [c.name for c in (control, *form.ancestors(name)) if not c.visible]
+        revealed.update(hidden)
+        if i == 0 and hidden:
+            front = hidden[-1]
+    return front, revealed

@@ -39,7 +39,9 @@ class DesignerSettings:
     show_grid: bool = True
     snap: bool = True
     smart_guides: bool = True
-    show_hidden: bool = True
+    #: Draw every hidden control dimmed on the canvas. Off, a hidden one (a dialog, a drawer) appears only
+    #: while it or something inside it is selected.
+    show_all_hidden: bool = False
     #: Grid step given to new forms.
     grid: int = 8
     show_toolbar: bool = True

@@ -120,7 +120,7 @@ def settings(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Snap to grid"), switch("snap"), theme=t),
         ui.field(tr("Smart guides"), switch("smart_guides"), description=tr("Align to other controls while dragging"),
                  theme=t),
-        ui.field(tr("Show hidden controls"), switch("show_hidden"), theme=t),
+        ui.field(tr("Show all hidden controls"), switch("show_all_hidden"), theme=t),
         ui.field(tr("Grid size for new forms"), ui.number_field(float(p.grid), lambda v: d.set_pref("grid", int(v)), min=2,
                                                             max=64, step=1, width=110, theme=t), theme=t),
     ], theme=t)
