@@ -1056,6 +1056,7 @@
   "Welcome to Pyzed Design": "Bienvenido a Pyzed Design",
   "Show at startup": "Mostrar al iniciar",
   "Could not create the project": "No se pudo crear el proyecto",
+  "Pyzed cannot write in {folder}. Choose another location, like {suggested}.": "Pyzed no puede escribir en {folder}. Elige otra ubicación, como {suggested}.",
   "Could not download the examples": "No se pudieron descargar los ejemplos",
   "Downloading the examples": "Descargando los ejemplos",
   "No permission to open it": "Sin permiso para abrirla",

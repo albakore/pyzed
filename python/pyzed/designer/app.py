@@ -51,6 +51,7 @@ from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
 from . import project_picker as _project_picker
 from . import welcome as _welcome
+from . import workspace as _workspace
 from .welcome import Welcome
 from .windows import Pane, PaneController
 from .dock_windows import DockWindows
@@ -2953,6 +2954,11 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     started = time.perf_counter()
     # opened from the desktop's menu, the app lacks the PATH of the user's shell (Node from nvm, ~/.local/bin...)
     threading.Thread(target=_platform.use_user_path, daemon=True, name="pyzed-user-path").start()
+    if not _workspace.usable(Path.cwd()):
+        # The installed app starts in its own folder (C:\\Program Files\\Pyzed Design), where new files must not
+        # go: what falls back on the current folder (a form saved without a project...) uses the home folder.
+        path = Path(path).resolve() if path is not None else None
+        os.chdir(Path.home())
     designer = Designer(path, theme=theme)
     if path is None and designer.prefs.show_welcome:
         designer.welcome.open()
