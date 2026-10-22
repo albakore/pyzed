@@ -846,7 +846,7 @@ Whether the parent passed a handler for the custom event `name`.
 Component.describe()
 ```
 
-The first paragraph of the docstring (shown in the designer).
+The first paragraph of the docstring on one line, in Markdown (shown in the designer).
 
 #### `Component.designer_spec`
 

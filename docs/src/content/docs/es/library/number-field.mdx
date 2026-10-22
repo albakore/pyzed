@@ -244,11 +244,14 @@ number_field(
     invalid=False,
     id=None,
     on_submit=None,
+    steppers=True,
+    drag=True,
+    drag_step=None,
     theme=None,
 )
 ```
 
-Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
+Un campo numérico con botones −/+ que también se puede arrastrar, como en Figma. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Mantén pulsado y mueve el ratón de lado a lado sobre el número para cambiarlo (sigue aunque salgas de la ventana); haz doble clic para escribir un valor, y Enter, Escape o un clic fuera para terminar. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
 
 | Propiedad | Por defecto | Descripción |
 | --- | --- | --- |
@@ -264,6 +267,9 @@ Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya li
 | `disabled` | `False` | Lo atenúa. |
 | `invalid` | `False` | Pinta el borde con el color de error. |
 | `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `steppers` | `True` | Muestra los botones −/+ (`False`: un campo compacto, como en una rejilla de propiedades). |
+| `drag` | `True` | Deja cambiarlo arrastrando el ratón (`False`: un campo de texto normal). |
+| `drag_step` | `None` | Cuánto suma cada píxel arrastrado (por defecto `step`, hasta 1; los pasos menores de 1 piden tres píxeles cada uno). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_change`, `on_submit` ([eventos](#eventos)).
