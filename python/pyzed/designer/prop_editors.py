@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Tuple
 
 from .. import _core, ui
+from ..ui import base as _ui_base
 from ..icons import icon as _icon
 from ..theme import Theme
 from .locale import tr
@@ -31,7 +32,7 @@ CORNER_TIPS = ("Top left", "Top right", "Bottom right", "Bottom left")
 
 def segmented(choices: Sequence[Choice], selected: Any, on_select: Callable[[Any], Any], t: Theme) -> Any:
     """The choices side by side, filling the row; the selected one is raised. A choice with an icon shows the
-    icon, with its label as the tooltip."""
+    icon, with its label as the tooltip. Once clicked (or reached with Tab) the arrows move the choice."""
     buttons = []
     for value, label, icon in choices:
         active = value == selected
@@ -42,8 +43,15 @@ def segmented(choices: Sequence[Choice], selected: Any, on_select: Callable[[Any
                               padding=(3, 6), width="fill", bg=t.element_selected if active else "transparent",
                               hover_bg=t.element_selected if active else t.ghost_hover, radius=t.radius_sm - 1)
         buttons.append(ui.tooltip(button, label, theme=t) if icon else button)
-    return _core.container(_core.row(buttons, spacing=2, width="fill"), padding=2, width="fill", bg=t.element,
-                           border_color=t.border_variant, border_width=1.0, radius=t.radius_sm + 1)
+    group = _core.container(_core.row(buttons, spacing=2, width="fill"), padding=2, width="fill", bg=t.element,
+                            border_color=t.border_variant, border_width=1.0, radius=t.radius_sm + 1)
+    values = [value for value, _, _ in choices]
+
+    def move(combo: str) -> Any:  # the arrows pick the previous or next choice once it has the focus
+        target = _ui_base.step_choice(values, selected, combo)
+        return None if target is None else on_select(target)
+
+    return _ui_base.key_focus(group, move, keys=_ui_base.CHOICE_KEYS, radius=t.radius_sm + 1, theme=t)
 
 
 def choice_label(value: str) -> str:

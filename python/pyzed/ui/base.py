@@ -232,7 +232,7 @@ def button(
         if "border_color" in style and "border_width" not in style:
             kwargs["border_width"] = 1.0 if style["border_color"] else 0.0
     widget = _core.button(inner, None if disabled else on_press, **kwargs)
-    return tooltip_text(widget, tooltip, theme=t) if tooltip else widget
+    return tooltip_text(widget, tooltip, keys=keys, theme=t) if tooltip else widget
 
 
 def icon_button(
@@ -375,6 +375,14 @@ def format_keys(keys: str) -> Sequence[str]:
     return out
 
 
+def keys_text(keys: str) -> str:
+    """A binding as plain text for a label or a status line: ``"ctrl-shift-p"`` -> ``"Ctrl+Shift+P"``
+    (``"⌃⇧P"`` with macOS symbols), chords separated by a space. Tooltips and menus take ``keys=``
+    and draw key caps instead."""
+    joiner = "" if (KEY_STYLE == "symbols" or (KEY_STYLE == "auto" and sys.platform == "darwin")) else "+"
+    return " ".join(joiner.join(chord) for chord in format_keys(keys))
+
+
 def kbd(keys: str, *, size: str = "sm", theme: Optional[Theme] = None) -> _core.Widget:
     """Renders a key binding such as ``"ctrl-shift-p"`` as key caps."""
     t = _theme(theme)
@@ -400,6 +408,48 @@ def _kbd(t: Theme, keys: str, size: str) -> _core.Widget:
         ]
         chords.append(_core.row(caps, spacing=2, align="center"))
     return _core.row(chords, spacing=6, align="center")
+
+
+def key_focus(content: Any, on_key: Any, *, keys: Sequence[str], id: Optional[str] = None,  # noqa: A002
+              radius: Optional[float] = None, theme: Optional[Theme] = None) -> _core.Widget:
+    """Lets a control take the keyboard focus (``pz.focusable``) with the theme's focus ring.
+
+    A click or Tab focuses it; while focused, the combos in ``keys`` call ``on_key(combo)``
+    instead of reaching the app's ``on_key``. ``on_key=None`` (a disabled control) leaves
+    ``content`` as it is.
+    """
+    if on_key is None:
+        return content
+    t = _theme(theme)
+    return _core.focusable(content, on_key, keys=list(keys), id=id, ring_color=t.border_focused,
+                           ring_radius=t.radius_sm if radius is None else radius)
+
+
+#: The keys that move between the options of a choice control (segmented, radio group).
+CHOICE_KEYS = ("left", "right", "up", "down", "home", "end")
+
+
+def step_choice(values: Sequence[Any], selected: Any, combo: str) -> Any:
+    """The value ``combo`` (one of ``CHOICE_KEYS``) moves to from ``selected``; ``None`` if it stays."""
+    if not values:
+        return None
+    index = values.index(selected) if selected in values else -1
+    if combo == "home":
+        target = 0
+    elif combo == "end":
+        target = len(values) - 1
+    elif combo in ("left", "up"):
+        target = max(index - 1, 0) if index >= 0 else len(values) - 1
+    elif combo in ("right", "down"):
+        target = min(index + 1, len(values) - 1)
+    else:
+        return None
+    return None if target == index else values[target]
+
+
+def send(handler: Any, *args: Any) -> Any:
+    """Calls ``handler`` with ``args`` when it is callable; otherwise it is a message and is returned."""
+    return handler(*args) if callable(handler) else handler
 
 
 def divider(*, vertical: bool = False, color: Optional[str] = None, label: Optional[str] = None,

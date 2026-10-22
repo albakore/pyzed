@@ -401,6 +401,11 @@ pub enum Kind {
     },
     /// Content that animates out while its replacement animates in (`presence(...)`).
     Presence(Box<crate::animation::PresenceProps>),
+    /// A control that takes the keyboard focus and some keys (`focusable(...)`).
+    Focus {
+        child: Py<Widget>,
+        props: Box<crate::focus::FocusProps>,
+    },
 }
 
 pub enum SvgSource {
@@ -460,6 +465,7 @@ impl Widget {
             }
             Kind::Resizable(_) => "resizable",
             Kind::WindowEdges { .. } => "window_edges",
+            Kind::Focus { .. } => "focusable",
             Kind::Presence(_) => "presence",
             Kind::Animated { child, spec } => {
                 let inner = Python::attach(|py| child.bind(py).get().__repr__());
@@ -541,7 +547,9 @@ impl Widget {
                 Some(l) => Some(l),
                 None => return Widget::_length(props.child.bind(py), axis),
             },
-            Kind::Events { child, .. } | Kind::Animated { child, .. } => {
+            Kind::Events { child, .. }
+            | Kind::Animated { child, .. }
+            | Kind::Focus { child, .. } => {
                 return Widget::_length(child.bind(py), axis);
             }
             _ => None,

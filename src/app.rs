@@ -2028,12 +2028,28 @@ fn window_moved(
     }
 }
 
+/// Set by a focused control (a select, `focusable`) that used the key being pressed, so the
+/// key does not also reach `on_key`.
+static KEY_CLAIMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Marks the key being pressed as used by the focused control (see `KEY_CLAIMED`).
+pub fn claim_key() {
+    KEY_CLAIMED.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
 fn key_event(
     event: iced::Event,
     status: iced::event::Status,
     window: window::Id,
 ) -> Option<Message> {
     track_keys(&event);
+    if matches!(
+        event,
+        iced::Event::Keyboard(keyboard::Event::KeyPressed { .. })
+    ) && KEY_CLAIMED.swap(false, std::sync::atomic::Ordering::Relaxed)
+    {
+        return None;
+    }
     match event {
         // Tab that no widget used (a code editor indents with it) moves the focus.
         iced::Event::Keyboard(keyboard::Event::KeyPressed {
