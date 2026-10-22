@@ -2514,6 +2514,14 @@ class Designer(App):
         exec(compile(self.doc.code, module.__file__, "exec"), module.__dict__)  # noqa: S102 - the user's own code
         return _code.handlers(module)
 
+    def stop_children(self) -> None:
+        """Stops every process the designer started (language servers, the running form, an export, agents)."""
+        for stop in (self.assist.shutdown, self.projects.stop, self.exporter.cancel, self.agent.shutdown):
+            try:
+                stop()
+            except Exception:  # noqa: BLE001 - one that fails must not keep the others running
+                _logs.log("designer").exception("Could not stop %s", getattr(stop, "__qualname__", stop))
+
     def stop_form(self) -> Any:
         """Stops the running form (its uv process or preview window) and the console capture."""
         self.projects.stop()
@@ -3207,8 +3215,11 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
         designer.logs.uninstall()
         telemetry.session_ended()
     if designer.updates.restart_pending:
-        # The update swaps the app once this process is gone: a background task still running (a uv
-        # command, a download, a sign-in) must not keep the old version alive and delay the restart.
+        # The update swaps the app folder once this process is gone. A child process still running from it (the
+        # bundled uv behind the language servers, a run, an export, an agent) would keep the folder in use and,
+        # on Windows, make the swap fail: stop them all first.
+        designer.stop_children()
+        # A background task still running (a download, a sign-in) must not keep the old version alive either.
         for stream in (sys.stdout, sys.stderr):  # None in an app without a console (Windows)
             if stream is not None:
                 stream.flush()
