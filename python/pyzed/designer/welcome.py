@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
 #: The gallery's first filter, before the categories of ``samples.CATEGORIES``.
 ALL = "All"
 #: Where examples are copied unless another folder is chosen.
-DEFAULT_FOLDER = Path.home() / "Pyzed Projects"
+DEFAULT_FOLDER = _workspace.PROJECTS_FOLDER
 COLUMNS = 3
 THUMB_HEIGHT = 128
 #: The icon of each category on its filter and its heading.
@@ -112,6 +112,10 @@ class Welcome:
         its packages with ``uv sync`` in the background; returns the commands."""
         sample, name = self.sample, self.name.strip()
         if sample is None or not name:
+            return None
+        problem = _workspace.check_writable(self.target)
+        if problem is not None:
+            self.d.notify(tr("Could not create the project"), problem, kind="error", seconds=8)
             return None
         try:
             folder = _samples.create(sample, self.target, name)

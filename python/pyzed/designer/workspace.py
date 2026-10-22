@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
@@ -910,12 +911,61 @@ def is_project(folder: Path) -> bool:
     return os.path.isfile(folder / "pyproject.toml")
 
 
+#: Where new projects (and the examples copied from the welcome window) go unless another folder is chosen.
+PROJECTS_FOLDER = Path.home() / "Pyzed Projects"
+
+
+def writable(folder: Path) -> bool:
+    """Whether files can be created in ``folder``. It is tried for real: on Windows ``os.access`` only looks at
+    the read-only flag and says yes for ``C:\\Program Files``."""
+    try:
+        with tempfile.TemporaryFile(dir=folder):
+            return True
+    except OSError:
+        return False
+
+
+def install_folder() -> Optional[Path]:
+    """The folder of the installed app (``None`` when Pyzed runs from Python). Nothing of the user goes there:
+    it may be read-only (``C:\\Program Files``) and a self-update replaces it whole."""
+    if not getattr(sys, "frozen", False):
+        return None
+    return Path(sys.executable).resolve().parent
+
+
+def usable(folder: Path) -> bool:
+    """Whether new projects may go in ``folder``: not the disk's root nor the installed app's folder, and
+    writable."""
+    folder = folder.resolve()
+    app = install_folder()
+    if folder.parent == folder or (app is not None and (folder == app or app in folder.parents)):
+        return False
+    return writable(folder)
+
+
 def start_folder() -> Path:
-    """Where new projects and the folder browser start: the current folder, or the home folder when the
-    designer was started from the disk's root or another folder the user cannot write to (a desktop
-    launcher often starts it in ``/``)."""
+    """Where new projects and the folder browser start: the current folder when the designer was started
+    in one (from a terminal); otherwise the folder of the last project opened, or ``PROJECTS_FOLDER`` (created
+    with the first project). The installed app starts in its own folder, or a desktop launcher in ``/``."""
     cwd = Path.cwd()
-    return cwd if cwd.parent != cwd and os.access(cwd, os.W_OK) else Path.home()
+    if cwd != Path.home() and usable(cwd):
+        return cwd
+    for recent in _project.recent_projects(3):
+        if recent.parent.is_dir() and usable(recent.parent):
+            return recent.parent
+    return PROJECTS_FOLDER
+
+
+def check_writable(target: Path) -> Optional[str]:
+    """Why a project cannot be created at ``target`` (``None`` when it can): its nearest existing folder is
+    not writable or is the installed app's."""
+    folder = target.expanduser().resolve()
+    while not folder.exists() and folder.parent != folder:
+        folder = folder.parent
+    if usable(folder):
+        return None
+    return tr("Pyzed cannot write in {folder}. Choose another location, like {suggested}.", folder=folder,
+              suggested=PROJECTS_FOLDER)
 
 
 def readable(folder: Path) -> bool:

@@ -454,6 +454,9 @@ def designer_tools(d: "Designer") -> List[Tool]:
         target = (base / name).resolve()
         if target.exists() and any(target.iterdir()) and not (target / "pyproject.toml").exists():
             raise FileExistsError(f"{target} is not empty")
+        problem = _workspace.check_writable(target)
+        if problem is not None:
+            raise PermissionError(problem)
         created = _project.init(target, package=package)
         d.agent.on_ui(lambda: d.projects.open(str(created.root)))
         return d.agent.on_ui(lambda: project_info(d))

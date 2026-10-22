@@ -244,13 +244,21 @@ class ProjectController:
         if target.exists() and any(target.iterdir()) and not (target / "pyproject.toml").exists():
             self.d.notify("The folder is not empty", str(target), kind="error", seconds=5)
             return None
+        problem = _workspace.check_writable(target)
+        if problem is not None:  # the dialog stays open to choose another location
+            self.d.notify(tr("Could not create the project"), problem, kind="error", seconds=8)
+            return None
         self.d.dialog = None
         git, package = self.new_git, self.new_package
 
         def work() -> Any:
             try:
                 return _project.init(target, git=git, package=package)
-            except (RuntimeError, FileNotFoundError) as err:
+            except PermissionError as err:
+                return Result(["uv", "init"], 1, tr("Pyzed cannot write in {folder}. Choose another location, "
+                                                    "like {suggested}.", folder=err.filename or target,
+                                                    suggested=_workspace.PROJECTS_FOLDER))
+            except (RuntimeError, OSError) as err:
                 return Result(["uv", "init"], 1, str(err))
 
         def done(result: Any) -> Any:
@@ -277,6 +285,10 @@ class ProjectController:
             return None
         if target.exists() and any(target.iterdir()):
             self.d.notify(tr("The folder is not empty"), str(target), kind="error", seconds=5)
+            return None
+        problem = _workspace.check_writable(target)
+        if problem is not None:
+            self.d.notify(tr("Could not clone the repository"), problem, kind="error", seconds=8)
             return None
         self.d.dialog = None
 
