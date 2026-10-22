@@ -136,9 +136,11 @@ def load() -> DesignerSettings:
 
 def save(prefs: DesignerSettings, path: Optional[Path] = None) -> Optional[Path]:
     """Writes the preferences (keeping the editor's section); ``None`` if the folder is not writable."""
+    from . import profiles
+
     path = path or settings_path()
     data = _read()
-    data["designer"] = prefs.to_dict()
+    data["designer"] = profiles.absorb("designer", prefs.to_dict())  # a project's own settings stay in the project
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

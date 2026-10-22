@@ -17,7 +17,7 @@ import re
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
@@ -31,6 +31,8 @@ from . import spacing
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, file_scan, geometry, panels, preferences, project_panel, surface
+from . import profiles as _profiles
+from . import settings_ui
 from . import commands as _commands
 from . import export_panel as _export
 from . import keymap as _keymap
@@ -196,6 +198,8 @@ class Designer(App):
         self.key_prefix: Optional[str] = None
         # preferences and view options
         self.prefs = preferences.load()
+        #: The user's and the open project's preferences, and the user's profiles (see ``profiles``).
+        self.profile_store = _profiles.use(_profiles.Store())
         # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
         self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
@@ -262,6 +266,8 @@ class Designer(App):
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.projects.on_change(self.agent.project_changed)  # the agents work on the active project
+        self.settings_ui = settings_ui.SettingsController(self)
+        self.projects.on_change(self._project_settings)  # a project may set its own preferences
         # File → Export app…: package the project for each platform (pyzed build)
         self.exporter = _export.ExportController(self)
         self.updates = UpdateController(self)
@@ -1449,10 +1455,88 @@ class Designer(App):
         preferences.save(self.prefs)
         _locale.apply(code)
 
-    def open_settings(self) -> None:
-        """Opens the Settings dialog."""
+    def open_settings(self, page: Optional[str] = None) -> Any:
+        """Opens the Settings dialog (on ``page``, such as "canvas" or "editor.cursor") and focuses its search."""
         self.app_menu = None
+        self.settings_ui.open(page)
         self.dialog = "settings"
+        return _core.Command.focus(settings_ui.SEARCH_ID)
+
+    # -- settings: scopes and profiles -------------------------------------------
+    def change_setting(self, section: str, key: str, value: Any, scope: str = "user") -> None:
+        """Sets preference ``key`` of ``section`` ("designer" or "editor") in ``scope`` ("user": the active profile,
+        "project": the open project's ``.pyzed/settings.json``), saves it and applies what changes."""
+        value = self.profile_store.set(section, key, value, scope)
+        _logs.event("designer", "Setting %s.%s = %r (%s)", section, key, value, scope)
+        self.apply_settings(section, notify=True)
+
+    def reset_setting(self, section: str, key: str, scope: str = "user") -> None:
+        """Puts ``key`` back to its default (``scope="user"``) or drops the project's own value."""
+        self.profile_store.reset(section, key, scope)
+        self.apply_settings(section, notify=True)
+
+    def reset_all_settings(self, scope: str = "user") -> None:
+        """Every preference back to its default in the active profile, or every project setting removed."""
+        self.profile_store.reset_all(scope)
+        self.apply_settings(notify=True)
+        self.notify(tr("Settings reset"), tr("The project uses the user's settings again") if scope == "project"
+                    else tr("Every setting of this profile is back to its default"), seconds=3)
+
+    def switch_profile(self, name: str) -> None:
+        """Makes profile ``name`` the active one and applies its preferences."""
+        self.profile_store.switch(name)
+        self.apply_settings(notify=True)
+
+    def create_profile(self, name: str) -> str:
+        """Adds a profile with the current preferences and switches to it; returns its name."""
+        name = self.profile_store.create(name)
+        self.apply_settings(notify=True)
+        return name
+
+    def delete_profile(self, name: str) -> None:
+        """Deletes profile ``name`` (the default one stays); deleting the active one goes back to the default."""
+        if self.profile_store.delete(name):
+            self.apply_settings(notify=True)
+
+    def _project_settings(self, project: Optional[Project]) -> None:
+        self.profile_store.open_project(project.root if project is not None else None)
+        if project is None and self.settings_ui.scope == "project":
+            self.settings_ui.scope = "user"
+        self.apply_settings()
+
+    def apply_settings(self, section: Optional[str] = None, *, notify: bool = False) -> None:
+        """Makes the designer use the preferences of the store (the user's, overlaid with the project's) where they
+        differ from the ones in use: theme, language, fonts, scale, view options and the code editor."""
+        if section in (None, "editor"):
+            values = self.profile_store.effective("editor")
+            current = self.assist.settings
+            changed = {k: v for k, v in values.items() if getattr(current, k) != v}
+            if changed:
+                self.assist.settings = replace(current, **changed)
+                self.assist.intel.apply_settings(self.assist.settings)
+                if "font_family" in changed:
+                    self.apply_fonts()
+                if changed.get("code_lens"):
+                    self.assist.intel.refresh_lenses(self.doc.form)
+        if section in (None, "designer"):
+            values = self.profile_store.effective("designer")
+            changed = {k: v for k, v in values.items() if getattr(self.prefs, k) != v}
+            for key, value in changed.items():
+                setattr(self.prefs, key, value)
+                if key in ("show_grid", "snap", "smart_guides", "show_all_hidden"):
+                    setattr(self, key, value)
+            if "theme" in changed:
+                self.theme = themes.get(changed["theme"]) if changed["theme"] in themes.names() else type(self).theme
+            if "language" in changed:
+                _locale.apply(changed["language"])
+            if "ui_font" in changed:
+                self.apply_fonts()
+            if "ui_scale" in changed:
+                self.scale = changed["ui_scale"]
+            if "preview_frame" in changed:
+                self.preview_frame = changed["preview_frame"] or None
+            if "window_frame" in changed and notify:
+                self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 
     def open_dialog_named(self, name: str) -> Any:
         """Opens the dialog ``name`` with an empty search and the first row highlighted; returns ``None``."""
@@ -1627,10 +1711,9 @@ class Designer(App):
         self.focus = "code"
         return self.assist.moved(line, column)
 
-    def open_editor_settings(self) -> None:
-        """Opens the code editor settings dialog."""
-        self.app_menu = None
-        self.dialog = "editor_settings"
+    def open_editor_settings(self) -> Any:
+        """Opens the Settings dialog on the code editor's pages."""
+        return self.open_settings(f"editor.{self.assist.settings_section}")
 
     def _code_scope(self) -> str:
         """The document's text of what the code editor shows: the whole file or one handler."""
@@ -3064,7 +3147,8 @@ class Designer(App):
         if self.dialog == "icon_picker":
             return ui.icon_picker_dialog(self.icon_value, self.pick_icon, on_close=self.close_dialog,
                                          theme=t)
-        if self.dialog == "editor_settings":
+        if self.dialog == "editor_settings":  # the old name of the editor's pages
+            self.dialog = "settings"
             return code_panel.settings_dialog(self, t)
         if self.dialog == "export":
             return _export.dialog(self, t)

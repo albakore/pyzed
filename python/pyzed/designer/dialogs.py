@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
 
 from .. import _core, ui
 from ..icons import icon as _icon
-from ..theme import Theme, themes
+from ..theme import Theme
 from . import commands as _commands
 from . import components as _components
 from . import keymap as _keymap
@@ -50,119 +50,16 @@ def font_select(value: str, default: str, on_change: Callable[[str], Any], t: Th
                      theme=t)
 
 
-def fonts_group(d: "Designer", t: Theme) -> Any:
-    """Fonts and sizes: the interface font and scale, and the code font, size and line height (shared with the
-    editor settings). They apply at once and are saved."""
-    from . import settings as _settings
-
-    s = d.assist.settings
-    scales = {f"{round(v * 100)}%": v for v in UI_SCALES}
-    current = f"{round(d.scale * 100)}%"
-    if current not in scales:
-        scales[current] = d.scale
-    heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
-    return ui.settings_group(tr("Fonts and size"), [
-        ui.field(tr("Interface font"), font_select(d.prefs.ui_font, "IBM Plex Sans", d.set_ui_font, t),
-                 description=tr("Menus, panels, dialogs and the properties"), theme=t),
-        ui.field(tr("Interface size"), ui.select(list(scales), current, lambda name: d.set_ui_scale(scales[name]),
-                                                 width=200, theme=t),
-                 description=tr("Zooms every window, like View → Zoom in and Zoom out"), theme=t),
-        ui.field(tr("Code font"), font_select(s.font_family, "IBM Plex Mono", d.assist.setter("font_family"), t),
-                 description=tr("The code editor, the console and other code"), theme=t),
-        ui.field(tr("Code font size"), ui.number_field(s.font_size, d.assist.setter("font_size"), min=8, max=32,
-                                                       step=1, width=110, theme=t), theme=t),
-        ui.field(tr("Code line height"), ui.segmented(list(heights), tr(s.line_height.capitalize()),
-                                                      lambda name: d.assist.set("line_height", heights[name]),
-                                                      theme=t), theme=t),
-    ], theme=t)
-
-
 def _footer_done(d: "Designer", t: Theme) -> List[Any]:
     return [_core.space(width="fill"), ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t)]
 
 
 def settings(d: "Designer", t: Theme) -> Any:
-    """General settings: appearance and language, canvas defaults, running, and a link to the editor settings."""
-    p = d.prefs
+    """The Settings dialog: every preference of the designer and the code editor, by page, with search, the user
+    and project scopes and the profiles (see ``settings_ui``)."""
+    from . import settings_ui
 
-    def switch(key: str) -> Any:
-        return ui.switch(bool(getattr(p, key)), lambda v, k=key: d.set_pref(k, v), theme=t)
-
-    frame_labels = {"": tr("This system ({name})", name=ui.frame.PLATFORM_LABELS[ui.system_platform()]),
-                    **ui.frame.PLATFORM_LABELS}
-    frame_names = list(frame_labels.values())
-    frame_current = frame_labels.get(p.preview_frame, frame_names[0])
-
-    def pick_frame(name: str) -> None:
-        d.set_preview("frame", next(k for k, v in frame_labels.items() if v == name) or None)
-
-    eyes = {tr("Hidden when running"): "visible", tr("Hidden in the editor only"): "editor"}
-    eye_current = next((k for k, v in eyes.items() if v == p.outline_eye), next(iter(eyes)))
-    names = {code: tr(name) if not code else name for code, name in LANGUAGES}
-    language_names = list(names.values())
-    current = names.get(p.language, language_names[0])
-    general = ui.settings_group(tr("Appearance"), [
-        ui.field(tr("Theme"), ui.select(themes.names(), t.name, d.set_designer_theme, width=200, theme=t), theme=t),
-        ui.field(tr("Language"), ui.select(language_names, current,
-                                       lambda name: d.set_language(next(c for c, n in names.items() if n == name)),
-                                       width=200, theme=t),
-                 description=tr("Language of the designer's menus and panels"), theme=t),
-        ui.field(tr("Toolbar"), switch("show_toolbar"), theme=t),
-        ui.field(tr("Status bar"), switch("show_status_bar"), theme=t),
-        ui.field(tr("Welcome window"), switch("show_welcome"),
-                 description=tr("Opens at startup with the example projects (also in Help → Welcome)"), theme=t),
-        ui.field(tr("Custom window frame"), ui.switch(bool(p.window_frame), d.set_window_frame, theme=t),
-                 description=tr("Pyzed's own title bar and window buttons; off uses the system's frame (applies on "
-                                "restart)"), theme=t),
-        ui.field(tr("Form preview frame"), ui.select(frame_names, frame_current, pick_frame, width=200, theme=t),
-                 description=tr("The window frame the canvas shows around the form"), theme=t),
-    ], theme=t)
-    canvas = ui.settings_group(tr("Form canvas"), [
-        ui.field(tr("Show grid"), switch("show_grid"), theme=t),
-        ui.field(tr("Snap to grid"), switch("snap"), theme=t),
-        ui.field(tr("Smart guides"), switch("smart_guides"), description=tr("Align to other controls while dragging"),
-                 theme=t),
-        ui.field(tr("Show all hidden controls"), switch("show_all_hidden"), theme=t),
-        ui.field(tr("Outline eye"), ui.select(list(eyes), eye_current, lambda name: d.set_pref("outline_eye", eyes[name]),
-                                              width=260, theme=t),
-                 description=tr("Hidden when running: also off the canvas, shown while selected. "
-                                "Editor only: hides it on the canvas, the running form still shows it"), theme=t),
-        ui.field(tr("Grid size for new forms"), ui.number_field(float(p.grid), lambda v: d.set_pref("grid", int(v)), min=2,
-                                                            max=64, step=1, width=110, theme=t), theme=t),
-    ], theme=t)
-    running = ui.settings_group(tr("Running"), [
-        ui.field(tr("Save before running"), switch("save_on_run"), theme=t),
-        ui.field(tr("Open the console on Run"), switch("console_on_run"), theme=t),
-        ui.field(tr("Log events in the console"), switch("log_events"),
-                 description=tr("Every event the running form handles, with its value"), theme=t),
-    ], theme=t)
-    errors = ui.settings_group(tr("Logs and errors"), [
-        ui.field(tr("Show a dialog on errors"), switch("error_dialogs"),
-                 description=tr("With buttons to copy the error and go to its line; errors are always in View → Logs"),
-                 theme=t),
-        ui.field(tr("Write a log file"), switch("log_file"),
-                 description=tr("pyzed-design.log in the Pyzed config folder, for bug reports (applies on restart)"),
-                 theme=t),
-    ], theme=t)
-    panels = ui.settings_group(tr("Panels"), [
-        ui.field(tr("Layout"), ui.button(tr("Reset"), d.reset_layout, icon="layout-dashboard", variant="ghost", size="sm",
-                                     theme=t),
-                 description=tr("Put every panel back in its default dock and size"), theme=t),
-        ui.field(tr("Code editor"), ui.button(tr("Editor settings…"), d.open_editor_settings, icon="code", variant="ghost",
-                                          size="sm", theme=t),
-                 description=tr("Font, tabs, completion, language servers"), theme=t),
-        ui.field(tr("Key bindings"), ui.button(tr("Keymap editor…"), d.open_keymap, icon="keyboard", variant="ghost",
-                                               size="sm", theme=t),
-                 description=tr("Every action's keys, like Zed's keymap; also File → Keymap editor"), theme=t),
-        ui.field(tr("AI agents"), ui.button(tr("AI agents settings…"), d.agent.open_settings, icon="sparkles",
-                                            variant="ghost", size="sm", theme=t),
-                 description=tr("Model providers, keys and sign-in, permissions"), theme=t),
-    ], theme=t)
-    body = _core.scrollable(_core.column([general, fonts_group(d, t), canvas, running, errors, panels,
-                                          telemetry_group(d, t)], spacing=14,
-                                         padding=(0, 6, 0, 0)),
-                            height=560, scrollbar_width=4)
-    return ui.modal(body, title=tr("Settings"), on_close=d.close_dialog, width=560, footer=_footer_done(d, t), theme=t)
+    return settings_ui.dialog(d, t)
 
 
 def telemetry_group(d: "Designer", t: Theme) -> Any:
@@ -378,9 +275,9 @@ def palette(d: "Designer", t: Theme) -> Any:
 
 
 def places(d: "Designer", t: Theme) -> List[Any]:
-    """The places of the editor the palette goes to: the panels, the sections of the editor settings and the
-    recent files (the general settings and the keymap editor are already commands)."""
-    from . import code_panel, docks
+    """The places of the editor the palette goes to: the panels, the pages of the settings and the recent files
+    (the keymap editor is already a command)."""
+    from . import docks
 
     def go(open_place: Any) -> Any:
         def press() -> Any:
@@ -394,13 +291,14 @@ def places(d: "Designer", t: Theme) -> List[Any]:
             items.append(ui.PaletteItem(f"{tr('Panel')}: {panel.title}", go(lambda pid=pid: d.show_panel(pid)),
                                         icon=panel.icon))
 
-    def editor_section(key: str) -> Any:
-        d.open_editor_settings()
-        d.assist.show_settings_section(key)
+    from . import settings_ui
 
-    for key, (title, icon, _build) in code_panel._settings_sections(d.assist, t).items():
-        items.append(ui.PaletteItem(f"{tr('Editor settings')}: {title}", go(lambda k=key: editor_section(k)),
-                                    icon=icon))
+    for group, pages in settings_ui.PAGES:
+        for key, title, icon in pages:
+            if key.startswith("project.") and d.projects.project is None:
+                continue
+            items.append(ui.PaletteItem(f"{tr('Settings')}: {tr(title)}", go(lambda k=key: d.open_settings(k)),
+                                        icon=icon, detail=tr(group)))
     for path in d.prefs.recent:
         items.append(ui.PaletteItem(f"{tr('Recent')}: {Path(path).name}", go(lambda p=path: d._open_recent(p)),
                                     icon="history", detail=str(Path(path).parent)))
