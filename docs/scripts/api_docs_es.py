@@ -461,6 +461,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción).',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
                         "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
+                        "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
+                        "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
+                        "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
                     },
                 },
             }),
@@ -859,6 +862,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`.',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
                         "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
+                        "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
+                        "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
+                        "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -2848,6 +2854,7 @@ MEMBERS = {
     "pyzed.designer.Document.wire": "Conecta `event` a un handler (creando su esqueleto si hace falta) y devuelve el nombre de la función.",
     "pyzed.designer.Document.unwire": "Desconecta `event`; con `delete_code` también quita el esqueleto si no se ha tocado.",
     "pyzed.designer.Document.handler_source": "Devuelve el código de `handler`, o un esqueleto nuevo si aún no existe.",
+    "pyzed.designer.Document.rename_handler": "Hace que los eventos conectados al manejador `old` apunten a `new` (después de renombrar su función en el código); devuelve si algún evento lo usaba.",
     "pyzed.designer.Document.set_handler_source": "Reemplaza el código de un handler (lanza `SyntaxError` y no cambia nada si no es válido).",
     "pyzed.designer.Document.set_code": "Reemplaza todo el texto del módulo de handlers y marca el documento como modificado.",
     # designer: caja de herramientas

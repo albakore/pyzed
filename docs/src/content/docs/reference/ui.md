@@ -2711,6 +2711,9 @@ editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    on_hover=None,
+    hover_delay=500,
+    sticky_scroll=0,
     theme=None,
 )
 ```
@@ -2758,6 +2761,9 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `keymap` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `False` hides the scrollbars. |
 | `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
+| `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
+| `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

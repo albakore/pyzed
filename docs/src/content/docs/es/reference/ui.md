@@ -2737,6 +2737,9 @@ editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    on_hover=None,
+    hover_delay=500,
+    sticky_scroll=0,
     theme=None,
 )
 ```
@@ -2784,6 +2787,9 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `keymap` | Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `False` oculta las barras de desplazamiento. |
 | `readonly` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
+| `on_hover` | Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información). |
+| `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
+| `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

@@ -233,7 +233,7 @@ def test_designer_completion_flow(tmp_path):
     labels = [i.label for i in d.assist.completion.shown]
     assert "text" in labels and "placeholder" in labels
     d.on_key("escape")
-    assert d.assist.completion is None and d.assist.captured_keys == ("alt-z",)
+    assert d.assist.completion is None and d.assist.captured_keys == ("ctrl-,", "alt-z", "ctrl-.", "alt-shift-o", "alt-left", "alt-right")
 
 
 def test_designer_settings_dialog_and_status(tmp_path):

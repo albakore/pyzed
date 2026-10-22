@@ -74,6 +74,13 @@ impl Caches {
         }
     }
 
+    /// Scrolls an editor's cursor to the middle of its view.
+    pub fn center_editor(&self, id: &str) -> Task<Message> {
+        self.editors
+            .get(id)
+            .map_or_else(Task::none, |editor| editor.center_cursor(id))
+    }
+
     pub fn perform_editor(&mut self, id: &str, action: text_editor::Action) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
         Some(editor.perform(id, action))
@@ -196,6 +203,8 @@ impl Caches {
                 position,
                 selection: None,
             });
+            // Shown in the middle once the editor knows its size (see `EditorInput`).
+            state.reveal.set(position.line > 0);
         }
         for op in self
             .pending_folds

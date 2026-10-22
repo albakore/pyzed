@@ -180,6 +180,12 @@ pub struct EditorProps {
     pub scrollbar: bool,
     /// The text can be selected and copied but not changed.
     pub readonly: bool,
+    /// `on_hover(info)` when the mouse rests on a word (`None` when it leaves it).
+    pub on_hover: Option<PyMsg>,
+    /// How long the mouse rests on a word before `on_hover`.
+    pub hover_delay: std::time::Duration,
+    /// Most block headers pinned to the top while scrolling (0: no sticky scroll).
+    pub sticky_scroll: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1523,7 +1529,13 @@ pub fn progress_bar(
 /// - `on_zoom(step)`: Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and
 ///   Ctrl+wheel.
 /// - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
-///   `"select_next"`…).
+///   `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+/// - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
+///   its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
+///   `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.
+///
+/// `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
+/// the top of the editor (0 turns it off); a click on one moves the cursor there.
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
@@ -1534,7 +1546,8 @@ pub fn progress_bar(
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
     cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
     match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false,
-    hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None))]
+    hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None, on_hover=None,
+    hover_delay=500.0, sticky_scroll=0))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1589,6 +1602,9 @@ pub fn code_editor(
     backspace_unindent: bool,
     repeat_delay: Option<f32>,
     repeat_rate: Option<f32>,
+    on_hover: Any<'_>,
+    hover_delay: f32,
+    sticky_scroll: usize,
 ) -> PyResult<Py<Widget>> {
     // Held Backspace/Delete: kept after `repeat_delay` ms, then `repeat_rate` times a second.
     let key_repeat =
@@ -1714,6 +1730,9 @@ pub fn code_editor(
             readonly,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
+            on_hover: PyMsg::maybe(&on_hover),
+            hover_delay: std::time::Duration::from_secs_f32(hover_delay.max(0.0) / 1000.0),
+            sticky_scroll,
         })),
     )
 }

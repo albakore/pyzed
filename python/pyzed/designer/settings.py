@@ -70,6 +70,10 @@ class EditorSettings:
     match_brackets: bool = True
     #: Highlight the other occurrences of the selected text.
     selection_highlight: bool = True
+    #: Show the documentation of the symbol under the mouse (and the problems there).
+    hover: bool = True
+    #: Pin the headers of the blocks being scrolled through (``class``, ``def``) to the top.
+    sticky_scroll: bool = True
     ty: bool = True
     ruff: bool = True
     #: Keys changed by the user: action name -> bindings separated by commas (``""``: no key).

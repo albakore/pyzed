@@ -157,7 +157,12 @@ class ProjectController:
     def _read_dependencies(self, project: Project) -> None:
         self.deps = project.dependencies()
         self.problems = project.problems()
-        self._stamp = project.stamp()
+        stamp = project.stamp()
+        if self._stamp is not None and stamp != self._stamp:
+            assist = getattr(self.d, "assist", None)
+            if assist is not None:  # the code editor's servers see the new packages
+                assist.environment_changed()
+        self._stamp = stamp
         # a version found by Check for updates is no news once it is the locked one
         locked = {d.name: d.locked for d in self.deps}
         self.latest = {name: v for name, v in self.latest.items() if v and locked.get(name) != v}
@@ -402,6 +407,11 @@ class ProjectController:
         dev = self.add_dev
         self.add_text = ""
         return self._uv(f"Adding {' '.join(specs)}", lambda p: p.add(*specs, dev=dev))
+
+    def add_package(self, spec: str, *, dev: bool = False) -> Any:
+        """Adds one package (``spec``) with ``uv add``, from the code editor's quick fix; returns the background
+        task."""
+        return self._uv(f"Adding {spec}", lambda p: p.add(spec, dev=dev))
 
     def remove(self, dep: Dependency) -> Any:
         """Removes dependency ``dep`` from its group with ``uv remove``; returns the background task."""

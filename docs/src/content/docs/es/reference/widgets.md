@@ -769,6 +769,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -788,6 +790,8 @@ Un texto.
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `wrap` | Ajuste de línea. Con `False` el texto no se parte. |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `icon`
 
@@ -915,6 +919,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -930,6 +936,8 @@ Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces
 | `code_bg` | Fondo del código. |
 | `on_link` | Callable que recibe la URL al pulsar un enlace. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `rich_text`
 
@@ -1590,6 +1598,9 @@ code_editor(
     backspace_unindent=True,
     repeat_delay=None,
     repeat_rate=None,
+    on_hover=None,
+    hover_delay=500.0,
+    sticky_scroll=0,
 )
 ```
 
@@ -1651,6 +1662,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `backspace_unindent` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
 | `repeat_delay` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
 | `repeat_rate` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
+| `on_hover` | Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información). |
+| `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
+| `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 
 ## Estilos
 
