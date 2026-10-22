@@ -17,7 +17,7 @@ Pyzed widgets react to events in two layers:
   clicks, hover, drag, focus, keys and size. A `pz.Component` also raises `on_mount` and `on_unmount`.
 
 So a component can have up to its own events plus 18 common ones. Across the 108 components of
-the library there are **141 own events**; the ones with the most are listed first in the table at the end.
+the library there are **142 own events**; the ones with the most are listed first in the table at the end.
 
 ```python
 ui.list_item("main.py", self.open, icon="file").on(   # on_press is its own event
@@ -99,8 +99,8 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Mouse area](/pyzed/library/mouse-area/#events) | 10 | 28 | `on_press`, `on_release`, `on_right_press`, `on_double_click`, `on_enter`, `on_exit`, `on_move`, `on_scroll`, `on_middle_press`, `on_middle_release` |
 | [Console](/pyzed/library/console/#events) | 8 | 26 | `on_query`, `on_toggle_level`, `on_clear`, `on_copy`, `on_context`, `on_open`, `on_source`, `on_write` |
 | [Tab bar](/pyzed/library/tab-bar/#events) | 7 | 25 | `on_select`, `on_close`, `on_drag`, `on_drop`, `on_drag_over`, `on_context`, `on_new` |
+| [Editor](/pyzed/library/editor/#events) | 6 | 24 | `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` |
 | [Canvas](/pyzed/library/canvas/#events) | 5 | 23 | `on_press`, `on_release`, `on_right_press`, `on_move`, `on_scroll` |
-| [Editor](/pyzed/library/editor/#events) | 5 | 23 | `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action` |
 | [Edits bar](/pyzed/library/edits-bar/#events) | 5 | 25 | `on_keep`, `on_reject`, `on_keep_file`, `on_reject_file`, `on_open` |
 | [Window frame](/pyzed/library/window-frame/#events) | 5 | 23 | `on_drag`, `on_minimize`, `on_maximize`, `on_close`, `on_menu` |
 | [Sign-in prompt](/pyzed/library/auth-prompt/#events) | 4 | 24 | `on_pick`, `on_cancel`, `on_open_url`, `on_copy` |

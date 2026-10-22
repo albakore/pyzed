@@ -1677,7 +1677,7 @@ def references_list(a: CodeAssist, refs: References, t: Theme) -> Tuple[Any, flo
         _icon("list-tree", size=13, color=t.icon_muted),
         ui.label(title, size="sm", theme=t),
         _core.space(width="fill"),
-        ui.icon_button("x", a.close_references, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+        ui.icon_button("x", a.close_references, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=8, align="center"), padding=(2, 8), width="fill")
     height = min(len(rows), 6) * 22 + 34
     body = _core.scrollable(_core.column(rows, width="fill"), scrollbar_width=4)

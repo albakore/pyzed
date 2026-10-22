@@ -12,6 +12,20 @@ from pyzed.designer import components, scene_code
 from pyzed.designer.scene import Scene, SceneDocument, discover, load, load_component, new_component, open_document
 
 
+@pytest.fixture(autouse=True)
+def _restore_registries():
+    """The components these tests load (a ``Card``, a ``Rating``...) replace the library's of the same name;
+    put the library's back so later tests see them."""
+    from pyzed import component as _component
+
+    specs, classes = dict(components._REGISTRY), dict(_component._REGISTRY)
+    yield
+    components._REGISTRY.clear()
+    components._REGISTRY.update(specs)
+    _component._REGISTRY.clear()
+    _component._REGISTRY.update(classes)
+
+
 # -- pz.state ----------------------------------------------------------------------
 
 

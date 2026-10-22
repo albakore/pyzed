@@ -1016,7 +1016,7 @@ The property each control type binds, and whether the user edits it (two-way): `
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=(), role=None)
 ```
 
 A toolbox entry: how a control of this `type` looks, behaves and is configured.

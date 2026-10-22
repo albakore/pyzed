@@ -1008,7 +1008,7 @@ La propiedad que enlaza cada tipo de control y si el usuario la edita (en los do
 
 ```python
 @dataclass
-class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=())
+class Component(type, label, icon, category, render, size=(120, 28), props=(), events=(), description='', visual=True, container=None, child_layout=(), children=(), role=None)
 ```
 
 Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`.
