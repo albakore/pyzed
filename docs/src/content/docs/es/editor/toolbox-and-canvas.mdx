@@ -181,8 +181,8 @@ componente): clic para seleccionarlo, **+** le añade un control.
 - **Flecha**: pliega o despliega los hijos de un contenedor. En un componente diseñado colocado, lista sus
   propiedades y métodos públicos; haz clic en uno para insertar `form.ada.rate()` (o `self.stars.pick()` en un
   componente) en el cursor del editor de código, o para copiarlo si no hay código abierto.
-- **Ojo**: oculta el control. Los controles ocultos no se ven al ejecutar el formulario; en el lienzo se dibujan
-  atenuados (o no se dibujan con **Ver → Mostrar controles ocultos** apagado) y su nombre sale en gris.
+- **Ojo**: oculta el control. Los controles ocultos no se ven al ejecutar el formulario y su nombre sale en gris
+  en la estructura. Mira [Diálogos, cajones y otros controles ocultos](#diálogos-cajones-y-otros-controles-ocultos).
 - **Candado**: bloquea el control para no moverlo ni redimensionarlo sin querer.
 - **+** (contenedores): añade un control dentro.
 - **Arrastra una fila** para reordenarla: una línea muestra dónde va (antes o después de una fila), y un marco
@@ -197,6 +197,29 @@ de mover controles entre contenedores con precisión.
 :::
 
 <Media clip="designer-timer-outline" alt="Un Temporizador arrastrado desde las herramientas al formulario de inicio de sesión cae en la bandeja bajo el formulario, no en él; luego se seleccionan desde la estructura el cuadro de texto del correo y el temporizador ticker del formulario, que aparece bajo «Non-visual» («No visuales» con el editor en español)" caption="Suelta un Temporizador en el formulario y va a la bandeja. En la estructura, los componentes no visuales aparecen después de los controles, bajo «No visuales»." />
+
+## Diálogos, cajones y otros controles ocultos
+
+Un diálogo, un cajón o una página que solo aparece al pulsar un botón es un contenedor con **Visible** apagado,
+que el código muestra con `form.status_dialog.show()` (y `.hide()` para cerrarlo). El lienzo no dibuja los controles
+ocultos, así un formulario con muchos no se convierte en un montón de paneles superpuestos:
+
+1. **Selecciónalo en la estructura** (o algo de dentro). Aparece delante del formulario, que queda oscurecido
+   detrás, tal como se verá al ejecutarlo. Un aviso arriba muestra su nombre.
+2. **Edítalo como siempre**: muévelo, cámbiale el tamaño, suelta controles nuevos dentro desde las herramientas o
+   cambia sus propiedades.
+3. **Vuelve** con <kbd>Esc</kbd>, la **×** del aviso o un clic en el formulario oscurecido.
+
+Para ver todos los controles ocultos a la vez, atenuados en su sitio, activa **Ver → Mostrar todos los controles
+ocultos**.
+
+### Ocultar un control solo en el editor
+
+Si prefieres tener todos los controles en el lienzo y ocultar algunos solo mientras trabajas, como las capas de un
+programa de dibujo, pon **Ajustes → Lienzo del formulario → Ojo de la estructura** en **Oculto solo en el editor**.
+Así el ojo oculta el control (y lo que tiene dentro) solo en el lienzo: sigue oculto aunque lo selecciones, al
+ejecutar el formulario se ve, y **Visible** se cambia en el panel Propiedades. En este modo los controles con
+Visible apagado se dibujan normal. Lo que oculta el ojo se guarda con el formulario.
 
 ## La barra de estado
 

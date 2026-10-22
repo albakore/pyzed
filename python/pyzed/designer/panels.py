@@ -374,6 +374,7 @@ def outline(d: "Designer", t: Theme) -> Any:
 
     doc = d.doc
     form = doc.form
+    editor_eye = d.prefs.outline_eye == "editor"
     rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="app-window",
                                  selected=not doc.selection, height=OUTLINE_ROW,
                                  end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
@@ -393,9 +394,9 @@ def outline(d: "Designer", t: Theme) -> Any:
             buttons = [
                 ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip="Add inside",
                                theme=t) if container else None,
-                ui.icon_button("eye" if c.visible else "eye-off",
-                               lambda n=c.name, v=c.visible: d.set_field(n, "visible", not v), size="xs",
-                               tooltip="Visible", theme=t),
+                ui.icon_button("eye-off" if (c.hidden_in_editor if editor_eye else not c.visible) else "eye",
+                               lambda n=c.name: d.toggle_eye(n), size="xs",
+                               tooltip="Hide in the editor" if editor_eye else "Visible", theme=t),
                 ui.icon_button("lock" if c.locked else "lock-open",
                                lambda n=c.name, v=c.locked: d.set_field(n, "locked", not v), size="xs",
                                selected=c.locked, tooltip="Lock", theme=t),
@@ -417,7 +418,8 @@ def outline(d: "Designer", t: Theme) -> Any:
             rows.append(press_row(
                 d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=spec.icon,
                 selected=doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
-                end=_core.row(buttons, spacing=0), color=None if c.visible else "text_muted",
+                end=_core.row(buttons, spacing=0),
+                color=None if c.visible and not c.hidden_in_editor else "text_muted",
                 on_right_press=lambda n=c.name: d.open_outline_menu(n),
                 on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
                 on_exit=lambda n=c.name: d.leave_outline(n),

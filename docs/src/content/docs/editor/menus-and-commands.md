@@ -72,7 +72,7 @@ keyboard and in the command palette.
 | Grid | <kbd>G</kbd> | Shows or hides the dot grid. |
 | Snap to grid | | Toggles snapping. |
 | Smart guides | | Toggles the alignment guides. |
-| Show hidden controls | | Draws hidden controls dimmed on the canvas, or leaves them out. |
+| Show all hidden controls | | Draws every hidden control dimmed on the canvas. Off, a hidden one appears only while it is selected. |
 | Preview window frame… | | Shows the form on the canvas in the window frame of another platform: macOS, Windows 11, GNOME, Ubuntu or KDE Plasma (checked while it is not this system's). |
 | Preview theme…, Preview language… | | Shows the canvas (and the next run) in another theme or language without changing the form (checked while on). See [Preview in another theme or language](/pyzed/editor/data-binding/#preview-in-another-theme-or-language). |
 | Reset panel layout | | Puts every panel back in its default dock and size, and closes the panel windows. |

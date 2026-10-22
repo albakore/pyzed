@@ -64,7 +64,8 @@ class Control:
     (``pz.Style.to_dict()``: background, border, radius, font...) drawn on top of the props.
     ``animations`` lists the control's animations (see ``designer.motion``). ``bind`` names the
     field of ``form.data`` the control shows (and edits, for inputs), and ``rules`` what its
-    value must be (see ``designer.binding``).
+    value must be (see ``designer.binding``). ``hidden_in_editor`` hides it on the designer's canvas only
+    (the outline's eye with the "editor" setting); the running form ignores it.
     """
 
     name: str
@@ -85,6 +86,7 @@ class Control:
     animations: List[Dict[str, Any]] = field(default_factory=list)
     bind: str = ""
     rules: Dict[str, Any] = field(default_factory=dict)
+    hidden_in_editor: bool = False
 
     @property
     def min_size(self) -> Tuple[float, float]:
@@ -121,7 +123,7 @@ class Control:
             del data["layout"]
         if not data["style"]:
             del data["style"]
-        for key in ("animations", "bind", "rules"):
+        for key in ("animations", "bind", "rules", "hidden_in_editor"):
             if not data[key]:
                 del data[key]
         return data
@@ -138,6 +140,7 @@ class Control:
         known["animations"] = [dict(a) for a in known.get("animations") or [] if isinstance(a, dict)]
         known["parent"] = known.get("parent") or None
         known["bind"] = str(known.get("bind") or "")
+        known["hidden_in_editor"] = bool(known.get("hidden_in_editor"))
         known["rules"] = {k: v for k, v in (known.get("rules") or {}).items() if v not in (None, "", False)} \
             if isinstance(known.get("rules"), dict) else {}
         return cls(**known)

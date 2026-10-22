@@ -19,7 +19,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from .. import _core, _platform, ui
 from ..app import App
@@ -46,7 +46,7 @@ from .components import Prop
 from .document import Document
 from . import keymap_editor
 from .keymap_editor import KeymapEditor
-from .model import SUFFIX
+from .model import SUFFIX, Control
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
 from . import project_picker as _project_picker
@@ -205,7 +205,7 @@ class Designer(App):
         self.show_grid = self.prefs.show_grid
         self.snap = self.prefs.snap
         self.smart_guides = self.prefs.smart_guides
-        self.show_hidden = self.prefs.show_hidden
+        self.show_all_hidden = self.prefs.show_all_hidden
         if self.prefs.language:
             _locale.apply(self.prefs.language)
         if theme is None and self.prefs.theme and self.prefs.theme in themes.names():
@@ -669,13 +669,43 @@ class Designer(App):
         return _layout.resolve(self.doc.form, free=free)
 
     @property
+    def revealed(self) -> Tuple[Optional[str], Set[str]]:
+        """The hidden control drawn in front while it (or something inside it) is selected, and every hidden
+        control the canvas shows for the selection (see ``layout.reveal``). Nothing when the outline's eye
+        only hides controls in the editor: those stay hidden even when selected."""
+        if self.prefs.outline_eye == "editor":
+            return None, set()
+        return _layout.reveal(self.doc.form, self.doc.selection)
+
+    def hidden_on_canvas(self, control: Control) -> bool:
+        """Whether the canvas leaves ``control`` out (or, with every hidden control shown, dims it): hidden
+        when the form runs and not revealed, or hidden in the editor, itself or a container holding it."""
+        form = self.doc.form
+        if self.prefs.outline_eye == "editor":
+            return any(c.hidden_in_editor for c in (control, *form.ancestors(control.name)))
+        return not _layout.visible(form, control, self.revealed[1])
+
+    def on_canvas(self, control: Control) -> bool:
+        """Whether ``control`` is drawn on the canvas (hidden ones only when revealed or all are shown)."""
+        return self.show_all_hidden or not self.hidden_on_canvas(control)
+
+    def toggle_eye(self, name: str) -> None:
+        """The outline's eye on control ``name``: its Visible, or whether the canvas hides it (``outline_eye``)."""
+        control = self.doc.form[name]
+        if self.prefs.outline_eye == "editor":
+            self.set_field(name, "hidden_in_editor", not control.hidden_in_editor)
+        else:
+            self.set_field(name, "visible", not control.visible)
+
+    @property
     def drop_target(self):
         """The container highlighted as the place a dragged or new control will go."""
         return self.doc.form.get(self.drop_name) if self.drop_name else None
 
     def _container_under(self, x: float, y: float, exclude=()) -> Optional[str]:
         form = self.doc.form
-        found = _layout.container_at(form, self.rects, x, y, exclude)
+        found = _layout.container_at(form, self.rects, x, y, exclude,
+                                     shown=lambda c: not self.hidden_on_canvas(c))
         # a dock only takes Dock panels: anything else goes to what holds the dock
         placing = [form[n].type for n in exclude if form.get(n) is not None]
         if not placing:
@@ -878,7 +908,7 @@ class Designer(App):
             if band is not None:
                 rects = _layout.resolve(form)
                 hit = [c.name for c in form.controls if c.name in rects and _components.get(c.type).visual
-                       and geometry.intersects(rects[c.name], band)]
+                       and self.on_canvas(c) and geometry.intersects(rects[c.name], band)]
                 # a container and what is inside it move together: keep the outermost
                 doc.select([n for n in hit if not any(a.name in hit for a in form.ancestors(n))])
                 self._selection_changed()
@@ -1376,10 +1406,10 @@ class Designer(App):
     def set_pref(self, key: str, value: Any) -> None:
         """Sets the preference ``key`` to ``value`` and saves the preferences.
 
-        The view options (``show_grid``, ``snap``, ``smart_guides``, ``show_hidden``) apply at once.
+        The view options (``show_grid``, ``snap``, ``smart_guides``, ``show_all_hidden``) apply at once.
         """
         setattr(self.prefs, key, value)
-        if key in ("show_grid", "snap", "smart_guides", "show_hidden"):
+        if key in ("show_grid", "snap", "smart_guides", "show_all_hidden"):
             setattr(self, key, value)
         _logs.event("designer", "Setting %s = %r", key, value)
         preferences.save(self.prefs)
@@ -1406,7 +1436,7 @@ class Designer(App):
 
     def toggle_pref(self, key: str) -> None:
         """Flips the boolean preference ``key`` and saves it."""
-        current = getattr(self, key) if key in ("show_grid", "snap", "smart_guides", "show_hidden") else \
+        current = getattr(self, key) if key in ("show_grid", "snap", "smart_guides", "show_all_hidden") else \
             getattr(self.prefs, key)
         self.set_pref(key, not current)
 
@@ -2463,7 +2493,10 @@ class Designer(App):
                 return self.logs.close_menu()
             if self.drag:
                 return self.cancel_drag()
-            self.tool = None
+            if self.tool:
+                self.tool = None
+            elif self.focus == "canvas" and self.revealed[0] is not None:
+                self.select_form()  # leave the hidden dialog being edited
         return None
 
     def run_key_action(self, action: str) -> Any:

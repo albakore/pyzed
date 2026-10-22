@@ -16,6 +16,9 @@ from .settings import _read, settings_path
 #: Smallest and largest interface scale, and the step of zooming in and out.
 UI_SCALE = (0.75, 1.5, 0.05)
 
+#: What the outline's eye can do: hide the control when the form runs, or on the canvas only.
+EYE_MODES = ("visible", "editor")
+
 #: Where a panel can be docked.
 DOCKS = ("left", "right", "bottom", "top")
 
@@ -39,7 +42,12 @@ class DesignerSettings:
     show_grid: bool = True
     snap: bool = True
     smart_guides: bool = True
-    show_hidden: bool = True
+    #: Draw every hidden control dimmed on the canvas. Off, a hidden one (a dialog, a drawer) appears only
+    #: while it or something inside it is selected.
+    show_all_hidden: bool = False
+    #: What the outline's eye does: "visible" turns the control's Visible off (hidden when the form runs and
+    #: on the canvas, shown while selected); "editor" hides it on the canvas only (see ``EYE_MODES``).
+    outline_eye: str = "visible"
     #: Grid step given to new forms.
     grid: int = 8
     show_toolbar: bool = True
@@ -105,6 +113,8 @@ class DesignerSettings:
             except (TypeError, ValueError):
                 continue
         out.grid = min(max(out.grid, 2), 64)
+        if out.outline_eye not in EYE_MODES:
+            out.outline_eye = "visible"
         out.ui_scale = min(max(round(out.ui_scale, 2), UI_SCALE[0]), UI_SCALE[1])
         out.docks = {k: v for k, v in out.docks.items() if is_place(v)}
         out.layouts = {str(k): v for k, v in out.layouts.items() if isinstance(v, dict)}

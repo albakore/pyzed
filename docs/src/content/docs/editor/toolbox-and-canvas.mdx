@@ -175,8 +175,8 @@ itself: click it to select it, **+** adds a control to it.
 - **Chevron**: folds or unfolds a container's children. On a placed designed component, it lists the component's
   public properties and methods; click one to insert `form.ada.rate()` (or `self.stars.pick()` in a component) at
   the code editor's cursor, or to copy it when no code is open.
-- **Eye**: hides the control. Hidden controls are invisible when the form runs; on the canvas they are drawn
-  dimmed (or not at all with **View → Show hidden controls** off) and their names are grayed in the outline.
+- **Eye**: hides the control. Hidden controls are invisible when the form runs and their names are grayed in
+  the outline. See [Dialogs, drawers and other hidden controls](#dialogs-drawers-and-other-hidden-controls).
 - **Lock**: locks the control so it cannot be moved or resized by accident.
 - **+** (containers): adds a control inside.
 - **Drag a row** to reorder it: a line shows where it goes (before or after a row), and a frame when it would go
@@ -189,6 +189,27 @@ The outline is the easiest way to pick a control buried under others, or a
 :::
 
 <Media clip="designer-timer-outline" alt="A Timer dragged from the toolbox onto the login form lands in the tray under the form, not on it; then the email text box and the form's ticker timer are selected from the Outline, where non-visual components are listed under Non-visual" caption="Drop a Timer on the form and it goes to the tray. In the Outline, non-visual components come after the controls, under Non-visual." />
+
+## Dialogs, drawers and other hidden controls
+
+A dialog, a drawer or a page that only appears when a button is pressed is a container with **Visible** off,
+shown from code with `form.status_dialog.show()` (and `.hide()` to close it). The canvas leaves hidden controls
+out, so a form with many of them does not turn into a pile of overlapping panels:
+
+1. **Select it in the outline** (or anything inside it). It comes up in front of the form, which is dimmed
+   behind it, as it will look when the form runs. A chip at the top names it.
+2. **Edit it as usual**: move, resize, drop new controls into it from the toolbox, change its properties.
+3. **Go back** with <kbd>Esc</kbd>, the chip's **×**, or a click on the dimmed form.
+
+To see every hidden control at once, dimmed in its place, turn on **View → Show all hidden controls**.
+
+### Hide a control in the editor only
+
+If you would rather keep every control on the canvas and hide some just while you work, like layers in a drawing
+app, set **Settings → Form canvas → Outline eye** to **Hidden in the editor only**. The eye then hides the control
+(and what is inside it) on the canvas only: it stays hidden even when selected, the running form still shows it,
+and **Visible** is set in the Properties panel. Controls whose Visible is off are drawn normally in this mode. What
+the eye hides is saved with the form.
 
 ## The status bar
 
