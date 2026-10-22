@@ -29,6 +29,7 @@ stable version.
 ### Fixes
 
 - 🐛 Restarting after an update on Windows no longer fails with `'NoneType' object has no attribute 'flush'` or opens several console windows. PR [#178](https://github.com/albakore/pyzed/pull/178) by [@albakore](https://github.com/albakore).
+- 🐛 A WSL project opened from Windows still lists its tools when Windows can't reach the distro. PR [#180](https://github.com/albakore/pyzed/pull/180) by [@albakore](https://github.com/albakore).
 
 ### Docs
 

@@ -254,6 +254,22 @@ def test_wsl_project_opened_from_windows(monkeypatch):
     assert project.tools(app)["uv"].version == "0.9.0"
 
 
+def test_wsl_tools_survive_an_unreachable_distro(monkeypatch):
+    """Windows can answer a look into a stopped or missing WSL distro with an error (WinError 64) instead of
+    "not found": the tools are still listed, run inside WSL by name."""
+    monkeypatch.setattr(sys, "platform", "win32")
+    app = project.Project(pathlib.Path(r"\\wsl.localhost\Ubuntu\home\me\shop"), {})
+
+    def unreachable(path):
+        raise OSError(22, "The specified network name is no longer available", str(path))
+
+    monkeypatch.setattr(pathlib.Path, "is_file", unreachable)
+    monkeypatch.setattr(project, "execute",
+                        lambda args, cwd=None, timeout=None: project.Result(list(args), 0, "ruff 0.9.0"))
+    assert app.tool_path("ruff") is None
+    assert project.tools(app)["ruff"].path == "ruff"
+
+
 def test_local_projects_run_commands_directly(tmp_path, monkeypatch):
     app = project.Project.open(_make(tmp_path, "shop"))
     assert not app.environment.remote
