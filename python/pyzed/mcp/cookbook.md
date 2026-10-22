@@ -219,6 +219,52 @@ pz.run(Signup)
 
 Docs: `integrations/overview`, `integrations/pydantic`, `integrations/sqlmodel`, `editor/data-binding`.
 
+## Dates, files and the operating system
+
+`ui.DatePicker`, `ui.DateRangePicker`, `ui.TimePicker` and `ui.Calendar` are components: `on_change`
+gets an event whose `value` is a `datetime.date`, a `(start, end)` pair or a `datetime.time`.
+`format` takes tokens (`"DD/MM/YYYY"`, `"MMM D, YYYY"`, `"h:mm A"`) or a `strftime` pattern, and
+`ui.format_date`/`ui.parse_date` use the same ones. `ui.file_input` opens the system's file dialog,
+`ui.DropZone` takes files dropped on the window and `pz.Launcher` opens files and links with the
+system's programs.
+
+```python
+import datetime
+
+import pyzed as pz
+from pyzed import ui
+
+
+class Trip(pz.App):
+    title = "Trip"
+    size = (460, 320)
+
+    def __init__(self):
+        self.stay = (datetime.date(2026, 10, 5), datetime.date(2026, 10, 9))
+        self.leave = datetime.time(9, 30)
+        self.ticket = ""
+        self.launcher = pz.Launcher()
+
+    def view(self):
+        start, end = self.stay
+        return pz.column([
+            ui.field("Stay", ui.DateRangePicker(value=self.stay, format="DD/MM/YYYY",
+                                                on_change=lambda e: setattr(self, "stay", e.value))),
+            ui.field("Leave at", ui.TimePicker(value=self.leave, format="h:mm A",
+                                               on_change=lambda e: setattr(self, "leave", e.value))),
+            ui.field("Ticket", ui.file_input(self.ticket, lambda path: setattr(self, "ticket", path),
+                                             filters="PDF: pdf")),
+            ui.label(f"{(end - start).days} nights from {ui.format_date(start, 'dddd D MMMM')}"
+                     if start and end else "Pick the dates"),
+            ui.button("Open ticket", lambda: self.launcher.open(self.ticket), disabled=not self.ticket),
+        ], spacing=12, padding=24)
+
+
+pz.run(Trip)
+```
+
+Docs: `library/date-picker`, `library/calendar`, `library/file-input`, `library/drop-zone`, `guides/services`.
+
 ## Large data: virtual lists and memoized views
 
 `ui.virtual_list` (and `pz.virtual_column`) only build the rows in view, so a million rows stay

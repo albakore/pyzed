@@ -68,6 +68,32 @@ SCRIPTS: dict[str, dict] = {
                                drag((412, 311), (300, 311)), leave()]},
     "icon-picker": {"steps": [wait(300), press("input:0"), type_text("star"), wait(500),
                               hover((228, 89), hold=300), press(), leave()]},
+    # -- dates and times --
+    "date-picker": {"steps": [wait(300), press((455, 39), after=600), hover((346, 237), hold=300),
+                              hover((414, 237), hold=300), press(after=600), press("input:0"), key("Down"),
+                              wait(300), key("Down"), wait(300), key("PageDown"), wait(500), key("Escape"), leave()]},
+    "date-range-picker": {"steps": [wait(300), press((475, 39), after=600), press((236, 203), after=300),
+                                    hover((406, 237), hold=300), hover((488, 169), hold=300),
+                                    hover((556, 169), hold=300), press(after=800), leave()]},
+    "time-picker": {"steps": [wait(300), press((333, 49), after=700), hover((238, 223), hold=300), press(after=300),
+                              hover((294, 196), hold=300), press(after=500), key("Escape"), leave(), wait(400)]},
+    "calendar": {"steps": clicks((256, 184), (188, 218), (329, 61), (222, 184))},
+    # -- system --
+    "file-input": {"steps": [wait(300), press("input:1"), type_text("~/img/logo.png"), hover((555, 140), hold=500),
+                             hover("Browse…", hold=500), leave(), wait(400)]},
+    "drop-zone": {
+        "code": '''t = clip_time() % 4.5
+images = ui.DropZone.create(text="Drop images here", hint="PNG or JPG, up to 10 MB", accept=["png", "jpg"],
+                            live=False)
+if 0.8 < t < 2.0:
+    images.hover("/home/ada/cat.png")
+elif 2.6 < t < 3.8:
+    images.hover("/home/ada/notes.txt")
+csv = ui.DropZone.create(icon_name="file-spreadsheet", text="Import a CSV", accept=["csv"], multiple=False,
+                         show_files=True, files=["~/data/sales-2026.csv"], live=False)
+pz.row([images.render(), csv.render()], spacing=16, width=600)''',
+        "steps": [wait(4500)],
+    },
     # -- feedback --
     "progress": {
         "code": '''t = clip_time()
@@ -181,6 +207,10 @@ pz.container(ui.terminal("\\n".join(lines[:shown])), width=560, height=190)''',
 EXAMPLES: dict[str, list] = {}
 
 #: Variant clips (``<slug>-v<group>-<n>``) that need their own script.
-VARIANTS: dict[str, list] = {}
+VARIANTS: dict[str, list] = {
+    # A click on a drop zone opens the system's file dialog: only hover them.
+    **{f"drop-zone-v{g}-{i}": [wait(300), hover("center", hold=900), leave(), wait(300)]
+       for g, n in ((1, 4), (2, 2)) for i in range(1, n + 1)},
+}
 
 __all__ = ["EXAMPLES", "SCRIPTS", "VARIANTS", "move"]

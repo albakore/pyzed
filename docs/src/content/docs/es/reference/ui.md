@@ -3110,6 +3110,282 @@ Un damero claro/oscuro para dibujar bajo colores translúcidos.
 | `height` | Alto. |
 | `size` | Tamaño de celda. |
 
+## Fechas y horas
+
+### `Calendar`
+
+```python
+class Calendar
+```
+
+Un componente con un mes donde elegir un día (`mode="single"`), un rango (`"range"`: el primer clic lo empieza y el segundo lo termina) o varios días (`"multiple"`). El título abre una cuadrícula de meses y después de años. Tras un clic recibe el teclado: las flechas mueven, Enter elige y Re Pág/Av Pág cambian de mes. Ver la página [Calendario](/pyzed/es/library/calendar/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Una fecha (`datetime.date` o `"2026-10-22"`), un par `(inicio, fin)` o una lista de fechas, según `mode`. |
+| `mode` | `"single"`, `"range"` o `"multiple"`. |
+| `min` | El primer día que se puede elegir. |
+| `max` | El último día que se puede elegir. |
+| `disabled` | Días que no se pueden elegir: fechas, nombres de día en inglés (`"sunday"`) o `"weekends"`. |
+| `first_weekday` | `"monday"`, `"sunday"` o `"saturday"`. |
+| `months` | Meses que se ven uno al lado del otro. |
+| `week_numbers` | Muestra el número de semana ISO de cada fila. |
+| `show_outside` | Muestra los días de los meses vecinos. |
+| `today_button` | Añade un enlace Hoy. |
+| `on_change` | Recibe `event.value` (una fecha, una tupla o una lista). |
+| `on_month` | Recibe `event.value`, el `(año, mes)` que se muestra. |
+
+```python
+ui.Calendar(self.day, on_change=lambda e: setattr(self, "day", e.value))
+ui.Calendar(self.stay, mode="range", months=2, on_change=lambda e: setattr(self, "stay", e.value))
+```
+
+### `DatePicker`
+
+```python
+class DatePicker
+```
+
+Un componente: un campo de fecha que abre un calendario debajo, en una ventana emergente que ningún panel recorta. Se puede escribir en `format` (Enter o salir del campo lo lee); tras un clic, ↑/↓ mueven la fecha un día y Re Pág/Av Pág un mes sin abrir nada, Alt+↓ abre el calendario y Escape lo cierra. Ver la página [Selector de fecha](/pyzed/es/library/date-picker/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | La fecha (`datetime.date`, texto ISO o `None`). |
+| `format` | Cómo se escribe: `"DD/MM/YYYY"`, `"MMM D, YYYY"`... (ver `format_date`). |
+| `placeholder` | Pista mientras está vacío (por defecto, el formato). |
+| `min` | La primera fecha. |
+| `max` | La última fecha. |
+| `disabled_dates` | Días que no se pueden elegir (como en `Calendar`). |
+| `first_weekday` | `"monday"`, `"sunday"` o `"saturday"`. |
+| `week_numbers` | Muestra los números de semana en el calendario. |
+| `clearable` | Muestra una x que lo vacía. |
+| `today_button` | Añade un enlace Hoy al calendario. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `on_change` | Recibe `event.value`: un `datetime.date` o `None`. |
+| `on_open` | Se abrió el calendario. |
+| `on_close` | Se cerró el calendario. |
+
+```python
+ui.DatePicker(self.due, format="DD/MM/YYYY", on_change=lambda e: setattr(self, "due", e.value))
+```
+
+### `DateRangePicker`
+
+```python
+class DateRangePicker
+```
+
+Un componente: un campo para una fecha de inicio y otra de fin, con dos meses y rangos rápidos (Hoy, Últimos 7 días, Este mes...) en su ventana emergente. El texto escrito son dos fechas separadas por `separator`. Ver la página [Selector de rango de fechas](/pyzed/es/library/date-range-picker/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | `(inicio, fin)`: fechas, texto ISO o `None`. |
+| `format` | Cómo se escribe cada fecha. |
+| `separator` | Texto entre las dos fechas. |
+| `placeholder` | Pista mientras está vacío. |
+| `min` | La primera fecha. |
+| `max` | La última fecha. |
+| `disabled_dates` | Días que no se pueden elegir. |
+| `first_weekday` | `"monday"`, `"sunday"` o `"saturday"`. |
+| `months` | Meses que se ven uno al lado del otro. |
+| `presets` | Muestra los rangos rápidos. |
+| `clearable` | Muestra una x que lo vacía. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `on_change` | Recibe `event.value`: `(inicio, fin)`. |
+| `on_open` | Se abrió el calendario. |
+| `on_close` | Se cerró el calendario. |
+
+```python
+ui.DateRangePicker(self.period, on_change=lambda e: setattr(self, "period", e.value))
+```
+
+### `TimePicker`
+
+```python
+class TimePicker
+```
+
+Un componente: un campo de hora con columnas de horas y minutos (y segundos, y AM/PM con un `format` de 12 horas) en una ventana emergente. Tras un clic, ↑/↓ la cambian `minute_step` minutos. Ver la página [Selector de hora](/pyzed/es/library/time-picker/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | La hora (`datetime.time`, `"14:30"` o `None`). |
+| `format` | `"HH:mm"`, `"HH:mm:ss"`, `"h:mm A"`... |
+| `placeholder` | Pista mientras está vacío. |
+| `minute_step` | Minutos entre los que se ofrecen. |
+| `min` | La primera hora. |
+| `max` | La última hora. |
+| `clearable` | Muestra una x que lo vacía. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `on_change` | Recibe `event.value`: un `datetime.time` o `None`. |
+| `on_open` | Se abrió la lista. |
+| `on_close` | Se cerró la lista. |
+
+```python
+ui.TimePicker(self.alarm, format="h:mm A", minute_step=15, on_change=lambda e: setattr(self, "alarm", e.value))
+```
+
+### `format_date`
+
+```python
+format_date(value, fmt='YYYY-MM-DD', *, language=None)
+```
+
+Escribe una fecha con un patrón de marcas: `YYYY` 2026, `YY` 26, `MMMM` octubre, `MMM` oct, `MM` 10, `M` 10, `DD` 05, `D` 5, `dddd` lunes, `ddd` lun, `HH`/`hh` horas, `mm` minutos, `ss` segundos, `A` AM/PM y `[texto]` tal cual. Un patrón con `%` es de `strftime`. Los nombres de meses y días siguen el idioma de `pyzed.i18n`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Una fecha, un datetime, texto ISO o `None` (da `""`). |
+| `fmt` | El patrón. |
+| `language` | Un idioma para los nombres en lugar del actual. |
+
+```python
+ui.format_date(day, "dddd, D [de] MMMM [de] YYYY")   # "lunes, 5 de octubre de 2026"
+```
+
+### `parse_date`
+
+```python
+parse_date(text, fmt='YYYY-MM-DD', *, language=None)
+```
+
+Lee una fecha escrita con un patrón de `format_date` (meses en el idioma actual o en inglés); el ISO `YYYY-MM-DD` siempre funciona. Devuelve `None` si el texto no es una fecha.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `text` | El texto. |
+| `fmt` | El patrón. |
+| `language` | El idioma de los nombres. |
+
+### `format_time`
+
+```python
+format_time(value, fmt='HH:mm')
+```
+
+Escribe una hora (o `"14:30"`) con un patrón como `"h:mm A"`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Un `datetime.time` o texto. |
+| `fmt` | El patrón. |
+
+### `parse_time`
+
+```python
+parse_time(text, fmt='HH:mm')
+```
+
+Lee una hora: `"14:30"`, `"2:30 PM"`, `"14:30:05"`, primero con `fmt`. `None` si no lo es.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `text` | El texto. |
+| `fmt` | El patrón. |
+
+## Sistema
+
+### `file_input`
+
+```python
+file_input(
+    value,
+    on_change=None,
+    *,
+    mode='open',
+    filters=None,
+    title=None,
+    directory=None,
+    file_name='',
+    placeholder=None,
+    button=None,
+    editable=True,
+    disabled=False,
+    invalid=False,
+    id=None,
+    width='fill',
+    theme=None,
+)
+```
+
+Un campo de ruta con un botón que abre el diálogo de archivos del sistema, para que nadie escriba una ruta a mano. Ver la página [Selector de archivos](/pyzed/es/library/file-input/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Valor actual. |
+| `on_change` | Recibe la ruta (una lista con `"open_many"`). |
+| `mode` | `"open"` (un archivo), `"open_many"` (una lista), `"save"` o `"folder"`. |
+| `filters` | Archivos que se muestran: `{"Imágenes": "png jpg"}` o `"Imágenes: png, jpg"`. |
+| `title` | El título del diálogo. |
+| `directory` | Dónde se abre el diálogo (por defecto, la carpeta de la ruta actual). |
+| `file_name` | El nombre que propone al guardar. |
+| `placeholder` | Texto de ayuda cuando está vacío. |
+| `button` | Texto para el botón en lugar de un icono de carpeta. |
+| `editable` | `False` impide escribir la ruta. |
+| `disabled` | Lo deshabilita (ignora los clics). |
+| `invalid` | Pinta el borde con el color de error. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.file_input(self.photo, self.set_photo, filters={"Imágenes": "png jpg"})
+```
+
+### `pick`
+
+```python
+pick(then, *, mode='open', title=None, filters=None, directory=None, file_name='')
+```
+
+El diálogo de archivos del sistema como un `Command`: devuélvelo desde un callback y `then` recibe lo que eligió el usuario (una ruta, una lista de rutas con `"open_many"`, o `None` si cancela). `ui.file_input` lo usa.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Se llama con el resultado. |
+| `mode` | `"open"`, `"open_many"`, `"save"` o `"folder"`. |
+| `title` | El título del diálogo. |
+| `filters` | Archivos que se muestran: `{"Imágenes": "png jpg"}` o `"Imágenes: png, jpg"`. |
+| `directory` | Dónde se abre el diálogo. |
+| `file_name` | El nombre que propone al guardar. |
+
+```python
+ui.button("Abrir…", lambda: ui.system.pick(self.cargar, filters="Texto: txt, md"))
+```
+
+### `DropZone`
+
+```python
+class DropZone
+```
+
+Un componente que recibe archivos arrastrados desde el explorador de archivos del sistema y soltados en la ventana, y abre el diálogo de archivos con un clic. Se ilumina mientras se arrastran archivos sobre la ventana y guarda las rutas soltadas en `files`. El gancho `on_file_drop` de la ventana entrega cada archivo a la zona bajo el puntero, si no a una cuyo `accept` incluya su tipo. Ver la página [Zona para soltar](/pyzed/es/library/drop-zone/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `text` | El texto principal (por defecto: Suelta archivos aquí). |
+| `hint` | La línea de debajo. |
+| `icon_name` | Su icono. |
+| `accept` | Extensiones (`["png", "jpg"]`), patrones (`"*.tar.gz"`) o `"folder"`; vacío acepta todo. |
+| `multiple` | `False` se queda solo con el último archivo. |
+| `browse` | Un clic abre el diálogo de archivos. |
+| `show_files` | Lista los archivos bajo el texto (cada uno con una x). |
+| `files` | Las rutas soltadas. |
+| `disabled` | No recibe nada. |
+| `live` | `False` lo dibuja sin recibir archivos (el lienzo del diseñador). |
+| `on_drop` | Recibe `event.value`: una ruta soltada (una vez por archivo). |
+| `on_files` | Recibe `event.value`: la lista de archivos. |
+| `on_reject` | Recibe una ruta que no acepta. |
+| `on_enter` | Se arrastran archivos sobre la ventana. |
+| `on_leave` | El arrastre salió sin soltar. |
+
+```python
+ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: self.photos.append(e.value))
+```
+
 ## Agente
 
 ### `ToolCall`

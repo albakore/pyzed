@@ -52,7 +52,7 @@ WIDGET_CATEGORIES = {
     "Text": ("text", "rich_text", "span", "markdown"),
     "Controls": ("button", "checkbox", "text_input", "toggler", "slider", "vertical_slider", "radio",
                  "pick_list", "progress_bar"),
-    "Interaction": ("mouse_area", "hover", "tooltip"),
+    "Interaction": ("mouse_area", "hover", "tooltip", "popup"),
     "Media": ("image", "image_viewer", "svg", "qr_code", "canvas", "shader", "icon"),
     "Code": ("code_editor",),
     "Anchors": ("anchor_layout", "anchor"),
@@ -68,7 +68,7 @@ UI_CATEGORIES = {
     "base": "Basics", "controls": "Controls", "inputs": "Inputs", "display": "Data display", "lists": "Lists",
     "navigation": "Navigation", "overlays": "Overlays", "dialogs": "Dialogs", "workspace": "Workspace",
     "editor": "Code", "color": "Color", "console": "Console", "help": "Help", "frame": "Window",
-    "icon_picker": "Icons", "agent": "Agent",
+    "icon_picker": "Icons", "agent": "Agent", "dates": "Dates and times", "system": "System",
 }
 
 

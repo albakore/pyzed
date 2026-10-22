@@ -769,6 +769,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -788,6 +790,8 @@ A piece of text.
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `wrap` | Line wrapping. With `False` the text doesn't wrap. |
+| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
+| `selection_color` | Color behind the selected text. |
 
 ### `icon`
 
@@ -915,6 +919,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -930,6 +936,8 @@ Renders Markdown (headings, lists, code blocks, quotes, tables, links…). For t
 | `code_bg` | Code background. |
 | `on_link` | Callable that receives the URL when a link is clicked. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
+| `selection_color` | Color behind the selected text. |
 
 ### `rich_text`
 
@@ -1284,6 +1292,27 @@ Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.
 | `border_width` | Border width in pixels. |
 | `radius` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
 | `shadow` | Shadow: `(color, (dx, dy), blur)`. |
+
+### `popup`
+
+```python
+popup(base, content=None, *, on_dismiss=None, side='bottom', align='start', gap=4.0)
+```
+
+Shows `content` over everything else next to `base`, like the menu of a drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls `on_dismiss`. With `content=None` only `base` is shown. The date pickers open their calendars with it.
+
+| Parameter | Description |
+| --- | --- |
+| `base` | The widget it belongs to (a field, a button). |
+| `content` | What opens (a panel, a menu), or `None` while closed. |
+| `on_dismiss` | Message or callable sent on a press outside or Escape. |
+| `side` | `"bottom"`, `"top"`, `"right"` or `"left"` of `base`. |
+| `align` | `"start"`, `"center"` or `"end"`: how it lines up with `base`. |
+| `gap` | Space between `base` and the content. |
+
+```python
+pz.popup(field, panel if self.open else None, on_dismiss=self.close)
+```
 
 ## Controls
 

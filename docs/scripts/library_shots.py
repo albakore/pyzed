@@ -140,7 +140,12 @@ STATEFUL = {
     "accordion": [("open", "on_toggle", "member")],
     "split": [("ratio", "on_resize", "set")],
     "tree": [("expanded", "on_toggle", "member"), ("selected", "on_select", "set")],
+    "file_input": [("value", "on_change", "set")],
 }
+
+
+#: ``ui`` components whose ``value`` prop comes back in ``event.value`` of ``on_change``.
+STATEFUL_COMPONENTS = ("Calendar", "DatePicker", "DateRangePicker", "TimePicker")
 
 
 class LiveUI:
@@ -159,6 +164,8 @@ class LiveUI:
 
     def __getattr__(self, name):
         real = getattr(ui, name)
+        if name in STATEFUL_COMPONENTS:
+            return self._component(name, real)
         rules = STATEFUL.get(name)
         if not rules:
             return real
@@ -191,6 +198,24 @@ class LiveUI:
                 bound.arguments[callback_name] = callback
             return real(*bound.args, **bound.kwargs)
 
+        return live
+
+    def _component(self, name, real):
+        def live(*args, **kwargs):
+            n = self.counts.get(name, 0)
+            self.counts[name] = n + 1
+            key = (name, n, "value")
+            if key in self.store:
+                args, kwargs = args[1:], {**kwargs, "value": self.store[key]}
+            original = kwargs.get("on_change")
+
+            def changed(event, _key=key, _orig=original):
+                self.store[_key] = event.value
+                return _orig(event) if _orig else None
+
+            return real(*args, **{**kwargs, "on_change": changed})
+
+        live.create = real.create  # draw snippets build one by hand
         return live
 
 

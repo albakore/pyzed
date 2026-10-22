@@ -769,6 +769,8 @@ text(
     width=None,
     height=None,
     wrap=True,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -788,6 +790,8 @@ Un texto.
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `wrap` | Ajuste de línea. Con `False` el texto no se parte. |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `icon`
 
@@ -915,6 +919,8 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
+    selectable=None,
+    selection_color=None,
 )
 ```
 
@@ -930,6 +936,8 @@ Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces
 | `code_bg` | Fondo del código. |
 | `on_link` | Callable que recibe la URL al pulsar un enlace. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `selectable` | `True` deja seleccionar el texto con el ratón (arrastrar, doble clic en una palabra, triple clic en un bloque) y copiarlo con Ctrl+C. Una cadena nombra un grupo de selección: los textos y el Markdown de un mismo grupo forman una sola selección, en el orden en que se dibujan (las líneas de un log, los mensajes de un chat). |
+| `selection_color` | Color detrás del texto seleccionado. |
 
 ### `rich_text`
 
@@ -1251,6 +1259,27 @@ Hace que un widget bloquee el ratón para lo que está debajo en un `stack`.
 | Parámetro | Descripción |
 | --- | --- |
 | `content` | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
+
+### `popup`
+
+```python
+popup(base, content=None, *, on_dismiss=None, side='bottom', align='start', gap=4.0)
+```
+
+Muestra `content` encima de todo junto a `base`, como el menú de un desplegable: no lo recortan los paneles donde está `base`, se pasa al otro lado cuando no cabe y se queda dentro de la ventana. Un clic fuera (y fuera de `base`) o Escape llama a `on_dismiss`. Con `content=None` solo se muestra `base`. Los selectores de fecha abren su calendario con él.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `base` | El widget al que pertenece (un campo, un botón). |
+| `content` | Lo que se abre (un panel, un menú), o `None` mientras está cerrado. |
+| `on_dismiss` | Mensaje o función que se envía con un clic fuera o Escape. |
+| `side` | `"bottom"`, `"top"`, `"right"` o `"left"` de `base`. |
+| `align` | `"start"`, `"center"` o `"end"`: cómo se alinea con `base`. |
+| `gap` | Espacio entre `base` y el contenido. |
+
+```python
+pz.popup(field, panel if self.open else None, on_dismiss=self.close)
+```
 
 ### `tooltip`
 

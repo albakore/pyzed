@@ -15,7 +15,7 @@ sidebar:
 import Gallery from '../../../components/library/Gallery.astro';
 import LibraryStats from '../../../components/library/LibraryStats.astro';
 
-<LibraryStats stats={[{"value": 108, "label": "components"}, {"value": 735, "label": "variants"}, {"value": 14, "label": "categories"}]} categories={[{"label": "Actions", "href": "#actions", "count": 6}, {"label": "Display", "href": "#display", "count": 9}, {"label": "Forms", "href": "#forms", "count": 12}, {"label": "Feedback", "href": "#feedback", "count": 7}, {"label": "Data", "href": "#data", "count": 8}, {"label": "Lists and menus", "href": "#lists-and-menus", "count": 7}, {"label": "Navigation", "href": "#navigation", "count": 3}, {"label": "Overlays", "href": "#overlays", "count": 6}, {"label": "Dialogs", "href": "#dialogs", "count": 7}, {"label": "Workspace", "href": "#workspace", "count": 7}, {"label": "Code and tools", "href": "#code-and-tools", "count": 7}, {"label": "AI agents", "href": "#ai-agents", "count": 9}, {"label": "Layout", "href": "#layout", "count": 11}, {"label": "Content", "href": "#content", "count": 9}]} navLabel="Components" />
+<LibraryStats stats={[{"value": 114, "label": "components"}, {"value": 774, "label": "variants"}, {"value": 16, "label": "categories"}]} categories={[{"label": "Actions", "href": "#actions", "count": 6}, {"label": "Display", "href": "#display", "count": 9}, {"label": "Forms", "href": "#forms", "count": 12}, {"label": "Dates and times", "href": "#dates-and-times", "count": 4}, {"label": "Feedback", "href": "#feedback", "count": 7}, {"label": "Data", "href": "#data", "count": 8}, {"label": "Lists and menus", "href": "#lists-and-menus", "count": 7}, {"label": "Navigation", "href": "#navigation", "count": 3}, {"label": "Overlays", "href": "#overlays", "count": 6}, {"label": "Dialogs", "href": "#dialogs", "count": 7}, {"label": "System", "href": "#system", "count": 2}, {"label": "Workspace", "href": "#workspace", "count": 7}, {"label": "Code and tools", "href": "#code-and-tools", "count": 7}, {"label": "AI agents", "href": "#ai-agents", "count": 9}, {"label": "Layout", "href": "#layout", "count": 11}, {"label": "Content", "href": "#content", "count": 9}]} navLabel="Components" />
 
 Every component of `pyzed.ui`, plus the layout and content widgets of `pyzed`, with a live
 preview, the code that draws it, examples and its API. Components are **functions that return
@@ -71,6 +71,12 @@ Controlled inputs: they show your state and report every change.
 
 <Gallery base="/pyzed/library/" summary="12 components · 107 variants" items={[{"slug": "checkbox", "name": "Checkbox", "blurb": "A checkbox with an optional label.", "count": "10 variants"}, {"slug": "color-picker", "name": "Color picker", "blurb": "Pick a color, a gradient or a masked fill; swatches show them.", "badge": "New", "count": "7 variants"}, {"slug": "field", "name": "Field", "blurb": "A settings row: title and description left, control right.", "count": "8 variants"}, {"slug": "icon-picker", "name": "Icon picker", "blurb": "Pick one of the ~2000 Lucide icons from a searchable grid.", "badge": "New", "count": "4 variants"}, {"slug": "input", "name": "Input", "blurb": "A controlled text field with icon, placeholder and password mode.", "count": "18 variants"}, {"slug": "number-field", "name": "Number field", "blurb": "A number with −/+ buttons, limits, step and suffix.", "count": "9 variants"}, {"slug": "radio-group", "name": "Radio group", "blurb": "Mutually exclusive options as radio buttons.", "count": "8 variants"}, {"slug": "search-input", "name": "Search input", "blurb": "An input with a magnifying glass, for filtering.", "count": "6 variants"}, {"slug": "segmented", "name": "Segmented", "blurb": "A group of mutually exclusive text buttons.", "count": "9 variants"}, {"slug": "select", "name": "Select", "blurb": "A dropdown to choose one option.", "count": "9 variants"}, {"slug": "slider", "name": "Slider", "blurb": "Pick a number in a range by dragging.", "count": "11 variants"}, {"slug": "switch", "name": "Switch", "blurb": "An on/off switch for settings that apply at once.", "count": "8 variants"}]} />
 
+## Dates and times
+
+Calendars and fields for dates, ranges and times, in the format you choose.
+
+<Gallery base="/pyzed/library/" summary="4 components · 25 variants" items={[{"slug": "calendar", "name": "Calendar", "blurb": "A month grid to pick a day, a range or several days, always on screen.", "badge": "New", "count": "10 variants"}, {"slug": "date-picker", "name": "Date picker", "blurb": "A date field with a calendar that drops down, in the format you choose.", "badge": "New", "count": "8 variants"}, {"slug": "date-range-picker", "name": "Date range picker", "blurb": "Two dates in one field, with two months side by side and quick ranges.", "badge": "New", "count": "2 variants"}, {"slug": "time-picker", "name": "Time picker", "blurb": "A time field with columns of hours and minutes, in 24 or 12 hours.", "badge": "New", "count": "5 variants"}]} />
+
 ## Feedback
 
 Progress, loading, notices and empty states.
@@ -106,6 +112,12 @@ Things drawn on top of the UI: layers, modals, palettes and notifications.
 Ready-made dialogs with translated buttons.
 
 <Gallery base="/pyzed/library/" summary="7 components · 26 variants" items={[{"slug": "alert", "name": "Alert", "blurb": "A message with one button.", "badge": "New", "count": "6 variants"}, {"slug": "choice", "name": "Choice", "blurb": "A message with your own buttons.", "badge": "New", "count": "2 variants"}, {"slug": "confirm", "name": "Confirm", "blurb": "A yes/no question, red for destructive actions.", "badge": "New", "count": "4 variants"}, {"slug": "dialog-layer", "name": "Dialog layer", "blurb": "Centers a dialog over your view with a dimmed backdrop.", "badge": "New", "count": "3 variants"}, {"slug": "error-dialog", "name": "Error dialog", "blurb": "What went wrong, where, and the traceback, with Copy and Go to source.", "badge": "New", "count": "6 variants"}, {"slug": "prompt", "name": "Prompt", "blurb": "Asks for a line of text.", "badge": "New", "count": "3 variants"}, {"slug": "unsaved-changes", "name": "Unsaved changes", "blurb": "“Save your changes before closing?”", "badge": "New", "count": "2 variants"}]} />
+
+## System
+
+Pieces that talk to the operating system: its file dialogs and files dropped from the desktop.
+
+<Gallery base="/pyzed/library/" summary="2 components · 14 variants" items={[{"slug": "drop-zone", "name": "Drop zone", "blurb": "An area that takes files dragged from the desktop or the file manager.", "badge": "New", "count": "6 variants"}, {"slug": "file-input", "name": "File picker", "blurb": "A path field with a button that opens the system's file or folder dialog.", "badge": "New", "count": "8 variants"}]} />
 
 ## Workspace
 

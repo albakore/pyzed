@@ -1763,6 +1763,174 @@
   "ms": 3700,
   "width": 480
  },
+ "calendar-v1-1.dark": {
+  "bytes": 13368,
+  "frames": 9,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v1-1.light": {
+  "bytes": 12964,
+  "frames": 9,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v1-2.dark": {
+  "bytes": 19904,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 552
+ },
+ "calendar-v1-2.light": {
+  "bytes": 19522,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 552
+ },
+ "calendar-v1-3.dark": {
+  "bytes": 13846,
+  "frames": 9,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v1-3.light": {
+  "bytes": 13474,
+  "frames": 9,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-1.dark": {
+  "bytes": 13964,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 578
+ },
+ "calendar-v2-1.light": {
+  "bytes": 13536,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 578
+ },
+ "calendar-v2-2.dark": {
+  "bytes": 12976,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-2.light": {
+  "bytes": 12500,
+  "frames": 8,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-3.dark": {
+  "bytes": 11410,
+  "frames": 7,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-3.light": {
+  "bytes": 11352,
+  "frames": 7,
+  "height": 548,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-4.dark": {
+  "bytes": 14058,
+  "frames": 10,
+  "height": 620,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v2-4.light": {
+  "bytes": 13792,
+  "frames": 10,
+  "height": 620,
+  "ms": 2333,
+  "width": 518
+ },
+ "calendar-v3-1.dark": {
+  "bytes": 19760,
+  "frames": 11,
+  "height": 570,
+  "ms": 2333,
+  "width": 1056
+ },
+ "calendar-v3-1.light": {
+  "bytes": 19416,
+  "frames": 11,
+  "height": 570,
+  "ms": 2333,
+  "width": 1056
+ },
+ "calendar-v3-2.dark": {
+  "bytes": 9148,
+  "frames": 8,
+  "height": 472,
+  "ms": 2333,
+  "width": 552
+ },
+ "calendar-v3-2.light": {
+  "bytes": 9588,
+  "frames": 8,
+  "height": 472,
+  "ms": 2333,
+  "width": 552
+ },
+ "calendar-v3-3.dark": {
+  "bytes": 9728,
+  "frames": 9,
+  "height": 472,
+  "ms": 2333,
+  "width": 534
+ },
+ "calendar-v3-3.light": {
+  "bytes": 9772,
+  "frames": 9,
+  "height": 472,
+  "ms": 2333,
+  "width": 534
+ },
+ "calendar.dark": {
+  "bytes": 47734,
+  "frames": 44,
+  "height": 760,
+  "ms": 4850,
+  "width": 1440
+ },
+ "calendar.light": {
+  "bytes": 47636,
+  "frames": 44,
+  "height": 760,
+  "ms": 4850,
+  "width": 1440
+ },
+ "calendar.thumb.dark": {
+  "bytes": 17324,
+  "frames": 27,
+  "height": 240,
+  "ms": 4900,
+  "width": 480
+ },
+ "calendar.thumb.light": {
+  "bytes": 18536,
+  "frames": 27,
+  "height": 240,
+  "ms": 4900,
+  "width": 480
+ },
  "callout-v1-1.dark": {
   "bytes": 10642,
   "frames": 4,
@@ -3527,6 +3695,216 @@
   "ms": 2200,
   "width": 480
  },
+ "date-picker-1.dark": {
+  "bytes": 20762,
+  "frames": 4,
+  "height": 400,
+  "ms": 4150,
+  "width": 1440
+ },
+ "date-picker-1.light": {
+  "bytes": 20586,
+  "frames": 4,
+  "height": 400,
+  "ms": 4150,
+  "width": 1440
+ },
+ "date-picker-v1-1.dark": {
+  "bytes": 4590,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-1.light": {
+  "bytes": 4732,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-2.dark": {
+  "bytes": 5076,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-2.light": {
+  "bytes": 5422,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-3.dark": {
+  "bytes": 5072,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-3.light": {
+  "bytes": 5344,
+  "frames": 10,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-4.dark": {
+  "bytes": 3696,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v1-4.light": {
+  "bytes": 3772,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v2-1.dark": {
+  "bytes": 2546,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v2-1.light": {
+  "bytes": 2712,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v2-2.dark": {
+  "bytes": 4776,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v2-2.light": {
+  "bytes": 4872,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 704
+ },
+ "date-picker-v2-3.dark": {
+  "bytes": 4662,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 704
+ },
+ "date-picker-v2-3.light": {
+  "bytes": 5136,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 704
+ },
+ "date-picker-v2-4.dark": {
+  "bytes": 17662,
+  "frames": 9,
+  "height": 754,
+  "ms": 2800,
+  "width": 600
+ },
+ "date-picker-v2-4.light": {
+  "bytes": 17902,
+  "frames": 9,
+  "height": 754,
+  "ms": 2800,
+  "width": 600
+ },
+ "date-picker.dark": {
+  "bytes": 31156,
+  "frames": 50,
+  "height": 760,
+  "ms": 6900,
+  "width": 1440
+ },
+ "date-picker.light": {
+  "bytes": 30622,
+  "frames": 50,
+  "height": 760,
+  "ms": 6900,
+  "width": 1440
+ },
+ "date-picker.thumb.dark": {
+  "bytes": 12750,
+  "frames": 23,
+  "height": 240,
+  "ms": 6900,
+  "width": 480
+ },
+ "date-picker.thumb.light": {
+  "bytes": 14466,
+  "frames": 24,
+  "height": 240,
+  "ms": 6900,
+  "width": 480
+ },
+ "date-range-picker-v1-1.dark": {
+  "bytes": 23370,
+  "frames": 13,
+  "height": 694,
+  "ms": 2800,
+  "width": 1376
+ },
+ "date-range-picker-v1-1.light": {
+  "bytes": 22812,
+  "frames": 15,
+  "height": 694,
+  "ms": 2800,
+  "width": 1376
+ },
+ "date-range-picker-v1-2.dark": {
+  "bytes": 20020,
+  "frames": 11,
+  "height": 696,
+  "ms": 2800,
+  "width": 600
+ },
+ "date-range-picker-v1-2.light": {
+  "bytes": 19340,
+  "frames": 11,
+  "height": 696,
+  "ms": 2800,
+  "width": 600
+ },
+ "date-range-picker.dark": {
+  "bytes": 57482,
+  "frames": 49,
+  "height": 760,
+  "ms": 5450,
+  "width": 1440
+ },
+ "date-range-picker.light": {
+  "bytes": 56568,
+  "frames": 49,
+  "height": 760,
+  "ms": 5450,
+  "width": 1440
+ },
+ "date-range-picker.thumb.dark": {
+  "bytes": 9988,
+  "frames": 14,
+  "height": 240,
+  "ms": 5500,
+  "width": 480
+ },
+ "date-range-picker.thumb.light": {
+  "bytes": 11234,
+  "frames": 14,
+  "height": 240,
+  "ms": 5500,
+  "width": 480
+ },
  "dialog-layer-v1-1.dark": {
   "bytes": 45698,
   "frames": 4,
@@ -4057,6 +4435,118 @@
   "frames": 4,
   "height": 240,
   "ms": 4200,
+  "width": 480
+ },
+ "drop-zone-v1-1.dark": {
+  "bytes": 12882,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-1.light": {
+  "bytes": 13032,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-2.dark": {
+  "bytes": 9796,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-2.light": {
+  "bytes": 9674,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-3.dark": {
+  "bytes": 12918,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-3.light": {
+  "bytes": 13042,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-4.dark": {
+  "bytes": 10902,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v1-4.light": {
+  "bytes": 11574,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v2-1.dark": {
+  "bytes": 21038,
+  "frames": 4,
+  "height": 584,
+  "ms": 4200,
+  "width": 824
+ },
+ "drop-zone-v2-1.light": {
+  "bytes": 20448,
+  "frames": 4,
+  "height": 584,
+  "ms": 4200,
+  "width": 824
+ },
+ "drop-zone-v2-2.dark": {
+  "bytes": 13610,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone-v2-2.light": {
+  "bytes": 13766,
+  "frames": 4,
+  "height": 424,
+  "ms": 4200,
+  "width": 704
+ },
+ "drop-zone.dark": {
+  "bytes": 21648,
+  "frames": 5,
+  "height": 720,
+  "ms": 4500,
+  "width": 1440
+ },
+ "drop-zone.light": {
+  "bytes": 21960,
+  "frames": 5,
+  "height": 720,
+  "ms": 4500,
+  "width": 1440
+ },
+ "drop-zone.thumb.dark": {
+  "bytes": 5718,
+  "frames": 5,
+  "height": 240,
+  "ms": 4500,
+  "width": 480
+ },
+ "drop-zone.thumb.light": {
+  "bytes": 6094,
+  "frames": 5,
+  "height": 240,
+  "ms": 4500,
   "width": 480
  },
  "editor-1.dark": {
@@ -5009,6 +5499,146 @@
   "frames": 20,
   "height": 240,
   "ms": 4900,
+  "width": 480
+ },
+ "file-input-v1-1.dark": {
+  "bytes": 6516,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-1.light": {
+  "bytes": 6708,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-2.dark": {
+  "bytes": 4912,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-2.light": {
+  "bytes": 4992,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-3.dark": {
+  "bytes": 3824,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-3.light": {
+  "bytes": 3942,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-4.dark": {
+  "bytes": 3502,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v1-4.light": {
+  "bytes": 3620,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v2-1.dark": {
+  "bytes": 3024,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v2-1.light": {
+  "bytes": 3190,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v2-2.dark": {
+  "bytes": 7572,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 720
+ },
+ "file-input-v2-2.light": {
+  "bytes": 7550,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 720
+ },
+ "file-input-v2-3.dark": {
+  "bytes": 5554,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v2-3.light": {
+  "bytes": 5630,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "file-input-v2-4.dark": {
+  "bytes": 5312,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 720
+ },
+ "file-input-v2-4.light": {
+  "bytes": 5908,
+  "frames": 4,
+  "height": 136,
+  "ms": 4200,
+  "width": 720
+ },
+ "file-input.dark": {
+  "bytes": 26102,
+  "frames": 48,
+  "height": 720,
+  "ms": 4550,
+  "width": 1440
+ },
+ "file-input.light": {
+  "bytes": 25756,
+  "frames": 48,
+  "height": 720,
+  "ms": 4550,
+  "width": 1440
+ },
+ "file-input.thumb.dark": {
+  "bytes": 11180,
+  "frames": 28,
+  "height": 240,
+  "ms": 4600,
+  "width": 480
+ },
+ "file-input.thumb.light": {
+  "bytes": 12162,
+  "frames": 28,
+  "height": 240,
+  "ms": 4600,
   "width": 480
  },
  "flex-v1-1.dark": {
@@ -12009,6 +12639,104 @@
   "frames": 14,
   "height": 240,
   "ms": 3300,
+  "width": 480
+ },
+ "time-picker-v1-1.dark": {
+  "bytes": 2410,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v1-1.light": {
+  "bytes": 2536,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v1-2.dark": {
+  "bytes": 2604,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v1-2.light": {
+  "bytes": 2712,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v1-3.dark": {
+  "bytes": 3428,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v1-3.light": {
+  "bytes": 3652,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 584
+ },
+ "time-picker-v2-1.dark": {
+  "bytes": 9240,
+  "frames": 10,
+  "height": 648,
+  "ms": 2800,
+  "width": 440
+ },
+ "time-picker-v2-1.light": {
+  "bytes": 8974,
+  "frames": 10,
+  "height": 648,
+  "ms": 2800,
+  "width": 440
+ },
+ "time-picker-v2-2.dark": {
+  "bytes": 8006,
+  "frames": 11,
+  "height": 648,
+  "ms": 2800,
+  "width": 440
+ },
+ "time-picker-v2-2.light": {
+  "bytes": 8340,
+  "frames": 11,
+  "height": 648,
+  "ms": 2800,
+  "width": 440
+ },
+ "time-picker.dark": {
+  "bytes": 27278,
+  "frames": 36,
+  "height": 720,
+  "ms": 4950,
+  "width": 1440
+ },
+ "time-picker.light": {
+  "bytes": 27234,
+  "frames": 36,
+  "height": 720,
+  "ms": 4950,
+  "width": 1440
+ },
+ "time-picker.thumb.dark": {
+  "bytes": 8574,
+  "frames": 15,
+  "height": 240,
+  "ms": 5000,
+  "width": 480
+ },
+ "time-picker.thumb.light": {
+  "bytes": 9528,
+  "frames": 15,
+  "height": 240,
+  "ms": 5000,
   "width": 480
  },
  "title-bar-v1-1.dark": {
