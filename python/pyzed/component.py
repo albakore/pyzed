@@ -745,9 +745,10 @@ class Component:
     # -- the designer ----------------------------------------------------------------
     @classmethod
     def describe(cls) -> str:
-        """The first paragraph of the docstring (shown in the designer)."""
-        doc = (cls.__doc__ or "").strip()
-        return doc.split("\n\n")[0].replace("\n", " ") if doc else ""
+        """The first paragraph of the docstring on one line, in Markdown (shown in the designer)."""
+        from .reference import first_paragraph
+
+        return " ".join(first_paragraph(cls.__doc__).split())
 
     @classmethod
     def designer_spec(cls) -> Any:
