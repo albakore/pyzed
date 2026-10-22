@@ -159,12 +159,13 @@ def _user_components() -> Dict[str, Any]:
     return {cls.__name__: cls for cls in registered()}
 
 
-def list_components(kind: str = "all", query: str = "", category: str = "") -> List[Dict[str, str]]:
+def list_components(kind: str = "all", query: str = "", category: str = "", role: str = "") -> List[Dict[str, str]]:
     """Every widget and component, with its kind, category and one-line summary.
 
     ``kind`` is ``"widget"`` (``pz.*``), ``"ui"`` (``pz.ui.*``), ``"designer"`` (the designer's
     toolbox types), ``"component"`` (``pz.Component`` subclasses defined so far) or ``"all"``.
-    ``query`` keeps the entries whose name or summary contains it, ``category`` one section.
+    ``query`` keeps the entries whose name or summary contains it, ``category`` one section and
+    ``role`` the designer types of one color role (``"layout"``, ``"input"``, ``"action"``...).
     """
     kinds = ("widget", "ui", "designer", "component")
     if kind != "all" and kind not in kinds:
@@ -179,15 +180,18 @@ def list_components(kind: str = "all", query: str = "", category: str = "") -> L
         out += [{"name": f"ui.{n}", "kind": "ui", "category": _ui_category(o), "summary": _summary(o)}
                 for n, o in _ui().items()]
     if kind in ("all", "designer"):
-        out += [{"name": f"designer:{c.type}", "kind": "designer", "category": c.category,
+        from ..designer import roles
+
+        out += [{"name": f"designer:{c.type}", "kind": "designer", "category": c.category, "role": roles.of(c),
                  "summary": c.description or c.label} for c in _designer().all_components()]
     if kind in ("all", "component"):
-        out += [{"name": n, "kind": "component", "category": c.category, "summary": c.describe()}
+        out += [{"name": n, "kind": "component", "category": c.category, "role": "custom", "summary": c.describe()}
                 for n, c in _user_components().items()]
-    q, cat = query.lower(), category.lower()
+    q, cat, role = query.lower(), category.lower(), role.lower()
     return [e for e in out
             if (not q or q in e["name"].lower() or q in e["summary"].lower())
-            and (not cat or cat == e["category"].lower())]
+            and (not cat or cat == e["category"].lower())
+            and (not role or role == e.get("role"))]
 
 
 def _api_docs() -> Dict[str, Any]:
@@ -290,10 +294,12 @@ def describe_component(name: str) -> Dict[str, Any]:
 
 
 def _describe_designer(qualified: str, spec: Any) -> Dict[str, Any]:
+    from ..designer import roles
+
     components = _designer()
     return {
         "name": qualified, "kind": "designer", "type": spec.type, "label": spec.label,
-        "category": spec.category, "icon": spec.icon, "description": spec.description,
+        "category": spec.category, "role": roles.of(spec), "icon": spec.icon, "description": spec.description,
         "default_size": list(spec.size), "container": spec.container, "visual": spec.visual,
         "props": [{"name": p.name, "kind": p.kind, "default": p.default, "group": p.group,
                    **({"choices": list(p.choices)} if p.choices else {}),

@@ -148,7 +148,7 @@ Eight panels live in four docks around the canvas:
 
 | Panel | Default dock | Shows |
 | --- | --- | --- |
-| **Design** | Left | The toolbox and the outline. |
+| **Toolbox** | Left | The toolbox and the outline. |
 | **Project** | Left | The project's files. |
 | **Dependencies** | Left | Dependencies, ruff and ty (only with a project open). |
 | **Properties** | Right | The property grid. |
@@ -178,7 +178,7 @@ as…** keeps them as a work layout to switch to later; **View → Reset panel l
 ```mermaid
 flowchart LR
     subgraph Left
-        Design
+        Toolbox
         Project
         Dependencies
     end

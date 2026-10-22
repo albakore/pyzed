@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 from ..agents import Image, Tool, file_tools, pyzed_tools, tool
 from . import components as _components
 from . import layout as _layout
+from . import roles as _roles
 from . import workspace as _workspace
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -95,7 +96,7 @@ _KNOWLEDGE: Dict[int, str] = {}
 
 
 def toolbox_catalog() -> str:
-    """Every toolbox type in one line: its category, default size, props (``name=a|b`` for choices,
+    """Every toolbox type in one line: its category, color role (see ``roles``), default size, props (``name=a|b`` for choices,
     ``name:kind=default`` otherwise) and events."""
     lines = []
     for spec in _components.all_components():
@@ -109,7 +110,8 @@ def toolbox_catalog() -> str:
             props.append(f"{prop.name}:{prop.type or prop.kind}{shown}")
         events = ",".join(spec.events)
         width, height = spec.size
-        lines.append(f"- {spec.type} ({spec.category}, {width:g}x{height:g}): {', '.join(props) or 'no props'}"
+        lines.append(f"- {spec.type} ({spec.category}, {_roles.of(spec)}, {width:g}x{height:g}): "
+                     f"{', '.join(props) or 'no props'}"
                      + (f"; events {events}" if events else ""))
     return "\n".join(lines)
 

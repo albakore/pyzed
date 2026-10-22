@@ -1265,7 +1265,7 @@ def _select_and_show(d: "Designer", node_id: str) -> None:
 
 
 def design_panel(d: "Designer", t: Theme) -> Any:
-    """The left dock's Design panel for a shader: the node sidebar over the outline."""
+    """The left dock's Toolbox panel for a shader: the node sidebar over the outline."""
     top = _core.column([ui.panel_header(tr("Shading"), icon=ICON, theme=t), toolbox(d, t)], width="fill", height="fill")
     bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), outline(d, t)], width="fill",
                           height="fill")

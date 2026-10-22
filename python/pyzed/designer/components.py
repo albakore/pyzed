@@ -24,6 +24,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from .. import _core, component as _components_api, ui
 from ..icons import icon as _icon
 from ..theme import Theme, current
+from . import roles as _roles
 from .model import Control
 
 #: Property editors the designer knows how to show.
@@ -196,6 +197,9 @@ class Component:
     child_layout: Tuple[Tuple[str, Any], ...] = ()
     #: Controls placed inside a new control of this type, as ``(type, props)`` (a Dock's first panels).
     children: Tuple[Tuple[str, Tuple[Tuple[str, Any], ...]], ...] = ()
+    #: The role that colors its icon in the designer (``"input"``, ``"layout"``...; see ``roles``); worked out
+    #: from the component when ``None``.
+    role: Optional[str] = None
 
     @property
     def default_event(self) -> Optional[str]:
@@ -641,7 +645,7 @@ def _non_visual(c: Control, ctx: RenderContext) -> Any:
     t = ctx.theme
     spec = _REGISTRY.get(c.type)
     return _core.container(
-        _core.row([_icon(spec.icon if spec is not None else "box", size=14, color=t.icon_muted),
+        _core.row([_icon(spec.icon if spec is not None else "box", size=14, color=_roles.icon_color(spec, t)),
                    ui.label(c.name, size="sm", color="text_muted", theme=t)], spacing=6, align="center"),
         width="fill", height="fill", center=True, bg=t.element, radius=t.radius_sm,
         border_color=t.border_variant, border_width=1)

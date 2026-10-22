@@ -7,7 +7,7 @@ sidebar:
 
 import Media from '../../../../components/Media.astro';
 
-El panel **Diseño** (dock izquierdo) tiene la caja de **Herramientas** arriba y la **Estructura** abajo; arrastra la
+El panel **Herramientas** (dock izquierdo) tiene los componentes arriba y la **Estructura** abajo; arrastra la
 barra entre ellas para dar más sitio a una. El **lienzo** del centro muestra el documento exactamente como se
 ejecutará, pero inerte: los botones no hacen clic y los campos de texto no escriben, así el ratón queda libre para
 editar.
@@ -34,6 +34,29 @@ para cada uno de sus eventos.
 - **Buscar componentes…** filtra la lista por nombre (en inglés o en el idioma del editor) o por tipo.
 - **Puntero** (la primera fila) es la herramienta normal de selección. Está resaltada cuando no hay componente
   elegido.
+
+### Colores de los iconos
+
+Cada componente tiene un **rol**, y su icono lleva el color de ese rol en todas partes: la caja de herramientas,
+la estructura, la bandeja de componentes no visuales, la cabecera de los paneles **Propiedades** y **Eventos** y la
+ficha que sigue al puntero mientras arrastras. Así la estructura de un formulario se entiende de un vistazo: las
+cajas azules contienen al resto, los campos verdes recogen lo que escribe el usuario y los botones amarillos
+ejecutan tu código. El icono de la paleta junto al buscador muestra la misma leyenda.
+
+| Color | Rol | Qué es |
+| --- | --- | --- |
+| Azul | **Disposición** | Contiene y ordena otros controles: paneles, tarjetas, marcos, filas, columnas, cuadrículas, docks, separadores, espaciadores. |
+| Verde | **Entrada** | Recoge un valor del usuario: cuadros de texto, casillas, interruptores, desplegables, deslizadores, números, selectores. |
+| Amarillo | **Acción** | Ejecuta algo al pulsarlo: botones y botones con menú. |
+| Cian | **Navegación** | Lleva de una vista a otra: pestañas, árboles, rutas de navegación, enlaces. |
+| Neutro | **Presentación** | Muestra contenido: etiquetas, títulos, imágenes, tablas, gráficos, insignias. |
+| Rojo | **Multimedia** | Sonido y vídeo: los controles de audio y la webcam. |
+| Naranja | **Sistema** | Componentes no visuales: temporizadores, procesos, vigilantes de archivos, peticiones web, el portapapeles. |
+| Morado | **Propio** | Tus propios componentes, hechos con el [diseñador de componentes](/pyzed/es/editor/component-designer/) o con `pz.Component`. |
+
+Los colores salen de la paleta de terminal del tema, así que cambian con el tema y se leen bien en temas claros y
+oscuros. El rol se deduce del componente (si contiene controles, su categoría y sus eventos); un componente
+registrado desde Python puede indicar el suyo con `Component(..., role="input")`.
 
 ### Colocar un control
 

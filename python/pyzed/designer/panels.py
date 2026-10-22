@@ -15,7 +15,7 @@ from ..theme import Theme, alpha, themes
 from . import components as _components
 from . import help as _help
 from . import scene_code as _scene_code
-from . import prop_editors, spacing
+from . import prop_editors, roles as _roles, spacing
 from .components import Prop
 from .locale import tr
 
@@ -304,8 +304,10 @@ def rows_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
 def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], t: Theme, *, icon: Optional[str] = None,
               selected: bool = False, height: float = spacing.ITEM_HEIGHT, indent: float = 0, start: Any = None, end: Any = None,
               color: Optional[str] = None, on_right_press: Any = None, on_move: Any = None, on_exit: Any = None,
-              drop: Optional[str] = None) -> Any:
+              drop: Optional[str] = None, icon_color: Optional[str] = None) -> Any:
     """A list row that reacts on press (not on click, like ``ui.list_item``), so it can start a drag.
+
+    ``icon_color`` paints the icon (a component's role color, see ``roles``) instead of the muted icon color.
 
     ``drop`` marks where a dragged control would land: a line ``"before"`` or ``"after"`` the
     row, or a frame around it for ``"inside"``.
@@ -314,7 +316,7 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
     row = _core.row([
         _core.space(width=indent) if indent else None,
         start,
-        _icon(icon, size=14, color=t.icon_muted) if icon else None,
+        _icon(icon, size=14, color=icon_color or t.icon_muted) if icon else None,
         _core.container(_core.text(label, size=13.5, color=text_color, wrap=False), width="fill", clip=True),
         end,
     ], spacing=6, align="center")
@@ -360,20 +362,42 @@ def _toolbox(d: "Designer", t: Theme) -> Any:
         rows.append(section(tr(category), t))
         for spec in shown:
             # press and drag onto the form (or a container), or click to pick it and then click on the form
+            role = _roles.of(spec)
             rows.append(ui.tooltip(
                 press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
-                          icon=spec.icon, selected=d.tool == spec.type),
-                tr(spec.description) if spec.description else tr(spec.label), position="right", theme=t))
+                          icon=spec.icon, selected=d.tool == spec.type, icon_color=_roles.color(role, t)),
+                f"{_roles.name(role)} · {tr(spec.description) if spec.description else tr(spec.label)}",
+                position="right", theme=t))
     if not query:  # a reusable component of your own joins the toolbox once it is created
         rows.append(ui.tooltip(press_row(d, "tool:+component", tr("New component…"), d.new_component, t,
                                          icon="plus", color="text_muted"),
                                tr("A reusable piece for forms and other components, not a window"), position="right",
                                theme=t))
+    search = ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"), size="sm",
+                             theme=t)
     return _core.column([
-        _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
-                                        size="sm", theme=t), padding=(spacing.BLOCK, spacing.GUTTER)),
+        _core.container(_core.row([_core.container(search, width="fill"), role_legend(t)], spacing=6, align="center"),
+                        padding=(spacing.BLOCK, spacing.GUTTER)),
         scroll_panel(_core.column(rows, width="fill", padding=(0, 0, spacing.BLOCK, 0))),
     ], width="fill", height="fill")
+
+
+def role_legend(t: Theme) -> Any:
+    """The palette icon next to the toolbox search: under the pointer it lists what each icon color means."""
+    return _core.tooltip(_core.container(_icon("palette", size=14, color=t.icon_muted), padding=4), legend_card(t),
+                         position="right", gap=6, bg=t.elevated, border_color=t.border, border_width=1.0,
+                         radius=t.radius, shadow=(t.shadow, (0, 2), 8))
+
+
+def legend_card(t: Theme) -> Any:
+    """The legend of the icon colors: a dot, the role's name and what it stands for, one line each."""
+    lines = [_core.row([_core.container(width=8, height=8, bg=_roles.color(role, t), radius=4),
+                        _core.text(_roles.name(role), size=12.5, color=t.text, wrap=False, width=92),
+                        _core.text(_roles.describe(role), size=12, color=t.text_muted, width=280)],
+                       spacing=8, align="center")
+             for role in _roles.ROLES]
+    return _core.container(_core.column([ui.label(tr("Icon colors"), size="xs", weight="semibold",
+                                                  color="text_muted", theme=t), *lines], spacing=5), padding=(8, 10))
 
 
 OUTLINE_ROW = 24
@@ -413,7 +437,7 @@ def outline(d: "Designer", t: Theme) -> Any:
                    doc.is_selected(c.name), drop, bool(members), opened)
             hit = drawn.get(c.name)
             row = hit[1] if hit is not None and hit[0] == key else \
-                _outline_row(d, c, spec.icon, depth, container, folded, bool(members), opened, drop, editor_eye, t)
+                _outline_row(d, c, spec, depth, container, folded, bool(members), opened, drop, editor_eye, t)
             kept[c.name] = (key, row)
             rows.append(row)
             if container and not folded:
@@ -428,15 +452,17 @@ def outline(d: "Designer", t: Theme) -> Any:
         rows.append(_core.container(ui.label(tr("Non-visual"), size="xs", color="text_muted", theme=t),
                                     padding=(6, spacing.GUTTER, 2, spacing.GUTTER + 4), width="fill"))
         for c in tray:
+            spec = _components.spec(c.type)
             rows.append(press_row(
                 d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t,
-                icon=_components.spec(c.type).icon, selected=doc.is_selected(c.name), indent=4, height=OUTLINE_ROW,
+                icon=spec.icon, icon_color=_roles.icon_color(spec, t), selected=doc.is_selected(c.name), indent=4,
+                height=OUTLINE_ROW,
                 start=_core.space(width=20), color=None if c.enabled else "text_muted",
                 on_right_press=lambda n=c.name: d.open_outline_menu(n)))
     return scroll_panel(_core.column(rows, width="fill"))
 
 
-def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, folded: bool, members: bool,
+def _outline_row(d: "Designer", c: Any, spec: Any, depth: int, container: bool, folded: bool, members: bool,
                  opened: bool, drop: Optional[str], editor_eye: bool, t: Theme) -> Any:
     """One control's row in the outline (``outline`` keeps it while what it shows stays the same)."""
     buttons = [
@@ -460,8 +486,8 @@ def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, 
         chevron = _core.space(width=20)
     # press to select, drag to reorder or to move into another container (or onto the form)
     return press_row(
-        d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=icon,
-        selected=d.doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
+        d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=spec.icon,
+        icon_color=_roles.icon_color(spec, t), selected=d.doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
         end=_core.row(buttons, spacing=0), color=None if c.visible and not c.hidden_in_editor else "text_muted",
         on_right_press=lambda n=c.name: d.open_outline_menu(n),
         on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
@@ -534,7 +560,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     assert c is not None
     spec = _components.spec(c.type)
     rows: List[Any] = [
-        _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
+        _core.container(_core.row([_icon(spec.icon, size=16, color=_roles.icon_color(spec, t)),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
                                                  ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
                                                 width="fill"),
@@ -758,7 +784,7 @@ def events(d: "Designer", t: Theme) -> Any:
     spec = _components.spec(control.type) if control is not None else None
     icon = spec.icon if spec is not None else "app-window"
     kind = tr(spec.label) if spec is not None else tr("Form")
-    head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),
+    head = _core.container(_core.row([_icon(icon, size=16, color=_roles.icon_color(spec, t) if spec else t.accent),
                                       _core.column([ui.label(owner, weight="semibold", mono=True, theme=t),
                                                     ui.label(kind, size="xs", color="text_muted", theme=t)],
                                                    width="fill"),

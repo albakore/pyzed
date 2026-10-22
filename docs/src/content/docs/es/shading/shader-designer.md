@@ -82,7 +82,7 @@ centrada, sus coordenadas en píxeles); el panel de propiedades las cambia entre
 
 ## La barra Shading
 
-El panel **Design** del panel izquierdo muestra la barra **Shading** en lugar de la caja de herramientas de
+El panel **Herramientas** del dock izquierdo muestra la barra **Shading** en lugar de la caja de herramientas de
 formularios. Sus entradas se agrupan por categoría; haz clic en una para añadirla en el centro del grafo, o
 arrástrala al grafo. El buscador encuentra títulos, categorías y palabras clave en inglés y en el idioma del
 diseñador.
