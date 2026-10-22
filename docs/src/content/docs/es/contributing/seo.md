@@ -79,3 +79,33 @@ less dist/es/llms.txt dist/es/guides/layout.md
   `albakore.github.io/pyzed/`, la copia de `docs/public/robots.txt` documenta la política (todos los buscadores y
   rastreadores de IA son bienvenidos); el sitemap también se enlaza desde cada página y se puede enviar en Google
   Search Console y Bing Webmaster Tools.
+
+## Que los buscadores encuentren la web
+
+Los buscadores solo muestran páginas que conocen, y un proyecto nuevo todavía no tiene enlaces que lleven a él.
+En cada despliegue de `main` (`.github/workflows/docs.yml`) pasan dos cosas:
+
+- **IndexNow.** `docs/scripts/indexnow.py` calcula un hash de cada página del sitemap, los publica en
+  `page-hashes.json` y, cuando la web ya está desplegada, envía a [IndexNow](https://www.indexnow.org) las páginas
+  que cambiaron respecto a la versión publicada. Bing (que también alimenta la búsqueda de ChatGPT, Copilot y
+  DuckDuckGo), Yandex, Seznam, Naver y Yep las rastrean en horas. La clave es el archivo `docs/public/<clave>.txt`
+  y es pública a propósito.
+- **Verificación de propiedad.** Las variables del repositorio `GOOGLE_SITE_VERIFICATION`,
+  `BING_SITE_VERIFICATION` y `YANDEX_VERIFICATION` (*Settings → Secrets and variables → Actions → Variables*) se
+  convierten en las etiquetas `google-site-verification`, `msvalidate.01` y `yandex-verification` de cada página.
+
+Para dar de alta la web una sola vez:
+
+1. En [Google Search Console](https://search.google.com/search-console), añade la propiedad de prefijo de URL
+   `https://albakore.github.io/pyzed/`, elige **Etiqueta HTML** y guarda el valor de `content` como la variable
+   `GOOGLE_SITE_VERIFICATION`. Vuelve a lanzar el workflow **Docs**, verifica y envía
+   `https://albakore.github.io/pyzed/sitemap-index.xml` en **Sitemaps**.
+2. En [Bing Webmaster Tools](https://www.bing.com/webmasters), importa la web desde Search Console (o usa la
+   variable `BING_SITE_VERIFICATION` del mismo modo) y envía el mismo sitemap.
+3. Dale al proyecto enlaces en los que los buscadores confíen: en el repositorio, **About → Website** apuntando a
+   la documentación y temas como `python`, `gui`, `desktop-app`, `rust`, `iced`; la página de PyPI (sus enlaces
+   salen de `[project.urls]` en `pyproject.toml`); y artículos o listados que enlacen a la documentación.
+
+Pyzed comparte el nombre de importación con el módulo `pyzed` del SDK de ZED de Stereolabs, así que la
+documentación deja claro que el paquete es `pyzed-ui` y usa las palabras que la gente busca: *GUI en Python*,
+*app de escritorio*, *Rust*, *Iced*.

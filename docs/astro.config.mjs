@@ -224,6 +224,17 @@ const redirects = Object.fromEntries(
 	]),
 );
 
+// Ownership checks for Google Search Console, Bing Webmaster Tools (which also feeds ChatGPT search, Copilot and
+// DuckDuckGo) and Yandex: the codes come from repository variables of the same name (see contributing/seo.md).
+const VERIFICATION = {
+	'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION,
+	'msvalidate.01': process.env.BING_SITE_VERIFICATION,
+	'yandex-verification': process.env.YANDEX_VERIFICATION,
+};
+const verification = Object.entries(VERIFICATION)
+	.filter(([, content]) => content)
+	.map(([name, content]) => ({ tag: 'meta', attrs: { name, content } }));
+
 export default defineConfig({
 	site: 'https://albakore.github.io',
 	base: '/pyzed',
@@ -251,6 +262,7 @@ export default defineConfig({
 			// SEO/GEO: per-page titles, descriptions, social cards, hreflang and JSON-LD (see contributing/seo.md).
 			routeMiddleware: './src/routeData.ts',
 			head: [
+				...verification,
 				{ tag: 'meta', attrs: { name: 'author', content: 'albakore and the Pyzed contributors' } },
 				{ tag: 'meta', attrs: { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' } },
 				{ tag: 'meta', attrs: { name: 'theme-color', content: '#181a1f', media: '(prefers-color-scheme: dark)' } },

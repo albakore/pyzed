@@ -237,6 +237,7 @@ const INTRO = {
 		summary:
 			'Pyzed is an open-source (MIT) Python framework for building native desktop GUIs. Python describes the interface; Iced, a GPU-accelerated GUI toolkit written in Rust, lays it out and draws it. It aims to be a frontend framework for desktop apps (mobile and web later), with 90+ components whose look is inspired by the Zed editor, themes, node-based GPU shaders, packaging for every desktop platform and Pyzed Design, a drag-and-drop visual designer in the spirit of Visual Basic, Qt Designer and Godot.',
 		facts: [
+			'Not to be confused with the `pyzed` module of the Stereolabs ZED SDK (`pyzed.sl`, for ZED stereo cameras): Pyzed is a GUI framework, published on PyPI as `pyzed-ui` and named after the Zed editor.',
 			'Install: `pip install pyzed-ui` (or `uv add pyzed-ui`); import it as `import pyzed as pz` and `from pyzed import ui`. Python 3.10+, prebuilt wheels for Windows, macOS and Linux.',
 			'Model: an `App` subclass with state, `view()` returning a widget tree and callbacks or `update(message)`, like the Elm architecture. Layout, text, syntax highlighting and drawing run in Rust; the GIL is released while the event loop runs.',
 			'A modern alternative to tkinter, Kivy, PyQt/PySide, wxPython, Dear PyGui and Flet for desktop tools, dashboards, editors and IDE-like apps, with themes, animation and effects (glow, bloom, glass, blur).',
@@ -252,6 +253,7 @@ const INTRO = {
 		summary:
 			'Pyzed es un framework de código abierto (MIT) para crear GUIs de escritorio nativas en Python. Python describe la interfaz; Iced, un toolkit de GUI acelerado por GPU escrito en Rust, la organiza y la dibuja. Busca ser un framework de frontend para apps de escritorio (más adelante móvil y web), con más de 90 componentes cuyo aspecto se inspira en el editor Zed, temas, shaders de GPU por nodos, empaquetado para todas las plataformas de escritorio y Pyzed Design, un diseñador visual de arrastrar y soltar al estilo de Visual Basic, Qt Designer y Godot.',
 		facts: [
+			'No confundir con el módulo `pyzed` del SDK de ZED de Stereolabs (`pyzed.sl`, para cámaras estéreo ZED): Pyzed es un framework de GUI, publicado en PyPI como `pyzed-ui` y con nombre tomado del editor Zed.',
 			'Instalación: `pip install pyzed-ui` (o `uv add pyzed-ui`); se importa como `import pyzed as pz` y `from pyzed import ui`. Python 3.10+, wheels precompilados para Windows, macOS y Linux.',
 			'Modelo: una subclase de `App` con estado, `view()` que devuelve un árbol de widgets y callbacks o `update(message)`, como la arquitectura Elm. El layout, el texto, el resaltado de sintaxis y el dibujo corren en Rust; el GIL se libera mientras corre el bucle de eventos.',
 			'Una alternativa moderna a tkinter, Kivy, PyQt/PySide, wxPython, Dear PyGui y Flet para herramientas de escritorio, paneles, editores y apps tipo IDE, con temas, animaciones y efectos (glow, bloom, glass, desenfoque).',

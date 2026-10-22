@@ -62,7 +62,21 @@ jobs:
           restore-keys: docs-images-
       - name: Build (reads CHANGELOG.md and marks the latest stable release)
         working-directory: docs
+        env:
+          # The download page asks GitHub which release has each file (scripts/sync-downloads.mjs).
+          GITHUB_TOKEN: ${{ github.token }}
+          # Search engine ownership checks, set as repository variables (contributing/seo.md).
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
+          YANDEX_VERIFICATION: ${{ vars.YANDEX_VERIFICATION }}
         run: npm run build
+      # The pages that differ from the live site, for IndexNow once they are deployed.
+      - name: List new and changed pages
+        run: python3 docs/scripts/indexnow.py changes docs/dist indexnow.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: indexnow
+          path: indexnow.txt
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/dist
@@ -117,3 +131,15 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+      # Bing (and ChatGPT search, Copilot, DuckDuckGo), Yandex, Seznam, Naver and Yep crawl the new and
+      # changed pages within hours. Best effort: a failure here never fails the deploy.
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: docs/scripts/indexnow.py
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: indexnow
+      - name: Notify search engines (IndexNow)
+        continue-on-error: true
+        run: python3 docs/scripts/indexnow.py submit indexnow.txt

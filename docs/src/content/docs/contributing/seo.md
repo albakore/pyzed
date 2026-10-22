@@ -75,3 +75,32 @@ less dist/llms.txt dist/guides/layout.md
 - **robots.txt** only works at the root of a host. While the docs are served from `albakore.github.io/pyzed/`,
   the copy in `docs/public/robots.txt` documents the policy (all search engines and AI crawlers are welcome); the
   sitemap is also linked from every page, and can be submitted in Google Search Console and Bing Webmaster Tools.
+
+## Getting indexed
+
+Search engines only show pages they know about, and a new project has no links pointing to it yet. Two things
+happen on every deploy of `main` (`.github/workflows/docs.yml`):
+
+- **IndexNow.** `docs/scripts/indexnow.py` hashes every page in the sitemap, publishes the hashes as
+  `page-hashes.json` and, once the site is deployed, sends the pages that differ from the live copy to
+  [IndexNow](https://www.indexnow.org). Bing (which also feeds ChatGPT search, Copilot and DuckDuckGo), Yandex,
+  Seznam, Naver and Yep then crawl them within hours. The key is the file `docs/public/<key>.txt`; it is public by
+  design.
+- **Ownership checks.** The repository variables `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` and
+  `YANDEX_VERIFICATION` (*Settings → Secrets and variables → Actions → Variables*) become the
+  `google-site-verification`, `msvalidate.01` and `yandex-verification` meta tags of every page.
+
+To register the site once:
+
+1. In [Google Search Console](https://search.google.com/search-console), add the URL-prefix property
+   `https://albakore.github.io/pyzed/`, choose **HTML tag** and save the `content` value as the
+   `GOOGLE_SITE_VERIFICATION` variable. Re-run the **Docs** workflow, verify, and submit
+   `https://albakore.github.io/pyzed/sitemap-index.xml` under **Sitemaps**.
+2. In [Bing Webmaster Tools](https://www.bing.com/webmasters), import the site from Search Console (or use the
+   `BING_SITE_VERIFICATION` variable the same way) and submit the same sitemap.
+3. Give the project links search engines trust: the repository's **About → Website** pointing to the docs and
+   topics such as `python`, `gui`, `desktop-app`, `rust`, `iced`; the PyPI page (its links come from
+   `[project.urls]` in `pyproject.toml`); and posts or listings that link to the docs.
+
+Pyzed shares its import name with the `pyzed` module of the Stereolabs ZED SDK, so the docs say clearly that
+the package is `pyzed-ui` and name what people search for: *Python GUI*, *desktop app*, *Rust*, *Iced*.
