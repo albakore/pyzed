@@ -139,14 +139,25 @@ _LAZY = {
 }
 
 
+def _version_key(version):
+    """Sorts ``"1.10.0"`` after ``"1.9.0"`` (and a final release after its ``rc``)."""
+    import re
+
+    release, rest = re.match(r"([\d.]*)(.*)", version).groups()
+    return tuple(int(n) for n in release.split(".") if n), rest == "", rest
+
+
 def __getattr__(name):
     if name == "__version__":
         # The version lives only in Cargo.toml; read it from the installed package metadata
         # (importlib.metadata is slow to import, so only when someone asks).
         try:
-            from importlib.metadata import version as _version
+            import sys
+            from importlib.metadata import distributions
 
-            value = _version("pyzed-ui")
+            versions = [d.version for d in distributions(name="pyzed-ui")]  # in sys.path order, like imports
+            # A packaged app installed over an older version can keep the old metadata next to the new: the newest
+            value = max(versions, key=_version_key) if getattr(sys, "frozen", False) else versions[0]
         except Exception:  # pragma: no cover - running from a source tree without metadata
             import os
 

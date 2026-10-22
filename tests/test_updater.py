@@ -237,3 +237,43 @@ def test_designer_downloads_updates_in_the_background(tmp_path, monkeypatch):
         (config_dir() / "updates" / version).mkdir(parents=True)
     app.updates._clean_downloads()
     assert sorted(p.name for p in (config_dir() / "updates").iterdir()) == ["0.5.0"]
+
+
+def test_designer_tells_when_the_restart_did_not_update(tmp_path, monkeypatch):
+    """"Restart to update" remembers the version it installs: starting again as the old one means the swap failed."""
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    app.updates.latest = updater.Release.from_api(API_RELEASE)
+    app.updates.bundle = tmp_path
+    monkeypatch.setattr(updater, "replace_on_exit", lambda bundle, **kw: tmp_path / "swap.cmd")
+    app.updates.current = "0.4.0"
+    app.updates.restart()
+    assert updater.load_state()["pending"] == "0.5.0"
+    (tmp_path / "swap.log").write_text("The app folder is still in use: the update was not installed.\n")
+
+    again = Designer(language_servers=False)  # the old version started again
+    again.updates.current = "0.4.0"
+    for command in again.updates.on_start():
+        command.close()
+    assert "still in use" in again.updates.error and str(tmp_path / "swap.log") in again.updates.error
+    assert updater.load_state()["pending"] is None
+    updated = Designer(language_servers=False)
+    updated.updates.current = "0.5.0"
+    updater.save_state(pending="0.5.0")
+    for command in updated.updates.on_start():
+        command.close()
+    assert updated.updates.error is None
+
+
+def test_designer_stops_its_processes_before_an_update(monkeypatch):
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    stopped = []
+    monkeypatch.setattr(app.assist, "shutdown", lambda: stopped.append("language servers"))
+    monkeypatch.setattr(app.projects, "stop", lambda: stopped.append("run"))
+    monkeypatch.setattr(app.exporter, "cancel", lambda: 1 / 0)  # one failing does not stop the others
+    monkeypatch.setattr(app.agent, "shutdown", lambda: stopped.append("agents"))
+    app.stop_children()
+    assert stopped == ["language servers", "run", "agents"]
