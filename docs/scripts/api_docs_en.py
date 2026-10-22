@@ -1038,6 +1038,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
 | `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |
+| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |
 
 The remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.
 
@@ -1110,6 +1111,19 @@ forwards them to `app.update()`.
         "example": """
             class Shop(pz.App):
                 splash = pz.Splash("assets/splash.png", duration=1.5, text="Loading…")
+        """,
+    },
+    "pyzed.Rendering": {
+        "desc": "How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `\"auto\"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).",
+        "params": {
+            "renderer": "`\"auto\"`, `\"gpu\"` (needed by shaders) or `\"cpu\"` (tiny-skia: starts faster, less memory, works everywhere).",
+            "gpu_api": "`\"auto\"`, `\"vulkan\"`, `\"metal\"`, `\"dx12\"` or `\"gl\"`.",
+            "power": "`\"auto\"`, `\"high\"` (the dedicated GPU) or `\"low\"` (the integrated one, saves battery).",
+            "vsync": "`\"auto\"`, `\"on\"` (no tearing) or `\"off\"` (draws as fast as it can).",
+        },
+        "example": """
+            class Game(pz.App):
+                rendering = pz.Rendering(renderer="gpu", vsync="off")
         """,
     },
 })

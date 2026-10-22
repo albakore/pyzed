@@ -118,6 +118,7 @@ Con ellas el agente construye una app completa en una carpeta, desde el proyecto
 | `check_project` | Las comprobaciones de Pyzed en cada archivo, más ruff y ty. |
 | `run_tests` | `uv run pytest` en el proyecto. |
 | `screenshot_project` | Una captura de un script, formulario, componente o grafo de shader, en el entorno del propio proyecto; por defecto la entrada. |
+| `project_settings`, `set_project_settings` | Los ajustes propios del proyecto: su [renderizador](/pyzed/es/editor/settings/#renderizado) (GPU o CPU, API gráfica, GPU, vsync, en `[tool.pyzed.rendering]`) y las preferencias del editor y del diseñador que comparte en `.pyzed/settings.json` (tabulación, cuadrícula...). |
 | `start_live_preview`, `live_preview_status`, `stop_live_preview` | Abren la app en una ventana real con hot reload mientras el agente la construye: cada archivo que escribe actualiza la ventana al guardarse, así ves cómo toma forma. El estado devuelve lo que la app imprimió, trazas de error incluidas. |
 
 ### Recursos y prompts

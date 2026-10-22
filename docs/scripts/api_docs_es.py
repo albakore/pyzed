@@ -1038,6 +1038,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 | `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
+| `rendering` | `None` | Un [`Rendering`](#rendering): GPU o CPU, API gráfica, GPU y vsync. `None` lee `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto. |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) están en `Window`.
 
@@ -1110,6 +1111,19 @@ reenvía a `app.update()`.
         "example": """
             class Shop(pz.App):
                 splash = pz.Splash("assets/splash.png", duration=1.5, text="Cargando…")
+        """,
+    },
+    "pyzed.Rendering": {
+        "desc": "Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica, qué GPU y vsync. Cada campo es `\"auto\"` por defecto (decide Pyzed). Dásela a `App.rendering`, o pon las mismas claves en `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto, que leen `pz.run`, el diseñador y `pyzed build`. Ver [Renderizado](/pyzed/es/editor/settings/#renderizado).",
+        "params": {
+            "renderer": "`\"auto\"`, `\"gpu\"` (la necesitan los shaders) o `\"cpu\"` (tiny-skia: arranca antes, menos memoria, funciona en todas partes).",
+            "gpu_api": "`\"auto\"`, `\"vulkan\"`, `\"metal\"`, `\"dx12\"` o `\"gl\"`.",
+            "power": "`\"auto\"`, `\"high\"` (la GPU dedicada) o `\"low\"` (la integrada, ahorra batería).",
+            "vsync": "`\"auto\"`, `\"on\"` (sin cortes) u `\"off\"` (dibuja lo más rápido posible).",
+        },
+        "example": """
+            class Game(pz.App):
+                rendering = pz.Rendering(renderer="gpu", vsync="off")
         """,
     },
 })
@@ -2772,6 +2786,11 @@ MEMBERS = {
     "pyzed.designer.Document.set_rect": "Fija la posición y el tamaño del control `name` a partir de `rect` `(x, y, width, height)`, redondeados a píxeles enteros; las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_prop": "Fija la propiedad `key` del control `name` a `value` (las ediciones repetidas se unen en un paso de deshacer).",
     "pyzed.Trigger.fire": "Reproduce desde el principio las animaciones que usan este disparador.",
+    "pyzed.Rendering.from_table": "Crea los ajustes a partir de una tabla `[tool.pyzed.rendering]`, ignorando claves y valores desconocidos.",
+    "pyzed.Rendering.to_table": "Los ajustes que no son `\"auto\"`, tal como se escriben en `pyproject.toml`.",
+    "pyzed.Rendering.custom": "Si algún ajuste no es `\"auto\"`.",
+    "pyzed.Rendering.env": "Las variables de entorno que llevan estos ajustes a Iced y wgpu.",
+    "pyzed.Rendering.apply": "Define las variables de `env()` que aún no están definidas (las tuyas mandan); devuelve las que definió.",
     "pyzed.Animation.properties": "Las propiedades que cambian los keyframes, en orden de aparición.",
     "pyzed.Animation.total": "Milisegundos del principio al final (`inf` si se repite para siempre).",
     "pyzed.Animation.with_options": "Una copia con otro timing o disparador (`duration`, `easing`, `on`...).",

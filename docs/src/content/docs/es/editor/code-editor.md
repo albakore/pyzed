@@ -244,10 +244,10 @@ sequenceDiagram
 
 ## Ajustes del editor
 
-Los abren el **engranaje** de la cabecera del panel de código, los puntos de los servidores en la barra de estado o
-**Ajustes → Editor de código → Ajustes del editor…**. Se guardan por usuario, en el mismo `designer.json` que los
-[ajustes del editor](/pyzed/es/editor/settings/). Un índice a la izquierda lista las secciones y a la
-derecha se ve la que eliges.
+Los abren el **engranaje** de la cabecera del panel de código y los puntos de los servidores en la barra de estado:
+son las páginas *Editor de código* del [diálogo de Ajustes](/pyzed/es/editor/settings/), con su buscador, sus
+perfiles, **↺** para devolver un ajuste a su valor por defecto y el ámbito *Proyecto* para que un proyecto tenga
+los suyos (su tabulación, por ejemplo).
 
 ![Ajustes del editor con el índice de secciones](../../../../assets/editor/editor-settings-appearance.png)
 

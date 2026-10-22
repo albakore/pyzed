@@ -1231,13 +1231,14 @@ The class is imported once and reused until its code changes.
 ### `discover`
 
 ```python
-discover(root=None)
+discover(root=None, *, fresh=True)
 ```
 
 Imports every designed component under `root` (the current folder by default).
 
 Components may use each other, so a failed import is retried once the others
-loaded (`errors` keeps what still failed).
+loaded (`errors` keeps what still failed). With `fresh=False` a component whose code
+did not change since it was last imported is kept as it is.
 
 ### `SceneDocument`
 

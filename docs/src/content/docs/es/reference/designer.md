@@ -1222,7 +1222,7 @@ La clase se importa una vez y se reutiliza hasta que cambia su código.
 ### `discover`
 
 ```python
-discover(root=None)
+discover(root=None, *, fresh=True)
 ```
 
 Importa todos los componentes diseñados bajo `root` (por defecto, la carpeta actual).

@@ -1,14 +1,102 @@
 ---
 title: Settings
-description: "The preferences of Pyzed Design and its code editor: themes, fonts, keys, where settings are saved and how to translate the visual designer."
+description: "The preferences of Pyzed Design and its code editor: search, profiles, per-project settings, Reset to default, the project's renderer (GPU or CPU), where settings are saved and how to translate the visual designer."
 sidebar:
   order: 13
 ---
 
-**Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>, the gear at the right of the title bar, or the ☰ menu) holds the
-editor's own preferences. Changes apply at once and are saved right away; **Done** closes the dialog.
+**Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>, the gear at the right of the title bar, or the ☰ menu) holds every
+preference of the designer and of its code editor in one dialog. Changes apply at once and are saved right away;
+**Done** closes the dialog.
 
 ![The settings dialog](../../../assets/editor/settings.png)
+
+- **The index** on the left groups the pages: *Designer* (General, Fonts and size, Form canvas, Running, Logs and
+  errors, Telemetry), *Code editor* (Appearance, Cursor, Editing, Deleting, Scrolling and wrapping, Code lens and
+  diagnostics, Language servers) and, with a project open, *Project* (Rendering). A number next to a page counts
+  its changed settings.
+- **Search settings…** (focused when the dialog opens) finds a setting by its name or its help, in English or in
+  your language, across every page.
+- **A dot** after a setting's name means it is not at its default; the **↺** button at its right puts it back.
+- **Reset all** puts every setting of the profile back to its default. It asks for a second press, so one click
+  can not lose your settings.
+- **Open settings file** opens the JSON file the page writes to.
+
+![Searching the settings](../../../assets/editor/settings-search.png)
+
+## Profiles
+
+A profile is a whole set of preferences you can switch between, like VS Code's profiles: one for everyday work,
+one with big fonts for presentations, one for a small laptop screen... The **Profile** list at the top right
+switches; switching applies the profile at once (theme, fonts, sizes, editor options).
+
+| Button | What it does |
+| --- | --- |
+| **+** | A new profile, a copy of the one in use, with the name you type. |
+| **✎** | Renames the profile in use. |
+| **🗑** | Deletes the profile in use and goes back to *Default*. *Default* can not be renamed or deleted. |
+
+Profiles only hold preferences: the panel layout, the recent files and the [keymap](/pyzed/editor/keymap/) stay
+the same whatever the profile.
+
+![A profile with two changed settings](../../../assets/editor/settings-profiles.png)
+
+## Project settings
+
+With a project open, **User | Project** at the top says where your changes go:
+
+- **User**: your own settings, in the active profile. They apply to every project.
+- **Project**: this project's own settings, saved in `.pyzed/settings.json` inside the project, like Zed's
+  `.zed/settings.json`. They win over the user's while the project is open, and travel with it (commit the file
+  so everyone who opens the project gets them).
+
+In the Project scope, the dot marks the settings the project sets, and **↺** removes them so the user's value
+applies again; **Remove project settings** removes all of them. In the User scope, a setting the project sets
+shows *This project sets its own*. A few settings belong to the user only (the welcome window, the window frame,
+updates, the log file).
+
+![The project scope: the project uses tabs of 2](../../../assets/editor/settings-project.png)
+
+```json
+{
+  "editor": { "tab_size": 2, "hard_tabs": false, "format_on_apply": true },
+  "designer": { "grid": 4, "snap": true }
+}
+```
+
+## Rendering
+
+**Project → Rendering** chooses how the project's app draws its windows. It is saved in the project's
+`pyproject.toml`, so it applies when the designer runs the project, when you run it with `pz.run` or
+`pyzed run`, and in the [exported app](/pyzed/editor/exporting/).
+
+| Setting | Options | What it does |
+| --- | --- | --- |
+| **Renderer** | Auto, GPU, CPU | *Auto* (the default) uses the GPU when there is a real one and the CPU renderer elsewhere (virtual machines, remote desktops). *GPU* always uses it: [shaders](/pyzed/shading/shaders/) need it. *CPU* (tiny-skia) starts faster and uses less memory, and works everywhere. |
+| **Graphics API** | Auto, Vulkan, Metal, DirectX 12, OpenGL | The GPU's API. *Auto* tries Vulkan, Metal or DirectX 12, then OpenGL. |
+| **GPU** | Auto, Fast, Saves battery | On laptops with two GPUs: the dedicated one or the integrated one. |
+| **Vsync** | Auto, On, Off | *On* waits for the screen (no tearing); *Off* draws as fast as it can (to measure performance). |
+
+![The project's renderer](../../../assets/editor/settings-rendering.png)
+
+```toml
+[tool.pyzed.rendering]
+renderer = "gpu"      # "auto", "gpu" or "cpu"
+gpu_api = "vulkan"    # "auto", "vulkan", "metal", "dx12" or "gl"
+power = "low"         # "auto", "high" or "low"
+vsync = "off"         # "auto", "on" or "off"
+```
+
+In code, `App.rendering` does the same for one app, and wins over `pyproject.toml`:
+
+```python
+class Game(pz.App):
+    rendering = pz.Rendering(renderer="gpu", vsync="off")
+```
+
+The settings become the environment variables Iced and wgpu read (`ICED_BACKEND`, `WGPU_BACKEND`,
+`WGPU_POWER_PREF`, `ICED_PRESENT_MODE`); one you set yourself still wins. While a project sets its own renderer,
+Run always starts the form in its own process, since the designer's window already has one.
 
 ## Appearance
 
@@ -65,14 +153,15 @@ A monospaced font keeps code columns aligned: pick one for **Code font** (its na
 | **Show a dialog on errors** | Opens the [error dialog](/pyzed/editor/console-and-running/#when-the-editor-itself-fails) when something fails. Off, errors only go to the Logs panel. |
 | **Write a log file** | Also writes the [logs](/pyzed/editor/console-and-running/#the-logs-panel) to `logs/pyzed-design.log` in the Pyzed config folder (applies on restart). |
 
-## Panels
+## More
 
-| Setting | What it does |
+The end of the index has links to the rest:
+
+| Item | What it does |
 | --- | --- |
-| **Layout → Reset** | Puts every panel back in its default dock and size. |
-| **Code editor → Editor settings…** | The [code editor's settings](/pyzed/editor/code-editor/#editor-settings): font, tabs, cursor, completion, language servers. |
-| **Key bindings → Keymap editor…** | The [keymap editor](/pyzed/editor/keymap/): change the keys of any action. |
-| **AI agents → AI agents settings…** | The [agent's settings](/pyzed/editor/ai-agents/#settings): model providers, keys and browser sign-in, default model, effort and permissions. |
+| **Key bindings** | The [keymap editor](/pyzed/editor/keymap/): change the keys of any action. |
+| **AI agents** | The [agent's settings](/pyzed/editor/ai-agents/#settings): model providers, keys and browser sign-in, default model, effort and permissions. |
+| **Reset panel layout** | Puts every panel back in its default dock and size. |
 
 ## Telemetry
 
@@ -112,7 +201,9 @@ Everything the editor remembers goes to one file, `designer.json`, in Pyzed's se
 
 Set `PYZED_CONFIG_DIR` to use another folder (handy for a portable setup or for tests). The file has two
 sections: `"designer"` (theme, language, canvas defaults, toolbar and status bar, run options, recent files, and
-where each panel is docked, which docks are hidden and their sizes) and `"editor"` (the code editor). The
+where each panel is docked, which docks are hidden and their sizes) and `"editor"` (the code editor). They hold
+the active profile; `"profile"` names it and `"profiles"` keeps the others (only what differs from the defaults).
+A project's own settings are in its `.pyzed/settings.json`. The
 [AI agent](/pyzed/editor/ai-agents/) keeps its settings in `agents.json` and its threads in `agents/threads/` in
 the same folder; API keys are never written there, they go to the system keychain. Invalid
 values are ignored and the defaults used, so a hand-edited file can not break the editor.

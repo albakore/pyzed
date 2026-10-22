@@ -1,15 +1,105 @@
 ---
 title: Ajustes
-description: "Las preferencias de Pyzed Design y de su editor de código: temas, fuentes, teclas, dónde se guardan los ajustes y cómo traducir el diseñador visual."
+description: "Las preferencias de Pyzed Design y de su editor de código: buscador, perfiles, ajustes por proyecto, restaurar valores por defecto, el renderizador del proyecto (GPU o CPU), dónde se guardan los ajustes y cómo traducir el diseñador visual."
 sidebar:
   order: 13
 ---
 
-**Ajustes** (<kbd>Ctrl</kbd>+<kbd>,</kbd>, el engranaje a la derecha de la barra de título, o el menú ☰) reúne las
-preferencias del propio editor. Los cambios se aplican al momento y se guardan enseguida; **Listo** cierra el
-diálogo.
+**Ajustes** (<kbd>Ctrl</kbd>+<kbd>,</kbd>, el engranaje a la derecha de la barra de título, o el menú ☰) reúne en un
+solo diálogo todas las preferencias del diseñador y de su editor de código. Los cambios se aplican al momento y se
+guardan enseguida; **Listo** cierra el diálogo.
 
 ![El diálogo de ajustes](../../../../assets/editor/settings.png)
+
+- **El índice** de la izquierda agrupa las páginas: *Diseñador* (General, Fuentes y tamaño, Lienzo del formulario,
+  Ejecución, Logs y errores, Telemetría), *Editor de código* (Apariencia, Cursor, Edición, Borrado, Desplazamiento
+  y ajuste de línea, Code lens y diagnósticos, Servidores de lenguaje) y, con un proyecto abierto, *Proyecto*
+  (Renderizado). Un número junto a una página cuenta sus ajustes cambiados.
+- **Buscar ajustes…** (tiene el foco al abrir el diálogo) encuentra un ajuste por su nombre o su ayuda, en inglés o
+  en tu idioma, en todas las páginas.
+- **Un punto** tras el nombre de un ajuste indica que no tiene su valor por defecto; el botón **↺** a su derecha lo
+  restaura.
+- **Restablecer todo** devuelve todos los ajustes del perfil a su valor por defecto. Pide una segunda pulsación, así
+  un clic no te hace perder tus ajustes.
+- **Abrir el archivo de ajustes** abre el JSON donde escribe la página.
+
+![Buscar en los ajustes](../../../../assets/editor/settings-search.png)
+
+## Perfiles
+
+Un perfil es un conjunto completo de preferencias entre los que puedes cambiar, como los perfiles de VS Code: uno
+para el día a día, otro con fuentes grandes para presentar, otro para la pantalla pequeña del portátil... La lista
+**Perfil** de arriba a la derecha cambia de uno a otro y lo aplica al momento (tema, fuentes, tamaños, opciones del
+editor).
+
+| Botón | Qué hace |
+| --- | --- |
+| **+** | Un perfil nuevo, copia del que usas, con el nombre que escribas. |
+| **✎** | Renombra el perfil en uso. |
+| **🗑** | Elimina el perfil en uso y vuelve a *Por defecto*, que no se puede renombrar ni eliminar. |
+
+Los perfiles solo guardan preferencias: la disposición de los paneles, los archivos recientes y el
+[keymap](/pyzed/es/editor/keymap/) son los mismos en todos.
+
+![Un perfil con dos ajustes cambiados](../../../../assets/editor/settings-profiles.png)
+
+## Ajustes del proyecto
+
+Con un proyecto abierto, **Usuario | Proyecto** arriba dice adónde van tus cambios:
+
+- **Usuario**: tus ajustes, en el perfil activo. Valen para todos los proyectos.
+- **Proyecto**: los ajustes propios del proyecto, guardados en `.pyzed/settings.json` dentro del proyecto, como el
+  `.zed/settings.json` de Zed. Mandan sobre los del usuario mientras el proyecto está abierto y viajan con él (sube
+  el archivo al repositorio para que los tenga cualquiera que lo abra).
+
+En el ámbito Proyecto el punto marca los ajustes que define el proyecto y **↺** los quita para que vuelva a valer el
+del usuario; **Quitar los ajustes del proyecto** los quita todos. En el ámbito Usuario, un ajuste que define el
+proyecto muestra *El proyecto define el suyo*. Algunos ajustes son solo del usuario (la ventana de bienvenida, el
+marco de ventana, las actualizaciones, el archivo de logs).
+
+![El ámbito Proyecto: el proyecto usa tabulación de 2](../../../../assets/editor/settings-project.png)
+
+```json
+{
+  "editor": { "tab_size": 2, "hard_tabs": false, "format_on_apply": true },
+  "designer": { "grid": 4, "snap": true }
+}
+```
+
+## Renderizado
+
+**Proyecto → Renderizado** elige cómo dibuja sus ventanas la app del proyecto. Se guarda en el `pyproject.toml`
+del proyecto, así que vale cuando el diseñador ejecuta el proyecto, cuando lo ejecutas con `pz.run` o
+`pyzed run`, y en la [app exportada](/pyzed/es/editor/exporting/).
+
+| Ajuste | Opciones | Qué hace |
+| --- | --- | --- |
+| **Renderizador** | Auto, GPU, CPU | *Auto* (por defecto) usa la GPU si hay una de verdad y el renderizador por CPU si no (máquinas virtuales, escritorios remotos). *GPU* la usa siempre: la necesitan los [shaders](/pyzed/es/shading/shaders/). *CPU* (tiny-skia) arranca antes, usa menos memoria y funciona en todas partes. |
+| **API gráfica** | Auto, Vulkan, Metal, DirectX 12, OpenGL | La API de la GPU. *Auto* prueba Vulkan, Metal o DirectX 12 y después OpenGL. |
+| **GPU** | Auto, Rápida, Ahorra batería | En portátiles con dos GPU: la dedicada o la integrada. |
+| **Vsync** | Auto, Activado, Desactivado | *Activado* espera a la pantalla (sin cortes); *Desactivado* dibuja lo más rápido posible (para medir rendimiento). |
+
+![El renderizador del proyecto](../../../../assets/editor/settings-rendering.png)
+
+```toml
+[tool.pyzed.rendering]
+renderer = "gpu"      # "auto", "gpu" o "cpu"
+gpu_api = "vulkan"    # "auto", "vulkan", "metal", "dx12" o "gl"
+power = "low"         # "auto", "high" o "low"
+vsync = "off"         # "auto", "on" u "off"
+```
+
+En código, `App.rendering` hace lo mismo para una app y manda sobre `pyproject.toml`:
+
+```python
+class Game(pz.App):
+    rendering = pz.Rendering(renderer="gpu", vsync="off")
+```
+
+Los ajustes se convierten en las variables de entorno que leen Iced y wgpu (`ICED_BACKEND`, `WGPU_BACKEND`,
+`WGPU_POWER_PREF`, `ICED_PRESENT_MODE`); una que definas tú sigue mandando. Mientras un proyecto elige su propio
+renderizador, Ejecutar arranca siempre el formulario en su propio proceso, porque la ventana del diseñador ya tiene
+el suyo.
 
 ## Apariencia
 
@@ -66,14 +156,15 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 | **Mostrar un diálogo con los errores** | Abre el [diálogo de error](/pyzed/es/editor/console-and-running/#cuando-falla-el-propio-editor) cuando algo falla. Apagado, los errores solo van al panel Logs. |
 | **Escribir un archivo de log** | Escribe además los [logs](/pyzed/es/editor/console-and-running/#el-panel-logs) en `logs/pyzed-design.log`, en la carpeta de configuración de Pyzed (se aplica al reiniciar). |
 
-## Paneles
+## Más
 
-| Ajuste | Qué hace |
+El final del índice enlaza con el resto:
+
+| Elemento | Qué hace |
 | --- | --- |
-| **Disposición → Restablecer** | Devuelve cada panel a su dock y tamaño iniciales. |
-| **Editor de código → Ajustes del editor…** | Los [ajustes del editor de código](/pyzed/es/editor/code-editor/#ajustes-del-editor): fuente, tabulación, cursor, sugerencias, servidores de lenguaje. |
-| **Atajos de teclado → Editor de keymap…** | El [editor de keymap](/pyzed/es/editor/keymap/): cambia las teclas de cualquier acción. |
-| **Agentes de IA → Ajustes de los agentes de IA…** | Los [ajustes del agente](/pyzed/es/editor/ai-agents/#ajustes): proveedores de modelos, claves e inicio de sesión con el navegador, modelo predeterminado, esfuerzo y permisos. |
+| **Atajos de teclado** | El [editor de keymap](/pyzed/es/editor/keymap/): cambia las teclas de cualquier acción. |
+| **Agentes de IA** | Los [ajustes del agente](/pyzed/es/editor/ai-agents/#ajustes): proveedores de modelos, claves e inicio de sesión con el navegador, modelo predeterminado, esfuerzo y permisos. |
+| **Restablecer los paneles** | Devuelve cada panel a su dock y tamaño iniciales. |
 
 ## Telemetría
 
@@ -115,7 +206,9 @@ Todo lo que recuerda el editor va a un único archivo, `designer.json`, en la ca
 Define `PYZED_CONFIG_DIR` para usar otra carpeta (útil para una instalación portátil o para tests). El archivo tiene
 dos secciones: `"designer"` (tema, idioma, valores del lienzo, barra de herramientas y de estado, opciones de
 ejecución, archivos recientes, y en qué dock está cada panel, qué docks están ocultos y sus tamaños) y `"editor"`
-(el editor de código). Los valores no válidos se ignoran y se usan los de por defecto, así que un archivo editado a
+(el editor de código). Ambas guardan el perfil activo; `"profile"` lo nombra y `"profiles"` guarda los demás (solo lo
+que difiere de los valores por defecto). Los ajustes propios de un proyecto están en su `.pyzed/settings.json`. Los
+valores no válidos se ignoran y se usan los de por defecto, así que un archivo editado a
 mano no puede romper el editor.
 
 ```json
