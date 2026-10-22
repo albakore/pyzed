@@ -1,5 +1,6 @@
 """The Project tab's file tree, file search and actions, the Dependencies tab and the folder browser."""
 
+import os
 import shutil
 from pathlib import Path
 import subprocess
@@ -137,7 +138,7 @@ def test_dependencies_tab_follows_changes_and_warns(tmp_path, monkeypatch):
     p.latest = {"pyzed-ui": "1.7.0"}
     # something else (a terminal, the agent) upgrades it: the tab reads it again
     (root / "uv.lock").write_text('version = 1\n\n[[package]]\nname = "pyzed-ui"\nversion = "1.7.0"\n')
-    site = root / ".venv" / "lib" / "python3.12" / "site-packages"
+    site = root / ".venv" / ("Lib/site-packages" if os.name == "nt" else "lib/python3.12/site-packages")
     site.mkdir(parents=True)
     (site / "pyzed_ui-1.7.0.dist-info").mkdir()
     p.poll(force=True)

@@ -104,7 +104,7 @@ def test_project_settings_and_dependencies(shop):
 
 def _install(root, **packages):
     """A fake ``.venv`` with ``packages`` (name=version) installed in it."""
-    site = root / ".venv" / "lib" / "python3.12" / "site-packages"
+    site = root / ".venv" / ("Lib/site-packages" if os.name == "nt" else "lib/python3.12/site-packages")
     site.mkdir(parents=True, exist_ok=True)
     for name, version in packages.items():
         (site / f"{name}-{version}.dist-info").mkdir()
