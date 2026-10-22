@@ -38,6 +38,7 @@ stable version.
 
 - 🐛 A WSL project opened from Windows still lists its tools when Windows can't reach the distro. PR [#180](https://github.com/albakore/pyzed/pull/180) by [@albakore](https://github.com/albakore).
 - 🐛 A project's components load whenever it opens, and a missing one is drawn as a warning instead of breaking the form. PR [#182](https://github.com/albakore/pyzed/pull/182) by [@albakore](https://github.com/albakore).
+- 🐛 Windows updates no longer keep the old version: the installer clears the old files before copying, and Restart to update stops child processes, retries the folder swap and says so if it fails. PR [#192](https://github.com/albakore/pyzed/pull/192) by [@albakore](https://github.com/albakore).
 - 🐛 Component descriptions show without raw reST marks: inline code in the Properties header and clean tooltips. PR [#187](https://github.com/albakore/pyzed/pull/187) by [@albakore](https://github.com/albakore).
 
 ### Refactors
