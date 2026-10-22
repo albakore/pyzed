@@ -9,7 +9,7 @@ description = "Fast, modern GUIs for Python powered by Iced (Rust), with Zed-ins
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-keywords = ["gui", "iced", "rust", "zed", "ui", "desktop"]
+keywords = ["gui", "python gui", "desktop", "desktop app", "gui framework", "native", "iced", "rust", "zed", "ui", "visual designer", "gui builder", "tkinter alternative", "cross-platform"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Rust",
@@ -21,6 +21,14 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Widget Sets",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+    "Environment :: GPU",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
@@ -42,7 +50,12 @@ dev = [
 test = ["maturin>=1.7,<2.0", "pytest", "pytest-xdist", "pillow", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
 
 [project.urls]
+Homepage = "https://albakore.github.io/pyzed/"
+Documentation = "https://albakore.github.io/pyzed/getting-started/introduction/"
+Download = "https://albakore.github.io/pyzed/download/"
+Changelog = "https://albakore.github.io/pyzed/changelog/"
 Repository = "https://github.com/albakore/pyzed"
+Issues = "https://github.com/albakore/pyzed/issues"
 
 [project.scripts]
 pyzed = "pyzed.cli:main"

@@ -35,6 +35,10 @@ stable version.
 
 - 🐛 New projects are no longer created in the installed app's folder (where they failed, or were deleted by the next update): Pyzed Design offers the last project's folder or `~/Pyzed Projects`, and refuses folders it cannot write to with a clear message. PR [#170](https://github.com/albakore/pyzed/pull/170) by [@albakore](https://github.com/albakore).
 
+### Docs
+
+- 📝 The docs reach search engines and AI answer engines sooner: new and changed pages are sent to IndexNow on every deploy, Google, Bing and Yandex ownership checks come from repository variables, the PyPI page links the docs, and the FAQ tells Pyzed apart from the ZED camera SDK's `pyzed` module. PR [#176](https://github.com/albakore/pyzed/pull/176) by [@albakore](https://github.com/albakore).
+
 ## [1.7.0] - 2026-10-22
 
 1.6.0 was tagged but never published (its wheels failed to build), so this release carries all of it.

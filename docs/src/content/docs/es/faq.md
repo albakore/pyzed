@@ -14,6 +14,13 @@ GPU (o con un renderizador por software si no la hay). Incluye más de 90 compon
 gráficos, diálogos, un workspace con docks) y Pyzed Design, un diseñador visual de arrastrar y soltar. Mira la
 [introducción](/pyzed/es/getting-started/introduction/).
 
+## ¿Pyzed tiene relación con el paquete pyzed de las cámaras ZED?
+
+No. Pyzed (`pip install pyzed-ui`, `import pyzed as pz`) es un framework de GUI de escritorio para Python, y su
+nombre viene del editor [Zed](https://zed.dev), que inspira sus componentes. El módulo `pyzed` del SDK de ZED de
+Stereolabs (`pyzed.sl`) es una biblioteca distinta para las cámaras estéreo ZED. Los dos se importan como
+`pyzed`, así que no se pueden instalar en el mismo entorno.
+
 ## ¿Cómo instalo Pyzed?
 
 Ejecuta `pip install pyzed-ui` o `uv add pyzed-ui` y luego `import pyzed as pz`. El paquete se llama `pyzed-ui`
@@ -28,8 +35,9 @@ comerciales y de código cerrado. El código está en [GitHub](https://github.co
 
 ## ¿Qué plataformas soporta Pyzed?
 
-Windows, macOS y Linux. Se publican wheels para los tres sistemas; en Linux necesitan glibc 2.28 o superior
-(todavía no hay wheels para Alpine/musl). Móviles y web no son objetivos. Mira
+Windows (x64 y ARM), macOS (Intel y Apple Silicon) y Linux (x86_64 y ARM, con glibc 2.28 o superior, y musl
+para Alpine). En Alpine el motor de audio solo renderiza sin dispositivos de sonido. Móviles y web todavía no son
+objetivos. Mira
 [Estabilidad y limitaciones conocidas](/pyzed/es/guides/stability/).
 
 ## ¿En qué se diferencia Pyzed de tkinter?

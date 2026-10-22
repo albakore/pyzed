@@ -24,7 +24,7 @@ const TEXT = {
 		ogLocale: 'en_US',
 		home: 'Pyzed',
 		keywords:
-			'Python GUI, Python desktop GUI, desktop apps in Python, native GUI, Rust, Iced, tkinter alternative, Kivy alternative, PyQt alternative, Flet alternative, visual designer, GUI builder, Python frontend framework, shaders, cross-platform, Windows, macOS, Linux',
+			'pyzed-ui, Python GUI, Python desktop GUI, desktop apps in Python, native GUI, Rust, Iced, tkinter alternative, Kivy alternative, PyQt alternative, Flet alternative, visual designer, GUI builder, Python frontend framework, shaders, cross-platform, Windows, macOS, Linux',
 		siteDescription:
 			'Pyzed is an open-source Python frontend framework for native desktop apps rendered by Iced (Rust), with 90+ components, themes, node-based GPU shaders and Pyzed Design, a drag-and-drop visual designer.',
 		designDescription:
@@ -40,7 +40,7 @@ const TEXT = {
 		ogLocale: 'es_ES',
 		home: 'Pyzed',
 		keywords:
-			'GUI en Python, interfaces de escritorio en Python, apps de escritorio con Python, GUI nativa, Rust, Iced, alternativa a tkinter, alternativa a Kivy, alternativa a PyQt, alternativa a Flet, diseñador visual, constructor de interfaces, framework de frontend en Python, shaders, multiplataforma, Windows, macOS, Linux',
+			'pyzed-ui, GUI en Python, interfaces de escritorio en Python, apps de escritorio con Python, GUI nativa, Rust, Iced, alternativa a tkinter, alternativa a Kivy, alternativa a PyQt, alternativa a Flet, diseñador visual, constructor de interfaces, framework de frontend en Python, shaders, multiplataforma, Windows, macOS, Linux',
 		siteDescription:
 			'Pyzed es un framework de frontend de código abierto para apps de escritorio nativas en Python renderizadas por Iced (Rust), con más de 90 componentes, temas, shaders de GPU por nodos y el diseñador visual Pyzed Design.',
 		designDescription:
