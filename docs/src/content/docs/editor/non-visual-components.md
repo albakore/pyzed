@@ -1,6 +1,6 @@
 ---
 title: Non-visual components
-description: "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing."
+description: "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, tray icons, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing."
 sidebar:
   order: 6.2
 ---
@@ -44,6 +44,7 @@ events). Copy, paste, undo and rename work as with any control, and renaming one
 | **Settings** | Values kept between runs (a JSON file per user), and the value of the controls listed in `remember`. | `change` (`(key, value)`) |
 | **File dialog** | The system's dialog: `mode` is `open`, `open_many`, `save` or `folder`; `filters` has one `Images: png, jpg` per line. | `chosen` (the path, or a list), `cancelled` |
 | **Notification** | A desktop notification with `title` and `text`. | `shown`, `failed` |
+| **Tray icon** | An icon in the system tray with an `icon`, a `tooltip` and a `menu`: one item per line, `-` for a separator, `[x]` or `[ ]` for a check item and indented lines for a submenu. It shows when the form opens unless **Show when the form opens** is off. On GNOME it needs the AppIndicator extension. | `click`, `double_click` (Windows), `menu` (the item's text), `failed` |
 | **System info** | The computer: `os`, `os_version`, `machine`, `hostname`, `user`, `home`, `cpu_count`, `language`, memory and free disk (of `disk_path`). With `interval` it checks again periodically. | `update` (a dict with all of it) |
 | **Launcher** | Opens `target` with the program the system uses for it: a file, a folder, a web page or a `mailto:` link. | `opened`, `failed` (the target) |
 | **Network monitor** | Whether the internet can be reached, checking `host`:`port` every `interval` ms while `running`. | `change` (`True`/`False`), `online`, `offline` |
@@ -85,6 +86,7 @@ def proc_finished(form, event):
 | Settings | `settings1["key"]`, `settings1["key"] = value`, `get(key, default)`, `set()`, `delete()`, `keys()` |
 | File dialog | `show()` (a command: return it), `path`, `paths` |
 | Notification | `show(text=None)` |
+| Tray icon | `show()` (returns whether it could), `hide()`, `visible`, `checked(item)`, `set_checked(item, value)` |
 | System info | `check()`, `env(name)`, `folder("documents")`, `memory_available`, `disk_free`, `is_windows`, `is_mac`, `is_linux` |
 | Launcher | `open(target=None)`, `reveal(path)` (shows it in the file manager), `email(to, subject, body)` |
 | Network monitor | `check()`, `online`, `start()`, `stop()` |

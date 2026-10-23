@@ -33,12 +33,14 @@ callback. With no app running (a script, a test) they are called right away.
 ``Settings``          Values kept between runs, in a JSON file (``change``).
 ``FileDialog``        The system's open, save and folder dialogs (``chosen``, ``cancelled``).
 ``Notification``      A desktop notification.
+``TrayIcon``          An icon in the system tray, with a menu (``click``, ``menu``...).
 ====================  ===================================================================
 """
 
 from __future__ import annotations
 
 import fnmatch
+import itertools
 import json as _json
 import os
 import shlex
@@ -64,7 +66,7 @@ from . import _core
 
 __all__ = [
     "Clipboard", "FileDialog", "FileWatcher", "HttpRequest", "HttpResponse", "Notification", "Process", "Service",
-    "Settings", "Shortcut", "Timer", "Worker", "parse_filters",
+    "Settings", "Shortcut", "Timer", "TrayIcon", "TrayItem", "Worker", "parse_filters", "parse_tray_menu",
 ]
 
 Handler = Callable[..., Any]
@@ -985,3 +987,214 @@ class Notification(Service):
         ok = self.enabled and notify(str(title or self.title or "Pyzed"), body)
         self.emit("shown" if ok else "failed", body)
         return ok
+
+
+# -- TrayIcon ------------------------------------------------------------------------------------------------------
+@dataclass
+class TrayItem:
+    """An entry of a ``TrayIcon``'s menu.
+
+    ``id`` is what ``on_menu`` receives (the text by default). ``checked`` set to ``True`` or
+    ``False`` makes it a check item that flips when clicked; ``items`` makes it a submenu.
+    """
+
+    text: str
+    id: Optional[str] = None
+    enabled: bool = True
+    checked: Optional[bool] = None
+    items: List[Union["TrayItem", str]] = field(default_factory=list)
+
+    @property
+    def key(self) -> str:
+        """The value ``on_menu`` receives for this item."""
+        return self.text if self.id is None else self.id
+
+
+#: A menu entry: a ``TrayItem``, its text, or ``"-"`` for a separator.
+TrayEntry = Union[TrayItem, str]
+
+
+def parse_tray_menu(value: Any) -> List[TrayEntry]:
+    """A tray menu from a list of entries, or from text with one item per line: ``-`` is a separator,
+    ``[x] Text`` and ``[ ] Text`` are check items and lines indented under an item make it a submenu."""
+    if value is None:
+        return []
+    if not isinstance(value, str):
+        return [entry if isinstance(entry, TrayItem) or entry == "-" else TrayItem(str(entry)) for entry in value]
+    root: List[TrayEntry] = []
+    stack: List[Tuple[int, List[TrayEntry]]] = [(-1, root)]
+    for raw in value.splitlines():
+        text = raw.strip()
+        if not text:
+            continue
+        depth = len(raw) - len(raw.lstrip())
+        while len(stack) > 1 and depth <= stack[-1][0]:
+            stack.pop()
+        if set(text) == {"-"}:
+            stack[-1][1].append("-")
+            continue
+        checked: Optional[bool] = None
+        if text[:3].lower() in ("[x]", "[ ]"):
+            checked, text = text[1] != " ", text[3:].strip()
+        item = TrayItem(text, checked=checked)
+        stack[-1][1].append(item)
+        stack.append((depth, item.items))
+    return root
+
+
+class TrayIcon(Service):
+    """An icon in the system tray: the notification area of the taskbar on Windows, the menu bar on
+    macOS and the panel on Linux, with a tooltip and a menu.
+
+    ``icon`` is a path to an image or its bytes (a blue dot when there is none). ``menu`` lists
+    ``TrayItem`` entries, plain texts and ``"-"`` separators, or is text with one item per line
+    (see ``parse_tray_menu``). ``show()`` puts it in the tray, ``hide()`` takes it away; changes to
+    ``icon``, ``tooltip``, ``title`` and ``menu`` show at once::
+
+        self.tray = pz.TrayIcon("icon.png", "Backups", menu=["Open", "[x] Pause", "-", "Quit"],
+                                on_click=self.open, on_menu=self.menu)
+        self.tray.show()
+
+        def menu(self, item):
+            if item == "Quit":
+                return pz.Command.exit()
+
+    On Linux the icon is a StatusNotifierItem: KDE, Cinnamon, XFCE and most panels show it, and
+    GNOME does with the AppIndicator extension. Where it cannot be shown, ``show()`` returns
+    ``False`` and ``failed`` says why.
+
+    Events:
+        ``on_click()``: the icon was clicked (its menu opens with the right button).
+        ``on_double_click()``: the icon was double-clicked (Windows only).
+        ``on_menu(item)``: a menu item was chosen; ``item`` is its ``id`` (its text by default).
+        ``on_failed(message)``: the icon could not be shown.
+    """
+
+    events = ("click", "double_click", "menu", "failed")
+    _numbers = itertools.count(1)
+    _SHOWN = ("icon", "tooltip", "title", "menu")
+
+    def __init__(self, icon: Union[str, Path, bytes, None] = None, tooltip: str = "", *, title: str = "",
+                 menu: Any = (), on_click: Optional[Handler] = None, on_double_click: Optional[Handler] = None,
+                 on_menu: Optional[Handler] = None, on_failed: Optional[Handler] = None) -> None:
+        super().__init__(on_click=on_click, on_double_click=on_double_click, on_menu=on_menu, on_failed=on_failed)
+        self._number = next(TrayIcon._numbers)
+        self._visible = False
+        #: Why the icon could not be shown the last time (``None`` when it was).
+        self.error: Optional[str] = None
+        self.icon = icon
+        self.tooltip = tooltip
+        self.title = title
+        self.menu = menu
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "menu":
+            value = parse_tray_menu(value)
+        super().__setattr__(name, value)
+        if name in self._SHOWN and getattr(self, "_visible", False):
+            self._update()
+
+    @staticmethod
+    def supported() -> bool:
+        """Whether this system can show tray icons (on Linux, whether the panel shows StatusNotifierItems)."""
+        return bool(_core.tray_supported())
+
+    @property
+    def visible(self) -> bool:
+        """Whether the icon is in the tray; setting it shows or hides it."""
+        return self._visible
+
+    @visible.setter
+    def visible(self, value: bool) -> None:
+        if value:
+            self.show()
+        else:
+            self.hide()
+
+    def show(self) -> bool:
+        """Puts the icon in the tray (or updates it); returns whether it could."""
+        self._visible = True
+        return self._update()
+
+    def hide(self) -> None:
+        """Takes the icon out of the tray."""
+        self._visible = False
+        _core.tray_remove(self._number)
+
+    def stop(self) -> None:
+        self.hide()
+
+    def item(self, key: str) -> Optional[TrayItem]:
+        """The menu item whose ``id`` (or text) is ``key``, in submenus too."""
+        entries: List[TrayEntry] = list(self.menu)
+        while entries:
+            entry = entries.pop(0)
+            if isinstance(entry, TrayItem):
+                if entry.key == key:
+                    return entry
+                entries.extend(entry.items)
+        return None
+
+    def checked(self, key: str) -> bool:
+        """Whether the check item ``key`` is checked."""
+        item = self.item(key)
+        return bool(item is not None and item.checked)
+
+    def set_checked(self, key: str, value: bool = True) -> None:
+        """Checks (or unchecks) the check item ``key``."""
+        item = self.item(key)
+        if item is not None:
+            item.checked = bool(value)
+            if self._visible:
+                self._update()
+
+    def _spec(self, entries: Sequence[TrayEntry]) -> List[Tuple[str, str, str, bool, bool, list]]:
+        out = []
+        for entry in entries:
+            if not isinstance(entry, TrayItem):
+                out.append(("separator", "", "", True, False, []))
+            elif entry.items:
+                out.append(("submenu", entry.key, entry.text, entry.enabled, False, self._spec(entry.items)))
+            elif entry.checked is not None:
+                out.append(("check", entry.key, entry.text, entry.enabled, bool(entry.checked), []))
+            else:
+                out.append(("item", entry.key, entry.text, entry.enabled, False, []))
+        return out
+
+    def _update(self) -> bool:
+        icon = self.icon
+        if isinstance(icon, Path):
+            icon = str(icon)
+        try:
+            _core.tray_set(self._number, self._event, tooltip=str(self.tooltip or ""), title=str(self.title or ""),
+                           icon=icon or None, menu=self._spec(self.menu))
+        except (RuntimeError, ValueError, OSError) as err:
+            self._visible = False
+            self._failed(str(err))
+            return False
+        self.error = None
+        return True
+
+    def _failed(self, message: str) -> None:
+        self.error = message
+        self.emit("failed", message)
+
+    def _event(self, event: str, value: Optional[str]) -> None:
+        """An event from the system's tray, on whatever thread it arrives: handled on the app's thread."""
+        def handle() -> Any:
+            if event == "failed":
+                self._visible = False
+                return self._failed(value or "")
+            if event == "menu" and value is not None:
+                item = self.item(value)
+                if item is not None and item.checked is not None:
+                    self.set_checked(value, not item.checked)
+            return self.emit(event, value)
+
+        try:
+            _core.post(handle)
+        except RuntimeError:  # no app: not on the tray's own thread, which is still handling the click
+            threading.Thread(target=handle, name="pyzed-tray", daemon=True).start()
+
+    def __repr__(self) -> str:
+        return f"<TrayIcon {self.tooltip or self.title!r}{' shown' if self._visible else ''}>"

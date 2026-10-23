@@ -199,8 +199,8 @@ class ControlProxy:
         return self._runtime.validate([self._control.name])
 
     def show(self, *args: Any, **kwargs: Any) -> Any:
-        """Makes the control visible. On a File dialog or a Notification it shows them instead (return a
-        dialog's ``show()`` from the handler: it is a command)."""
+        """Makes the control visible. On a File dialog, a Notification or a Tray icon it shows them instead
+        (return a dialog's ``show()`` from the handler: it is a command)."""
         service = self.service
         if service is not None and callable(getattr(service, "show", None)):
             return service.show(*args, **kwargs)
@@ -208,7 +208,11 @@ class ControlProxy:
         return None
 
     def hide(self) -> None:
-        """Hides the control (and whatever is inside it)."""
+        """Hides the control (and whatever is inside it); a Tray icon leaves the tray."""
+        service = self.service
+        if service is not None and callable(getattr(service, "hide", None)):
+            service.hide()
+            return
         self._control.visible = False
 
     def focus(self) -> _core.Command:

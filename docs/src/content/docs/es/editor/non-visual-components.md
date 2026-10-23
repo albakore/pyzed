@@ -1,6 +1,6 @@
 ---
 title: Componentes no visuales
-description: "Temporizadores, atajos de teclado, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, el portapapeles, ajustes, diálogos de archivos, notificaciones, información del sistema, el lanzador y los monitores de red y batería en Pyzed Design: componentes con propiedades y eventos que no dibujan nada."
+description: "Temporizadores, atajos de teclado, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, el portapapeles, ajustes, diálogos de archivos, notificaciones, iconos de bandeja, información del sistema, el lanzador y los monitores de red y batería en Pyzed Design: componentes con propiedades y eventos que no dibujan nada."
 sidebar:
   order: 6.2
 ---
@@ -45,6 +45,7 @@ renombran sus handlers.
 | **Ajustes** | Valores que se guardan entre ejecuciones (un JSON por usuario) y el valor de los controles de `remember`. | `change` (`(clave, valor)`) |
 | **Diálogo de archivos** | El diálogo del sistema: `mode` es `open`, `open_many`, `save` o `folder`; `filters` lleva una línea `Imágenes: png, jpg` por filtro. | `chosen` (la ruta o una lista), `cancelled` |
 | **Notificación** | Una notificación de escritorio con `title` y `text`. | `shown`, `failed` |
+| **Icono de bandeja** | Un icono en la bandeja del sistema con `icon`, `tooltip` y `menu`: un elemento por línea, `-` para un separador, `[x]` o `[ ]` para una casilla y líneas con sangría para un submenú. Aparece al abrir el formulario salvo que desactives **Mostrar al abrir el formulario**. En GNOME necesita la extensión AppIndicator. | `click`, `double_click` (Windows), `menu` (el texto del elemento), `failed` |
 | **Información del sistema** | El ordenador: `os`, `os_version`, `machine`, `hostname`, `user`, `home`, `cpu_count`, `language`, la memoria y el disco libre (de `disk_path`). Con `interval` vuelve a mirar cada cierto tiempo. | `update` (un diccionario con todo) |
 | **Lanzador** | Abre `target` con el programa que usa el sistema para eso: un archivo, una carpeta, una página web o un enlace `mailto:`. | `opened`, `failed` (el destino) |
 | **Monitor de red** | Si se llega a internet, probando `host`:`port` cada `interval` ms mientras `running`. | `change` (`True`/`False`), `online`, `offline` |
@@ -86,6 +87,7 @@ def proc_finished(form, event):
 | Ajustes | `settings1["clave"]`, `settings1["clave"] = valor`, `get(clave, defecto)`, `set()`, `delete()`, `keys()` |
 | Diálogo de archivos | `show()` (un comando: devuélvelo), `path`, `paths` |
 | Notificación | `show(text=None)` |
+| Icono de bandeja | `show()` (devuelve si pudo), `hide()`, `visible`, `checked(item)`, `set_checked(item, value)` |
 | Información del sistema | `check()`, `env(name)`, `folder("documents")`, `memory_available`, `disk_free`, `is_windows`, `is_mac`, `is_linux` |
 | Lanzador | `open(target=None)`, `reveal(path)` (lo muestra en el explorador de archivos), `email(to, subject, body)` |
 | Monitor de red | `check()`, `online`, `start()`, `stop()` |

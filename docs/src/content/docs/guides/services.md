@@ -1,13 +1,13 @@
 ---
 title: Services
-description: "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps with Pyzed, with events delivered on the UI thread."
+description: "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps with Pyzed, with events delivered on the UI thread."
 sidebar:
   order: 5.5
 ---
 
 **Services** are the parts of an app that raise events but draw nothing: `pz.Timer`, `pz.Shortcut`,
-`pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`, `pz.Settings`, `pz.FileDialog` and
-`pz.Notification`. They are the same objects as the [non-visual components](/pyzed/editor/non-visual-components/)
+`pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`, `pz.Settings`, `pz.FileDialog`,
+`pz.Notification` and `pz.TrayIcon`. They are the same objects as the [non-visual components](/pyzed/editor/non-visual-components/)
 of Pyzed Design, and they work in a `pz.App`, in a form, or in a script with no window at all.
 
 ```python
@@ -62,6 +62,7 @@ raised the event.
 | `pz.Settings(name, folder=None, defaults=None)` | `change` (`(key, value)`) | A dict saved as JSON at once (`autosave`), per user, in Pyzed's settings folder. |
 | `pz.FileDialog(mode="open", filters=..., directory=None, file_name="")` | `chosen` (path or list), `cancelled` | `show()` returns the command that opens it; modes `open`, `open_many`, `save`, `folder`. |
 | `pz.Notification(title, text)` | `shown`, `failed` | `show(text=None)` returns whether it could be shown. |
+| `pz.TrayIcon(icon=None, tooltip="", menu=())` | `click`, `double_click` (Windows), `menu` (the item), `failed` | `show()` returns whether it could; `hide()`. Changes to `icon`, `tooltip` and `menu` show at once. |
 | `pz.SystemInfo(interval=0, disk_path=None)` | `update` (a dict) | `os`, `os_version`, `hostname`, `user`, `cpu_count`, `language`, `memory_total`, `memory_available`, `disk_free`; `folder("downloads")`, `env(name)`. |
 | `pz.Launcher(target="")` | `opened`, `failed` (the target) | `open(target)` with the system's program (files, folders, links, `mailto:`), `reveal(path)`, `email(to, subject, body)`. |
 | `pz.NetworkMonitor(host="1.1.1.1", port=53, interval=5000)` | `change` (bool), `online`, `offline` | Tries a connection every `interval` ms in the background; `online` holds the last answer. |
@@ -166,6 +167,38 @@ network.start()
 For files, `ui.file_input` is a path field with a button that opens the system's dialog, and `ui.DropZone` takes
 files dragged from the desktop. A window also gets every dropped file in `on_file_drop(path)` (`on_file_hover` and
 `on_file_leave` while they are dragged over it). See the [System](/pyzed/library/drop-zone/) pages of the library.
+
+### An icon in the tray
+
+`pz.TrayIcon` puts an icon in the notification area on Windows, the menu bar on macOS and the panel on Linux, with
+a tooltip and a menu. The menu is a list, or text with one item per line: `-` is a separator, `[x]` and `[ ]` make
+check items that flip when clicked, and indented lines make a submenu.
+
+```python
+self.tray = pz.TrayIcon("icon.png", "Backups", menu="""
+Open
+[x] Pause
+Speed
+  Slow
+  Fast
+-
+Quit
+""", on_click=self.open, on_menu=self.menu)
+self.tray.show()
+
+def menu(self, item):
+    if item == "Pause":
+        self.paused = self.tray.checked("Pause")
+    elif item == "Quit":
+        return pz.Command.exit()
+```
+
+`pz.TrayItem(text, id=None, enabled=True, checked=None, items=[])` gives an item an `id` (what `on_menu` receives)
+or disables it. Without an `icon` it shows a blue dot.
+
+On Linux the icon is a StatusNotifierItem, without GTK: KDE, Cinnamon, XFCE, MATE, LXQt and most panels show it,
+and GNOME does with the AppIndicator extension. `pz.TrayIcon.supported()` says whether the desktop shows tray
+icons; where it does not, `show()` returns `False` and `failed` says why.
 
 ## Without a window
 

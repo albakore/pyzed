@@ -1,6 +1,6 @@
 ---
 title: "Services (pyzed.services)"
-description: "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps."
+description: "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps."
 sidebar:
   order: 10.5
 ---
@@ -113,6 +113,23 @@ class Notification
 ```
 
 A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`.
+
+### `TrayIcon`
+
+```python
+class TrayIcon
+```
+
+An icon in the system tray with a `tooltip` and a `menu` (a list, or text with one item per line: `-` separator, `[x]` check, indented submenu): `show()` returns whether it could, `hide()`, `checked(item)`; raises `click`, `double_click` (Windows), `menu` and `failed`. On Linux it is a StatusNotifierItem, without GTK.
+
+### `TrayItem`
+
+```python
+@dataclass
+class TrayItem(text, id=None, enabled=True, checked=None, items=[])
+```
+
+An entry of a `TrayIcon` menu: `text`, `id` (what `menu` receives), `enabled`, `checked` and `items` for a submenu.
 
 ## Operating system (pyzed.system)
 

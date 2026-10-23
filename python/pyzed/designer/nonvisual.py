@@ -4,7 +4,7 @@ A Timer, a File watcher, a Process... placed on a form draw nothing. ``build`` m
 service behind each of them, gives it the control's properties and wires its events to the
 handlers of the form; ``ControlProxy`` then forwards to it what handlers read, set and call
 (``form.process1.start()``, ``form.http1.url = ...``). The properties a service does not have
-(``autostart``, ``send_on_load``, ``remember``...) are read by the form when it opens.
+(``autostart``, ``send_on_load``, ``show_on_load``, ``remember``...) are read by the form when it opens.
 
 Add one of your own with ``register``: a function that makes the service from the control.
 """
@@ -33,6 +33,7 @@ FACTORIES: Dict[str, Callable[[Control], _services.Service]] = {
     "settings": lambda c: _services.Settings(),
     "file_dialog": lambda c: _services.FileDialog(),
     "notification": lambda c: _services.Notification(),
+    "tray_icon": lambda c: _services.TrayIcon(),
     "system_info": lambda c: _system.SystemInfo(),
     "launcher": lambda c: _system.Launcher(),
     "network_monitor": lambda c: _system.NetworkMonitor(),
@@ -62,8 +63,8 @@ def props(control: Control) -> Dict[str, Any]:
 
 
 def _value(control: Control, prop: str, value: Any) -> Any:
-    if control.type in ("settings", "process", "file_dialog", "system_info") and prop in ("file", "directory",
-                                                                                         "disk_path"):
+    if control.type in ("settings", "process", "file_dialog", "system_info", "tray_icon") and prop in (
+            "file", "directory", "disk_path", "icon"):
         return value or None
     return value
 
@@ -135,6 +136,8 @@ def start(runtime: "FormRuntime") -> List[Any]:
             service.start()
         if isinstance(service, _services.HttpRequest) and values.get("send_on_load") and control.enabled:
             service.send()
+        if isinstance(service, _services.TrayIcon) and values.get("show_on_load") and control.enabled:
+            service.show()
     return []
 
 

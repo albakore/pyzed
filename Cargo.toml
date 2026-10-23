@@ -65,8 +65,15 @@ arboard = { version = "3.7", features = ["wayland-data-control"] }
 cpal = "0.18"
 midir = "0.11"
 
+# Tray icons (pz.TrayIcon): the system's own tray on Windows and macOS.
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tray-icon = { version = "0.24", default-features = false }
+
 # PulseAudio is a pure-Rust client (it also reaches PipeWire); ALSA is the fallback.
 [target.'cfg(target_os = "linux")'.dependencies]
+# Tray icons over D-Bus (StatusNotifierItem), without GTK.
+ksni = { version = "0.3", default-features = false, features = ["async-io", "blocking"] }
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 cpal = { version = "0.18", features = ["pulseaudio", "realtime"], optional = true }
 midir = { version = "0.11", optional = true }
 
@@ -92,17 +99,17 @@ strip = true
 # `iced_winit::quiet`, the Android handoff) and the community pull requests listed in its PYZED.md.
 # To update it, push to the `pyzed-0.14` branch of albakore/iced and bump `rev` here.
 [patch.crates-io]
-iced = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_core = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_debug = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_futures = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_graphics = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_program = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_renderer = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_runtime = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_selector = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_test = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_wgpu = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_widget = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_winit = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_core = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_debug = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_futures = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_graphics = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_program = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_renderer = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_runtime = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_selector = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_test = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_wgpu = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_widget = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_winit = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }

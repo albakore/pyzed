@@ -1,6 +1,6 @@
 ---
 title: "Servicios (pyzed.services)"
-description: "Referencia de la API de pyzed.services: temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos y notificaciones."
+description: "Referencia de la API de pyzed.services: temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos, notificaciones e iconos de bandeja."
 sidebar:
   order: 10.5
 ---
@@ -113,6 +113,23 @@ class Notification
 ```
 
 Una notificación de escritorio: `show(text)` la muestra y devuelve si pudo; lanza `shown` o `failed`.
+
+### `TrayIcon`
+
+```python
+class TrayIcon
+```
+
+Un icono en la bandeja del sistema con `tooltip` y `menu` (una lista, o un texto con un elemento por línea: `-` separador, `[x]` casilla, con sangría un submenú): `show()` devuelve si pudo, `hide()`, `checked(item)`; lanza `click`, `double_click` (Windows), `menu` y `failed`. En Linux es un StatusNotifierItem, sin GTK.
+
+### `TrayItem`
+
+```python
+@dataclass
+class TrayItem(text, id=None, enabled=True, checked=None, items=[])
+```
+
+Un elemento del menú de un `TrayIcon`: `text`, `id` (lo que recibe `menu`), `enabled`, `checked` e `items` para un submenú.
 
 ## Sistema operativo (pyzed.system)
 

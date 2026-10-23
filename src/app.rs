@@ -1367,6 +1367,7 @@ fn editor_outcome_with(
 }
 
 fn update(state: &mut State, message: Message) -> Task<Message> {
+    crate::tray::flush();
     let task = handle(state, message);
     Python::attach(|py| sync_targets(py, state));
     task
@@ -1921,6 +1922,31 @@ pub(crate) fn open_post_channel() {
     let (sender, receiver) = mpsc::unbounded();
     *POST.lock().unwrap() = Some(sender);
     *POST_RECEIVER.lock().unwrap() = Some(receiver);
+}
+
+/// Whether `pz.run` is running the app's event loop (not a screenshot or a recording).
+static RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// The thread `pz.run` runs the event loop on.
+static APP_THREAD: std::sync::OnceLock<std::thread::ThreadId> = std::sync::OnceLock::new();
+
+/// Whether the app's event loop is running.
+#[allow(dead_code)]
+pub(crate) fn running() -> bool {
+    RUNNING.load(std::sync::atomic::Ordering::SeqCst)
+}
+
+/// Whether this is the thread of the app's event loop.
+#[allow(dead_code)]
+pub(crate) fn on_app_thread() -> bool {
+    APP_THREAD.get() == Some(&std::thread::current().id())
+}
+
+/// Makes the running app update once (with nothing to do); whether an app was running.
+pub(crate) fn wake() -> bool {
+    POST.lock()
+        .unwrap()
+        .as_ref()
+        .is_some_and(|sender| sender.unbounded_send(Message::Noop).is_ok())
 }
 
 pub(crate) fn close_post_channel() {
@@ -2528,7 +2554,14 @@ pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
     window_settings(app.bind(py))?;
     let size = font_size(app.bind(py))?;
     open_post_channel();
+    let _ = APP_THREAD.set(std::thread::current().id());
+    RUNNING.store(true, std::sync::atomic::Ordering::SeqCst);
+    if crate::tray::pending() {
+        wake(); // tray icons asked for before the event loop show on its first update
+    }
     let result = py.detach(move || daemon(app, size, false).run());
+    RUNNING.store(false, std::sync::atomic::Ordering::SeqCst);
+    crate::tray::clear();
     *POST.lock().unwrap() = None;
     result.map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }

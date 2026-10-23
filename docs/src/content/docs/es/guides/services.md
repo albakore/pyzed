@@ -1,13 +1,13 @@
 ---
 title: Servicios
-description: "Temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos y notificaciones para apps de escritorio en Python con Pyzed, con eventos en el hilo de la interfaz."
+description: "Temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos, notificaciones e iconos de bandeja para apps de escritorio en Python con Pyzed, con eventos en el hilo de la interfaz."
 sidebar:
   order: 5.5
 ---
 
 Los **servicios** son las partes de una app que lanzan eventos pero no dibujan nada: `pz.Timer`, `pz.Shortcut`,
-`pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`, `pz.Settings`, `pz.FileDialog` y
-`pz.Notification`. Son los mismos objetos que los [componentes no visuales](/pyzed/es/editor/non-visual-components/)
+`pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`, `pz.Settings`, `pz.FileDialog`,
+`pz.Notification` y `pz.TrayIcon`. Son los mismos objetos que los [componentes no visuales](/pyzed/es/editor/non-visual-components/)
 de Pyzed Design, y funcionan en un `pz.App`, en un formulario o en un script sin ninguna ventana.
 
 ```python
@@ -62,6 +62,7 @@ el momento, en el hilo que lanzó el evento.
 | `pz.Settings(name, folder=None, defaults=None)` | `change` (`(clave, valor)`) | Un diccionario guardado como JSON al momento (`autosave`), por usuario, en la carpeta de ajustes de Pyzed. |
 | `pz.FileDialog(mode="open", filters=..., directory=None, file_name="")` | `chosen` (ruta o lista), `cancelled` | `show()` devuelve el comando que lo abre; modos `open`, `open_many`, `save`, `folder`. |
 | `pz.Notification(title, text)` | `shown`, `failed` | `show(text=None)` devuelve si se pudo mostrar. |
+| `pz.TrayIcon(icon=None, tooltip="", menu=())` | `click`, `double_click` (Windows), `menu` (el elemento), `failed` | `show()` devuelve si pudo; `hide()`. Los cambios de `icon`, `tooltip` y `menu` se ven al momento. |
 | `pz.SystemInfo(interval=0, disk_path=None)` | `update` (un diccionario) | `os`, `os_version`, `hostname`, `user`, `cpu_count`, `language`, `memory_total`, `memory_available`, `disk_free`; `folder("downloads")`, `env(name)`. |
 | `pz.Launcher(target="")` | `opened`, `failed` (el destino) | `open(target)` con el programa del sistema (archivos, carpetas, enlaces, `mailto:`), `reveal(path)`, `email(to, subject, body)`. |
 | `pz.NetworkMonitor(host="1.1.1.1", port=53, interval=5000)` | `change` (bool), `online`, `offline` | Prueba una conexión cada `interval` ms en segundo plano; `online` guarda la última respuesta. |
@@ -167,6 +168,38 @@ Para archivos, `ui.file_input` es un campo de ruta con un botón que abre el di�
 recibe archivos arrastrados desde el escritorio. Una ventana también recibe cada archivo soltado en
 `on_file_drop(path)` (`on_file_hover` y `on_file_leave` mientras se arrastran por encima). Mira las páginas de
 [Sistema](/pyzed/es/library/drop-zone/) de la librería.
+
+### Un icono en la bandeja
+
+`pz.TrayIcon` pone un icono en el área de notificación de Windows, en la barra de menús de macOS y en el panel de
+Linux, con un texto al pasar el ratón y un menú. El menú es una lista, o un texto con un elemento por línea: `-` es
+un separador, `[x]` y `[ ]` crean casillas que cambian al hacer clic, y las líneas con sangría forman un submenú.
+
+```python
+self.tray = pz.TrayIcon("icono.png", "Copias", menu="""
+Abrir
+[x] Pausa
+Velocidad
+  Lenta
+  Rápida
+-
+Salir
+""", on_click=self.open, on_menu=self.menu)
+self.tray.show()
+
+def menu(self, item):
+    if item == "Pausa":
+        self.paused = self.tray.checked("Pausa")
+    elif item == "Salir":
+        return pz.Command.exit()
+```
+
+`pz.TrayItem(text, id=None, enabled=True, checked=None, items=[])` le da a un elemento un `id` (lo que recibe
+`on_menu`) o lo desactiva. Sin `icon` muestra un punto azul.
+
+En Linux el icono es un StatusNotifierItem, sin GTK: KDE, Cinnamon, XFCE, MATE, LXQt y la mayoría de paneles lo
+muestran, y GNOME también con la extensión AppIndicator. `pz.TrayIcon.supported()` dice si el escritorio muestra
+iconos de bandeja; donde no, `show()` devuelve `False` y `failed` dice por qué.
 
 ## Sin ventana
 
