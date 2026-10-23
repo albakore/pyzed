@@ -166,7 +166,6 @@ jobs:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
         run: |
           if [ "$RUNNER_OS" = macOS ] && [ -n "$MACOS_CERTIFICATE" ]; then
             keychain="$RUNNER_TEMP/signing.keychain-db"
@@ -181,11 +180,6 @@ jobs:
           elif [ "$RUNNER_OS" = Windows ] && [ -n "$WINDOWS_CERTIFICATE" ]; then
             echo "$WINDOWS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.pfx"
             echo "PYZED_SIGN_PFX=$RUNNER_TEMP/cert.pfx" >> "$GITHUB_ENV"
-          elif [ "$RUNNER_OS" = Windows ] && [ -n "$AZURE_SIGNING_ACCOUNT" ]; then
-            # Azure Artifact Signing (formerly Trusted Signing), like Zed's Windows builds: signtool's plugin
-            nuget install Microsoft.ArtifactSigning.Client -Version 1.0.128 -x -OutputDirectory "$RUNNER_TEMP/signing" >/dev/null
-            dlib=$(find "$RUNNER_TEMP/signing" -path '*x64*' -name Azure.CodeSigning.Dlib.dll | head -1)
-            echo "PYZED_AZURE_SIGNING_DLIB=$(cygpath -w "$dlib")" >> "$GITHUB_ENV"
           fi
       - name: Install Inno Setup
         if: runner.os == 'Windows'
@@ -199,12 +193,6 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           PYZED_SIGN_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-          PYZED_AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
-          PYZED_AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
-          PYZED_AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           # The Agent panel's sign-in apps (optional, bundled into the designer only)
           PYZED_GITHUB_CLIENT_ID: ${{ secrets.PYZED_GITHUB_CLIENT_ID }}
           PYZED_GOOGLE_CLIENT_ID: ${{ secrets.PYZED_GOOGLE_CLIENT_ID }}

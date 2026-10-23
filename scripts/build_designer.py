@@ -24,11 +24,8 @@ Signing is optional and driven by environment variables, so builds without certi
   app with the hardened runtime; with ``APPLE_ID``, ``APPLE_TEAM_ID`` and ``APPLE_APP_PASSWORD`` it is
   also notarized and the ticket stapled.
 - Windows: ``PYZED_SIGN_PFX`` (a .pfx file) and ``PYZED_SIGN_PASSWORD`` sign the executables with
-  Authenticode and a timestamp. Or, like Zed's Windows builds, Azure Artifact Signing (formerly Trusted
-  Signing): ``PYZED_AZURE_SIGNING_DLIB`` (its ``Azure.CodeSigning.Dlib.dll``), ``PYZED_AZURE_SIGNING_ENDPOINT``,
-  ``PYZED_AZURE_SIGNING_ACCOUNT`` and ``PYZED_AZURE_SIGNING_PROFILE``, with the app registration that may sign
-  in ``AZURE_TENANT_ID``, ``AZURE_CLIENT_ID`` and ``AZURE_CLIENT_SECRET``. A signed app is trusted by Windows'
-  SmartScreen and antivirus, which otherwise hold up the first start of each new version while they check it.
+  Authenticode and a timestamp. A signed app is trusted by Windows' SmartScreen and antivirus, which otherwise
+  hold up the first start of each new version while they check it.
 
 The OAuth apps the Agent panel signs in with are optional too: ``PYZED_GITHUB_CLIENT_ID``,
 ``PYZED_GOOGLE_CLIENT_ID`` and ``PYZED_GOOGLE_CLIENT_SECRET`` are bundled as the ``pyzed_oauth_apps``
@@ -39,7 +36,6 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
 import os
 import shutil
 import subprocess
@@ -83,25 +79,6 @@ def signtool() -> str:
     return str(kits[-1])
 
 
-def windows_identity() -> "list[str] | None":
-    """signtool's arguments for the certificate the environment carries (a .pfx or Azure Artifact Signing, see
-    the module docstring), or ``None`` to leave the app unsigned."""
-    if os.environ.get("PYZED_SIGN_PFX"):
-        return ["/f", os.environ["PYZED_SIGN_PFX"], "/p", os.environ.get("PYZED_SIGN_PASSWORD", ""),
-                "/tr", "http://timestamp.digicert.com"]
-    dlib = os.environ.get("PYZED_AZURE_SIGNING_DLIB")
-    if not dlib:
-        return None
-    metadata = ROOT / "build" / "designer" / "azure-signing.json"
-    metadata.parent.mkdir(parents=True, exist_ok=True)
-    metadata.write_text(json.dumps({
-        "Endpoint": os.environ["PYZED_AZURE_SIGNING_ENDPOINT"],
-        "CodeSigningAccountName": os.environ["PYZED_AZURE_SIGNING_ACCOUNT"],
-        "CertificateProfileName": os.environ["PYZED_AZURE_SIGNING_PROFILE"],
-    }), encoding="utf-8")
-    return ["/dlib", dlib, "/dmdf", str(metadata), "/tr", "http://timestamp.acs.microsoft.com"]
-
-
 def sign(bundle: Path) -> None:
     """Signs the app (or one file, like the setup program) when the environment carries the certificates (see
     the module docstring)."""
@@ -109,14 +86,13 @@ def sign(bundle: Path) -> None:
         subprocess.run(["codesign", "--force", "--deep", "--options", "runtime", "--timestamp",
                         "--sign", os.environ["PYZED_CODESIGN_IDENTITY"], str(bundle)], check=True)
         print(f"Signed {bundle.name}")
-    elif sys.platform == "win32":
-        identity = windows_identity()
-        if identity is None:
-            return
+    elif sys.platform == "win32" and os.environ.get("PYZED_SIGN_PFX"):
         # the executables and the Python extensions (Pyzed's core is the biggest file Windows checks at start)
         files = [str(bundle)] if bundle.is_file() else sorted(
             str(p) for pattern in ("*.exe", "*.pyd") for p in bundle.rglob(pattern))
-        subprocess.run([signtool(), "sign", *identity, "/fd", "sha256", "/td", "sha256", *files], check=True)
+        subprocess.run([signtool(), "sign", "/f", os.environ["PYZED_SIGN_PFX"],
+                        "/p", os.environ.get("PYZED_SIGN_PASSWORD", ""), "/fd", "sha256",
+                        "/tr", "http://timestamp.digicert.com", "/td", "sha256", *files], check=True)
         print(f"Signed {len(files)} files")
 
 
