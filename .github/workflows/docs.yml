@@ -56,13 +56,15 @@ jobs:
         working-directory: docs
         run: npm ci
       # Optimizing the screenshots takes about 5 minutes from scratch; Astro keeps the results
-      # in node_modules/.astro and only redoes the images that changed.
+      # in node_modules/.astro/assets and only redoes the images that changed. Only that folder:
+      # the rest is the content store, whose cached pages keep linking the code blocks' old
+      # stylesheet after the code theme changes, and that file is gone (code without colors).
       - name: Restore the optimized images
         uses: actions/cache@v6
         with:
-          path: docs/node_modules/.astro
-          key: docs-images-${{ hashFiles('docs/package-lock.json', 'docs/src/assets/**', 'docs/screenshots/**') }}
-          restore-keys: docs-images-
+          path: docs/node_modules/.astro/assets
+          key: docs-assets-${{ hashFiles('docs/package-lock.json', 'docs/src/assets/**', 'docs/screenshots/**') }}
+          restore-keys: docs-assets-
       - name: Build (reads CHANGELOG.md and marks the latest stable release)
         working-directory: docs
         env:

@@ -10,6 +10,11 @@ import starlightSidebarTopics from 'starlight-sidebar-topics';
 
 // Published on GitHub Pages: https://albakore.github.io/pyzed/
 // English lives at the root; every other language is a folder in src/content/docs (es/ ...).
+/** The Library's components in one group per category (written by scripts/library_sidebar.py). */
+const libraryGroups = JSON.parse(readFileSync(new URL('./src/lib/library-sidebar.json', import.meta.url), 'utf8')).map(
+	(g) => ({ label: g.label.en, translations: { es: g.label.es }, collapsed: true, items: g.items }),
+);
+
 /** A sidebar group listing a docs folder, with its Spanish label. */
 function group(label, es, directory, extra = {}) {
 	return { label, translations: { es }, items: [{ autogenerate: { directory } }], ...extra };
@@ -58,7 +63,14 @@ const topics = [
 		label: { en: 'Library', es: 'Biblioteca' },
 		link: '/library/',
 		icon: 'puzzle',
-		items: [group('Components', 'Componentes', 'library'), group('Blocks', 'Bloques', 'blocks')],
+		items: [
+			{
+				label: 'Components',
+				translations: { es: 'Componentes' },
+				items: [{ slug: 'library' }, { slug: 'library/events' }, ...libraryGroups],
+			},
+			group('Blocks', 'Bloques', 'blocks'),
+		],
 	},
 	{
 		id: 'designer',
