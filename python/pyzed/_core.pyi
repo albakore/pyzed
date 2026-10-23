@@ -485,8 +485,13 @@ def grid(children: Any = ..., *, columns: Any = ..., rows: Any = ..., max_width:
 def hover(base: Any, top: Any) -> Any:
     """Shows `top` over `base` only while the mouse hovers it."""
     ...
-def image(source: Any, *, width: Any = ..., height: Any = ..., content_fit: Any = ..., filter: Any = ..., opacity: Any = ..., radius: Any = ..., rotation: Any = ..., scale: Any = ..., size: Any = ...) -> Any:
-    """A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes."""
+def image(source: Any, *, width: Any = ..., height: Any = ..., content_fit: Any = ..., filter: Any = ..., opacity: Any = ..., radius: Any = ..., rotation: Any = ..., scale: Any = ..., size: Any = ..., background: Any = ...) -> Any:
+    """A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes.
+
+    In a running app, files of 256 KB and up decode on a worker thread (`background=None`): the
+    image shows nothing until it is ready, so give it a `width` and `height` to keep its space.
+    `background=True` decodes every file there, `False` decodes on the spot.
+    """
     ...
 def image_size(source: Any) -> Any:
     """The size of the image `source` (a path or the file's bytes), in pixels: `(width, height)`."""

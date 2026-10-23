@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
@@ -445,6 +446,8 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     """
     if _hot_reload.is_reloading():
         return  # the main script is being re-executed by a reload; the app already runs
+    if _in_worker_process():
+        return  # a ``process=True`` worker imports the main script: it must not open the app again
     _devices._start(app).apply()
     if _platform.is_wsl():  # under WSL the window opens as a Windows program (see pyzed._wsl_windows)
         from . import _wsl_windows
@@ -464,6 +467,18 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     finally:
         if reloader is not None:
             reloader.stop()
+        workers = sys.modules.get("pyzed.workers")
+        if workers is not None:
+            workers.shutdown()
+
+
+def _in_worker_process() -> bool:
+    """Whether this is a worker process started by ``multiprocessing`` (``pz.background(process=True)``)."""
+    if "multiprocessing" not in sys.modules:
+        return False
+    import multiprocessing
+
+    return multiprocessing.parent_process() is not None
 
 
 def screenshot(app, path, *, size=None, scale: float = 2.0, wait: float = 0.1) -> None:

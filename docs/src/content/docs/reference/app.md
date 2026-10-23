@@ -581,6 +581,27 @@ Uses a profile from now on (a name or a `pz.Device`; `None` picks one again as `
 | --- | --- |
 | `choice` | A profile name or a `pz.Device`. |
 
+### `background`
+
+```python
+background(function=None, *, then=None, latest=False, process=False)
+```
+
+Makes a function return a command that runs it off the UI thread: on a worker thread (an `async def` on Pyzed's asyncio loop) or, with `process=True`, in another process. The result reaches `then` on the UI thread. See [Off the UI thread](/pyzed/guides/async/#off-the-ui-thread-pzbackground).
+
+| Parameter | Description |
+| --- | --- |
+| `function` | The function (used as `@pz.background` or `@pz.background(...)`). |
+| `then` | A callable, or the name of a method of the same object, that gets the result (each value of a generator); without it the result goes to `update`. |
+| `latest` | `True` delivers only the newest call's result (searches as you type). |
+| `process` | `True` runs it in a worker process, for CPU-heavy pure Python: a function at the top of a module, with picklable arguments and result. |
+
+```python
+@pz.background(then="show", latest=True)
+def search(self, text):
+    return database.find(text)
+```
+
 ### `renderer_info`
 
 ```python

@@ -581,6 +581,27 @@ Usa un perfil desde ahora (un nombre o un `pz.Device`; `None` vuelve a elegir co
 | --- | --- |
 | `choice` | El nombre de un perfil o un `pz.Device`. |
 
+### `background`
+
+```python
+background(function=None, *, then=None, latest=False, process=False)
+```
+
+Hace que una función devuelva un comando que la ejecuta fuera del hilo de la interfaz: en un hilo aparte (un `async def` en el bucle asyncio de Pyzed) o, con `process=True`, en otro proceso. El resultado llega a `then` en el hilo de la interfaz. Ver [Fuera del hilo de la interfaz](/pyzed/es/guides/async/#fuera-del-hilo-de-la-interfaz-pzbackground).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `function` | La función (como `@pz.background` o `@pz.background(...)`). |
+| `then` | Un callable, o el nombre de un método del mismo objeto, que recibe el resultado (cada valor de un generador); sin él el resultado va a `update`. |
+| `latest` | `True` entrega solo el resultado de la llamada más nueva (búsquedas mientras se escribe). |
+| `process` | `True` la ejecuta en un proceso aparte, para Python puro que exprime la CPU: una función del nivel superior de un módulo, con argumentos y resultado serializables con pickle. |
+
+```python
+@pz.background(then="mostrar", latest=True)
+def buscar(self, texto):
+    return base.buscar(texto)
+```
+
 ### `renderer_info`
 
 ```python

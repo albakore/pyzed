@@ -350,6 +350,13 @@ fn view_root(
     Ok(root)
 }
 
+/// Builds every window again on the next update, isolated ones included (an image finished
+/// decoding on a worker thread). Safe from any thread.
+pub(crate) fn refresh_all() {
+    TOUCHED.lock().unwrap().all = true;
+    wake();
+}
+
 /// `Window.refresh()`: draws an isolated window again after something outside it changed what
 /// it shows. Safe from any thread.
 #[pyfunction]

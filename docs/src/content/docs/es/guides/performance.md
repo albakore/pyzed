@@ -262,8 +262,15 @@ Lo que Pyzed hace en otros hilos:
 - Iced calcula el layout y renderiza el frame en Rust, fuera del GIL, y la GPU lo dibuja.
 - Las fuentes del sistema se buscan, los archivos del proyecto se listan y los agentes, servidores
   de lenguaje y builds del diseñador corren en hilos aparte.
-- Tu trabajo lento también va ahí: [tareas async](/pyzed/es/guides/async/) o un `threading.Thread`
-  que envía su resultado con `pz.post(...)`.
+- Las fotos y otras imágenes grandes (desde 256 KB) se decodifican en unos pocos hilos aparte: la
+  vista no muestra nada en su lugar un momento en vez de retener el frame, y luego se vuelven a
+  dibujar todas las ventanas. Dale a la imagen `width` y `height` para que conserve su espacio
+  mientras carga; `pz.image(ruta, background=False)` decodifica en el acto y `background=True`
+  manda a los hilos incluso archivos pequeños.
+- Tu trabajo lento también va ahí: [`@pz.background`](/pyzed/es/guides/async/#fuera-del-hilo-de-la-interfaz-pzbackground),
+  [tareas async](/pyzed/es/guides/async/) o un `threading.Thread` que envía su resultado con
+  `pz.post(...)`. El Python puro que exprime la CPU va a otro proceso con
+  `@pz.background(process=True)`, así el GIL no frena la interfaz.
 
 ## Subárboles memoizados
 

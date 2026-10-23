@@ -1232,6 +1232,20 @@ forwards them to `app.update()`.
         "desc": "Uses a profile from now on (a name or a `pz.Device`; `None` picks one again as `pz.run` does) and returns it.",
         "params": {"choice": "A profile name or a `pz.Device`."},
     },
+    "pyzed.background": {
+        "desc": "Makes a function return a command that runs it off the UI thread: on a worker thread (an `async def` on Pyzed's asyncio loop) or, with `process=True`, in another process. The result reaches `then` on the UI thread. See [Off the UI thread](/pyzed/guides/async/#off-the-ui-thread-pzbackground).",
+        "params": {
+            "function": "The function (used as `@pz.background` or `@pz.background(...)`).",
+            "then": "A callable, or the name of a method of the same object, that gets the result (each value of a generator); without it the result goes to `update`.",
+            "latest": "`True` delivers only the newest call's result (searches as you type).",
+            "process": "`True` runs it in a worker process, for CPU-heavy pure Python: a function at the top of a module, with picklable arguments and result.",
+        },
+        "example": """
+            @pz.background(then="show", latest=True)
+            def search(self, text):
+                return database.find(text)
+        """,
+    },
     "pyzed.renderer_info": {
         "desc": "The GPU and the graphics API drawing the windows, like `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, or `(\"CPU\", \"tiny-skia\")` with the CPU renderer; `None` until the first window is open.",
         "example": """
@@ -1493,7 +1507,7 @@ dict(_w)["Layout"].update({
 _section("widgets", "Images and content", {
     "pyzed.image": {
         "desc": "A bitmap image (PNG, JPEG, GIF, BMP, WebP…) from a path or `bytes`, or raw RGBA pixels.",
-        "params": {"radius": "Corner radius.", "scale": "Scale.", "size": "`(width, height)` when `source` is raw RGBA pixels."},
+        "params": {"radius": "Corner radius.", "scale": "Scale.", "size": "`(width, height)` when `source` is raw RGBA pixels.", "background": "Decode on a worker thread: `None` (the default) does it for files of 256 KB and up, `True` always, `False` never. Until it is ready the image shows nothing, so give it a `width` and `height` to keep its space."},
         "example": 'pz.image("photo.jpg", width=320, content_fit="cover", radius=8)',
     },
     "pyzed.image_viewer": {

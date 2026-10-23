@@ -92,6 +92,7 @@ from .splash import Splash
 from .rendering import Rendering
 from . import devices
 from .devices import Device, device, set_device
+from .workers import background
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
@@ -277,6 +278,7 @@ __all__ = [
     "device",
     "devices",
     "set_device",
+    "background",
     "Clipboard",
     "FileDialog",
     "FileWatcher",

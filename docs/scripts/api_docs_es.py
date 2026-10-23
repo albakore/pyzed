@@ -1232,6 +1232,20 @@ reenvía a `app.update()`.
         "desc": "Usa un perfil desde ahora (un nombre o un `pz.Device`; `None` vuelve a elegir como hace `pz.run`) y lo devuelve.",
         "params": {"choice": "El nombre de un perfil o un `pz.Device`."},
     },
+    "pyzed.background": {
+        "desc": "Hace que una función devuelva un comando que la ejecuta fuera del hilo de la interfaz: en un hilo aparte (un `async def` en el bucle asyncio de Pyzed) o, con `process=True`, en otro proceso. El resultado llega a `then` en el hilo de la interfaz. Ver [Fuera del hilo de la interfaz](/pyzed/es/guides/async/#fuera-del-hilo-de-la-interfaz-pzbackground).",
+        "params": {
+            "function": "La función (como `@pz.background` o `@pz.background(...)`).",
+            "then": "Un callable, o el nombre de un método del mismo objeto, que recibe el resultado (cada valor de un generador); sin él el resultado va a `update`.",
+            "latest": "`True` entrega solo el resultado de la llamada más nueva (búsquedas mientras se escribe).",
+            "process": "`True` la ejecuta en un proceso aparte, para Python puro que exprime la CPU: una función del nivel superior de un módulo, con argumentos y resultado serializables con pickle.",
+        },
+        "example": """
+            @pz.background(then="mostrar", latest=True)
+            def buscar(self, texto):
+                return base.buscar(texto)
+        """,
+    },
     "pyzed.renderer_info": {
         "desc": "La GPU y la API gráfica que dibujan las ventanas, como `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, o `(\"CPU\", \"tiny-skia\")` con el renderizador de CPU; `None` hasta que se abre la primera ventana.",
         "example": """
@@ -1493,7 +1507,7 @@ dict(_w)["Layout"].update({
 _section("widgets", "Imágenes y contenido", {
     "pyzed.image": {
         "desc": "Una imagen de mapa de bits (PNG, JPEG, GIF, BMP, WebP…) desde una ruta o `bytes`, o píxeles RGBA crudos.",
-        "params": {"radius": "Radio de las esquinas.", "scale": "Escala.", "size": "`(ancho, alto)` cuando `source` son píxeles RGBA crudos."},
+        "params": {"radius": "Radio de las esquinas.", "scale": "Escala.", "size": "`(ancho, alto)` cuando `source` son píxeles RGBA crudos.", "background": "Decodificar en un hilo aparte: `None` (por defecto) lo hace con archivos desde 256 KB, `True` siempre, `False` nunca. Hasta que esté lista la imagen no muestra nada, así que dale `width` y `height` para conservar su espacio."},
         "example": 'pz.image("foto.jpg", width=320, content_fit="cover", radius=8)',
     },
     "pyzed.image_viewer": {

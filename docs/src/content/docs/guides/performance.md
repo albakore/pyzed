@@ -255,8 +255,15 @@ threads:
 - Iced lays out and renders the frame in Rust, outside the GIL, and the GPU draws it.
 - System fonts are scanned, project files are listed and the designer's agents, language servers
   and builds run on worker threads.
-- Your slow work belongs there too: [async tasks](/pyzed/guides/async/) or a `threading.Thread`
-  that sends its result with `pz.post(...)`.
+- Photos and other big images (256 KB and up) decode on a few worker threads: the view shows
+  nothing in their place for a moment instead of holding the frame back, then every window is
+  drawn again. Give the image a `width` and `height` to keep its space while it loads;
+  `pz.image(path, background=False)` decodes on the spot and `background=True` sends even small
+  files to the workers.
+- Your slow work belongs there too: [`@pz.background`](/pyzed/guides/async/#off-the-ui-thread-pzbackground),
+  [async tasks](/pyzed/guides/async/) or a `threading.Thread` that sends its result with
+  `pz.post(...)`. CPU-heavy pure Python goes to another process with
+  `@pz.background(process=True)`, so the GIL doesn't slow the UI.
 
 ## Memoized subtrees
 

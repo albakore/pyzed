@@ -74,14 +74,63 @@ impl ImageSource {
     /// Decoding here, instead of handing iced a path, makes the first frame complete
     /// (wgpu loads files in the background, so off-screen screenshots came out empty)
     /// and gives `Picture` the pixels it needs to crop and round corners itself.
+    ///
+    /// In a running app, an encoded file or buffer decodes on a worker thread when
+    /// `background` is `Some(true)`, or when it is `None` and the data is big (see
+    /// [`BACKGROUND_BYTES`]): the view shows nothing in its place until it is ready, then
+    /// every window is built again, so a big photo never holds a frame back.
     pub fn decode(
         &self,
         cache: &std::cell::RefCell<std::collections::HashMap<u64, Decoded>>,
+        background: Option<bool>,
     ) -> Decoded {
         let key = self.key();
         if let Some(decoded) = cache.borrow().get(&key) {
             return decoded.clone();
         }
+        if self.in_background(background) {
+            let mut pending = PENDING.lock().unwrap();
+            match pending.get(&key) {
+                Some(Some(_)) => {
+                    let decoded = pending.remove(&key).flatten().expect("checked above");
+                    drop(pending);
+                    cache.borrow_mut().insert(key, decoded.clone());
+                    return decoded;
+                }
+                Some(None) => return placeholder(key),
+                None => {
+                    pending.insert(key, None);
+                    drop(pending);
+                    let source = self.clone();
+                    decode_pool(Box::new(move || {
+                        let decoded = source.decode_now(key);
+                        PENDING.lock().unwrap().insert(key, Some(decoded));
+                        crate::app::refresh_all();
+                    }));
+                    return placeholder(key);
+                }
+            }
+        }
+        let decoded = self.decode_now(key);
+        cache.borrow_mut().insert(key, decoded.clone());
+        decoded
+    }
+
+    /// Whether this source decodes on a worker thread (see [`ImageSource::decode`]).
+    fn in_background(&self, background: Option<bool>) -> bool {
+        if !crate::app::running() || background == Some(false) {
+            return false;
+        }
+        let size = match self {
+            ImageSource::Path(p) => std::fs::metadata(p).map(|m| m.len()).unwrap_or(0),
+            ImageSource::Bytes(b) => b.len() as u64,
+            ImageSource::Rgba { .. } => return false,
+        };
+        background == Some(true) || size >= BACKGROUND_BYTES
+    }
+
+    /// Decodes the image on this thread.
+    fn decode_now(&self, key: u64) -> Decoded {
         let rgba = match self {
             ImageSource::Path(p) => ::image::open(p).map(|i| i.to_rgba8()).ok(),
             ImageSource::Bytes(b) => ::image::load_from_memory(b).map(|i| i.to_rgba8()).ok(),
@@ -91,7 +140,7 @@ impl ImageSource {
                 pixels,
             } => ::image::RgbaImage::from_raw(*width, *height, pixels.clone()),
         };
-        let decoded = match rgba {
+        match rgba {
             Some(rgba) => {
                 let (width, height) = rgba.dimensions();
                 let pixels = bytes::Bytes::from(rgba.into_raw());
@@ -113,10 +162,62 @@ impl ImageSource {
                 size: None,
                 pixels: bytes::Bytes::new(),
             },
-        };
-        cache.borrow_mut().insert(key, decoded.clone());
-        decoded
+        }
     }
+}
+
+/// Encoded images at least this big (a photo, roughly) decode on a worker thread in a running
+/// app unless the image says `background=False`.
+pub const BACKGROUND_BYTES: u64 = 256 * 1024;
+
+/// Images being decoded on a worker thread (`None`) and the ones done, until a view takes them.
+static PENDING: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<u64, Option<Decoded>>>,
+> = std::sync::LazyLock::new(Default::default);
+
+/// What an image shows while it decodes: one transparent pixel (the same handle every time,
+/// so nothing is uploaded again).
+fn placeholder(key: u64) -> Decoded {
+    static EMPTY: std::sync::LazyLock<img::Handle> =
+        std::sync::LazyLock::new(|| img::Handle::from_rgba(1, 1, vec![0u8; 4]));
+    Decoded {
+        key: key ^ 0x5bd1_e995,
+        handle: EMPTY.clone(),
+        size: Some((1, 1)),
+        pixels: bytes::Bytes::from_static(&[0, 0, 0, 0]),
+    }
+}
+
+type Job = Box<dyn FnOnce() + Send>;
+
+/// Runs `job` on one of a few decoding threads (one per core, at most four, so decoding a
+/// gallery leaves the UI thread and a core free).
+fn decode_pool(job: Job) {
+    static JOBS: std::sync::LazyLock<std::sync::Mutex<std::sync::mpsc::Sender<Job>>> =
+        std::sync::LazyLock::new(|| {
+            let (sender, receiver) = std::sync::mpsc::channel::<Job>();
+            let receiver = std::sync::Arc::new(std::sync::Mutex::new(receiver));
+            let threads = std::thread::available_parallelism()
+                .map(|n| n.get().saturating_sub(1))
+                .unwrap_or(1)
+                .clamp(1, 4);
+            for index in 0..threads {
+                let receiver = receiver.clone();
+                let _ = std::thread::Builder::new()
+                    .name(format!("pyzed-decode-{index}"))
+                    .spawn(move || {
+                        loop {
+                            let job = receiver.lock().unwrap().recv();
+                            match job {
+                                Ok(job) => job(),
+                                Err(_) => break,
+                            }
+                        }
+                    });
+            }
+            std::sync::Mutex::new(sender)
+        });
+    let _ = JOBS.lock().unwrap().send(job);
 }
 
 /// A decoded bitmap: an iced handle plus its RGBA pixels (cheap to clone).
@@ -188,12 +289,18 @@ pub struct ImageProps {
     pub rotation: f32,
     pub scale: f32,
     pub viewer: Option<(f32, f32, f32)>,
+    /// Decode on a worker thread: always, never or (`None`) for big files.
+    pub background: Option<bool>,
 }
 
 /// A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes.
+///
+/// In a running app, files of 256 KB and up decode on a worker thread (`background=None`): the
+/// image shows nothing until it is ready, so give it a `width` and `height` to keep its space.
+/// `background=True` decodes every file there, `False` decodes on the spot.
 #[pyfunction]
 #[pyo3(signature = (source, *, width=None, height=None, content_fit=None, filter="linear",
-    opacity=1.0, radius=0.0, rotation=0.0, scale=1.0, size=None))]
+    opacity=1.0, radius=0.0, rotation=0.0, scale=1.0, size=None, background=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn image(
     py: Python<'_>,
@@ -207,6 +314,7 @@ pub fn image(
     rotation: f32,
     scale: f32,
     size: Option<(u32, u32)>,
+    background: Option<bool>,
 ) -> PyResult<Py<Widget>> {
     new(
         py,
@@ -221,6 +329,7 @@ pub fn image(
             rotation,
             scale,
             viewer: None,
+            background,
         })),
     )
 }
@@ -254,6 +363,7 @@ pub fn image_viewer(
             rotation: 0.0,
             scale: 1.0,
             viewer: Some((min_scale, max_scale, scale_step)),
+            background: None,
         })),
     )
 }
@@ -792,7 +902,7 @@ thread_local! {
 }
 
 fn sprite_handle(source: &ImageSource) -> img::Handle {
-    SPRITES.with(|cache| source.decode(cache).handle)
+    SPRITES.with(|cache| source.decode(cache, Some(false)).handle)
 }
 
 fn cursor_kind(value: Option<&str>) -> PyResult<Option<mouse::Interaction>> {
