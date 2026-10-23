@@ -530,7 +530,10 @@ fn drive<P: Program<Theme = Theme> + 'static>(
                 let delta = mouse::ScrollDelta::Lines { x: f(0)?, y: f(1)? };
                 driver.events(
                     program,
-                    &[Event::Mouse(mouse::Event::WheelScrolled { delta })],
+                    &[Event::Mouse(mouse::Event::WheelScrolled {
+                        delta,
+                        phase: mouse::ScrollPhase::Moved,
+                    })],
                 );
             }
             "key" => {

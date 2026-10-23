@@ -347,7 +347,7 @@ def checkout() -> Optional[Path]:
 
 
 #: What makes up the native core: a change to any of them needs a new Windows build.
-_CORE_SOURCES = ("Cargo.toml", "Cargo.lock", "build.rs", "pyproject.toml", "src", "vendor")
+_CORE_SOURCES = ("Cargo.toml", "Cargo.lock", "build.rs", "pyproject.toml", "src")
 
 
 def core_hash(root: Path) -> str:

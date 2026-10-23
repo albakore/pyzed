@@ -2167,7 +2167,7 @@ where
 }
 
 // ---------------------------------------------------------------------------
-// Effect layers: rotation, blur, backdrop blur and bloom (see vendor/README.md)
+// Effect layers: rotation, blur, backdrop blur and bloom (see the PYZED.md of the iced fork)
 // ---------------------------------------------------------------------------
 
 /// How a group of drawing is composited (both renderers take the same values).

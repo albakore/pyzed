@@ -41,7 +41,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: >-
           python3 scripts/ci_changes.py "$BASE" HEAD
-          'rust=src/**,vendor/**,Cargo.toml,Cargo.lock,.github/workflows/ci.yml'
+          'rust=src/**,Cargo.toml,Cargo.lock,.github/workflows/ci.yml'
           'code=!docs/**,!**.md,!.github/ISSUE_TEMPLATE/**,!.github/workflows/docs.yml,!.github/workflows/pr-title.yml'
           | tee -a "$GITHUB_OUTPUT"
 

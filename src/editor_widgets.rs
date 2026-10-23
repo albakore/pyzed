@@ -185,6 +185,7 @@ impl Widget<Message, Theme, Renderer> for Caret<'_> {
                         color: self.color,
                         width: 1.0,
                         radius: 0.0.into(),
+                        ..Default::default()
                     },
                     ..Quad::default()
                 },
@@ -213,6 +214,7 @@ impl Widget<Message, Theme, Renderer> for Caret<'_> {
                     align_y: iced::alignment::Vertical::Top,
                     shaping: core_text::Shaping::Advanced,
                     wrapping: core_text::Wrapping::None,
+                    letter_spacing: iced::Em::ZERO,
                 },
                 at,
                 self.under_color,
@@ -282,6 +284,7 @@ impl Widget<Message, Theme, Renderer> for Boxes {
                         color: rect.border.unwrap_or(Color::TRANSPARENT),
                         width: if rect.border.is_some() { 1.0 } else { 0.0 },
                         radius: 2.0.into(),
+                        ..Default::default()
                     },
                     ..Quad::default()
                 },
@@ -451,7 +454,7 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                     shell.capture_event();
                 }
             }
-            Event::Mouse(mouse::Event::WheelScrolled { delta }) if cursor.is_over(bounds) => {
+            Event::Mouse(mouse::Event::WheelScrolled { delta, .. }) if cursor.is_over(bounds) => {
                 let dy = match delta {
                     mouse::ScrollDelta::Lines { y, .. } => -y * self.line_height * 3.0,
                     mouse::ScrollDelta::Pixels { y, .. } => -y,
@@ -815,7 +818,7 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
                     _ => {}
                 }
             }
-            Event::Mouse(mouse::Event::WheelScrolled { delta })
+            Event::Mouse(mouse::Event::WheelScrolled { delta, .. })
                 if state.modifiers.command()
                     && cursor.is_over(layout.bounds())
                     && self.on_zoom.is_some() =>

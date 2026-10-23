@@ -362,6 +362,7 @@ impl Widget<Message, Theme, Renderer> for Select<'_> {
             align_y: alignment::Vertical::Center,
             shaping: text::Shaping::default(),
             wrapping: text::Wrapping::default(),
+            letter_spacing: iced::Em::ZERO,
         };
         for (option, paragraph) in self.options.iter().zip(state.options.iter_mut()) {
             let _ = paragraph.update(Text {
@@ -450,6 +451,7 @@ impl Widget<Message, Theme, Renderer> for Select<'_> {
             }
             Event::Mouse(mouse::Event::WheelScrolled {
                 delta: mouse::ScrollDelta::Lines { y, .. },
+                ..
             }) if state.keyboard_modifiers.command()
                 && cursor.is_over(layout.bounds())
                 && !state.is_open =>
@@ -557,6 +559,7 @@ impl Widget<Message, Theme, Renderer> for Select<'_> {
                     align_y: alignment::Vertical::Center,
                     shaping: text::Shaping::Basic,
                     wrapping: text::Wrapping::default(),
+                    letter_spacing: iced::Em::ZERO,
                 },
                 Point::new(
                     bounds.x + bounds.width - self.padding.right,
@@ -584,6 +587,7 @@ impl Widget<Message, Theme, Renderer> for Select<'_> {
                     align_y: alignment::Vertical::Top,
                     shaping: text::Shaping::default(),
                     wrapping: text::Wrapping::default(),
+                    letter_spacing: iced::Em::ZERO,
                 },
                 Point::new(
                     bounds.x + self.padding.left,

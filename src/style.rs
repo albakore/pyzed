@@ -306,6 +306,7 @@ impl BoxStyle {
             color: self.border_color.unwrap_or(Color::TRANSPARENT),
             width: self.border_width,
             radius: self.radius,
+            ..Default::default()
         }
     }
 

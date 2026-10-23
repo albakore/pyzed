@@ -1254,6 +1254,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             if let Some(c) = *color {
                 s = s.style(move |_, _| svg::Style {
                     color: Some(crate::animation::fade(c)),
+                    ..svg::Style::default()
                 });
             }
             s.into()

@@ -383,7 +383,7 @@ where
                     }
                 }
             }
-            Event::Mouse(mouse::Event::WheelScrolled { delta }) if over => {
+            Event::Mouse(mouse::Event::WheelScrolled { delta, .. }) if over => {
                 let (dx, dy) = match delta {
                     mouse::ScrollDelta::Lines { x, y } => (*x, *y),
                     mouse::ScrollDelta::Pixels { x, y } => (x / 60.0, y / 60.0),
