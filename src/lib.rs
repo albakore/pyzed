@@ -66,6 +66,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(recorder::record, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
+    m.add_function(wrap_pyfunction!(app::safe_area, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_set, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_remove, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_supported, m)?)?;

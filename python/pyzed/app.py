@@ -48,6 +48,11 @@ class Window:
     the app bundle's icon instead. ``app_id`` names the app to the Linux desktop: it should
     match the app's ``.desktop`` file, which gives Wayland the icon and groups its windows.
 
+    On a phone, ``safe_area`` (on by default) keeps the content clear of the status bar, the
+    camera cutout, the navigation bar and the soft keyboard; ``False`` draws under them (place
+    things with ``pz.safe_area()``). Android's back button calls ``on_back()``: return ``False``
+    (or leave it out) and the app goes to the background, as on any app's first screen.
+
     ``transition`` animates the window's content when it opens: a window transition
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
@@ -86,6 +91,7 @@ class Window:
     exit_transition: Any = None
     icon: Any = None
     app_id: Optional[str] = None
+    safe_area: bool = True
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -278,6 +284,15 @@ class App(Window):
     def screenshot(self, path, *, size=None, scale: float = 2.0, wait: float = 0.1) -> None:
         """Renders the current state off-screen (no GPU or display needed) into a PNG."""
         _core.screenshot(self, str(path), size=size, scale=scale, wait=wait)
+
+
+def safe_area() -> Tuple[float, float, float, float]:
+    """The parts of the screen the system draws over, in logical pixels: ``(top, right, bottom, left)``.
+
+    On Android: the status and navigation bars, the camera cutout and the soft keyboard while it
+    is open. Zeros on a desktop. Windows keep clear of them unless ``safe_area = False``.
+    """
+    return _core.safe_area()
 
 
 def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> None:

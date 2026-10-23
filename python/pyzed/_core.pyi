@@ -596,6 +596,11 @@ def rule(*, vertical: Any = ..., thickness: Any = ..., color: Any = ...) -> Any:
 def run(app: Any) -> Any:
     """Opens the app's window and runs it until it is closed."""
     ...
+def safe_area() -> Any:
+    """The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`
+    (the status and navigation bars, the camera cutout and the soft keyboard; zeros on a desktop).
+    """
+    ...
 def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ...) -> Any:
     """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
     ...
