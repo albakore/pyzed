@@ -571,6 +571,14 @@ def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
 def reduced_motion() -> Any:
     """Whether reduced motion is on."""
     ...
+def refresh_window(window: Any) -> Any:
+    """`Window.refresh()`: draws an isolated window again after something outside it changed what
+    it shows. Safe from any thread.
+    """
+    ...
+def renderer_info() -> Any:
+    """The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open."""
+    ...
 def resizable(content: Any, *, edge: Any = ..., size: Any = ..., min_size: Any = ..., max_size: Any = ..., on_resize: Any = ..., color: Any = ..., hover_color: Any = ..., thickness: Any = ..., handle: Any = ..., width: Any = ..., height: Any = ...) -> Any:
     """A panel whose `edge` ("left", "right", "top" or "bottom") can be dragged to resize
     it. `size` is the width (or height for "top"/"bottom") it starts with; the panel

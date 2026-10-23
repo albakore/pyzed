@@ -210,6 +210,162 @@ fn sync_targets(py: Python<'_>, state: &State) {
     TARGETS.with(|t| *t.borrow_mut() = Some(targets));
 }
 
+// ---------------------------------------------------------------------------
+// Isolated windows (`Window.isolated`)
+// ---------------------------------------------------------------------------
+
+/// The windows whose messages were handled since the last rebuild, the windows that asked to be
+/// drawn again (`Window.refresh()`, from any thread, by object address) and whether something
+/// whose window is unknown happened (`pz.post`, which also brings async results and lifecycle
+/// hooks): then every window is rebuilt.
+#[derive(Default)]
+struct Touched {
+    windows: std::collections::HashSet<window::Id>,
+    refreshed: Vec<usize>,
+    all: bool,
+}
+
+static TOUCHED: LazyLock<Mutex<Touched>> = LazyLock::new(Mutex::default);
+
+/// The last drawing of an isolated window: its root widget and what else it depended on.
+struct Drawn {
+    root: Py<crate::widget::Widget>,
+    epoch: Py<PyAny>,
+    palette: Option<Vec<String>>,
+}
+
+thread_local! {
+    static DRAWN: RefCell<HashMap<window::Id, Drawn>> = RefCell::new(HashMap::new());
+    /// The windows `unchanged` let keep their drawing in the rebuild that follows it.
+    static KEEP: RefCell<std::collections::HashSet<window::Id>> =
+        RefCell::new(std::collections::HashSet::new());
+}
+
+fn touch(id: window::Id) {
+    TOUCHED.lock().unwrap().windows.insert(id);
+}
+
+fn isolated(obj: &Bound<'_, PyAny>) -> bool {
+    obj.getattr("isolated")
+        .and_then(|v| v.is_truthy())
+        .unwrap_or(false)
+}
+
+/// What every isolated view depends on besides its window (language, styles, reloaded code).
+fn isolation_epoch(py: Python<'_>) -> Option<Py<PyAny>> {
+    static EPOCH: pyo3::sync::PyOnceLock<Py<PyAny>> = pyo3::sync::PyOnceLock::new();
+    let epoch = EPOCH
+        .get_or_try_init(py, || {
+            py.import("pyzed.app")
+                .and_then(|m| m.getattr("_isolation_epoch"))
+                .map(Bound::unbind)
+        })
+        .ok()?;
+    epoch.bind(py).call0().ok().map(Bound::unbind)
+}
+
+/// Asked by iced after each update: the isolated windows that no message reached, that did not
+/// call `refresh()` and whose theme, language and styles are the same keep their layout and are
+/// not redrawn; their `view()` is not called either.
+fn unchanged(ids: &[window::Id]) -> Vec<window::Id> {
+    let touched = std::mem::take(&mut *TOUCHED.lock().unwrap());
+    KEEP.with(|keep| keep.borrow_mut().clear());
+    if touched.all || DRAWN.with(|drawn| drawn.borrow().is_empty()) {
+        return Vec::new();
+    }
+    let kept: Vec<window::Id> = Python::attach(|py| {
+        let Some(epoch) = isolation_epoch(py) else {
+            return Vec::new();
+        };
+        TARGETS.with(|targets| {
+            let targets = targets.borrow();
+            let Some(targets) = targets.as_ref() else {
+                return Vec::new();
+            };
+            DRAWN.with(|drawn| {
+                let drawn = drawn.borrow();
+                ids.iter()
+                    .copied()
+                    .filter(|id| !touched.windows.contains(id))
+                    .filter(|id| {
+                        let (Some(last), Some(obj)) = (drawn.get(id), targets.windows.get(id))
+                        else {
+                            return false;
+                        };
+                        let obj = obj.bind(py);
+                        !touched.refreshed.contains(&(obj.as_ptr() as usize))
+                            && isolated(obj)
+                            && last.epoch.bind(py).eq(epoch.bind(py)).unwrap_or(false)
+                            && palette_key(obj) == last.palette
+                    })
+                    .collect()
+            })
+        })
+    });
+    KEEP.with(|keep| keep.borrow_mut().extend(kept.iter().copied()));
+    kept
+}
+
+/// The root widget of a window's view: the last one when [`unchanged`] kept it, otherwise a new
+/// one from Python (remembered when the window is isolated).
+fn view_root(
+    py: Python<'_>,
+    id: window::Id,
+    obj: &Bound<'_, PyAny>,
+) -> PyResult<Py<crate::widget::Widget>> {
+    if KEEP.with(|keep| keep.borrow_mut().remove(&id))
+        && let Some(root) =
+            DRAWN.with(|drawn| drawn.borrow().get(&id).map(|d| d.root.clone_ref(py)))
+    {
+        return Ok(root);
+    }
+    let method = if obj.hasattr("__pyzed_view__").unwrap_or(false) {
+        "__pyzed_view__"
+    } else {
+        "view"
+    };
+    let root = obj
+        .call_method0(method)
+        .and_then(|w| crate::widget::child(&w))?;
+    DRAWN.with(|drawn| {
+        let mut drawn = drawn.borrow_mut();
+        match isolation_epoch(py).filter(|_| isolated(obj)) {
+            Some(epoch) => {
+                drawn.insert(
+                    id,
+                    Drawn {
+                        root: root.clone_ref(py),
+                        epoch,
+                        palette: palette_key(obj),
+                    },
+                );
+            }
+            None => {
+                drawn.remove(&id);
+            }
+        }
+    });
+    Ok(root)
+}
+
+/// `Window.refresh()`: draws an isolated window again after something outside it changed what
+/// it shows. Safe from any thread.
+#[pyfunction]
+pub fn refresh_window(window: &Bound<'_, PyAny>) {
+    TOUCHED
+        .lock()
+        .unwrap()
+        .refreshed
+        .push(window.as_ptr() as usize);
+    wake();
+}
+
+/// The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open.
+#[pyfunction]
+pub fn renderer_info() -> Option<(String, String)> {
+    iced_winit::quiet::graphics()
+}
+
 /// Runs a pointer callback (`on_move`, `on_enter`, `on_exit`...) as soon as its message arrives,
 /// before iced rebuilds the windows: if it returns `pz.UNCHANGED` the message is dropped and, when
 /// the whole batch was, nothing is rebuilt nor redrawn (a mouse moving over a big view costs
@@ -1382,6 +1538,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
 fn handle(state: &mut State, message: Message) -> Task<Message> {
     state.caches.prune();
     if let Message::Windowed(id, inner) = message {
+        touch(id);
         let previous = state.current.replace(id);
         let task = handle(state, *inner);
         state.current = previous;
@@ -1390,6 +1547,11 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
         } else {
             task.map(move |m| m.in_window(id))
         };
+    }
+    if state.current.is_none()
+        && let Some(main) = state.main
+    {
+        touch(main);
     }
     Python::attach(|py| {
         let target = match state.current {
@@ -1845,15 +2007,7 @@ pub fn format_error(py: Python<'_>, err: &PyErr) -> String {
 fn view(state: &State, id: window::Id) -> Element<'_, Message> {
     let element = Python::attach(|py| {
         let obj = state.window(id).bind(py);
-        let method = if obj.hasattr("__pyzed_view__").unwrap_or(false) {
-            "__pyzed_view__"
-        } else {
-            "view"
-        };
-        let root = obj
-            .call_method0(method)
-            .and_then(|w| crate::widget::child(&w));
-        match root {
+        match view_root(py, id, obj) {
             Ok(root) => {
                 crate::selectable::begin_frame();
                 crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches)))
@@ -2054,7 +2208,15 @@ pub(crate) fn close_post_channel() {
 
 fn post_stream() -> impl Stream<Item = Message> {
     match POST_RECEIVER.lock().unwrap().take() {
-        Some(receiver) => receiver.boxed(),
+        // A posted message may change what any window shows (isolated ones included); `wake`
+        // only asks for an update.
+        Some(receiver) => receiver
+            .inspect(|message| {
+                if !matches!(message, Message::Noop) {
+                    TOUCHED.lock().unwrap().all = true;
+                }
+            })
+            .boxed(),
         None => stream::pending().boxed(),
     }
 }
@@ -2628,6 +2790,7 @@ pub(crate) fn daemon(
     };
 
     iced_winit::quiet::set_filter(quiet);
+    iced_winit::quiet::set_unchanged(unchanged);
     iced::daemon(boot, update, view)
         .title(title)
         .theme(theme_of)

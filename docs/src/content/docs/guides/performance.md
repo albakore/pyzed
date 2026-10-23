@@ -55,6 +55,8 @@ their UI fast: start drawing as soon as possible, and don't redo work nobody ask
   only builds again the controls whose properties changed. The designer does the same with its
   console, outline and toolbox: its view went from 21 ms to 4.5 ms with an 85-control form and
   400 log lines.
+- **Covered windows rest.** A window hidden whole behind others (on X11 and macOS) or minimized
+  draws nothing, animations included, and is drawn once when it shows again.
 - **Files are listed off the UI thread.** The Open dialog, the agent's `@` list and the shader file
   picker read the project folder once and then refresh it on a worker thread, so typing in them
   never waits for the disk.
@@ -154,6 +156,58 @@ and anything your `update()` returns. Return it only when nothing that `view()`,
 For a highlight under the pointer you don't need a callback at all: `.style(hover={"background": "ghost_hover"})`
 draws it in the native widget.
 :::
+
+## Many windows
+
+After a message Pyzed rebuilds every open window, because any of them may show what changed. When
+a window only shows its own state (a settings dialog, a tool palette, a document of its own),
+set `isolated = True`: messages from other windows and the app's timers then skip its `view()`,
+keep its layout and don't redraw it, so ten open windows cost what the busy one costs.
+
+```python
+class Inspector(pz.Window):
+    isolated = True  # only its own callbacks change what it shows
+
+    def __init__(self, item):
+        self.item = item
+
+    def view(self):
+        return ui.property_grid(self.item)
+```
+
+An isolated window is still rebuilt after its own messages (clicks, commands, its subscriptions),
+after a change of theme, language, style or code, and after `pz.post` (async results and worker
+threads, which may change anything). When it shows something that changed elsewhere, call
+`window.refresh()` (from any thread).
+
+Measured with `benchmarks/multiwindow.py` (the main window ticks 60 times a second, every other
+window shows 300 rows; Xvfb without a GPU, medians of 3 runs):
+
+| Open windows | CPU per tick | CPU per tick, `isolated` | CPU use, `isolated` |
+| --- | --- | --- | --- |
+| 1 | 0.67 ms | 0.67 ms | 4% |
+| 4 | 7.0 ms | 1.4 ms | 8% (was 42%) |
+| 8 | 15.3 ms | 2.6 ms | 16% (was 91%) |
+
+## Frame rate and battery
+
+Animations ask for a frame as soon as the screen can show one: 60, 120 or 144 times a second.
+That is smooth, but on a touch panel, a phone or a laptop on battery it is often more than the
+interface needs. Two settings cap it without slowing anything else, since a click, a key or a
+new view is always drawn at once:
+
+```toml
+[tool.pyzed.rendering]
+max_fps = 30          # the most frames per second animations draw (0 follows the screen)
+background_fps = 0    # windows without the focus: 0 pauses their animations
+```
+
+Six spinning icons take 98% of a CPU core without a GPU; with `max_fps = 30` they take 28%, and
+with the window in the background and `background_fps = 0`, nothing.
+
+`antialiasing`, `present`, `frame_latency`, `memory` and `gpu` tune the GPU renderer itself; the
+[Rendering settings](/pyzed/editor/settings/#rendering) explain each one. `pz.renderer_info()`
+tells which GPU and graphics API ended up drawing (`("CPU", "tiny-skia")` without a GPU).
 
 ## Components drawn only when they change
 

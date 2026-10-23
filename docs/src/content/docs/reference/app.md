@@ -182,6 +182,7 @@ forwards them to `app.update()`.
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
 | `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
+| `isolated` | `False` | `True` promises that only its own messages change what it shows: messages from other windows and the app's timers skip its `view()`, layout and redraw. See [Many windows](/pyzed/guides/performance/#many-windows). |
 
 | Method | Description |
 | --- | --- |
@@ -194,6 +195,7 @@ forwards them to `app.update()`.
 | `on_close()` | When the user asks to close it; return `False` to prevent it. |
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
+| `refresh()` | Draws an `isolated` window again on the next update (safe from any thread). |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 
 **Methods and properties**
@@ -294,6 +296,14 @@ Window.toggle_maximize()
 
 A command that maximizes the window, or restores it when it is maximized.
 
+#### `Window.refresh`
+
+```python
+Window.refresh()
+```
+
+Draws an `isolated` window again on the next update (safe from any thread); other windows are drawn after every update anyway.
+
 #### `Window.frame_menus`
 
 ```python
@@ -346,10 +356,10 @@ class Shop(pz.App):
 
 ```python
 @dataclass
-class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto')
+class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto', present='auto', antialiasing='auto', frame_latency='auto', memory='auto', gpu='', max_fps=0, background_fps=None)
 ```
 
-How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `"auto"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).
+How the app draws its windows: on the GPU or the CPU, which graphics API and GPU, vsync, antialiasing and frame rate limits. Each field is `"auto"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).
 
 | Parameter | Description |
 | --- | --- |
@@ -357,10 +367,20 @@ How the app draws its windows: on the GPU or the CPU, which graphics API, which 
 | `gpu_api` | `"auto"`, `"vulkan"`, `"metal"`, `"dx12"` or `"gl"`. |
 | `power` | `"auto"`, `"high"` (the dedicated GPU) or `"low"` (the integrated one, saves battery). |
 | `vsync` | `"auto"`, `"on"` (no tearing) or `"off"` (draws as fast as it can). |
+| `present` | How frames reach the screen, winning over `vsync`: `"auto"`, `"fifo"` (least power), `"fifo_relaxed"`, `"mailbox"` (low latency without tearing) or `"immediate"` (lowest latency, may tear). |
+| `antialiasing` | Edges of canvas drawings, charts and curves: `"auto"` (4x), `"off"`, `"2x"`, `"4x"`, `"8x"` or `"16x"`. |
+| `frame_latency` | Frames the GPU may prepare ahead: `"auto"` (1, answers input soonest), `"1"`, `"2"` or `"3"`. |
+| `memory` | `"auto"` (low), `"low"` or `"performance"`: how the GPU renderer allocates memory. |
+| `gpu` | Part of the name of the GPU to use (`"nvidia"`, `"intel"`); `""` lets `power` decide. |
+| `max_fps` | The most frames per second animations draw (`0` follows the screen). Input and new content are drawn at once. |
+| `background_fps` | The same for windows without the focus: `0` pauses their animations, `None` uses `max_fps`. |
 
 ```python
 class Game(pz.App):
     rendering = pz.Rendering(renderer="gpu", vsync="off")
+
+class Kiosk(pz.App):
+    rendering = pz.Rendering(max_fps=30, background_fps=0, antialiasing="off")
 ```
 
 **Methods and properties**
@@ -380,7 +400,7 @@ Builds the settings from a `[tool.pyzed.rendering]` table, ignoring unknown keys
 Rendering.to_table()
 ```
 
-The settings that are not `"auto"`, as written to `pyproject.toml`.
+The settings that are not `"auto"` (or empty), as written to `pyproject.toml`.
 
 #### `Rendering.custom`
 
@@ -405,6 +425,27 @@ Rendering.apply(environ=None)
 ```
 
 Sets the variables of `env()` that are not set yet (yours win); returns the ones it set.
+
+### `safe_area`
+
+```python
+safe_area()
+```
+
+The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`. On Android: the status and navigation bars, the camera cutout and the soft keyboard while it is open; zeros on a desktop. Windows keep clear of them unless `safe_area = False`.
+
+### `renderer_info`
+
+```python
+renderer_info()
+```
+
+The GPU and the graphics API drawing the windows, like `("NVIDIA GeForce RTX 4060", "Vulkan")`, or `("CPU", "tiny-skia")` with the CPU renderer; `None` until the first window is open.
+
+```python
+def on_start(self):
+    print(pz.renderer_info())
+```
 
 ## Async and subscriptions
 

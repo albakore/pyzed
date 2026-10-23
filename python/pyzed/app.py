@@ -53,6 +53,13 @@ class Window:
     things with ``pz.safe_area()``). Android's back button calls ``on_back()``: return ``False``
     (or leave it out) and the app goes to the background, as on any app's first screen.
 
+    ``isolated = True`` promises that only the window's own messages change what it shows (its
+    callbacks, commands and subscriptions). After a message from another window, a timer of the
+    app or anything else, Pyzed then skips its ``view()``, keeps its layout and does not redraw
+    it, so many open windows cost what the busy one costs. Theme, language, style and code
+    changes still redraw it, and so does ``pz.post`` (async results, worker threads). Call
+    ``refresh()`` when it shows something that changed outside it.
+
     ``transition`` animates the window's content when it opens: a window transition
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
@@ -92,6 +99,7 @@ class Window:
     icon: Any = None
     app_id: Optional[str] = None
     safe_area: bool = True
+    isolated: bool = False
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -171,6 +179,11 @@ class Window:
     def toggle_maximize(self) -> _core.Command:
         """A command that maximizes the window, or restores it when it is maximized."""
         return _core.Command.toggle_maximize_window(self)
+
+    def refresh(self) -> None:
+        """Draws an ``isolated`` window again on the next update (safe from any thread); other
+        windows are drawn after every update anyway."""
+        _core.refresh_window(self)
 
     def frame_menus(self) -> Optional[Sequence[Any]]:
         """The menus on the left of a custom frame's title bar (``frame = "custom"``): a list of ``ui.Menu``."""
@@ -284,6 +297,20 @@ class App(Window):
     def screenshot(self, path, *, size=None, scale: float = 2.0, wait: float = 0.1) -> None:
         """Renders the current state off-screen (no GPU or display needed) into a PNG."""
         _core.screenshot(self, str(path), size=size, scale=scale, wait=wait)
+
+
+def renderer_info() -> Optional[Tuple[str, str]]:
+    """The GPU and the graphics API drawing the windows, like ``("NVIDIA GeForce RTX 4060", "Vulkan")``,
+    or ``("CPU", "tiny-skia")`` with the CPU renderer; ``None`` until the first window is open."""
+    return _core.renderer_info()
+
+
+def _isolation_epoch() -> tuple:
+    """What the view of an ``isolated`` window depends on besides its own state."""
+    from . import i18n as _i18n
+
+    return (_i18n.language(), _style._screen, _style._named_version, _style._rules_version,
+            _hot_reload.generation, id(_style.global_style()))
 
 
 def safe_area() -> Tuple[float, float, float, float]:

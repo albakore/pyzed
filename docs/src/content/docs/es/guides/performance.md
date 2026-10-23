@@ -59,6 +59,8 @@ rápidos para mantener ágil su interfaz: empezar a dibujar cuanto antes y no re
   lienzo del diseñador, solo vuelve a construir los controles cuyas propiedades cambiaron. El
   diseñador hace lo mismo con su consola, su árbol y su caja de herramientas: su vista pasó de 21 ms
   a 4,5 ms con un formulario de 85 controles y 400 líneas de log.
+- **Las ventanas tapadas descansan.** Una ventana oculta del todo tras otras (en X11 y macOS) o
+  minimizada no dibuja nada, tampoco sus animaciones, y se dibuja una vez cuando vuelve a verse.
 - **Los archivos se listan fuera del hilo de la interfaz.** El diálogo Abrir, la lista `@` del
   agente y el selector de archivos de los shaders leen la carpeta del proyecto una vez y luego la
   actualizan en un hilo aparte, así que escribir en ellos nunca espera al disco.
@@ -160,6 +162,59 @@ eventos `mouse_move`, `mouse_enter`, `mouse_leave`... de `.on(...)`), en los men
 Para resaltar algo bajo el puntero no hace falta ningún callback: `.style(hover={"background": "ghost_hover"})`
 lo dibuja el propio widget nativo.
 :::
+
+## Muchas ventanas
+
+Tras un mensaje, Pyzed reconstruye todas las ventanas abiertas, porque cualquiera puede mostrar lo
+que cambió. Cuando una ventana solo muestra su propio estado (un diálogo de ajustes, una paleta de
+herramientas, un documento propio), pon `isolated = True`: los mensajes de otras ventanas y los
+temporizadores de la app ya no llaman a su `view()`, conservan su maquetación y no la vuelven a
+dibujar, así que diez ventanas abiertas cuestan lo que cuesta la que está trabajando.
+
+```python
+class Inspector(pz.Window):
+    isolated = True  # solo sus propios callbacks cambian lo que muestra
+
+    def __init__(self, item):
+        self.item = item
+
+    def view(self):
+        return ui.property_grid(self.item)
+```
+
+Una ventana aislada se reconstruye igual tras sus propios mensajes (clics, comandos, sus
+suscripciones), tras un cambio de tema, idioma, estilo o código, y tras `pz.post` (resultados
+asíncronos e hilos de trabajo, que pueden cambiar cualquier cosa). Cuando muestra algo que cambió
+en otro sitio, llama a `ventana.refresh()` (desde cualquier hilo).
+
+Medido con `benchmarks/multiwindow.py` (la ventana principal cambia 60 veces por segundo, cada una
+de las demás muestra 300 filas; Xvfb sin GPU, medianas de 3 ejecuciones):
+
+| Ventanas abiertas | CPU por tick | CPU por tick, `isolated` | Uso de CPU, `isolated` |
+| --- | --- | --- | --- |
+| 1 | 0,67 ms | 0,67 ms | 4% |
+| 4 | 7,0 ms | 1,4 ms | 8% (antes 42%) |
+| 8 | 15,3 ms | 2,6 ms | 16% (antes 91%) |
+
+## Frames por segundo y batería
+
+Las animaciones piden un frame en cuanto la pantalla puede mostrarlo: 60, 120 o 144 veces por
+segundo. Queda fluido, pero en un panel táctil, un móvil o un portátil con batería suele ser más de
+lo que la interfaz necesita. Dos ajustes lo limitan sin frenar nada más, porque un clic, una tecla
+o una vista nueva se dibujan siempre al momento:
+
+```toml
+[tool.pyzed.rendering]
+max_fps = 30          # frames por segundo máximos de las animaciones (0 sigue a la pantalla)
+background_fps = 0    # ventanas sin el foco: 0 pausa sus animaciones
+```
+
+Seis iconos girando ocupan el 98% de un núcleo sin GPU; con `max_fps = 30` ocupan el 28%, y con la
+ventana en segundo plano y `background_fps = 0`, nada.
+
+`antialiasing`, `present`, `frame_latency`, `memory` y `gpu` ajustan el propio renderizador de GPU;
+los [ajustes de Renderizado](/pyzed/es/editor/settings/#renderizado) explican cada uno.
+`pz.renderer_info()` dice qué GPU y qué API gráfica acabaron dibujando (`("CPU", "tiny-skia")` sin GPU).
 
 ## Componentes que solo se dibujan cuando cambian
 

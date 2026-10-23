@@ -182,6 +182,7 @@ reenvía a `app.update()`.
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
 | `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
+| `isolated` | `False` | `True` promete que solo sus propios mensajes cambian lo que muestra: los mensajes de otras ventanas y los temporizadores de la app no llaman a su `view()` ni la vuelven a maquetar o dibujar. Ver [Muchas ventanas](/pyzed/es/guides/performance/#muchas-ventanas). |
 
 | Método | Descripción |
 | --- | --- |
@@ -194,6 +195,7 @@ reenvía a `app.update()`.
 | `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
+| `refresh()` | Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo). |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 
 **Métodos y propiedades**
@@ -294,6 +296,14 @@ Window.toggle_maximize()
 
 Un comando que maximiza la ventana, o la restaura si está maximizada.
 
+#### `Window.refresh`
+
+```python
+Window.refresh()
+```
+
+Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo); las demás ventanas se dibujan tras cada actualización de todos modos.
+
 #### `Window.frame_menus`
 
 ```python
@@ -346,10 +356,10 @@ class Shop(pz.App):
 
 ```python
 @dataclass
-class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto')
+class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto', present='auto', antialiasing='auto', frame_latency='auto', memory='auto', gpu='', max_fps=0, background_fps=None)
 ```
 
-Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica, qué GPU y vsync. Cada campo es `"auto"` por defecto (decide Pyzed). Dásela a `App.rendering`, o pon las mismas claves en `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto, que leen `pz.run`, el diseñador y `pyzed build`. Ver [Renderizado](/pyzed/es/editor/settings/#renderizado).
+Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica y qué GPU, vsync, antialiasing y límites de frames por segundo. Cada campo es `"auto"` por defecto (decide Pyzed). Dásela a `App.rendering`, o pon las mismas claves en `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto, que leen `pz.run`, el diseñador y `pyzed build`. Ver [Renderizado](/pyzed/es/editor/settings/#renderizado).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -357,10 +367,20 @@ Cómo dibuja la app sus ventanas: en la GPU o en la CPU, con qué API gráfica, 
 | `gpu_api` | `"auto"`, `"vulkan"`, `"metal"`, `"dx12"` o `"gl"`. |
 | `power` | `"auto"`, `"high"` (la GPU dedicada) o `"low"` (la integrada, ahorra batería). |
 | `vsync` | `"auto"`, `"on"` (sin cortes) u `"off"` (dibuja lo más rápido posible). |
+| `present` | Cómo llegan los frames a la pantalla, por encima de `vsync`: `"auto"`, `"fifo"` (menos consumo), `"fifo_relaxed"`, `"mailbox"` (poca latencia sin cortes) o `"immediate"` (la menor latencia, puede cortar). |
+| `antialiasing` | Bordes de dibujos de canvas, gráficos y curvas: `"auto"` (4x), `"off"`, `"2x"`, `"4x"`, `"8x"` o `"16x"`. |
+| `frame_latency` | Frames que la GPU puede preparar por adelantado: `"auto"` (1, responde antes), `"1"`, `"2"` o `"3"`. |
+| `memory` | `"auto"` (poca), `"low"` o `"performance"`: cómo reserva memoria el renderizador de GPU. |
+| `gpu` | Parte del nombre de la GPU a usar (`"nvidia"`, `"intel"`); `""` deja decidir a `power`. |
+| `max_fps` | Los frames por segundo máximos de las animaciones (`0` sigue a la pantalla). La entrada y el contenido nuevo se dibujan al momento. |
+| `background_fps` | Lo mismo para ventanas sin el foco: `0` pausa sus animaciones, `None` usa `max_fps`. |
 
 ```python
 class Game(pz.App):
     rendering = pz.Rendering(renderer="gpu", vsync="off")
+
+class Kiosco(pz.App):
+    rendering = pz.Rendering(max_fps=30, background_fps=0, antialiasing="off")
 ```
 
 **Métodos y propiedades**
@@ -405,6 +425,27 @@ Rendering.apply(environ=None)
 ```
 
 Define las variables de `env()` que aún no están definidas (las tuyas mandan); devuelve las que definió.
+
+### `safe_area`
+
+```python
+safe_area()
+```
+
+Las partes de la pantalla que dibuja el sistema, en píxeles lógicos: `(arriba, derecha, abajo, izquierda)`. En Android: las barras de estado y de navegación, el recorte de la cámara y el teclado en pantalla mientras está abierto; ceros en escritorio. Las ventanas las dejan libres salvo con `safe_area = False`.
+
+### `renderer_info`
+
+```python
+renderer_info()
+```
+
+La GPU y la API gráfica que dibujan las ventanas, como `("NVIDIA GeForce RTX 4060", "Vulkan")`, o `("CPU", "tiny-skia")` con el renderizador de CPU; `None` hasta que se abre la primera ventana.
+
+```python
+def on_start(self):
+    print(pz.renderer_info())
+```
 
 ## Async y suscripciones
 
