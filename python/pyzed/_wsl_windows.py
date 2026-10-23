@@ -504,8 +504,9 @@ def _follow_parent():
             pass
     except OSError:
         pass
-    sys.stdout.flush()
-    sys.stderr.flush()
+    for stream in (sys.stdout, sys.stderr):  # None in an app without a console (Windows)
+        if stream is not None:
+            stream.flush()
     os._exit(0)
 
 
