@@ -147,8 +147,8 @@ def test_windows_swap_script_swaps_and_keeps_the_uninstaller(tmp_path, monkeypat
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
 def test_windows_swap_script_gives_up_on_a_folder_in_use(tmp_path, monkeypatch):
-    """A process still using the app folder (the bundled uv behind a language server...) keeps it from moving:
-    the script retries, then leaves the old app as it was."""
+    """A file of the app folder kept open keeps it from moving and its files too: the script retries, then
+    leaves the old app as it was."""
     old, new = tmp_path / "app", tmp_path / "new"
     old.mkdir()
     new.mkdir()
@@ -163,32 +163,35 @@ def test_windows_swap_script_gives_up_on_a_folder_in_use(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
-def test_windows_swap_script_stops_a_program_running_from_the_app_folder(tmp_path, monkeypatch):
-    """A helper still running from the app folder (the bundled uv kept by another app) is stopped, so the update
-    goes in instead of failing with "Access is denied"."""
+def test_windows_swap_script_replaces_a_folder_a_program_works_in(tmp_path, monkeypatch):
+    """A process whose current folder is the app folder keeps it from moving ("Access is denied"): the script
+    moves what is inside it instead, and the update goes in."""
     old, new = tmp_path / "app", tmp_path / "new"
-    old.mkdir()
-    new.mkdir()
+    (old / "_internal").mkdir(parents=True)
+    (old / "_internal" / "lib.pyd").write_text("old")
+    (old / "pyzed-design.exe").write_text("old")
+    (old / "unins000.exe").write_text("uninstaller")
+    (new / "_internal").mkdir(parents=True)
+    (new / "_internal" / "lib.pyd").write_text("new")
     (new / "pyzed-design.exe").write_text("new")
-    helper = old / "helper.exe"
-    shutil.copy2(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "PING.EXE", helper)
-    busy = subprocess.Popen([str(helper), "-n", "120", "127.0.0.1"], stdout=subprocess.DEVNULL)
+    ping = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "PING.EXE"
+    busy = subprocess.Popen([str(ping), "-n", "120", "127.0.0.1"], cwd=old, stdout=subprocess.DEVNULL)
     try:
-        monkeypatch.setattr(updater, "SWAP_TRIES", 15)
-        done = _windows_swap(tmp_path, monkeypatch)
+        done = _windows_swap(tmp_path, monkeypatch, keep=("unins*",))
     finally:
         busy.kill()
+        busy.wait()
     assert done.returncode == 0, done.stdout + done.stderr
-    assert "Stopping helper.exe" in done.stdout
-    assert (old / "pyzed-design.exe").read_text() == "new" and not (old / "helper.exe").exists()
+    assert (old / "pyzed-design.exe").read_text() == "new" and (old / "_internal" / "lib.pyd").read_text() == "new"
+    assert (old / "unins000.exe").read_text() == "uninstaller" and not new.exists()
 
 
 def test_windows_swap_script_names_the_programs_in_use():
-    """The script stops the helpers left in the app folder but only names another window of the app."""
+    """After a few tries the script writes which programs run from the app folder, another window of the app first."""
     script = updater._WINDOWS_SCRIPT
-    assert "{free}" in script and 'set "PYZED_APP={app}"' in script
-    assert "Stop-Process" in updater._FREE_FOLDER and "$env:PYZED_EXE" in updater._FREE_FOLDER
-    assert 1 < updater.FREE_AFTER < updater.SWAP_TRIES
+    assert "{list}" in script and 'set "PYZED_APP={app}"' in script
+    assert "Stop-Process" not in updater._LIST_PROGRAMS and "$env:PYZED_EXE" in updater._LIST_PROGRAMS
+    assert 1 < updater.LIST_AFTER < updater.SWAP_TRIES
 
 
 def test_installer_removes_the_old_version_first():
