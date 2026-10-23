@@ -135,6 +135,25 @@ second. They can be slower than your system's key repeat, not faster.
   and more. See the full list in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys)
   or press <kbd>F1</kbd> in the designer.
 
+## Find in the project
+
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> (**Find in project…** in the command palette, or the search button of
+the Project panel) opens the **Search** panel in the left
+dock, like Zed's project search: it looks in every text file of the project (the open form's folder without a
+project), not in `.venv`, caches or hidden folders.
+
+- Type the text; the buttons match case, whole words or a regular expression, as in the find bar. **Files to
+  include** narrows it down: `*.py`, `ui/`, `main.py`, separated by commas.
+- The results are grouped by file, with the matching lines. Click one to open the file in the Code panel with the
+  match selected.
+- <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> (or the arrow before the field) shows the replace field.
+  **Replace all** changes every match listed, and the button on a file only that file's. With a regular expression,
+  `\1` in the replacement inserts a group.
+
+Files open in the editor and the code of open forms are searched with their unsaved changes and replaced there, so
+you can still undo the change or not save it. Other files are written straight away: **Undo replace** puts back
+what the last replace wrote. Open forms and components themselves are never changed by a replace.
+
 ## Completion
 
 ![Completing a function of the re module, with its signature and docstring](../../../../screenshots/designer-completion.png)

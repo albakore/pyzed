@@ -68,6 +68,8 @@ class DesignerSettings:
     log_file: bool = True
     #: Open the welcome window (start a project, the example gallery) when the designer starts.
     show_welcome: bool = True
+    #: Open projects the user did not create or trust in restricted mode (see ``designer.trust``).
+    restricted_mode: bool = True
     #: Look for a new version of the designer once a day (the compiled app updates itself).
     check_updates: bool = True
     #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).

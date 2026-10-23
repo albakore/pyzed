@@ -121,7 +121,7 @@ Opens the visual designer, optionally on a `.pzform` file (created on first save
 
 ```python
 @dataclass
-class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='')
+class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[])
 ```
 
 A window designed visually: its settings, its controls (in z-order) and its events.
@@ -226,7 +226,23 @@ Renames a control and returns the name actually used (made unique and valid).
 Form.reorder(names, where)
 ```
 
-Moves controls to the `"front"` or `"back"` of the z-order.
+Moves controls in the z-order: to the `"front"` or `"back"`, or one step `"forward"` or `"backward"` past the next sibling (a control in the same container) they overlap or, when none does, the next sibling. Only the order among siblings matters: each container draws its own.
+
+#### `Form.tab_sequence`
+
+```python
+Form.tab_sequence(eligible=None)
+```
+
+The controls Tab goes through, in order: those of `tab_order` first, then the other `eligible` ones (every control by default) in the order they are drawn.
+
+#### `Form.set_tab_order`
+
+```python
+Form.set_tab_order(names)
+```
+
+Saves `names` as the tab order (unknown names and repeats are dropped; empty: drawing order).
 
 #### `Form.to_dict`
 
@@ -844,6 +860,14 @@ Document.set_form(key, value)
 ```
 
 Sets attribute `key` of the form (a new `name` is made a valid identifier first).
+
+#### `Document.set_tab_order`
+
+```python
+Document.set_tab_order(names, *, group=None)
+```
+
+Saves the order Tab moves the focus in (see `Form.tab_order`); `[]` goes back to the drawing order. Edits with the same `group` merge into one undo step.
 
 #### `Document.reflow`
 
@@ -1493,7 +1517,7 @@ Adds a reusable method (not an event handler) to the class; returns its name.
 
 ```python
 @dataclass
-class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', label='', icon='component', category='Custom', description='', extends='', bindings={})
+class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[], label='', icon='component', category='Custom', description='', extends='', bindings={})
 ```
 
 The layout of a designed component: a `Form` whose `name` is the class name.

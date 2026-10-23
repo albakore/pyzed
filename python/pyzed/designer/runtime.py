@@ -413,6 +413,8 @@ class FormRuntime:
         _binding.load_texts(self.path)
         #: Validation messages on show, by control name.
         self.errors: Dict[str, str] = {}
+        #: The place of each control of ``form.tab_order`` in the Tab order (from 1), by name.
+        self._tab_index: Dict[str, int] = {}
         self.data = data
         self._fill_data()
         self.opened: list = []
@@ -639,6 +641,8 @@ class FormRuntime:
             layers.append(painted)
         rects = _layout.resolve(form, size)
         bubbles: list = []  # validation messages, over every control
+        # the form's tab order: each listed control (and the fields inside it) takes its place for Tab
+        self._tab_index = {name: i for i, name in enumerate(form.tab_order, start=1)}
         layers.extend(self._draw(None, rects, bubbles))
         layers.extend(bubbles)
         if self.error:
@@ -684,6 +688,9 @@ class FormRuntime:
             if message:
                 widget = _core.container(widget, width=w, height=h, border_color=t.error, border_width=1,
                                          radius=t.radius_sm)
+            index = self._tab_index.get(control.name)
+            if index is not None:
+                widget = _core.focusable(widget, tab_index=index)
             layers.append(_core.pin(widget, x=x, y=y))
             if message:
                 bubbles.append(_core.pin(_core.container(
@@ -802,8 +809,8 @@ class _FormHost:
         return self.runtime.subscriptions()
 
     def on_key(self, combo: str) -> Any:
-        result = self.runtime.key(combo)
-        return [] if result is None else result
+        # ``None`` when no handler took the key, so Tab still moves the focus between the fields
+        return self.runtime.key(combo)
 
     def on_resize(self, width: float, height: float) -> Any:
         return self.runtime.dispatch(None, "resize", (width, height))

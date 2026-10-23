@@ -153,13 +153,47 @@ La barra de herramientas actúa sobre la selección:
 | **Distribuir horizontalmente / verticalmente** | Reparte tres o más controles a la misma distancia entre el primero y el último. |
 | **Mismo ancho / alto** | Da a todos los seleccionados el ancho o el alto del control principal. |
 | **Centrar horizontalmente / verticalmente en el formulario** | Centra la selección en el formulario. |
-| **Traer al frente / Enviar al fondo** | Cambia el orden de dibujo (qué queda encima). |
+| **Traer al frente / Enviar al fondo** | Cambia el orden de dibujo (qué queda encima); ver [Orden z](#orden-z). |
 | **Eliminar** | Borra la selección (<kbd>Supr</kbd> o <kbd>Retroceso</kbd>). |
 
 Con varios controles, la alineación usa los límites de la selección; con uno solo, alinea con el formulario. El
 panel Propiedades muestra las mismas herramientas cuando hay varios controles seleccionados.
 
 ![Tres controles seleccionados, listos para alinear](../../../../../screenshots/designer-align.png)
+
+## Orden z
+
+Los controles que se solapan se dibujan en orden z: la estructura lista los controles de cada contenedor desde el
+fondo (el primero) hasta el frente (el último). Cuatro comandos lo cambian, como en Figma; están en el menú
+contextual del control, en el teclado y en la paleta de comandos:
+
+| Comando | Teclas | Hace |
+| --- | --- | --- |
+| **Traer adelante** | <kbd>Ctrl</kbd>+<kbd>]</kbd> | Un paso adelante: pasa al siguiente control con el que se solapa (o al siguiente). |
+| **Enviar atrás** | <kbd>Ctrl</kbd>+<kbd>[</kbd> | Un paso atrás. |
+| **Traer al frente** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> | Delante de todo lo de su contenedor. |
+| **Enviar al fondo** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> | Detrás de todo lo de su contenedor. |
+
+Solo cambia el orden entre controles del mismo contenedor: un contenedor conserva lo que tiene dentro, y arrastrar
+filas en la estructura hace lo mismo a mano.
+
+## Orden de tabulación
+
+El **orden de tabulación** es el orden en que <kbd>Tab</kbd> mueve el foco del teclado por los campos del formulario
+en ejecución (cajas de texto, casillas, selectores, deslizadores, tus propios componentes). Por defecto sigue el
+orden de dibujo. Para elegirlo, como en Qt Designer y Visual Basic:
+
+1. Pulsa **Editar orden de tabulación** al final de la barra de herramientas (o ejecútalo desde la paleta de
+   comandos). Cada campo muestra su número en una insignia y una barra abajo del formulario explica qué hacer.
+2. **Haz clic en los campos en el orden en que Tab debe recorrerlos.** Cada clic da el número siguiente (1, 2,
+   3...); los campos en los que no hagas clic mantienen su orden detrás de los demás. Volver a hacer clic en un
+   campo lo lleva al final de los ya marcados.
+3. <kbd>Esc</kbd>, **Listo** o el mismo comando vuelven a la edición. **Restablecer** olvida el orden (Tab vuelve
+   a seguir el orden de dibujo).
+
+El orden se guarda en el `.pzform` (`"tab_order"` en los ajustes del formulario) y toda la sesión es un solo paso de
+deshacer. Las etiquetas, los botones y los contenedores no llevan número: <kbd>Tab</kbd> no se detiene en ellos. En
+código, `pz.focusable(..., tab_index=n)` da a cualquier widget su lugar en el orden.
 
 ## Portapapeles e historial
 
@@ -191,7 +225,7 @@ Clic derecho en un control del lienzo, en su fila de la estructura o en la pesta
 | **Group in a row / column / grid / panel** | Envuelve la selección en una fila flex, una columna flex, una grilla o un panel nuevos. |
 | **Move out of *contenedor*** | Saca el control de su contenedor, al padre del contenedor. |
 | **Cut, Copy, Paste, Duplicate** | Como los atajos. |
-| **Bring to front, Send to back** | Orden de dibujo. |
+| **Bring to front, Send to back** | [Orden z](#orden-z). |
 | **Lock / Unlock** | Bloquea el control en su sitio. |
 | **Delete** | Borra la selección. |
 

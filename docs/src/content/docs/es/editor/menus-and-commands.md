@@ -53,6 +53,10 @@ en el teclado y en la paleta de comandos.
 | Seleccionar todo | <kbd>Ctrl</kbd>+<kbd>A</kbd> |
 | Añadir control… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> |
 | Agrupar en una fila / en una columna / en una cuadrícula | |
+| Traer adelante / Enviar atrás | <kbd>Ctrl</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>[</kbd>; ver [Orden z](/pyzed/es/editor/toolbox-and-canvas/#orden-z) |
+| Traer al frente / Enviar al fondo | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> |
+| Editar orden de tabulación | también en la barra de herramientas; ver [Orden de tabulación](/pyzed/es/editor/toolbox-and-canvas/#orden-de-tabulación) |
+| Buscar en el proyecto… / Reemplazar en el proyecto… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>; ver [Buscar en el proyecto](/pyzed/es/editor/code-editor/#buscar-en-el-proyecto) |
 | Convertir la sangría a tabulaciones / a espacios | (paleta) el archivo del editor de código; ver [Tabulaciones o espacios](/pyzed/es/editor/code-editor/#tabulaciones-o-espacios) |
 
 ## Menú Ver

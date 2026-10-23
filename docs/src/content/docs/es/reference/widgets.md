@@ -628,6 +628,7 @@ focusable(
     ring_color=None,
     ring_radius=4.0,
     ring_offset=2.0,
+    tab_index=None,
 )
 ```
 
@@ -642,6 +643,7 @@ Deja que cualquier widget tome el foco del teclado como un campo de texto: un cl
 | `ring_color` | Color del anillo de foco (ninguno por defecto). |
 | `ring_radius` | Radio de las esquinas del anillo. |
 | `ring_offset` | Píxeles entre el control y el anillo. |
+| `tab_index` | Su lugar (y el de cada campo que contiene) en el orden en que Tab mueve el foco: primero los números más bajos y después los campos sin número, en el orden en que se dibujan. Funciona también sin `on_key`. |
 
 ```python
 pz.focusable(estrellas, lambda combo: self.puntuar(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")

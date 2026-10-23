@@ -145,6 +145,7 @@ A monospaced font keeps code columns aligned: pick one for **Code font** (its na
 | **Save before running** | <kbd>F5</kbd> saves the document first. |
 | **Open the console on Run** | Brings the console to the front when a form starts. |
 | **Log events in the console** | Writes every event the running form handles, with its value and handler. |
+| **Restricted mode** | Asks before installing the packages of a project you did not create, importing its components or running it ([restricted mode](/pyzed/editor/projects/#restricted-mode)). On by default; only your own settings can turn it off. |
 
 ## Logs and errors
 

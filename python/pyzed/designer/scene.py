@@ -98,6 +98,8 @@ class Scene(Form):
         data = {k: v for k, v in asdict(self).items() if k not in ("controls", "bindings", "title", "events")}
         if not data["extends"]:
             del data["extends"]
+        if not data["tab_order"]:
+            del data["tab_order"]
         return {
             "format": FORMAT,
             "component": data,

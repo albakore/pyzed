@@ -148,13 +148,47 @@ The toolbar acts on the selection:
 | **Distribute horizontally / vertically** | Spaces three or more controls evenly between the first and the last. |
 | **Same width / height** | Gives every selected control the primary control's width or height. |
 | **Center in form horizontally / vertically** | Centers the selection in the form. |
-| **Bring to front / Send to back** | Changes the z-order (what is drawn on top). |
+| **Bring to front / Send to back** | Changes the z-order (what is drawn on top); see [Z-order](#z-order). |
 | **Delete** | Deletes the selection (<kbd>Delete</kbd> or <kbd>Backspace</kbd>). |
 
 With several controls selected, alignment uses the bounds of the selection; with a single control it aligns to
 the form. The Properties panel shows the same tools while several controls are selected.
 
 ![Three controls selected, ready to align](../../../../screenshots/designer-align.png)
+
+## Z-order
+
+Controls that overlap are drawn in z-order: the outline lists each container's controls from the back (first) to
+the front (last). Four commands change it, as in Figma; they are in the control's context menu, on the keyboard
+and in the command palette:
+
+| Command | Keys | Does |
+| --- | --- | --- |
+| **Bring forward** | <kbd>Ctrl</kbd>+<kbd>]</kbd> | One step forward: past the next control it overlaps (or the next one). |
+| **Send backward** | <kbd>Ctrl</kbd>+<kbd>[</kbd> | One step back. |
+| **Bring to front** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> | In front of everything in its container. |
+| **Send to back** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> | Behind everything in its container. |
+
+Only the order among controls of the same container changes: a container keeps what it holds, and dragging rows in
+the outline does the same by hand.
+
+## Tab order
+
+The **tab order** is the order <kbd>Tab</kbd> moves the keyboard focus through the fields of the running form (text
+boxes, checks, selects, sliders, your own components). By default it follows the drawing order. To choose it,
+as in Qt Designer and Visual Basic:
+
+1. Click **Edit tab order** at the end of the toolbar (or run it from the command palette). Every field shows its
+   number in a badge, and a bar at the bottom of the form says what to do.
+2. **Click the fields in the order Tab should visit them.** Each click gives the next number (1, 2, 3...); the
+   fields you do not click keep their order after the ones you did. Clicking a field again moves it to the end of
+   the ones clicked.
+3. <kbd>Esc</kbd>, **Done** or the command again goes back to editing. **Reset** forgets the order (Tab follows
+   the drawing order again).
+
+The order is saved in the `.pzform` (`"tab_order"` in the form's settings) and the whole session is one undo step.
+Labels, buttons and containers have no number: <kbd>Tab</kbd> does not stop on them. In code, `pz.focusable(...,
+tab_index=n)` gives any widget its place in the order.
 
 ## Clipboard and history
 
@@ -185,7 +219,7 @@ Right-click a control on the canvas, its row in the outline or a container's gri
 | **Group in a row / column / grid / panel** | Wraps the selection in a new flex row, flex column, grid or panel. |
 | **Move out of *container*** | Takes the control out of its container, into the container's parent. |
 | **Cut, Copy, Paste, Duplicate** | As the shortcuts. |
-| **Bring to front, Send to back** | Z-order. |
+| **Bring to front, Send to back** | [Z-order](#z-order). |
 | **Lock / Unlock** | Locks the control in place. |
 | **Delete** | Deletes the selection. |
 

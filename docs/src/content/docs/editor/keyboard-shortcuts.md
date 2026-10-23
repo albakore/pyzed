@@ -30,6 +30,8 @@ These work anywhere, even while you type in the code editor.
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> | [Keymap editor](/pyzed/editor/keymap/) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Command palette |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> | Add control |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> | [Find in the project](/pyzed/editor/code-editor/#find-in-the-project) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> | Replace in the project |
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Show or hide the left dock |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> | Show or hide the right dock |
 | <kbd>Ctrl</kbd>+<kbd>J</kbd> | Show or hide the bottom dock |
@@ -65,11 +67,13 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Group the selection in an invisible panel |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Ungroup: take the children out of the selected container |
 | <kbd>Shift</kbd>+<kbd>A</kbd> | Add auto layout: wrap the selection in a flex row or column |
+| <kbd>Ctrl</kbd>+<kbd>]</kbd>, <kbd>Ctrl</kbd>+<kbd>[</kbd> | Bring the selection forward, send it backward ([z-order](/pyzed/editor/toolbox-and-canvas/#z-order)) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> | Bring it to the front, send it to the back |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Undo |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Redo |
 | <kbd>Enter</kbd> | Open the code of the selected control's main event |
 | <kbd>G</kbd> | Show or hide the grid |
-| <kbd>Esc</kbd> | Cancel a drag, close a menu, or drop the placing tool and go back to the pointer |
+| <kbd>Esc</kbd> | Cancel a drag, close a menu, leave the [tab order](/pyzed/editor/toolbox-and-canvas/#tab-order) mode, or drop the placing tool and go back to the pointer |
 
 ## Mouse
 

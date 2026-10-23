@@ -24,6 +24,8 @@ def pytest_configure(config):
 def _isolated_config(tmp_path, monkeypatch):
     """Keeps the designer's saved preferences out of the user's real config folder."""
     monkeypatch.setenv("PYZED_CONFIG_DIR", str(tmp_path / "pyzed-config"))
+    # every folder a test opens is trusted (tests/test_trust.py turns restricted mode back on)
+    monkeypatch.setenv("PYZED_TRUST_ALL", "1")
     yield
     from pyzed import i18n
 

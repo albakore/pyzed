@@ -131,6 +131,12 @@ def _console(d: "Designer", t: Theme) -> Any:
     return console.view(d, t)
 
 
+def _search(d: "Designer", t: Theme) -> Any:
+    from . import project_search
+
+    return project_search.view(d, t)
+
+
 def _logs(d: "Designer", t: Theme) -> Any:
     from . import logs
 
@@ -141,6 +147,7 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
     # the id stays "design" so saved layouts keep their place; the tab is named after what it holds
     Panel("design", "Toolbox", "component", "left", _design),
     Panel("project", "Project", "folder-tree", "left", _project),
+    Panel("search", "Search", "text-search", "left", _search, lambda d: d.search.visible),
     Panel("dependencies", "Dependencies", "package", "left", _dependencies, lambda d: d.projects.project is not None),
     Panel("properties", "Properties", "settings-2", "right", _properties),
     Panel("events", "Events", "zap", "right", _events),

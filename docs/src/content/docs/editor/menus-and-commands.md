@@ -53,6 +53,10 @@ keyboard and in the command palette.
 | Select all | <kbd>Ctrl</kbd>+<kbd>A</kbd> |
 | Add control… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> |
 | Group in a row / in a column / in a grid | |
+| Bring forward / Send backward | <kbd>Ctrl</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>[</kbd>; see [Z-order](/pyzed/editor/toolbox-and-canvas/#z-order) |
+| Bring to front / Send to back | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> |
+| Edit tab order | also on the toolbar; see [Tab order](/pyzed/editor/toolbox-and-canvas/#tab-order) |
+| Find in project… / Replace in project… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>; see [Find in the project](/pyzed/editor/code-editor/#find-in-the-project) |
 | Convert indentation to tabs / to spaces | (palette) the file in the code editor; see [Tabs or spaces](/pyzed/editor/code-editor/#tabs-or-spaces) |
 
 ## View menu

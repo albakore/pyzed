@@ -651,6 +651,12 @@ class Document:
         self.reflow(None, size)
         self.commit(group=f"form:{key}")
 
+    def set_tab_order(self, names: Sequence[str], *, group: Optional[str] = None) -> None:
+        """Saves the order Tab moves the focus in (see ``Form.tab_order``); ``[]`` goes back to the drawing
+        order. Edits with the same ``group`` merge into one undo step."""
+        self.form.set_tab_order(names)
+        self.commit(group)
+
     def reflow(self, parent: Optional[str], size: Tuple[float, float]) -> None:
         """After the form (``parent`` ``None``) or container ``parent`` was resized from ``size``, moves and
         sizes what is inside it the way the anchors say (unless ``follow_anchors`` is off)."""

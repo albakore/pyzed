@@ -24,12 +24,29 @@ you opened or above it, or above the current folder. If it finds one it:
   its `.venv`;
 - **discovers its components**: every `.pzcomp` of the project joins the toolbox;
 - **checks its tools** in the background (uv, git, ruff and ty, with their versions);
-- **gets its environment ready**, like Zed does when a project opens: if uv is missing it installs it with its
+- **gets its environment ready** (once you [trust it](#restricted-mode)), like Zed does when a project opens: if uv is missing it installs it with its
   official installer, and if the project has no `.venv` yet it runs `uv sync`, which also installs ruff and ty.
   A notification says when the project is ready.
 
 The title bar then shows the project's name, its git branch and, in a linked
 [git worktree](https://git-scm.com/docs/git-worktree), the worktree's name, each one apart, as Zed does.
+
+## Restricted mode
+
+Opening a project can run its code: `uv sync` installs its packages (and may build them, running their build
+scripts), the toolbox imports its components and **Run** starts its forms. So, like Zed and VS Code, Pyzed Design
+asks first when the project comes from somewhere else (a cloned repository, a downloaded folder): **Do you trust
+the authors of the files in this folder?**
+
+- **Stay in restricted mode**: you can read and edit every file, but the editor does not prepare the environment,
+  import the project's modules, run, build or export it, or use the tools of its `.venv` (the code editor uses its
+  own ruff and ty). A strip in the Project panel says so; **Trust…** asks again, and so does **Run**.
+- **Trust this project**: the folder joins your trusted folders, and the editor does what it held back.
+
+Projects created by the editor (**New project**, an example of the gallery) are trusted from the start, and a
+folder inside a trusted one is trusted too. The list lives in `trusted.json` in the Pyzed config folder.
+**Settings → Running → Restricted mode** turns the question off (a project's own `.pyzed/settings.json` cannot),
+and `PYZED_TRUST_ALL=1` does the same for scripts and CI.
 
 ## Several projects in one window
 

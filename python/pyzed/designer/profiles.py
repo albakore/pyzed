@@ -31,6 +31,9 @@ DEFAULT_PROFILE = "Default"
 #: Fields of ``DesignerSettings`` that are the designer's state, not preferences (profiles leave them alone).
 STATE = frozenset({"recent", "docks", "order", "active", "windows", "layouts", "layout_name", "panels", "sizes"})
 
+#: Preferences a project's own settings never change: what keeps a project from running code by itself.
+USER_ONLY = frozenset({"restricted_mode"})
+
 _CLASSES = {"editor": _settings.EditorSettings, "designer": _preferences.DesignerSettings}
 
 
@@ -136,18 +139,18 @@ class Store:
     # -- values -------------------------------------------------------------------------------
     def effective(self, section: str) -> Dict[str, Any]:
         """The value of each preference of ``section`` the designer uses (the project's win)."""
-        return {**self.user[section], **self.project[section]}
+        return {**self.user[section], **{k: v for k, v in self.project[section].items() if k not in USER_ONLY}}
 
     def value(self, section: str, key: str, scope: str = "effective") -> Any:
         """The value of ``key`` in ``scope``: "user", "project" (the user's when the project leaves it) or
         "effective"."""
-        if scope == "user":
+        if scope == "user" or key in USER_ONLY:
             return self.user[section][key]
         return self.project[section].get(key, self.user[section][key])
 
     def overridden(self, section: str, key: str) -> bool:
         """Whether the project sets ``key``."""
-        return key in self.project[section]
+        return key in self.project[section] and key not in USER_ONLY
 
     def modified(self, section: str, key: str, scope: str = "user") -> bool:
         """In "user" scope, whether ``key`` differs from its default; in "project", whether the project sets it."""

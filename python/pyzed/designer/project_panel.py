@@ -23,7 +23,9 @@ from .. import rendering as _rendering
 from ..icons import icon as _icon
 from ..project import Dependency, Problem, Project, Result, Tool
 from ..theme import Theme, alpha
+from . import keymap as _keymap
 from . import logs as _logs
+from . import trust as _trust
 from . import workspace as _workspace
 from .locale import tr
 
@@ -110,10 +112,12 @@ class ProjectController:
         if project.root not in self.window:
             self.window.append(project.root)
         project.activate()
-        if changed:  # its components join the toolbox, so its forms can draw them
+        if changed and self.d.trust.trusted(project.root):  # its components join the toolbox for its forms
             from . import scene as _scene
 
             _scene.discover_project(project.root)
+        elif changed:  # restricted mode: nothing of it runs until the user trusts it
+            self.d.trust.opened(project.root)
         _project.remember(project)
         try:
             os.chdir(project.root)
@@ -239,8 +243,8 @@ class ProjectController:
         """Loads the active project's environment in the background when it is not ready, like Zed does when a
         project opens: installs uv if it is missing and creates ``.venv`` (``uv sync``) with its tools."""
         project = self.project
-        if project is None or not project.needs_prepare():
-            return None
+        if project is None or not project.needs_prepare() or not self.d.trust.trusted(project.root):
+            return None  # in restricted mode, uv sync waits until the project is trusted
         where = project.environment
 
         def done(result: Result) -> Any:
@@ -328,6 +332,7 @@ class ProjectController:
                 self.last = result
                 self.d.notify(tr("Could not create the project"), result.output, kind="error", seconds=6)
                 return None
+            _trust.trust(result.root)  # made here: nothing to ask
             return self.open(str(result.root))
 
         return self._task(f"Creating {name} with uv", work, done)
@@ -398,7 +403,7 @@ class ProjectController:
 
     def _uv(self, label: str, work: Callable[[Project], Result]) -> Any:
         project = self.project
-        if project is None or self.busy:
+        if project is None or self.busy or not self.d.trust.allow():
             return None
         return self._task(label, lambda: work(project),
                           lambda r: self.d.notify(label, kind="success", seconds=2) if r.ok else None)
@@ -696,6 +701,8 @@ def _header(d: "Designer", p: ProjectController, project: Project, t: Theme) -> 
         _core.row([ui.label(project.name, weight="semibold", theme=t),
                    ui.label(project.version, size="xs", mono=True, color="text_muted", theme=t),
                    _core.space(width="fill"), git,
+                   ui.icon_button("text-search", d.search.open, size="sm", tooltip=tr("Find in project…"),
+                                  keys=_keymap.shown_keys("find_in_project"), theme=t),
                    ui.icon_button("folder-open", p.show("open"), size="sm", tooltip=tr("Open another project"),
                                   theme=t)], spacing=6, align="center"),
         ui.label(str(project.root), size="xs", color="text_muted", wrap=False, theme=t),
@@ -749,6 +756,7 @@ def view(d: "Designer", t: Theme) -> Any:
                             on_press=p.files.focus, on_right_press=lambda: p.files.open_menu(""))
     return _core.column([
         _header(d, p, project, t),
+        _trust.banner(d, t),
         _problems(p, t),
         _busy(p, t),
         _workspace.toolbar_view(p.files, t),
