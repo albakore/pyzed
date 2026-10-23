@@ -888,6 +888,7 @@ image(
     rotation=0.0,
     scale=1.0,
     size=None,
+    background=None,
 )
 ```
 
@@ -905,6 +906,7 @@ A bitmap image (PNG, JPEG, GIF, BMP, WebP…) from a path or `bytes`, or raw RGB
 | `rotation` | Rotation in degrees. |
 | `scale` | Scale. |
 | `size` | `(width, height)` when `source` is raw RGBA pixels. |
+| `background` | Decode on a worker thread: `None` (the default) does it for files of 256 KB and up, `True` always, `False` never. Until it is ready the image shows nothing, so give it a `width` and `height` to keep its space. |
 
 ```python
 pz.image("photo.jpg", width=320, content_fit="cover", radius=8)

@@ -1005,7 +1005,7 @@ def _apply_classes(widget: Any, names: Iterable[Any], id: Optional[str] = None, 
 _viewport: Optional[Tuple[float, float]] = None
 #: The size a screenshot renders at (set while ``pz.screenshot`` runs).
 _screen: Optional[Tuple[float, float]] = None
-_QUERY_KEYS = ("min_width", "max_width", "min_height", "max_height", "orientation", "theme")
+_QUERY_KEYS = ("min_width", "max_width", "min_height", "max_height", "orientation", "theme", "pointer", "device")
 
 
 def viewport() -> Tuple[float, float]:
@@ -1038,7 +1038,9 @@ def _parse_query(text: str) -> Tuple[Tuple[str, Any], ...]:
             raise ValueError(f"orientation is portrait or landscape, not {value!r}")
         if key == "theme" and value not in ("dark", "light"):
             raise ValueError(f"theme is dark or light, not {value!r}")
-        out.append((key, value if key in ("orientation", "theme") else _px(value)))
+        if key == "pointer" and value not in ("coarse", "fine", "none"):
+            raise ValueError(f"pointer is coarse, fine or none, not {value!r}")
+        out.append((key, value if key in ("orientation", "theme", "pointer", "device") else _px(value)))
     return tuple(out)
 
 
@@ -1062,6 +1064,16 @@ def _matches(conditions: Iterable[Tuple[str, Any]]) -> bool:
                 dark = True
             if (value == "dark") != bool(dark):
                 return False
+        if key in ("pointer", "device"):
+            from .devices import device
+
+            current = device()
+            if key == "device" and current.name != value:
+                return False
+            # like CSS: coarse for touch screens, none when nothing points (TVs), fine otherwise
+            pointer = "coarse" if current.touch else ("fine" if current.pointer else "none")
+            if key == "pointer" and pointer != value:
+                return False
     return True
 
 
@@ -1069,7 +1081,9 @@ def media(query: Optional[str] = None, **conditions: Any) -> bool:
     """Whether the window being drawn matches a media query, like CSS ``@media``.
 
     ``pz.media("max_width: 600")``, ``pz.media(min_width=768, orientation="landscape")`` or a
-    breakpoint name: ``pz.media("md")`` (768 px wide and up).
+    breakpoint name: ``pz.media("md")`` (768 px wide and up). ``pointer`` (``coarse`` on touch
+    screens, ``fine`` with a mouse, ``none`` on a TV) and ``device`` (a profile name) ask about
+    the device (see ``pyzed.devices``).
     """
     parsed = list(_parse_query(query)) if query else []
     for key, value in conditions.items():

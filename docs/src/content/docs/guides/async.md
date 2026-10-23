@@ -88,6 +88,48 @@ class Quotes(pz.App):
 `then` is called even when `function` returns nothing (with `None`), so it also works as
 "tell me when it's done": `Command.perform(db.migrate, lambda _: self.reload())`.
 
+## Off the UI thread: `@pz.background`
+
+`@pz.background` turns a function into a command: calling it returns a `Command.perform` that runs
+it on a worker thread (an `async def` on Pyzed's asyncio loop) and hands the result to `then`, back
+on the UI thread. `then` is a callable or the name of a method of the same object:
+
+```python
+class Search(pz.App):
+    query = ""
+    rows = []
+
+    def typed(self, text):
+        self.query = text
+        return self.search(text)             # a command: starts the search
+
+    @pz.background(then="show", latest=True)
+    def search(self, text):
+        return database.find(text)          # on a worker thread: don't touch self here
+
+    def show(self, rows):                    # back on the UI thread
+        self.rows = rows
+
+    def view(self):
+        return pz.column([ui.input(self.query, on_change=self.typed), table(self.rows)])
+```
+
+- `latest=True` delivers only the result of the newest call. Typing fast starts one search per
+  key, and an older, slower search never replaces the result of a newer one.
+- A generator function yields progress: `then` gets each value.
+- Without `then`, the result goes to `update` as a message.
+- `process=True` runs the function in another process, with its own Python. Python runs one
+  thread at a time (the GIL), so pure Python that keeps the CPU busy (no NumPy, no I/O) still slows
+  the UI from a thread; from a process it doesn't. The function must be at the top of a module and
+  its arguments and result picklable (plain data), and it cannot be a generator. Pyzed stops the
+  worker processes when the app closes.
+
+```python
+@pz.background(process=True, then=lambda primes: print(len(primes)))
+def primes(limit):
+    return [n for n in range(2, limit) if all(n % d for d in range(2, int(n ** 0.5) + 1))]
+```
+
 ## Progress: async generators
 
 Each `yield` reaches `update` while the work keeps going in the background:

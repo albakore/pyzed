@@ -32,6 +32,20 @@ def test_rendering_settings_become_environment_variables():
         rendering.Rendering(renderer="fast")
     assert rendering.Rendering.from_table({"renderer": "CPU", "vsync": "maybe", "x": 1}).to_table() == {
         "renderer": "cpu"}
+    tuned = rendering.Rendering(vsync="on", present="mailbox", antialiasing="8x", frame_latency="2",
+                                memory="performance", gpu=" intel ", max_fps=30, background_fps=0)
+    assert tuned.env() == {"ICED_PRESENT_MODE": "mailbox", "ICED_MSAA": "8", "ICED_FRAME_LATENCY": "2",
+                           "ICED_MEMORY": "performance", "WGPU_ADAPTER_NAME": "intel", "ICED_MAX_FPS": "30",
+                           "ICED_BACKGROUND_FPS": "0"}
+    # the frame rate limits apply to the CPU renderer too
+    assert rendering.Rendering(renderer="cpu", antialiasing="off", max_fps=20).env() == {
+        "ICED_BACKEND": "tiny-skia", "ICED_MAX_FPS": "20"}
+    assert rendering.Rendering.from_table({"max_fps": "fast", "background_fps": "pause", "gpu": 3}).to_table() == {
+        "background_fps": 0}
+    with pytest.raises(ValueError, match="max_fps"):
+        rendering.Rendering(max_fps=-5)
+    with pytest.raises(ValueError, match="antialiasing"):
+        rendering.Rendering(antialiasing="32x")
     env = {"ICED_BACKEND": "wgpu"}  # what the user sets wins
     assert rendering.Rendering(renderer="cpu").apply(env) == [] and env["ICED_BACKEND"] == "wgpu"
     assert pz.Rendering is rendering.Rendering and pz.App.rendering is None
@@ -47,6 +61,9 @@ def test_rendering_is_saved_in_pyproject(project):
     rendering.save(root, rendering.Rendering(renderer="gpu", vsync="off"))
     assert rendering.find(root).to_table() == {"renderer": "gpu", "vsync": "off"}
     assert (root / "pyproject.toml").read_text().count("[tool.pyzed.rendering]") == 1
+    rendering.save(root, rendering.Rendering(max_fps=60, background_fps=0, gpu="nvidia"))
+    assert 'gpu = "nvidia"\nmax_fps = 60\nbackground_fps = 0\n' in (root / "pyproject.toml").read_text()
+    assert rendering.find(root) == rendering.Rendering(max_fps=60, background_fps=0, gpu="nvidia")
     rendering.save(root, rendering.Rendering())  # all "auto": the table goes away
     assert "rendering" not in (root / "pyproject.toml").read_text()
 

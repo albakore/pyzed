@@ -312,15 +312,16 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
     @gated()
     def project_settings(path: str = ".") -> str:
         """The project's own settings: its renderer ([tool.pyzed.rendering]: renderer auto/gpu/cpu, gpu_api,
-        power, vsync) and the code editor and designer preferences it sets for everyone who opens it
+        gpu, power, vsync, present, antialiasing, frame_latency, memory, max_fps, background_fps) and the code editor and designer preferences it sets for everyone who opens it
         (.pyzed/settings.json), with every key and its default."""
         return _json(projects.settings(base, path))
 
     @gated()
-    def set_project_settings(rendering: Optional[Dict[str, str]] = None, editor: Optional[Dict[str, Any]] = None,
+    def set_project_settings(rendering: Optional[Dict[str, Any]] = None, editor: Optional[Dict[str, Any]] = None,
                              designer: Optional[Dict[str, Any]] = None, path: str = ".") -> str:
         """Changes the project's settings. rendering, e.g. {"renderer": "cpu"} for virtual machines or
-        {"renderer": "gpu"} for shaders ("auto" lets Pyzed decide); editor and designer, e.g.
+        {"renderer": "gpu"} for shaders, {"max_fps": 30, "background_fps": 0} for touch panels and batteries
+        ("auto" lets Pyzed decide); editor and designer, e.g.
         {"tab_size": 2, "hard_tabs": false} or {"grid": 4} (null removes a key, so the user's own value applies)."""
         return _json(projects.set_settings(base, path, rendering=rendering, editor=editor, designer=designer))
 

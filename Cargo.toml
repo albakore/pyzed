@@ -23,7 +23,7 @@ iced = { version = "0.14", default-features = false, features = [
     "wayland",
     "advanced",
     "svg",
-    "image",
+    "image-without-codecs",
     "canvas",
     "markdown",
     "qr_code",
@@ -44,7 +44,11 @@ pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
 two-face = { version = "0.5", default-features = false, features = ["syntect-default-fancy"] }
 elsa = "1.11"
 png = "0.18"
-image = "0.25"
+# Every format the image crate reads, without the AVIF encoder (rav1e) and OpenEXR, which
+# double the codecs' size for formats apps rarely load.
+image = { version = "0.25", default-features = false, features = [
+    "rayon", "png", "jpeg", "gif", "webp", "bmp", "ico", "tiff", "qoi", "pnm", "tga", "dds", "hdr", "ff",
+] }
 bytes = "1"
 # Audio engine (pyzed.audio): FFT and WAV files; devices and MIDI below.
 rustfft = "6.4"
@@ -93,25 +97,58 @@ asio = ["cpal/asio"]
 jack = ["alsa", "cpal/jack"]
 
 [profile.release]
-lto = "thin"
-codegen-units = 4
+# One codegen unit with fat LTO drops the code no app reaches across crates: the wheel's library
+# goes from 34 to under 29 MB (CI skips both to build faster, see ci.yml).
+lto = "fat"
+codegen-units = 1
 strip = true
 
 # Iced comes from Pyzed's fork: the 0.14 release with Pyzed's changes (effect layers, tab widths,
 # `iced_winit::quiet`, the Android handoff) and the community pull requests listed in its PYZED.md.
 # To update it, push to the `pyzed-0.14` branch of albakore/iced and bump `rev` here.
 [patch.crates-io]
-iced = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_core = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_debug = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_futures = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_graphics = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_program = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_renderer = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_runtime = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_selector = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_test = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_wgpu = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_widget = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
-iced_winit = { git = "https://github.com/albakore/iced", rev = "54d4831bb13c15beb4856dafe5f8fe77fb6e221d" }
+iced = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_core = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_debug = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_futures = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_graphics = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_program = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_renderer = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_runtime = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_selector = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_test = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_wgpu = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_widget = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced_winit = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+
+# Code that runs once (parsing shaders, SVG files and syntax definitions, D-Bus for the tray and
+# the system theme, the clipboard) is optimized for size: the hot paths keep opt-level 3.
+[profile.release.package.naga]
+opt-level = "s"
+[profile.release.package.zbus]
+opt-level = "s"
+[profile.release.package.zvariant]
+opt-level = "s"
+[profile.release.package.ksni]
+opt-level = "s"
+[profile.release.package.mundy]
+opt-level = "s"
+[profile.release.package.arboard]
+opt-level = "s"
+[profile.release.package.usvg]
+opt-level = "s"
+[profile.release.package.regex-syntax]
+opt-level = "s"
+[profile.release.package.syntect]
+opt-level = "s"
+[profile.release.package.two-face]
+opt-level = "s"
+[profile.release.package.plist]
+opt-level = "s"
+[profile.release.package.quick-xml]
+opt-level = "s"
+[profile.release.package.tiff]
+opt-level = "s"
+[profile.release.package.rfd]
+opt-level = "s"

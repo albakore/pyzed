@@ -75,16 +75,30 @@ updates, the log file).
 | **Renderer** | Auto, GPU, CPU | *Auto* (the default) uses the GPU when there is a real one and the CPU renderer elsewhere (virtual machines, remote desktops). *GPU* always uses it: [shaders](/pyzed/shading/shaders/) need it. *CPU* (tiny-skia) starts faster and uses less memory, and works everywhere. |
 | **Graphics API** | Auto, Vulkan, Metal, DirectX 12, OpenGL | The GPU's API. *Auto* tries Vulkan, Metal or DirectX 12, then OpenGL. |
 | **GPU** | Auto, Fast, Saves battery | On laptops with two GPUs: the dedicated one or the integrated one. |
+| **GPU name** | Any, or part of a name | Picks the GPU by name (`nvidia`, `intel`, `radeon`) when the machine has several; Enter saves it. |
 | **Vsync** | Auto, On, Off | *On* waits for the screen (no tearing); *Off* draws as fast as it can (to measure performance). |
+| **Present mode** | Auto, Fifo, Relaxed, Mailbox, Immediate | Wins over Vsync. *Mailbox* keeps only the newest frame (low latency without tearing), *Immediate* shows each frame at once (lowest latency, may tear), *Fifo* waits for the screen (least power). A mode the system lacks falls back to vsync on or off. |
+| **Antialiasing** | Auto, Off, 2x, 4x, 8x, 16x | Smooths the edges of canvas drawings, charts and curves. *Auto* is 4x; *Off* saves GPU work on weak devices. |
+| **Frame latency** | Auto, 1, 2, 3 | Frames the GPU may prepare ahead of the screen. 1 (the default) answers input soonest; 2 or 3 smooth heavy scenes on slow GPUs. |
+| **GPU memory** | Auto, Low, Performance | *Low* (the default) allocates in small blocks freed soon; *Performance* keeps large blocks for fewer allocations. |
+| **Max frame rate** | Screen, 30, 60, 90, 120, 144 | The most frames per second animations draw. Clicks, keys and new content are always drawn at once. |
+| **Background frame rate** | Same, Pause, 5, 15, 30 | The same for windows without the focus; *Pause* stops their animations until they get it back. |
 
 ![The project's renderer](../../../assets/editor/settings-rendering.png)
 
 ```toml
 [tool.pyzed.rendering]
-renderer = "gpu"      # "auto", "gpu" or "cpu"
-gpu_api = "vulkan"    # "auto", "vulkan", "metal", "dx12" or "gl"
-power = "low"         # "auto", "high" or "low"
-vsync = "off"         # "auto", "on" or "off"
+renderer = "gpu"         # "auto", "gpu" or "cpu"
+gpu_api = "vulkan"       # "auto", "vulkan", "metal", "dx12" or "gl"
+gpu = "intel"            # part of the GPU's name, when there are several
+power = "low"            # "auto", "high" or "low"
+vsync = "off"            # "auto", "on" or "off"
+present = "mailbox"      # "auto", "fifo", "fifo_relaxed", "mailbox" or "immediate"
+antialiasing = "8x"      # "auto", "off", "2x", "4x", "8x" or "16x"
+frame_latency = "2"      # "auto", "1", "2" or "3"
+memory = "performance"   # "auto", "low" or "performance"
+max_fps = 30             # 0 follows the screen
+background_fps = 0       # 0 pauses animations of windows without the focus
 ```
 
 In code, `App.rendering` does the same for one app, and wins over `pyproject.toml`:
@@ -95,7 +109,9 @@ class Game(pz.App):
 ```
 
 The settings become the environment variables Iced and wgpu read (`ICED_BACKEND`, `WGPU_BACKEND`,
-`WGPU_POWER_PREF`, `ICED_PRESENT_MODE`); one you set yourself still wins. While a project sets its own renderer,
+`WGPU_ADAPTER_NAME`, `WGPU_POWER_PREF`, `ICED_PRESENT_MODE`, `ICED_MSAA`, `ICED_FRAME_LATENCY`, `ICED_MEMORY`,
+`ICED_MAX_FPS`, `ICED_BACKGROUND_FPS`); one you set yourself still wins, so a deployed app can be tuned
+without changing its code. While a project sets its own renderer,
 Run always starts the form in its own process, since the designer's window already has one.
 
 ## Appearance

@@ -1261,7 +1261,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
         }
         Kind::Image(props) => extra::render_image(
             props,
-            props.source.decode(&ctx.caches.images),
+            props.source.decode(&ctx.caches.images, props.background),
             &ctx.caches.image_masks,
         ),
         Kind::Canvas(props) => {

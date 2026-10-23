@@ -87,6 +87,49 @@ class Quotes(pz.App):
 `then` se llama aunque `funcion` no devuelva nada (con `None`), así que también sirve para
 "avísame cuando termine": `Command.perform(db.migrate, lambda _: self.reload())`.
 
+## Fuera del hilo de la interfaz: `@pz.background`
+
+`@pz.background` convierte una función en un comando: llamarla devuelve un `Command.perform` que la
+ejecuta en un hilo aparte (un `async def` en el bucle asyncio de Pyzed) y entrega el resultado a
+`then`, de vuelta en el hilo de la interfaz. `then` es un callable o el nombre de un método del
+mismo objeto:
+
+```python
+class Buscador(pz.App):
+    consulta = ""
+    filas = []
+
+    def escrito(self, texto):
+        self.consulta = texto
+        return self.buscar(texto)            # un comando: lanza la búsqueda
+
+    @pz.background(then="mostrar", latest=True)
+    def buscar(self, texto):
+        return base.buscar(texto)            # en un hilo aparte: no toques self aquí
+
+    def mostrar(self, filas):                # de vuelta en el hilo de la interfaz
+        self.filas = filas
+
+    def view(self):
+        return pz.column([ui.input(self.consulta, on_change=self.escrito), tabla(self.filas)])
+```
+
+- `latest=True` entrega solo el resultado de la llamada más nueva. Escribir rápido lanza una
+  búsqueda por tecla, y una búsqueda vieja y más lenta nunca reemplaza el resultado de una nueva.
+- Una función generadora va dando progreso: `then` recibe cada valor.
+- Sin `then`, el resultado llega a `update` como mensaje.
+- `process=True` ejecuta la función en otro proceso, con su propio Python. Python ejecuta un hilo a
+  la vez (el GIL), así que el Python puro que tiene la CPU ocupada (sin NumPy, sin E/S) sigue
+  frenando la interfaz desde un hilo; desde un proceso, no. La función debe estar en el nivel
+  superior de un módulo, sus argumentos y su resultado deben poder serializarse con pickle (datos
+  simples), y no puede ser un generador. Pyzed detiene los procesos al cerrar la app.
+
+```python
+@pz.background(process=True, then=lambda primos: print(len(primos)))
+def primos(limite):
+    return [n for n in range(2, limite) if all(n % d for d in range(2, int(n ** 0.5) + 1))]
+```
+
 ## Progreso: generadores async
 
 Cada `yield` llega a `update` mientras el trabajo sigue en segundo plano:

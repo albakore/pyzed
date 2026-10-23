@@ -257,6 +257,8 @@ class SettingsController:
         #: The moment Reset all was pressed once; a second press within a few seconds resets.
         self.reset_armed = 0.0
         self._rendering: Optional[Tuple[Path, float, _rendering.Rendering]] = None
+        #: The GPU name being typed in the rendering page (saved with Enter).
+        self.gpu_draft: Optional[str] = None
 
     @property
     def store(self) -> _profiles.Store:
@@ -343,7 +345,15 @@ class SettingsController:
             self._rendering = (root, stamp, _rendering.find(root))
         return self._rendering[2]
 
-    def set_rendering(self, key: str, value: str) -> None:
+    def edit_gpu(self, value: str) -> None:
+        self.gpu_draft = value
+
+    def save_gpu(self, *_: Any) -> None:
+        if self.gpu_draft is not None:
+            self.set_rendering("gpu", self.gpu_draft.strip())
+        self.gpu_draft = None
+
+    def set_rendering(self, key: str, value: Any) -> None:
         current = self.rendering()
         root = self.project_root
         if current is None or root is None:
@@ -477,14 +487,56 @@ def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
                  description=tr("Auto tries Vulkan, Metal or DirectX 12, then OpenGL"), theme=t),
         ui.field(tr("GPU"), seg("power", (("auto", "Auto"), ("high", "Fast"), ("low", "Saves battery")), cpu),
                  description=tr("On laptops with two: the dedicated GPU or the integrated one"), theme=t),
+        ui.field(tr("GPU name"), ui.label(tr("Not used by the CPU renderer"), size="sm", color="text_muted",
+                                          theme=t) if cpu else ui.input(
+            c.gpu_draft if c.gpu_draft is not None else r.gpu, c.edit_gpu, placeholder=tr("Any"),
+            on_submit=c.save_gpu, width=200, theme=t),
+                 description=tr("Part of the name of the GPU to use (nvidia, intel, radeon); Enter saves it"),
+                 theme=t),
         ui.field(tr("Vsync"), seg("vsync", (("auto", "Auto"), ("on", "On"), ("off", "Off")), cpu),
                  description=tr("On waits for the screen (no tearing); off draws as fast as it can"), theme=t),
+        ui.field(tr("Present mode"), seg("present", (("auto", "Auto"), ("fifo", "Fifo"), ("fifo_relaxed", "Relaxed"),
+                                                   ("mailbox", "Mailbox"), ("immediate", "Immediate")), cpu),
+                 description=tr("Wins over vsync. Mailbox: low latency without tearing; Immediate: lowest latency, "
+                                "may tear; Fifo: least power"), theme=t),
+    ]
+    fps = (("auto", "Screen"), ("30", "30"), ("60", "60"), ("90", "90"), ("120", "120"), ("144", "144"))
+    background = (("auto", "Same"), ("pause", "Pause"), ("5", "5"), ("15", "15"), ("30", "30"))
+
+    def fps_seg(key: str, options: Sequence[Tuple[str, str]], value: Optional[int]) -> Any:
+        current = "auto" if value is None or (key == "max_fps" and value == 0) else (
+            "pause" if value == 0 else str(value))
+        if current not in dict(options):
+            options = (*options, (current, current))
+        labels = {tr(label): v for v, label in options}
+        selected = next(label for label, v in labels.items() if v == current)
+        return ui.segmented(list(labels), selected, lambda label: c.set_rendering(key, labels[label]), theme=t)
+
+    quality = [
+        ui.field(tr("Antialiasing"), seg("antialiasing", (("auto", "Auto"), ("off", "Off"), ("2x", "2x"),
+                                                        ("4x", "4x"), ("8x", "8x"), ("16x", "16x")), cpu),
+                 description=tr("Smooth edges of canvas drawings, charts and curves; Auto is 4x"), theme=t),
+        ui.field(tr("Frame latency"), seg("frame_latency", (("auto", "Auto"), ("1", "1"), ("2", "2"), ("3", "3")), cpu),
+                 description=tr("Frames the GPU may prepare ahead: 1 answers input soonest, 2 or 3 smooth heavy "
+                                "scenes"), theme=t),
+        ui.field(tr("GPU memory"), seg("memory", (("auto", "Auto"), ("low", "Low"), ("performance", "Performance")),
+                                       cpu),
+                 description=tr("Low frees memory soon; Performance keeps large blocks for fewer allocations"),
+                 theme=t),
+        ui.field(tr("Max frame rate"), fps_seg("max_fps", fps, r.max_fps),
+                 description=tr("The most frames per second animations draw; input is always drawn at once"),
+                 theme=t),
+        ui.field(tr("Background frame rate"), fps_seg("background_fps", background, r.background_fps),
+                 description=tr("For windows without the focus: Pause stops their animations until they get it "
+                                "back"), theme=t),
     ]
     env = "  ".join(f"{k}={v}" for k, v in r.env().items()) or tr("Nothing: Pyzed decides")
     return [
         ui.settings_group(tr("Rendering"), rows, theme=t,
                           description=tr("Saved in pyproject.toml ([tool.pyzed.rendering]): used by Run, pz.run and "
                                          "the exported app")),
+        ui.settings_group(tr("Quality and frame rate"), quality, theme=t,
+                          description=tr("Lower them on touch panels, phones and laptops on battery")),
         ui.label(f"{tr('Environment')}: {env}", size="xs", mono=True, color="text_muted", theme=t),
     ]
 

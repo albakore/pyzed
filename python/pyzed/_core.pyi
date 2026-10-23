@@ -126,6 +126,12 @@ class Command:
         """Focuses the `text_input` (or editor) with the given `id`."""
         ...
     @staticmethod
+    def focus_direction(direction: Any) -> Any:
+        """Moves the keyboard focus to the nearest field `"up"`, `"down"`, `"left"` or `"right"`
+        on the screen (TV remotes, rotary knobs; `App.arrow_focus` does it with the arrows).
+        """
+        ...
+    @staticmethod
     def focus_next() -> Any:
         """Moves the keyboard focus to the next field of the window (what Tab does), wrapping around."""
         ...
@@ -145,6 +151,18 @@ class Command:
     def fold_line(id: Any, line: Any, fold: Any = ...) -> Any:
         """Folds the block that starts at `line` (1-based) of the `code_editor` with the given
         `id` (`fold=False` unfolds it).
+        """
+        ...
+    @staticmethod
+    def hide_cursor(hidden: Any = ..., window: Any = ...) -> Any:
+        """Hides the pointer over the window whatever the widgets ask (touch panels, kiosks), or
+        shows it again with `hidden=False`.
+        """
+        ...
+    @staticmethod
+    def list_monitors(then: Any) -> Any:
+        """Asks the system for its monitors and calls `then(monitors)` with a list of
+        `pz.Monitor` (also kept for `pz.monitors()`).
         """
         ...
     @staticmethod
@@ -245,8 +263,17 @@ class Command:
         """Replaces the contents of the `code_editor` with the given `id`."""
         ...
     @staticmethod
-    def set_fullscreen(fullscreen: Any = ..., window: Any = ...) -> Any:
-        """Switches the window between fullscreen and windowed mode."""
+    def set_fullscreen(fullscreen: Any = ..., window: Any = ..., monitor: Any = ..., exclusive: Any = ...) -> Any:
+        """Switches the window between fullscreen and windowed mode. `monitor` (an index of
+        `pz.monitors()`) moves it to that screen; `exclusive=True` takes the screen over with its
+        own video mode (lower latency on Windows and X11; Wayland keeps a borderless window).
+        """
+        ...
+    @staticmethod
+    def set_window_level(level: Any, window: Any = ...) -> Any:
+        """Keeps the window above (`"top"`) or below (`"bottom"`) the others, or back to
+        `"normal"`.
+        """
         ...
     @staticmethod
     def show_window_menu(window: Any = ...) -> Any:
@@ -458,8 +485,13 @@ def grid(children: Any = ..., *, columns: Any = ..., rows: Any = ..., max_width:
 def hover(base: Any, top: Any) -> Any:
     """Shows `top` over `base` only while the mouse hovers it."""
     ...
-def image(source: Any, *, width: Any = ..., height: Any = ..., content_fit: Any = ..., filter: Any = ..., opacity: Any = ..., radius: Any = ..., rotation: Any = ..., scale: Any = ..., size: Any = ...) -> Any:
-    """A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes."""
+def image(source: Any, *, width: Any = ..., height: Any = ..., content_fit: Any = ..., filter: Any = ..., opacity: Any = ..., radius: Any = ..., rotation: Any = ..., scale: Any = ..., size: Any = ..., background: Any = ...) -> Any:
+    """A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes.
+
+    In a running app, files of 256 KB and up decode on a worker thread (`background=None`): the
+    image shows nothing until it is ready, so give it a `width` and `height` to keep its space.
+    `background=True` decodes every file there, `False` decodes on the spot.
+    """
     ...
 def image_size(source: Any) -> Any:
     """The size of the image `source` (a path or the file's bytes), in pixels: `(width, height)`."""
@@ -490,6 +522,11 @@ def markdown(source: Any, *, size: Any = ..., color: Any = ..., link_color: Any 
     """
     ...
 def midi_ports() -> Any: ...
+def monitors() -> Any:
+    """The monitors as dictionaries (`index`, `name`, `x`, `y`, `width`, `height`, `scale`,
+    `refresh_rate`, `primary`); empty before the first window opens.
+    """
+    ...
 def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_double_click: Any = ..., on_enter: Any = ..., on_exit: Any = ..., on_move: Any = ..., on_scroll: Any = ..., on_middle_press: Any = ..., on_middle_release: Any = ..., cursor: Any = ...) -> Any:
     """Detects mouse events over its content.
 
@@ -570,6 +607,14 @@ def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
     ...
 def reduced_motion() -> Any:
     """Whether reduced motion is on."""
+    ...
+def refresh_window(window: Any) -> Any:
+    """`Window.refresh()`: draws an isolated window again after something outside it changed what
+    it shows. Safe from any thread.
+    """
+    ...
+def renderer_info() -> Any:
+    """The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open."""
     ...
 def resizable(content: Any, *, edge: Any = ..., size: Any = ..., min_size: Any = ..., max_size: Any = ..., on_resize: Any = ..., color: Any = ..., hover_color: Any = ..., thickness: Any = ..., handle: Any = ..., width: Any = ..., height: Any = ...) -> Any:
     """A panel whose `edge` ("left", "right", "top" or "bottom") can be dragged to resize
@@ -721,4 +766,7 @@ def window_edges(content: Any, *, border: Any = ..., enabled: Any = ...) -> Any:
     resizes the window: the way to resize windows opened with `decorations=False`. The
     corners take twice as much room. `enabled=False` turns it off (for a maximized window).
     """
+    ...
+def window_options(window: Any) -> Any:
+    """What `window_settings` makes of a `pyzed.Window`, for the tests."""
     ...

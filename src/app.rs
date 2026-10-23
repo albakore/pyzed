@@ -125,6 +125,8 @@ pub enum Message {
     Frame(iced::time::Instant),
     /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
     TabKey(String, bool),
+    /// An arrow no widget used, with `App.arrow_focus`: `on_key` first, then the focus moves.
+    ArrowKey(String, crate::focus::Direction),
     /// Android's back button: `on_back()` first, then the app goes to the background.
     #[cfg(target_os = "android")]
     BackKey,
@@ -210,6 +212,263 @@ fn sync_targets(py: Python<'_>, state: &State) {
     TARGETS.with(|t| *t.borrow_mut() = Some(targets));
 }
 
+// ---------------------------------------------------------------------------
+// Isolated windows (`Window.isolated`)
+// ---------------------------------------------------------------------------
+
+/// The windows whose messages were handled since the last rebuild, the windows that asked to be
+/// drawn again (`Window.refresh()`, from any thread, by object address) and whether something
+/// whose window is unknown happened (`pz.post`, which also brings async results and lifecycle
+/// hooks): then every window is rebuilt.
+#[derive(Default)]
+struct Touched {
+    windows: std::collections::HashSet<window::Id>,
+    refreshed: Vec<usize>,
+    all: bool,
+}
+
+static TOUCHED: LazyLock<Mutex<Touched>> = LazyLock::new(Mutex::default);
+
+/// The last drawing of an isolated window: its root widget and what else it depended on.
+struct Drawn {
+    root: Py<crate::widget::Widget>,
+    epoch: Py<PyAny>,
+    palette: Option<Vec<String>>,
+}
+
+thread_local! {
+    static DRAWN: RefCell<HashMap<window::Id, Drawn>> = RefCell::new(HashMap::new());
+    /// The windows `unchanged` let keep their drawing in the rebuild that follows it.
+    static KEEP: RefCell<std::collections::HashSet<window::Id>> =
+        RefCell::new(std::collections::HashSet::new());
+}
+
+fn touch(id: window::Id) {
+    TOUCHED.lock().unwrap().windows.insert(id);
+}
+
+fn isolated(obj: &Bound<'_, PyAny>) -> bool {
+    obj.getattr("isolated")
+        .and_then(|v| v.is_truthy())
+        .unwrap_or(false)
+}
+
+/// What every isolated view depends on besides its window (language, styles, reloaded code).
+fn isolation_epoch(py: Python<'_>) -> Option<Py<PyAny>> {
+    static EPOCH: pyo3::sync::PyOnceLock<Py<PyAny>> = pyo3::sync::PyOnceLock::new();
+    let epoch = EPOCH
+        .get_or_try_init(py, || {
+            py.import("pyzed.app")
+                .and_then(|m| m.getattr("_isolation_epoch"))
+                .map(Bound::unbind)
+        })
+        .ok()?;
+    epoch.bind(py).call0().ok().map(Bound::unbind)
+}
+
+/// Asked by iced after each update: the isolated windows that no message reached, that did not
+/// call `refresh()` and whose theme, language and styles are the same keep their layout and are
+/// not redrawn; their `view()` is not called either.
+fn unchanged(ids: &[window::Id]) -> Vec<window::Id> {
+    let touched = std::mem::take(&mut *TOUCHED.lock().unwrap());
+    KEEP.with(|keep| keep.borrow_mut().clear());
+    if touched.all || DRAWN.with(|drawn| drawn.borrow().is_empty()) {
+        return Vec::new();
+    }
+    let kept: Vec<window::Id> = Python::attach(|py| {
+        let Some(epoch) = isolation_epoch(py) else {
+            return Vec::new();
+        };
+        TARGETS.with(|targets| {
+            let targets = targets.borrow();
+            let Some(targets) = targets.as_ref() else {
+                return Vec::new();
+            };
+            DRAWN.with(|drawn| {
+                let drawn = drawn.borrow();
+                ids.iter()
+                    .copied()
+                    .filter(|id| !touched.windows.contains(id))
+                    .filter(|id| {
+                        let (Some(last), Some(obj)) = (drawn.get(id), targets.windows.get(id))
+                        else {
+                            return false;
+                        };
+                        let obj = obj.bind(py);
+                        !touched.refreshed.contains(&(obj.as_ptr() as usize))
+                            && isolated(obj)
+                            && last.epoch.bind(py).eq(epoch.bind(py)).unwrap_or(false)
+                            && palette_key(obj) == last.palette
+                    })
+                    .collect()
+            })
+        })
+    });
+    KEEP.with(|keep| keep.borrow_mut().extend(kept.iter().copied()));
+    kept
+}
+
+/// The root widget of a window's view: the last one when [`unchanged`] kept it, otherwise a new
+/// one from Python (remembered when the window is isolated).
+fn view_root(
+    py: Python<'_>,
+    id: window::Id,
+    obj: &Bound<'_, PyAny>,
+) -> PyResult<Py<crate::widget::Widget>> {
+    if KEEP.with(|keep| keep.borrow_mut().remove(&id))
+        && let Some(root) =
+            DRAWN.with(|drawn| drawn.borrow().get(&id).map(|d| d.root.clone_ref(py)))
+    {
+        return Ok(root);
+    }
+    let method = if obj.hasattr("__pyzed_view__").unwrap_or(false) {
+        "__pyzed_view__"
+    } else {
+        "view"
+    };
+    let root = obj
+        .call_method0(method)
+        .and_then(|w| crate::widget::child(&w))?;
+    DRAWN.with(|drawn| {
+        let mut drawn = drawn.borrow_mut();
+        match isolation_epoch(py).filter(|_| isolated(obj)) {
+            Some(epoch) => {
+                drawn.insert(
+                    id,
+                    Drawn {
+                        root: root.clone_ref(py),
+                        epoch,
+                        palette: palette_key(obj),
+                    },
+                );
+            }
+            None => {
+                drawn.remove(&id);
+            }
+        }
+    });
+    Ok(root)
+}
+
+/// Builds every window again on the next update, isolated ones included (an image finished
+/// decoding on a worker thread). Safe from any thread.
+pub(crate) fn refresh_all() {
+    TOUCHED.lock().unwrap().all = true;
+    wake();
+}
+
+/// `Window.refresh()`: draws an isolated window again after something outside it changed what
+/// it shows. Safe from any thread.
+#[pyfunction]
+pub fn refresh_window(window: &Bound<'_, PyAny>) {
+    TOUCHED
+        .lock()
+        .unwrap()
+        .refreshed
+        .push(window.as_ptr() as usize);
+    wake();
+}
+
+/// The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open.
+#[pyfunction]
+pub fn renderer_info() -> Option<(String, String)> {
+    iced_winit::quiet::graphics()
+}
+
+/// One monitor for `pz.monitors()`: its name, place and size on the desktop in logical pixels,
+/// scale, refresh rate in hertz and whether it is the primary one.
+#[derive(Clone, Debug)]
+struct MonitorInfo {
+    name: Option<String>,
+    position: (f32, f32),
+    size: (f32, f32),
+    scale: f64,
+    refresh_rate: Option<f64>,
+    primary: bool,
+}
+
+/// The monitors seen when the app started or last asked (`Command.list_monitors`).
+static MONITORS: Mutex<Vec<MonitorInfo>> = Mutex::new(Vec::new());
+
+/// The monitors as dictionaries (`index`, `name`, `x`, `y`, `width`, `height`, `scale`,
+/// `refresh_rate`, `primary`); empty before the first window opens.
+#[pyfunction]
+pub fn monitors(py: Python<'_>) -> PyResult<Bound<'_, PyList>> {
+    monitor_dicts(py, &MONITORS.lock().unwrap())
+}
+
+fn monitor_dicts<'py>(py: Python<'py>, list: &[MonitorInfo]) -> PyResult<Bound<'py, PyList>> {
+    let out = PyList::empty(py);
+    for (index, monitor) in list.iter().enumerate() {
+        let item = PyDict::new(py);
+        item.set_item("index", index)?;
+        item.set_item("name", monitor.name.as_deref())?;
+        item.set_item("x", monitor.position.0)?;
+        item.set_item("y", monitor.position.1)?;
+        item.set_item("width", monitor.size.0)?;
+        item.set_item("height", monitor.size.1)?;
+        item.set_item("scale", monitor.scale)?;
+        item.set_item("refresh_rate", monitor.refresh_rate)?;
+        item.set_item("primary", monitor.primary)?;
+        out.append(item)?;
+    }
+    Ok(out)
+}
+
+/// Reads the monitors into [`MONITORS`] and calls `then(monitors)` when given.
+fn list_monitors(then: Option<PyMsg>) -> Task<Message> {
+    window::list_monitors().map(move |list| {
+        let infos: Vec<MonitorInfo> = list
+            .iter()
+            .map(|monitor| {
+                let size = monitor.size();
+                let position = monitor.position();
+                MonitorInfo {
+                    name: monitor.name().map(str::to_owned),
+                    position: (position.x, position.y),
+                    size: (size.width, size.height),
+                    scale: monitor.scale_factor(),
+                    refresh_rate: monitor
+                        .refresh_rate_millihertz()
+                        .map(|mhz| f64::from(mhz) / 1000.0),
+                    primary: monitor.is_primary(),
+                }
+            })
+            .collect();
+        *MONITORS.lock().unwrap() = infos.clone();
+        match &then {
+            Some(then) => Python::attach(|py| match monitor_dicts(py, &infos) {
+                Ok(list) => {
+                    let monitors = py
+                        .import("pyzed.app")
+                        .and_then(|m| m.call_method1("_monitors", (list,)));
+                    match monitors {
+                        Ok(value) => Message::Call(then.clone(), PyMsg::new(&value)),
+                        Err(err) => {
+                            err.print(py);
+                            Message::Noop
+                        }
+                    }
+                }
+                Err(_) => Message::Noop,
+            }),
+            None => Message::Noop,
+        }
+    })
+}
+
+/// `Window.level` and `Command.set_window_level`: "normal", "top" or "bottom".
+fn window_level(level: &str) -> PyResult<window::Level> {
+    match level {
+        "normal" => Ok(window::Level::Normal),
+        "top" | "always_on_top" => Ok(window::Level::AlwaysOnTop),
+        "bottom" | "always_on_bottom" => Ok(window::Level::AlwaysOnBottom),
+        other => Err(PyValueError::new_err(format!(
+            "invalid window level {other:?}: use \"normal\", \"top\" or \"bottom\""
+        ))),
+    }
+}
+
 /// Runs a pointer callback (`on_move`, `on_enter`, `on_exit`...) as soon as its message arrives,
 /// before iced rebuilds the windows: if it returns `pz.UNCHANGED` the message is dropped and, when
 /// the whole batch was, nothing is rebuilt nor redrawn (a mouse moving over a big view costs
@@ -275,6 +534,7 @@ enum CommandKind {
     Focus(String),
     /// Next (`true`) or previous field of the current window.
     FocusNext(bool),
+    FocusDirection(crate::focus::Direction),
     SelectAll(String),
     SetEditorText(String, String),
     SetEditorCursor(String, usize, usize),
@@ -283,6 +543,7 @@ enum CommandKind {
     SelectEditorRanges(String, Vec<crate::editor::TextRange>),
     ReplaceEditorRanges(String, Vec<crate::editor::RangeEdit>),
     Batch(Vec<Py<Command>>),
+    ListMonitors(Option<PyMsg>),
     Message(PyMsg),
     Perform(PyMsg, Option<PyMsg>),
     ScrollToEnd(String),
@@ -317,7 +578,10 @@ enum WindowOp {
     SystemMenu,
     Minimize,
     ToggleMaximize,
-    Fullscreen(bool),
+    /// Windowed with `None`; fullscreen on a monitor (maybe exclusive) otherwise.
+    Fullscreen(Option<window::Fullscreen>),
+    Level(window::Level),
+    HideCursor(bool),
     Resize(f32, f32),
     Move(f32, f32),
     Focus,
@@ -360,6 +624,19 @@ impl Command {
     #[staticmethod]
     fn focus_previous() -> Self {
         cmd(CommandKind::FocusNext(false))
+    }
+
+    /// Moves the keyboard focus to the nearest field `"up"`, `"down"`, `"left"` or `"right"`
+    /// on the screen (TV remotes, rotary knobs; `App.arrow_focus` does it with the arrows).
+    #[staticmethod]
+    fn focus_direction(direction: &str) -> PyResult<Self> {
+        crate::focus::Direction::parse(direction)
+            .map(|d| cmd(CommandKind::FocusDirection(d)))
+            .ok_or_else(|| {
+                PyValueError::new_err(format!(
+                    "invalid direction {direction:?}: use \"up\", \"down\", \"left\" or \"right\""
+                ))
+            })
     }
 
     /// Focuses the `text_input` with the given `id` and selects all its text.
@@ -572,14 +849,54 @@ impl Command {
         ))
     }
 
-    /// Switches the window between fullscreen and windowed mode.
+    /// Switches the window between fullscreen and windowed mode. `monitor` (an index of
+    /// `pz.monitors()`) moves it to that screen; `exclusive=True` takes the screen over with its
+    /// own video mode (lower latency on Windows and X11; Wayland keeps a borderless window).
     #[staticmethod]
-    #[pyo3(signature = (fullscreen=true, window=None))]
-    fn set_fullscreen(fullscreen: bool, window: Option<Bound<'_, PyAny>>) -> Self {
+    #[pyo3(signature = (fullscreen=true, window=None, monitor=None, exclusive=false))]
+    fn set_fullscreen(
+        fullscreen: bool,
+        window: Option<Bound<'_, PyAny>>,
+        monitor: Option<usize>,
+        exclusive: bool,
+    ) -> Self {
+        let mode = fullscreen.then_some(window::Fullscreen {
+            monitor: monitor.map(window::MonitorIndex),
+            exclusive,
+        });
         cmd(CommandKind::Window(
-            WindowOp::Fullscreen(fullscreen),
+            WindowOp::Fullscreen(mode),
             PyMsg::maybe(&window),
         ))
+    }
+
+    /// Keeps the window above (`"top"`) or below (`"bottom"`) the others, or back to
+    /// `"normal"`.
+    #[staticmethod]
+    #[pyo3(signature = (level, window=None))]
+    fn set_window_level(level: &str, window: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        Ok(cmd(CommandKind::Window(
+            WindowOp::Level(window_level(level)?),
+            PyMsg::maybe(&window),
+        )))
+    }
+
+    /// Hides the pointer over the window whatever the widgets ask (touch panels, kiosks), or
+    /// shows it again with `hidden=False`.
+    #[staticmethod]
+    #[pyo3(signature = (hidden=true, window=None))]
+    fn hide_cursor(hidden: bool, window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::Window(
+            WindowOp::HideCursor(hidden),
+            PyMsg::maybe(&window),
+        ))
+    }
+
+    /// Asks the system for its monitors and calls `then(monitors)` with a list of
+    /// `pz.Monitor` (also kept for `pz.monitors()`).
+    #[staticmethod]
+    fn list_monitors(then: &Bound<'_, PyAny>) -> Self {
+        cmd(CommandKind::ListMonitors(Some(PyMsg::new(then))))
     }
 
     /// Resizes the window to `width` x `height` logical pixels.
@@ -685,6 +1002,7 @@ impl Command {
             CommandKind::Focus(_) => "Command.focus(...)",
             CommandKind::FocusNext(true) => "Command.focus_next()",
             CommandKind::FocusNext(false) => "Command.focus_previous()",
+            CommandKind::FocusDirection(_) => "Command.focus_direction(...)",
             CommandKind::SelectAll(_) => "Command.select_all(...)",
             CommandKind::SetEditorText(..) => "Command.set_editor_text(...)",
             CommandKind::SetEditorCursor(..) => "Command.set_editor_cursor(...)",
@@ -693,6 +1011,7 @@ impl Command {
             CommandKind::SelectEditorRanges(..) => "Command.select_editor_ranges(...)",
             CommandKind::ReplaceEditorRanges(..) => "Command.replace_editor_ranges(...)",
             CommandKind::Batch(_) => "Command.batch(...)",
+            CommandKind::ListMonitors(_) => "Command.list_monitors(...)",
             CommandKind::Message(_) => "Command.message(...)",
             CommandKind::Perform(..) => "Command.perform(...)",
             CommandKind::ScrollToEnd(_) => "Command.scroll_to_end(...)",
@@ -813,6 +1132,10 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             Some(window) => crate::focus::cycle(window, *forward),
             None => Task::none(),
         },
+        CommandKind::FocusDirection(direction) => match state.current.or(state.main) {
+            Some(window) => crate::focus::step(window, *direction),
+            None => Task::none(),
+        },
         CommandKind::SelectAll(id) => Task::batch([
             iced::widget::operation::focus(id.clone()),
             iced::widget::operation::select_all(id.clone()),
@@ -856,6 +1179,7 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 .collect::<Vec<_>>(),
         ),
         CommandKind::Message(msg) => Task::done(Message::Py(msg.clone())),
+        CommandKind::ListMonitors(then) => list_monitors(then.clone()),
         CommandKind::Perform(function, then) => {
             // A coroutine or generator object (not a function) is drained as is.
             let call = !is_deferred(function.0.bind(py));
@@ -877,14 +1201,9 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 WindowOp::SystemMenu => window::show_system_menu(id),
                 WindowOp::Minimize => window::minimize(id, true),
                 WindowOp::ToggleMaximize => window::toggle_maximize(id),
-                WindowOp::Fullscreen(on) => window::set_mode(
-                    id,
-                    if on {
-                        window::Mode::Fullscreen
-                    } else {
-                        window::Mode::Windowed
-                    },
-                ),
+                WindowOp::Fullscreen(mode) => window::set_fullscreen(id, mode),
+                WindowOp::Level(level) => window::set_level(id, level),
+                WindowOp::HideCursor(hidden) => window::set_cursor_hidden(id, hidden),
                 WindowOp::Resize(w, h) => window::resize(id, Size::new(w, h)),
                 WindowOp::Move(x, y) => window::move_to(id, Point::new(x, y).into()),
                 WindowOp::Focus => window::gain_focus(id),
@@ -1073,6 +1392,12 @@ fn close_animated(py: Python<'_>, state: &State, id: window::Id) -> Task<Message
 }
 
 pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
+    // `Window.__pyzed_device__`: fills in what the device profile sets and the window leaves
+    match obj.call_method0("__pyzed_device__") {
+        Ok(_) => {}
+        Err(err) if err.is_instance_of::<pyo3::exceptions::PyAttributeError>(obj.py()) => {}
+        Err(err) => return Err(err),
+    }
     let attr = |name: &str| obj.getattr(name).ok().filter(|v| !v.is_none());
     let size_of = |name: &str| -> PyResult<Option<Size>> {
         attr(name)
@@ -1111,26 +1436,91 @@ pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settin
         Err(err) => return Err(err),
     };
     let overlay = frame.as_deref() == Some("overlay");
-    let decorations = flag("decorations", true)? && (frame.is_none() || overlay);
+    // `Window.kiosk`: fullscreen, no frame, above the others and not closed by the user.
+    let kiosk = flag("kiosk", false)?;
+    let decorations = flag("decorations", true)? && (frame.is_none() || overlay) && !kiosk;
+    // `Window.fullscreen`: True (a borderless window over the screen) or "exclusive"
+    let fullscreen = attr("fullscreen");
+    let exclusive = match &fullscreen {
+        Some(v) => match v.extract::<String>() {
+            Ok(s) if s == "exclusive" => true,
+            Ok(s) if s == "borderless" => false,
+            Ok(s) => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid fullscreen {s:?}: use True, False, \"borderless\" or \"exclusive\""
+                )));
+            }
+            Err(_) => false,
+        },
+        None => false,
+    };
+    let fullscreen = kiosk
+        || fullscreen
+            .map(|v| v.is_truthy())
+            .transpose()?
+            .unwrap_or(false);
+    let level = if flag("always_on_bottom", false)? {
+        window::Level::AlwaysOnBottom
+    } else if flag("always_on_top", false)? || kiosk {
+        window::Level::AlwaysOnTop
+    } else {
+        window::Level::Normal
+    };
+    let monitor = attr("monitor")
+        .map(|v| v.extract::<usize>())
+        .transpose()?
+        .map(window::MonitorIndex);
     Ok(window::Settings {
         size: size_of("size")?.unwrap_or(Size::new(1280.0, 800.0)),
         min_size: size_of("min_size")?,
         max_size: size_of("max_size")?,
         position,
-        resizable: flag("resizable", true)?,
+        resizable: flag("resizable", true)? && !kiosk,
+        closeable: flag("closable", true)? && !kiosk,
+        minimizable: flag("minimizable", true)? && !kiosk,
         decorations,
         transparent: flag("transparent", false)?,
         maximized: flag("maximized", false)?,
-        fullscreen: flag("fullscreen", false)?,
+        fullscreen,
+        exclusive_fullscreen: exclusive,
+        monitor,
+        level,
         exit_on_close_request: false,
         icon: attr("icon").and_then(|v| window_icon(&v)),
         platform_specific: platform_specific(
             frame.is_some(),
             overlay,
             attr("app_id").and_then(|v| v.extract::<String>().ok()),
+            flag("skip_taskbar", false)? || kiosk,
         ),
         ..Default::default()
     })
+}
+
+/// What `window_settings` makes of a `pyzed.Window`, for the tests.
+#[pyfunction]
+pub fn window_options<'py>(
+    py: Python<'py>,
+    window: &Bound<'py, PyAny>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let settings = window_settings(window)?;
+    let out = PyDict::new(py);
+    out.set_item("fullscreen", settings.fullscreen)?;
+    out.set_item("exclusive", settings.exclusive_fullscreen)?;
+    out.set_item("monitor", settings.monitor.map(|index| index.0))?;
+    out.set_item(
+        "level",
+        match settings.level {
+            window::Level::Normal => "normal",
+            window::Level::AlwaysOnTop => "top",
+            window::Level::AlwaysOnBottom => "bottom",
+        },
+    )?;
+    out.set_item("decorations", settings.decorations)?;
+    out.set_item("resizable", settings.resizable)?;
+    out.set_item("closable", settings.closeable)?;
+    out.set_item("minimizable", settings.minimizable)?;
+    Ok(out)
 }
 
 /// The icon of a window (`Window.icon`: a path to an image or its bytes), at most 256 pixels wide; a
@@ -1158,6 +1548,7 @@ fn platform_specific(
     _custom: bool,
     overlay: bool,
     _app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         title_hidden: overlay,
@@ -1171,10 +1562,12 @@ fn platform_specific(
     custom: bool,
     _overlay: bool,
     _app_id: Option<String>,
+    skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         // the drop shadow and rounded corners of Windows 11 for windows without decorations
         undecorated_shadow: custom,
+        skip_taskbar,
         ..Default::default()
     }
 }
@@ -1186,6 +1579,7 @@ fn platform_specific(
     _custom: bool,
     _overlay: bool,
     app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         application_id: app_id.unwrap_or_default(),
@@ -1198,6 +1592,7 @@ fn platform_specific(
     _custom: bool,
     _overlay: bool,
     _app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific
 }
@@ -1382,6 +1777,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
 fn handle(state: &mut State, message: Message) -> Task<Message> {
     state.caches.prune();
     if let Message::Windowed(id, inner) = message {
+        touch(id);
         let previous = state.current.replace(id);
         let task = handle(state, *inner);
         state.current = previous;
@@ -1390,6 +1786,11 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
         } else {
             task.map(move |m| m.in_window(id))
         };
+    }
+    if state.current.is_none()
+        && let Some(main) = state.main
+    {
+        touch(main);
     }
     Python::attach(|py| {
         let target = match state.current {
@@ -1480,6 +1881,22 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             // Nothing to do: the views read the new insets when they are built again.
             #[cfg(target_os = "android")]
             Message::Insets => return Task::none(),
+            Message::ArrowKey(combo, direction) => {
+                let main = state.app.bind(py).clone();
+                let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
+                    None if !target.is(&main) => call_hook(&main, "on_key", (combo,)),
+                    other => other,
+                };
+                match hooked {
+                    Some(Ok(value)) if !value.is_none() => return command_task(py, state, &value),
+                    Some(Err(err)) => err.print(py),
+                    _ => {}
+                }
+                return match state.current.or(state.main) {
+                    Some(window) => crate::focus::step(window, direction),
+                    None => Task::none(),
+                };
+            }
             Message::TabKey(combo, back) => {
                 let main = state.app.bind(py).clone();
                 let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1642,7 +2059,16 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     }
                     _ => Task::none(),
                 };
-                return Task::batch([ask_maximized(id), hook, splash]);
+                let cursor = if obj
+                    .getattr("hide_cursor")
+                    .and_then(|v| v.is_truthy())
+                    .unwrap_or(false)
+                {
+                    window::set_cursor_hidden(id, true)
+                } else {
+                    Task::none()
+                };
+                return Task::batch([ask_maximized(id), hook, splash, cursor, list_monitors(None)]);
             }
             Message::SplashDone => {
                 if state.main.is_some() || state.splash.is_none() {
@@ -1656,6 +2082,14 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             }
             Message::CloseRequested(id) => {
                 let obj = state.window(id).bind(py).clone();
+                // a kiosk is closed by the app (`Command.close_window`), never by the user
+                if obj
+                    .getattr("kiosk")
+                    .and_then(|v| v.is_truthy())
+                    .unwrap_or(false)
+                {
+                    return Task::none();
+                }
                 let allowed = match obj.call_method0("on_close") {
                     Ok(value) => {
                         !(value.is_instance_of::<pyo3::types::PyBool>()
@@ -1686,6 +2120,8 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             }
             Message::WindowResized(id, size) => {
                 let obj = state.window(id).bind(py).clone();
+                // the scale the size was measured with, for `design_size`
+                let _ = obj.setattr("_pyzed_size_scale", scale_factor(state, id));
                 let _ = obj.setattr("window_size", (size.width, size.height));
                 let hook = run_hook(
                     py,
@@ -1719,6 +2155,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     let _ = obj.setattr("window_position", (at.x, at.y));
                 }
                 if let Some(size) = size {
+                    let _ = obj.setattr("_pyzed_size_scale", scale_factor(state, id));
                     let _ = obj.setattr("window_size", (size.width, size.height));
                 }
                 return Task::none();
@@ -1845,15 +2282,7 @@ pub fn format_error(py: Python<'_>, err: &PyErr) -> String {
 fn view(state: &State, id: window::Id) -> Element<'_, Message> {
     let element = Python::attach(|py| {
         let obj = state.window(id).bind(py);
-        let method = if obj.hasattr("__pyzed_view__").unwrap_or(false) {
-            "__pyzed_view__"
-        } else {
-            "view"
-        };
-        let root = obj
-            .call_method0(method)
-            .and_then(|w| crate::widget::child(&w));
-        match root {
+        match view_root(py, id, obj) {
             Ok(root) => {
                 crate::selectable::begin_frame();
                 crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches)))
@@ -1998,12 +2427,13 @@ fn title(state: &State, id: window::Id) -> String {
 
 fn scale_factor(state: &State, id: window::Id) -> f32 {
     Python::attach(|py| {
-        state
-            .window(id)
-            .bind(py)
-            .getattr("scale")
-            .and_then(|s| s.extract::<f32>())
-            .unwrap_or(1.0)
+        let obj = state.window(id).bind(py);
+        // `Window.__pyzed_scale__`: `scale`, times the fit of `design_size` when it has one
+        match obj.call_method0("__pyzed_scale__") {
+            Ok(value) => value.extract::<f32>(),
+            Err(_) => obj.getattr("scale").and_then(|s| s.extract::<f32>()),
+        }
+        .unwrap_or(1.0)
     })
 }
 
@@ -2054,7 +2484,15 @@ pub(crate) fn close_post_channel() {
 
 fn post_stream() -> impl Stream<Item = Message> {
     match POST_RECEIVER.lock().unwrap().take() {
-        Some(receiver) => receiver.boxed(),
+        // A posted message may change what any window shows (isolated ones included); `wake`
+        // only asks for an update.
+        Some(receiver) => receiver
+            .inspect(|message| {
+                if !matches!(message, Message::Noop) {
+                    TOUCHED.lock().unwrap().all = true;
+                }
+            })
+            .boxed(),
         None => stream::pending().boxed(),
     }
 }
@@ -2129,10 +2567,18 @@ static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
 static KEY_HOOKS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 const ON_KEY: u8 = 1;
 const ON_KEY_UP: u8 = 2;
+/// `App.arrow_focus`: the arrow keys no widget used move the focus.
+const ARROW_FOCUS: u8 = 4;
 
 fn key_hooks(obj: &Bound<'_, PyAny>) -> u8 {
     let has = |name: &str| obj.hasattr(name).unwrap_or(false);
-    (if has("on_key") { ON_KEY } else { 0 }) | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+    let arrows = obj
+        .getattr("arrow_focus")
+        .and_then(|v| v.is_truthy())
+        .unwrap_or(false);
+    (if has("on_key") { ON_KEY } else { 0 })
+        | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+        | (if arrows { ARROW_FOCUS } else { 0 })
 }
 
 fn key_message(event: keyboard::Event) -> Option<Message> {
@@ -2252,6 +2698,29 @@ fn key_event(
                 "tab"
             };
             Some(Message::TabKey(combo.into(), modifiers.shift()).in_window(window))
+        }
+        // with `App.arrow_focus`, the arrows no widget used move the focus (remotes, knobs)
+        iced::Event::Keyboard(keyboard::Event::KeyPressed {
+            key:
+                Key::Named(
+                    named @ (Named::ArrowUp
+                    | Named::ArrowDown
+                    | Named::ArrowLeft
+                    | Named::ArrowRight),
+                ),
+            modifiers,
+            ..
+        }) if status == iced::event::Status::Ignored
+            && modifiers.is_empty()
+            && KEY_HOOKS.load(std::sync::atomic::Ordering::Relaxed) & ARROW_FOCUS != 0 =>
+        {
+            let (combo, direction) = match named {
+                Named::ArrowUp => ("up", crate::focus::Direction::Up),
+                Named::ArrowDown => ("down", crate::focus::Direction::Down),
+                Named::ArrowLeft => ("left", crate::focus::Direction::Left),
+                _ => ("right", crate::focus::Direction::Right),
+            };
+            Some(Message::ArrowKey(combo.into(), direction).in_window(window))
         }
         iced::Event::Keyboard(event) => key_message(event).map(|m| m.in_window(window)),
         _ => None,
@@ -2628,6 +3097,7 @@ pub(crate) fn daemon(
     };
 
     iced_winit::quiet::set_filter(quiet);
+    iced_winit::quiet::set_unchanged(unchanged);
     iced::daemon(boot, update, view)
         .title(title)
         .theme(theme_of)

@@ -888,6 +888,7 @@ image(
     rotation=0.0,
     scale=1.0,
     size=None,
+    background=None,
 )
 ```
 
@@ -905,6 +906,7 @@ Una imagen de mapa de bits (PNG, JPEG, GIF, BMP, WebP…) desde una ruta o `byte
 | `rotation` | Rotación en grados. |
 | `scale` | Escala. |
 | `size` | `(ancho, alto)` cuando `source` son píxeles RGBA crudos. |
+| `background` | Decodificar en un hilo aparte: `None` (por defecto) lo hace con archivos desde 256 KB, `True` siempre, `False` nunca. Hasta que esté lista la imagen no muestra nada, así que dale `width` y `height` para conservar su espacio. |
 
 ```python
 pz.image("foto.jpg", width=320, content_fit="cover", radius=8)

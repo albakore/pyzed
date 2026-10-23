@@ -30,6 +30,8 @@ messages, `update(message)`. State lives in instance attributes.
 | `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
+| `arrow_focus` | `False` | The arrow keys no control used move the focus to the nearest control that way (remotes, rotary knobs). |
+| `device` | `None` | The device profile: a name (`"touch"`, `"automotive"`, `"mobile"`, `"kiosk"`, `"tv"`) or a `pz.Device`. See [Devices](/pyzed/guides/devices/). |
 | `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |
 | `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |
 
@@ -173,7 +175,14 @@ forwards them to `app.update()`.
 | `position` | `None` | `"center"` or `(x, y)`. |
 | `resizable` | `True` | Whether it can be resized. |
 | `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |
-| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |
+| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. `fullscreen = "exclusive"` takes the screen over with its own video mode (Windows, X11, macOS). |
+| `monitor` | `None` | The screen it opens on: an index of `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `False` | `True` keeps it above (or below) the other windows. |
+| `closable`, `minimizable` | `True` | `False` removes those buttons. |
+| `skip_taskbar` | `False` | Leaves it out of the taskbar (Windows). |
+| `hide_cursor` | `False` | Hides the pointer over it (touch panels). |
+| `kiosk` | `False` | Fullscreen, no frame or buttons, above the rest, and the user cannot close it. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks). |
+| `design_size`, `stretch` | `None`, `"expand"` | Lays the view out for `design_size` and scales it to the window: `"expand"` grows into the space left, `"fit"` keeps the design centered. See [Design resolution](/pyzed/guides/devices/#design-resolution). |
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
 | `style` | `None` | Its own global style; `None` uses the app's. |
@@ -182,6 +191,7 @@ forwards them to `app.update()`.
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
 | `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
+| `isolated` | `False` | `True` promises that only its own messages change what it shows: messages from other windows and the app's timers skip its `view()`, layout and redraw. See [Many windows](/pyzed/guides/performance/#many-windows). |
 
 | Method | Description |
 | --- | --- |
@@ -194,6 +204,8 @@ forwards them to `app.update()`.
 | `on_close()` | When the user asks to close it; return `False` to prevent it. |
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
+| `refresh()` | Draws an `isolated` window again on the next update (safe from any thread). |
+| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Commands for fullscreen (on a screen, maybe exclusive) and for staying above or below the others. |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 
 **Methods and properties**
@@ -294,6 +306,30 @@ Window.toggle_maximize()
 
 A command that maximizes the window, or restores it when it is maximized.
 
+#### `Window.set_fullscreen`
+
+```python
+Window.set_fullscreen(fullscreen=True, monitor=None, exclusive=False)
+```
+
+A command that makes the window fullscreen (on `monitor`, an index of `pz.monitors()`; `exclusive` takes the screen over), or windowed with `False`.
+
+#### `Window.set_window_level`
+
+```python
+Window.set_window_level(level)
+```
+
+A command that keeps the window above (`"top"`) or below (`"bottom"`) the others, or back to `"normal"`.
+
+#### `Window.refresh`
+
+```python
+Window.refresh()
+```
+
+Draws an `isolated` window again on the next update (safe from any thread); other windows are drawn after every update anyway.
+
 #### `Window.frame_menus`
 
 ```python
@@ -346,10 +382,10 @@ class Shop(pz.App):
 
 ```python
 @dataclass
-class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto')
+class Rendering(renderer='auto', gpu_api='auto', power='auto', vsync='auto', present='auto', antialiasing='auto', frame_latency='auto', memory='auto', gpu='', max_fps=0, background_fps=None)
 ```
 
-How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `"auto"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).
+How the app draws its windows: on the GPU or the CPU, which graphics API and GPU, vsync, antialiasing and frame rate limits. Each field is `"auto"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).
 
 | Parameter | Description |
 | --- | --- |
@@ -357,10 +393,20 @@ How the app draws its windows: on the GPU or the CPU, which graphics API, which 
 | `gpu_api` | `"auto"`, `"vulkan"`, `"metal"`, `"dx12"` or `"gl"`. |
 | `power` | `"auto"`, `"high"` (the dedicated GPU) or `"low"` (the integrated one, saves battery). |
 | `vsync` | `"auto"`, `"on"` (no tearing) or `"off"` (draws as fast as it can). |
+| `present` | How frames reach the screen, winning over `vsync`: `"auto"`, `"fifo"` (least power), `"fifo_relaxed"`, `"mailbox"` (low latency without tearing) or `"immediate"` (lowest latency, may tear). |
+| `antialiasing` | Edges of canvas drawings, charts and curves: `"auto"` (4x), `"off"`, `"2x"`, `"4x"`, `"8x"` or `"16x"`. |
+| `frame_latency` | Frames the GPU may prepare ahead: `"auto"` (1, answers input soonest), `"1"`, `"2"` or `"3"`. |
+| `memory` | `"auto"` (low), `"low"` or `"performance"`: how the GPU renderer allocates memory. |
+| `gpu` | Part of the name of the GPU to use (`"nvidia"`, `"intel"`); `""` lets `power` decide. |
+| `max_fps` | The most frames per second animations draw (`0` follows the screen). Input and new content are drawn at once. |
+| `background_fps` | The same for windows without the focus: `0` pauses their animations, `None` uses `max_fps`. |
 
 ```python
 class Game(pz.App):
     rendering = pz.Rendering(renderer="gpu", vsync="off")
+
+class Kiosk(pz.App):
+    rendering = pz.Rendering(max_fps=30, background_fps=0, antialiasing="off")
 ```
 
 **Methods and properties**
@@ -380,7 +426,7 @@ Builds the settings from a `[tool.pyzed.rendering]` table, ignoring unknown keys
 Rendering.to_table()
 ```
 
-The settings that are not `"auto"`, as written to `pyproject.toml`.
+The settings that are not `"auto"` (or empty), as written to `pyproject.toml`.
 
 #### `Rendering.custom`
 
@@ -405,6 +451,169 @@ Rendering.apply(environ=None)
 ```
 
 Sets the variables of `env()` that are not set yet (yours win); returns the ones it set.
+
+### `safe_area`
+
+```python
+safe_area()
+```
+
+The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`. On Android: the status and navigation bars, the camera cutout and the soft keyboard while it is open; zeros on a desktop. Windows keep clear of them unless `safe_area = False`.
+
+### `monitors`
+
+```python
+monitors()
+```
+
+The connected screens as a list of `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (logical pixels on the desktop), `scale`, `refresh_rate` in hertz and `primary`. Read when a window opens (empty before the first one) and by `Command.list_monitors`.
+
+```python
+class Rear(pz.Window):
+    monitor = 1
+    fullscreen = True
+
+def on_start(self):
+    if len(pz.monitors()) > 1:
+        return Rear().open()
+```
+
+### `Monitor`
+
+A screen from `pz.monitors()`. `size` and `position` give `(width, height)` and `(x, y)`.
+
+**Methods and properties**
+
+#### `Monitor.size`
+
+```python
+Monitor.size  # property
+```
+
+`(width, height)` in logical pixels.
+
+#### `Monitor.position`
+
+```python
+Monitor.position  # property
+```
+
+`(x, y)` of its top left corner on the desktop.
+
+### `Device`
+
+```python
+@dataclass
+class Device(name='desktop', touch=False, pointer=True, kiosk=False, fullscreen=False, arrow_focus=False, scale=1.0, min_target=24.0, design_size=None, stretch='expand', quality='high', reduced_motion=None, rendering={})
+```
+
+A device profile: how the device is used (touch, pointer, arrow keys) and drawn on (scale, design size, quality). Pyzed fills in the window and rendering options the app leaves at their defaults. See [Devices](/pyzed/guides/devices/).
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Its name, for `pz.media("device: ...")`. |
+| `touch` | Touched more than clicked: `pz.media("pointer: coarse")` is true. |
+| `pointer` | `False` hides the pointer over the windows. |
+| `kiosk` | The main window opens as a kiosk. |
+| `fullscreen` | The main window opens fullscreen. |
+| `arrow_focus` | The arrow keys move the focus. |
+| `scale` | Interface scale of the windows that leave `scale` at 1. |
+| `min_target` | The smallest comfortable control in logical pixels. |
+| `design_size` | The window size the app was designed for. |
+| `stretch` | `"expand"`, `"fit"` or `"none"`. |
+| `quality` | `"high"`, `"medium"` or `"low"`: rendering defaults. |
+| `reduced_motion` | `True` turns animations off, `None` follows the system. |
+| `rendering` | `pz.Rendering` fields on top of the quality level. |
+
+```python
+class Panel(pz.App):
+    device = pz.Device("panel", touch=True, kiosk=True, quality="low")
+```
+
+**Methods and properties**
+
+#### `Device.replace`
+
+```python
+Device.replace(**changes)
+```
+
+A copy with some fields changed: `pz.devices.PROFILES["tv"].replace(scale=1.5)`.
+
+#### `Device.window_defaults`
+
+```python
+Device.window_defaults(main)
+```
+
+The window options this profile gives a window that leaves them at their defaults.
+
+#### `Device.tune`
+
+```python
+Device.tune(rendering)
+```
+
+`rendering` (a `pz.Rendering`) with the quality level and `self.rendering` filling in the settings it leaves at their defaults.
+
+### `device`
+
+```python
+device()
+```
+
+The device profile the app runs with (`desktop` before `pz.run` picks one).
+
+```python
+if pz.device().touch:
+    padding = 20
+```
+
+### `set_device`
+
+```python
+set_device(choice)
+```
+
+Uses a profile from now on (a name or a `pz.Device`; `None` picks one again as `pz.run` does) and returns it.
+
+| Parameter | Description |
+| --- | --- |
+| `choice` | A profile name or a `pz.Device`. |
+
+### `background`
+
+```python
+background(function=None, *, then=None, latest=False, process=False)
+```
+
+Makes a function return a command that runs it off the UI thread: on a worker thread (an `async def` on Pyzed's asyncio loop) or, with `process=True`, in another process. The result reaches `then` on the UI thread. See [Off the UI thread](/pyzed/guides/async/#off-the-ui-thread-pzbackground).
+
+| Parameter | Description |
+| --- | --- |
+| `function` | The function (used as `@pz.background` or `@pz.background(...)`). |
+| `then` | A callable, or the name of a method of the same object, that gets the result (each value of a generator); without it the result goes to `update`. |
+| `latest` | `True` delivers only the newest call's result (searches as you type). |
+| `process` | `True` runs it in a worker process, for CPU-heavy pure Python: a function at the top of a module, with picklable arguments and result. |
+
+```python
+@pz.background(then="show", latest=True)
+def search(self, text):
+    return database.find(text)
+```
+
+### `renderer_info`
+
+```python
+renderer_info()
+```
+
+The GPU and the graphics API drawing the windows, like `("NVIDIA GeForce RTX 4060", "Vulkan")`, or `("CPU", "tiny-skia")` with the CPU renderer; `None` until the first window is open.
+
+```python
+def on_start(self):
+    print(pz.renderer_info())
+```
 
 ## Async and subscriptions
 
