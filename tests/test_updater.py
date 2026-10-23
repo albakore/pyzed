@@ -286,14 +286,15 @@ def test_designer_logs_how_long_it_took_to_open(monkeypatch):
     from pyzed.designer import app as designer_app
     from pyzed.designer.app import Designer
 
+    app = Designer(language_servers=False)
     lines = []
     monkeypatch.setattr(designer_app._logs, "event", lambda kind, message, *args: lines.append(message % args))
-    app = Designer(language_servers=False)
     app.started = designer_app.time.perf_counter() - 2.0
     monkeypatch.setattr(_platform, "process_age", lambda: 5.0)
     app._log_startup()
     monkeypatch.setattr(_platform, "process_age", lambda: None)
     app._log_startup()
+    lines = [line for line in lines if line.startswith("Pyzed Design opened")]  # not other messages of the app
     assert lines[0] == "Pyzed Design opened in 5.0 s (3.0 s before its code started)"
     assert lines[1].startswith("Pyzed Design opened in 2.0 s")
     assert _platform.process_age() is None or _platform.process_age() >= 0
