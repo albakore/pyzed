@@ -225,7 +225,7 @@ class ProjectController:
         try:
             project = Project.open(path)
         except (OSError, ValueError) as err:
-            self.d.notify("Could not open the project", str(err), kind="error", seconds=5)
+            self.d.notify(tr("Could not open the project"), str(err), kind="error", seconds=5)
             return None
         self.d.dialog = None
         self.attach(project)
@@ -304,7 +304,7 @@ class ProjectController:
             return None
         target = Path(self.new_folder.strip() or ".").expanduser() / name
         if target.exists() and any(target.iterdir()) and not (target / "pyproject.toml").exists():
-            self.d.notify("The folder is not empty", str(target), kind="error", seconds=5)
+            self.d.notify(tr("The folder is not empty"), str(target), kind="error", seconds=5)
             return None
         problem = _workspace.check_writable(target)
         if problem is not None:  # the dialog stays open to choose another location
@@ -326,7 +326,7 @@ class ProjectController:
         def done(result: Any) -> Any:
             if isinstance(result, Result):
                 self.last = result
-                self.d.notify("Could not create the project", result.output, kind="error", seconds=6)
+                self.d.notify(tr("Could not create the project"), result.output, kind="error", seconds=6)
                 return None
             return self.open(str(result.root))
 
@@ -460,7 +460,8 @@ class ProjectController:
 
         def found(outdated: List[Dependency]) -> None:
             self.latest = {d.name: d.latest or "" for d in outdated}
-            self.d.notify(f"{len(outdated)} updates available" if outdated else "Everything is up to date",
+            self.d.notify(tr("{count} updates available", count=len(outdated)) if outdated
+                          else tr("Everything is up to date"),
                           kind="info", seconds=3)
 
         return self._task("Checking for updates", project.outdated, found)
@@ -498,7 +499,7 @@ class ProjectController:
         try:
             self.process = self.project.spawn(form, reload=True, capture=capture, env=env)
         except (OSError, FileNotFoundError) as err:
-            self.d.notify("Could not start the form", str(err), kind="error", seconds=5)
+            self.d.notify(tr("Could not start the form"), str(err), kind="error", seconds=5)
             return
         self.d.notify(f"Running {form.name}", "With uv run; saving updates the window", seconds=3)
 
@@ -617,7 +618,7 @@ def _empty(p: ProjectController, t: Theme) -> Any:
                            end=ui.label(str(path.parent), size="xs", color="text_muted", wrap=False, theme=t),
                            theme=t) for path in _project.recent_projects(8)]
     parts: List[Any] = [
-        ui.empty_state("No project open", "Projects use uv for dependencies, ruff and ty for checks and git.",
+        ui.empty_state(tr("No project open"), tr("Projects use uv for dependencies, ruff and ty for checks and git."),
                        icon="package", theme=t, actions=[
                            ui.button(tr("Open project"), p.show("open"), icon="folder-open", variant="solid",
                                      size="sm", theme=t),
@@ -646,9 +647,9 @@ def _dep_row(p: ProjectController, dep: Dependency, t: Theme) -> Any:
                                          installed=dep.installed or tr("nothing"), locked=dep.locked), theme=t)
     end = _core.row([
         version,
-        ui.icon_button("pencil", lambda: p.start_change(dep), size="sm", tooltip="Change version", theme=t),
-        ui.icon_button("arrow-up-circle", lambda: p.upgrade(dep), size="sm", tooltip="Upgrade", theme=t),
-        ui.icon_button("trash-2", lambda: p.remove(dep), size="sm", tooltip="Remove", theme=t),
+        ui.icon_button("pencil", lambda: p.start_change(dep), size="sm", tooltip=tr("Change version"), theme=t),
+        ui.icon_button("arrow-up-circle", lambda: p.upgrade(dep), size="sm", tooltip=tr("Upgrade"), theme=t),
+        ui.icon_button("trash-2", lambda: p.remove(dep), size="sm", tooltip=tr("Remove"), theme=t),
     ], spacing=2, align="center")
     name = _core.row([ui.label(dep.name, size="sm", wrap=False, theme=t),
                       ui.badge(dep.group, tint="info", theme=t) if dep.dev else None], spacing=6, align="center")
@@ -772,9 +773,9 @@ def dependencies_view(d: "Designer", t: Theme) -> Any:
         ui.icon_button("arrow-up-circle", lambda: p.upgrade(), size="sm", tooltip=tr("Upgrade all"), theme=t),
     ], spacing=2)
     checks = _core.container(_core.row([
-        ui.tooltip(ui.button("Lint", p.lint, icon="list-checks", size="sm", theme=t), "ruff check", theme=t),
-        ui.tooltip(ui.button("Format", p.format, icon="wand-sparkles", size="sm", theme=t), "ruff format", theme=t),
-        ui.tooltip(ui.button("Types", p.typecheck, icon="shield-check", size="sm", theme=t), "ty check", theme=t),
+        ui.tooltip(ui.button(tr("Lint"), p.lint, icon="list-checks", size="sm", theme=t), "ruff check", theme=t),
+        ui.tooltip(ui.button(tr("Format"), p.format, icon="wand-sparkles", size="sm", theme=t), "ruff format", theme=t),
+        ui.tooltip(ui.button(tr("Types"), p.typecheck, icon="shield-check", size="sm", theme=t), "ty check", theme=t),
     ], spacing=4), padding=(4, 8), width="fill")
     body = _core.column([
         _problems(p, t),
@@ -797,18 +798,18 @@ def dialog(d: "Designer", t: Theme) -> Any:
     if which == "new":
         target = Path(p.new_folder or ".").expanduser() / (p.new_name or "…")
         return ui.modal(_core.column([
-            ui.field("Name", ui.input(p.new_name, p.setter("new_name"), on_submit=p.create, width=260, theme=t),
+            ui.field(tr("Name"), ui.input(p.new_name, p.setter("new_name"), on_submit=p.create, width=260, theme=t),
                      theme=t),
-            ui.field("Location", _core.row([
+            ui.field(tr("Location"), _core.row([
                 ui.input(p.new_folder, p.setter("new_folder"), mono=True, width=260, theme=t),
                 ui.button(tr("Browse…"), p.show("browse_new"), icon="folder-search", size="sm", theme=t),
             ], spacing=6, align="center"), description=f"Creates {target}", theme=t),
-            ui.field("Backend in src/", ui.switch(p.new_package, p.setter("new_package"), theme=t),
+            ui.field(tr("Backend in src/"), ui.switch(p.new_package, p.setter("new_package"), theme=t),
                      description="uv init --package: importable from the UI and from tests", theme=t),
-            ui.field("Git repository", ui.switch(p.new_git, p.setter("new_git"), theme=t), theme=t),
-        ], spacing=12), title="New project", on_close=d.close_dialog, width=560, theme=t, footer=[
-            ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),
-            ui.button("Create", p.create, icon="folder-plus", variant="solid", theme=t)])
+            ui.field(tr("Git repository"), ui.switch(p.new_git, p.setter("new_git"), theme=t), theme=t),
+        ], spacing=12), title=tr("New project"), on_close=d.close_dialog, width=560, theme=t, footer=[
+            ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+            ui.button(tr("Create"), p.create, icon="folder-plus", variant="solid", theme=t)])
     if which == "open":
         here = p.browser.path
         ok = _workspace.is_project(here)
@@ -859,12 +860,12 @@ def dialog(d: "Designer", t: Theme) -> Any:
         return _workspace.find_dialog(p.files, t)
     if which == "change" and p.change_target is not None:
         return ui.modal(
-            ui.field("Requirement", ui.input(p.change_text, p.setter("change_text"), on_submit=p.change, mono=True,
+            ui.field(tr("Requirement"), ui.input(p.change_text, p.setter("change_text"), on_submit=p.change, mono=True,
                                              width=260, theme=t),
-                     description='A version constraint, e.g. "httpx==0.27.2" or "httpx>=0.28,<1"', theme=t),
+                     description=tr('A version constraint, e.g. "httpx==0.27.2" or "httpx>=0.28,<1"'), theme=t),
             title=f"Change {p.change_target.name}", on_close=d.close_dialog, width=520, theme=t, footer=[
-                ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),
-                ui.button("Apply", p.change, variant="solid", theme=t)])
+                ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+                ui.button(tr("Apply"), p.change, variant="solid", theme=t)])
     return None
 
 

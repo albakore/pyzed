@@ -1801,7 +1801,7 @@ class Designer(App):
         """
         if self.editing is None or not self._flush_code():
             return None
-        self.notify("Code applied", kind="success", seconds=1.5)
+        self.notify(tr("Code applied"), kind="success", seconds=1.5)
         formatted = self.assist.format(self.editing[1])
         if formatted == self.editing[1]:
             return None
@@ -1922,7 +1922,7 @@ class Designer(App):
     def _leave_doc(self) -> bool:
         """Closes what belongs to the active tab (the code editor, menus) before switching."""
         if not self._flush_code():
-            self.notify("Fix the code first", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code first"), self.code_error, kind="error", seconds=4)
             return False
         self.editing = None
         self.menu = None
@@ -2149,7 +2149,7 @@ class Designer(App):
                 doc.form.grid = self.prefs.grid
                 doc.save()
             except (OSError, ValueError, SyntaxError) as err:
-                self.notify("Could not create the component", str(err), kind="error", seconds=5)
+                self.notify(tr("Could not create the component"), str(err), kind="error", seconds=5)
                 return
             self.dialog = None
             self.open_path(path)
@@ -2190,7 +2190,7 @@ class Designer(App):
             try:
                 created = _new.new_form(path, title=s.get("title") or None, template=s.get("template", "blank"))
             except (OSError, ValueError, KeyError) as err:
-                self.notify("Could not create the form", str(err), kind="error", seconds=5)
+                self.notify(tr("Could not create the form"), str(err), kind="error", seconds=5)
                 return
             self.dialog = None
             self.open_path(created)
@@ -2251,7 +2251,7 @@ class Designer(App):
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
             _logs.log("document").warning("Could not open %s: %s", path, err)
-            self.notify("Could not open the form", str(err), kind="error", seconds=5)
+            self.notify(tr("Could not open the form"), str(err), kind="error", seconds=5)
             return
         _binding.load_texts(path)  # the form's own translations, for @key texts and Preview language
         self.dialog = None
@@ -2305,7 +2305,7 @@ class Designer(App):
             self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
             return
         if not self._flush_code():
-            self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code before saving"), self.code_error, kind="error", seconds=4)
             return
         self._convert_form_code()
         path = self.doc.save()
@@ -2460,7 +2460,7 @@ class Designer(App):
     def run_form(self) -> Any:
         """Opens the form in a new window with its handlers loaded fresh (F5)."""
         if not self._flush_code():
-            self.notify("Fix the code before running", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code before running"), self.code_error, kind="error", seconds=4)
             return None
         if scene_panel.is_scene(self):
             return scene_panel.run(self)
@@ -2501,7 +2501,7 @@ class Designer(App):
 
             self.console.event("error", "The code file has an error\n" + traceback.format_exc().rstrip())
             self.console.stop()
-            self.notify("The code file has an error", f"{type(err).__name__}: {err}", kind="error", seconds=6)
+            self.notify(tr("The code file has an error"), f"{type(err).__name__}: {err}", kind="error", seconds=6)
             return None
         commands = []
         if self.preview is not None and self.preview.is_open:
@@ -3179,13 +3179,14 @@ class Designer(App):
                                       self.close_dialog, theme=t)
         if self.dialog == "save_as":
             return ui.modal(
-                ui.field("File", ui.input(self.dialog_path, self.set_dialog_path,
+                ui.field(tr("File"), ui.input(self.dialog_path, self.set_dialog_path,
                                           on_submit=lambda: self.save_as(self.dialog_path), mono=True, width=280,
                                           theme=t),
-                         description=f"Relative to {Path.cwd()}. The code goes next to it as .py.", theme=t),
-                title="Save form", on_close=self.close_dialog, width=520, theme=t,
-                footer=[ui.button("Cancel", self.close_dialog, variant="ghost", theme=t),
-                        ui.button("Save", lambda: self.save_as(self.dialog_path), variant="solid", theme=t)])
+                         description=tr("Relative to {folder}. The code goes next to it as .py.", folder=Path.cwd()),
+                         theme=t),
+                title=tr("Save form"), on_close=self.close_dialog, width=520, theme=t,
+                footer=[ui.button(tr("Cancel"), self.close_dialog, variant="ghost", theme=t),
+                        ui.button(tr("Save"), lambda: self.save_as(self.dialog_path), variant="solid", theme=t)])
         if self.dialog == "open":
             rows = []
             for p in self.pyzed_files():

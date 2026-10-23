@@ -207,7 +207,7 @@ class PaneController:
         if pane is self.active:
             return True
         if not self.d._leave_doc():
-            self.d.notify("Fix the code first", self.d.code_error, kind="error", seconds=4)
+            self.d.notify(tr("Fix the code first"), self.d.code_error, kind="error", seconds=4)
             return False
         self.active = pane
         self.d.help_active = False

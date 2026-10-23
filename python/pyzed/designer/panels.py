@@ -81,7 +81,7 @@ def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, ta
     rows of fields the editor stacks (two for a box edited side by side)."""
     label = ui.label(tr(title), size="sm", color="text_muted", wrap=False, theme=t)
     if tip:
-        label = ui.tooltip(label, tip, theme=t)
+        label = ui.tooltip(label, tr(tip), theme=t)
     if tall:
         head = _core.row([label, _core.space(width="fill"), end], align="center", height=ROW_HEIGHT - 4)
         return _core.container(_core.column([head, editor], spacing=4, width="fill"), padding=(spacing.ROW_PAD, 0),
@@ -250,7 +250,7 @@ def _text_toggle(d: "Designer", prop: Prop, key: str, t: Theme) -> Any:
         return None
     as_text = key in d.text_editors
     return ui.icon_button("list" if as_text else "file-text", lambda: d.toggle_text_editor(key), size="xs",
-                          tooltip="Edit item by item" if as_text else "Edit as text", theme=t)
+                          tooltip=tr("Edit item by item") if as_text else tr("Edit as text"), theme=t)
 
 
 def text_area(d: "Designer", key: str, value: Any, on_change: Callable[[Any], Any], t: Theme, height: float = 132) -> Any:
@@ -293,11 +293,11 @@ def list_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
         rows.append(_core.row([
             _core.container(ui.label(str(i + 1), size="xs", color="text_muted", mono=True, theme=t), width=18),
             ui.input(item, lambda v, i=i: edit(i, v), size="sm", theme=t),
-            ui.icon_button("chevron-up", lambda i=i: move(i, -1), size="xs", tooltip="Move up", disabled=i == 0,
+            ui.icon_button("chevron-up", lambda i=i: move(i, -1), size="xs", tooltip=tr("Move up"), disabled=i == 0,
                            theme=t),
-            ui.icon_button("chevron-down", lambda i=i: move(i, 1), size="xs", tooltip="Move down",
+            ui.icon_button("chevron-down", lambda i=i: move(i, 1), size="xs", tooltip=tr("Move down"),
                            disabled=i == len(items) - 1, theme=t),
-            ui.icon_button("x", lambda i=i: save(items[:i] + items[i + 1:]), size="xs", tooltip="Remove", theme=t),
+            ui.icon_button("x", lambda i=i: save(items[:i] + items[i + 1:]), size="xs", tooltip=tr("Remove"), theme=t),
         ], spacing=4, align="center"))
     rows.append(ui.button(tr("Add item"), lambda: save(items + [f"{tr('Item')} {len(items) + 1}"]), icon="plus",
                           variant="ghost", size="sm", theme=t))
@@ -351,13 +351,14 @@ def rows_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
 
     gutter = 22.0
     lines: List[Any] = [_core.row([_core.space(width=gutter)] + [
-        _core.container(ui.icon_button("x", lambda c=c: remove_column(c), size="xs", tooltip="Remove column",
+        _core.container(ui.icon_button("x", lambda c=c: remove_column(c), size="xs", tooltip=tr("Remove column"),
                                        disabled=columns == 1, theme=t), width=CELL_WIDTH, align_x="end")
         for c in range(columns)], spacing=4)]
     for r in range(len(rows)):
         start = (_core.container(ui.label(str(r), size="xs", color="text_muted", mono=True, theme=t), width=gutter)
                  if r else _core.container(_icon("heading", size=12, color=t.icon_muted), width=gutter))
-        end = (ui.icon_button("x", lambda r=r: save(rows[:r] + rows[r + 1:]), size="xs", tooltip="Remove row", theme=t)
+        end = (ui.icon_button("x", lambda r=r: save(rows[:r] + rows[r + 1:]), size="xs", tooltip=tr("Remove row"),
+                              theme=t)
                if r else _core.space(width=22))
         lines.append(_core.row([start] + [cell(r, c) for c in range(columns)] + [end], spacing=4, align="center"))
     grid = _core.scrollable(_core.column(lines, spacing=3), direction="horizontal", width="fill")
@@ -485,7 +486,7 @@ def outline(d: "Designer", t: Theme) -> Any:
     rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="app-window",
                                  selected=not doc.selection, height=OUTLINE_ROW,
                                  end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
-                                                    tooltip="Add a control", theme=t))]
+                                                    tooltip=tr("Add a control"), theme=t))]
 
     def add(parent: Optional[str], depth: int) -> None:
         children = form.children(parent)
@@ -535,14 +536,14 @@ def _outline_row(d: "Designer", c: Any, spec: Any, depth: int, container: bool, 
                  opened: bool, drop: Optional[str], editor_eye: bool, t: Theme) -> Any:
     """One control's row in the outline (``outline`` keeps it while what it shows stays the same)."""
     buttons = [
-        ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip="Add inside",
+        ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip=tr("Add inside"),
                        theme=t) if container else None,
         ui.icon_button("eye-off" if (c.hidden_in_editor if editor_eye else not c.visible) else "eye",
                        lambda n=c.name: d.toggle_eye(n), size="xs",
-                       tooltip="Hide in the editor" if editor_eye else "Visible", theme=t),
+                       tooltip=tr("Hide in the editor") if editor_eye else tr("Visible"), theme=t),
         ui.icon_button("lock" if c.locked else "lock-open",
                        lambda n=c.name, v=c.locked: d.set_field(n, "locked", not v), size="xs",
-                       selected=c.locked, tooltip="Lock", theme=t),
+                       selected=c.locked, tooltip=tr("Lock"), theme=t),
     ]
     if container:
         chevron = ui.icon_button("chevron-right" if folded else "chevron-down",
@@ -550,7 +551,7 @@ def _outline_row(d: "Designer", c: Any, spec: Any, depth: int, container: bool, 
     elif members:
         chevron = ui.icon_button("chevron-down" if opened else "chevron-right",
                                  lambda n=c.name: d.toggle_members(n), size="xs",
-                                 tooltip="Its properties and methods", theme=t)
+                                 tooltip=tr("Its properties and methods"), theme=t)
     else:
         chevron = _core.space(width=20)
     # press to select, drag to reorder or to move into another container (or onto the form)
@@ -580,7 +581,8 @@ def _position_rows(d: "Designer", c, t: Theme) -> List[Any]:
             ui.button(parent.name, lambda: d.select_from_outline(parent.name), icon=_components.spec(parent.type).icon,
                       variant="ghost", size="sm", theme=t),
             _core.space(width="fill"),
-            ui.icon_button("arrow-up-left", lambda: d.move_out(c.name), size="sm", tooltip="Move out of the container",
+            ui.icon_button("arrow-up-left", lambda: d.move_out(c.name), size="sm",
+                           tooltip=tr("Move out of the container"),
                            theme=t),
         ], align="center"), t, tip="The container holding this control"))
     if kind in ("flex", "grid"):
@@ -744,20 +746,20 @@ def multi_properties(d: "Designer", t: Theme) -> List[Any]:
                    ("align-center-horizontal", "middle", "Middles"), ("align-end-horizontal", "bottom",
                                                                       "Bottom edges")]),
     ]
-    rows: List[Any] = [_core.container(ui.label(f"{count} controls selected", weight="semibold", theme=t),
+    rows: List[Any] = [_core.container(ui.label(tr("{count} controls selected", count=count), weight="semibold", theme=t),
                                        padding=spacing.HEADER_PADDING)]
     for title, items in tools:
         rows.append(Group(title))
-        rows.append(_core.container(_core.row([ui.icon_button(icon, lambda e=edge: d.align(e), tooltip=tip, theme=t)
+        rows.append(_core.container(_core.row([ui.icon_button(icon, lambda e=edge: d.align(e), tooltip=tr(tip), theme=t)
                                                for icon, edge, tip in items], spacing=2)))
     rows.append(Group("Spacing and size"))
     rows.append(_core.container(_core.row([
         ui.icon_button("align-horizontal-distribute-center", lambda: d.distribute("horizontal"),
-                       tooltip="Distribute horizontally", theme=t),
+                       tooltip=tr("Distribute horizontally"), theme=t),
         ui.icon_button("align-vertical-distribute-center", lambda: d.distribute("vertical"),
-                       tooltip="Distribute vertically", theme=t),
-        ui.icon_button("stretch-horizontal", lambda: d.same_size("width"), tooltip="Same width", theme=t),
-        ui.icon_button("stretch-vertical", lambda: d.same_size("height"), tooltip="Same height", theme=t),
+                       tooltip=tr("Distribute vertically"), theme=t),
+        ui.icon_button("stretch-horizontal", lambda: d.same_size("width"), tooltip=tr("Same width"), theme=t),
+        ui.icon_button("stretch-vertical", lambda: d.same_size("height"), tooltip=tr("Same height"), theme=t),
     ], spacing=2)))
     return rows
 
@@ -773,10 +775,10 @@ def form_properties(d: "Designer", t: Theme) -> List[Any]:
     accent_row = _core.row([swatch(color, t, lambda c=color: d.set_form("accent", c), selected=form.accent == color)
                             for color in ACCENTS]
                            + [ui.icon_button("x", lambda: d.set_form("accent", None), size="xs",
-                                             tooltip="Theme default", theme=t)], spacing=6, align="center")
+                                             tooltip=tr("Theme default"), theme=t)], spacing=6, align="center")
     return [
         _core.container(_core.row([_icon("app-window", size=16, color=t.accent),
-                                   ui.label("Form", weight="semibold", theme=t)], spacing=10, align="center"),
+                                   ui.label(tr("Form"), weight="semibold", theme=t)], spacing=10, align="center"),
                         padding=spacing.HEADER_PADDING),
         Group("Window"),
         prop_row("Name", ui.input(form.name, setter("name"), size="sm", mono=True, theme=t), t),
@@ -854,7 +856,7 @@ def events(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     target = None if len(doc.selection) != 1 else doc.selection[0]
     if len(doc.selection) > 1:
-        return ui.empty_state("Select one control", "Events belong to a single control or to the form.",
+        return ui.empty_state(tr("Select one control"), tr("Events belong to a single control or to the form."),
                               icon="zap", theme=t)
     owner, wired = doc.owner(target)
     control = doc.form.get(target) if target else None
@@ -1065,7 +1067,7 @@ def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -
         _core.button(ui.label(tr(describe(value)), size="sm", color="text" if value else "text_muted", theme=t),
                      lambda: d.toggle_color_picker(name, "background"), bg="transparent", hover_bg=t.element_hover,
                      padding=(2, 6), width="fill"),
-        ui.icon_button("x", lambda: d.set_style_value(name, "background", None), size="xs", tooltip="No background",
+        ui.icon_button("x", lambda: d.set_style_value(name, "background", None), size="xs", tooltip=tr("No background"),
                        theme=t) if value else _core.space(width=0),
     ], spacing=6, align="center")
     return [prop_row("Background", summary, t, tip="A color, a gradient or a masked fill: click to pick")]

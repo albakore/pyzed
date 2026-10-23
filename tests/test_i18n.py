@@ -139,3 +139,20 @@ def test_designer_menus_code_panel_and_color_picker_are_translated(tmp_path):
     assert app.status_bar(app.theme_obj) is not None
     from pyzed.designer import components
     assert all(components.get(type_).description in locale._ES for type_ in ("label", "button", "table", "timer"))
+
+
+def test_every_designer_text_has_a_spanish_translation():
+    import ast
+    from pathlib import Path
+
+    from pyzed.designer import locale
+
+    folder = Path(locale.__file__).parent
+    texts = set()
+    for path in folder.glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (isinstance(node, ast.Call) and getattr(node.func, "id", None) == "tr" and node.args
+                    and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)):
+                texts.add((path.name, node.args[0].value))
+    assert len(texts) > 1000
+    assert sorted(f"{name}: {text}" for name, text in texts if text not in locale._ES) == []
