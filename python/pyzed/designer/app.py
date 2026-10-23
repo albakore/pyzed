@@ -151,6 +151,8 @@ class Designer(App):
 
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
+        #: When the designer's code started (``time.perf_counter()``), for the startup time in the Logs panel.
+        self.started = time.perf_counter()
         # the open documents: the main window's tabs, and those moved to windows of their own
         self.panes = PaneController(self)
         #: A file given to open that is not a document (a ``.pzanim``, a script): opened once the panels exist.
@@ -292,9 +294,21 @@ class Designer(App):
     def on_start(self) -> Any:
         """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
         computer when the app starts; returns the commands."""
+        self._log_startup()
         self.agent.on_start()
         return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
                 if c is not None]
+
+    def _log_startup(self) -> None:
+        """Writes in the Logs panel how long the window took to open, and how much of it passed before the
+        designer's code ran (loading the app's files, an antivirus scanning them the first time...)."""
+        own = time.perf_counter() - self.started
+        total = _platform.process_age()
+        if total is None or total < own:
+            _logs.event("designer", "Pyzed Design opened in %.1f s", own)
+        else:
+            _logs.event("designer", "Pyzed Design opened in %.1f s (%.1f s before its code started)", total,
+                        total - own)
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
@@ -3201,6 +3215,7 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
         path = Path(path).resolve() if path is not None else None
         os.chdir(Path.home())
     designer = Designer(path, theme=theme)
+    designer.started = started
     if path is None and designer.prefs.show_welcome:
         designer.welcome.open()
     telemetry = _telemetry.get()

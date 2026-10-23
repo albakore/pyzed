@@ -276,6 +276,37 @@ def use_user_path() -> None:
     os.environ["PATH"] = user_path()
 
 
+def process_age() -> Optional[float]:
+    """Seconds since this process started (``None`` where that can't be told). Next to the time the app's own code
+    took, it shows how long went before it ran: loading the app's files, an antivirus scanning them..."""
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+
+            kernel32 = ctypes.WinDLL("kernel32")
+            kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+            kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE, *[ctypes.POINTER(wintypes.FILETIME)] * 4]
+            times = [wintypes.FILETIME() for _ in range(4)]  # created, exited, kernel, user
+            if not kernel32.GetProcessTimes(kernel32.GetCurrentProcess(), *(ctypes.byref(t) for t in times)):
+                return None
+            now = wintypes.FILETIME()
+            kernel32.GetSystemTimeAsFileTime(ctypes.byref(now))
+
+            def ticks(value: "wintypes.FILETIME") -> int:  # hundreds of nanoseconds
+                return (value.dwHighDateTime << 32) | value.dwLowDateTime
+
+            return (ticks(now) - ticks(times[0])) / 1e7
+        if sys.platform.startswith("linux"):
+            # the 22nd field of /proc/self/stat: when the process started, in clock ticks after boot
+            started = int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])
+            uptime = float(Path("/proc/uptime").read_text().split()[0])
+            return uptime - started / os.sysconf("SC_CLK_TCK")
+    except (OSError, ValueError, IndexError, AttributeError):
+        return None
+    return None
+
+
 def which(name: str) -> Optional[str]:
     """``shutil.which``, also looking in the user's shell ``PATH`` and the usual tool folders."""
     return shutil.which(name) or shutil.which(name, path=user_path())
