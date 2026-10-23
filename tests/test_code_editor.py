@@ -10,7 +10,6 @@ from pyzed.designer import intellisense as intel
 from pyzed.designer import code_panel, keymap, lsp, settings
 from pyzed.designer.app import Designer
 from pyzed.designer.intellisense import CodeIntel, CompletionItem
-from pyzed.designer.model import Form
 
 ROOT = Path(__file__).resolve().parent.parent
 

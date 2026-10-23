@@ -271,3 +271,25 @@ def test_export_dialog(shop, monkeypatch):  # noqa: F811
     e.write_workflow()
     assert (shop.root / ".github" / "workflows" / "build.yml").is_file()
     d.logs.uninstall()
+
+
+def test_export_failure_shows_the_reason(shop, monkeypatch):  # noqa: F811
+    import asyncio
+
+    from pyzed.designer import commands
+    from pyzed.designer.app import Designer
+
+    monkeypatch.chdir(shop.root)
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")
+    d = Designer(shop.main_form)
+    commands.run("export", d)
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("PyInstaller is missing")
+
+    monkeypatch.setattr(build, "prepare", broken)
+    then = asyncio.run(d.exporter.build())
+    then()  # the error ran out of its except block before this: it must still be there
+    assert d.exporter.state == "failed" and d.exporter.message == "PyInstaller is missing"
+    d.logs.uninstall()

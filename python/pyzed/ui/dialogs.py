@@ -37,7 +37,6 @@ def dialog_layer(base: Any, dialog: Any = None, *, on_dismiss: Any = None, theme
     """
     if dialog is None:
         return base
-    t = _theme(theme)
     return layer(base, dialog, on_dismiss=on_dismiss, backdrop=alpha("#000000", 0.4), align_y="center")
 
 

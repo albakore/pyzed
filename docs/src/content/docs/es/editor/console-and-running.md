@@ -120,6 +120,10 @@ Las mismas líneas (de event para arriba) se escriben en `logs/pyzed-design.log`
 Pyzed (el archivo se renueva al pasar de 1 MB y se guardan los tres últimos): adjúntalo a un informe de error.
 **Ajustes → Logs y errores → Escribir un archivo de log** lo desactiva.
 
+Si el propio Pyzed Design se cierra por un fallo (un error de su núcleo nativo o un error fatal de Python), lo que pasó
+queda en `logs/crash.log`, en la misma carpeta. La próxima vez que se abre, Pyzed Design lo avisa, mueve el archivo a
+`logs/crash-previous.log` y lo muestra en el panel Logs.
+
 Cuando se han registrado errores o avisos, la barra de estado muestra su número a la izquierda; haz clic para abrir
 el panel.
 

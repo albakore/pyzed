@@ -623,7 +623,7 @@ def test_release_builds_bundle_the_oauth_apps(tmp_path, monkeypatch):
 
 
 def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
-    from pyzed.designer import agent_panel, agent_thread, agent_tools
+    from pyzed.designer import agent_thread, agent_tools
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 
@@ -1127,7 +1127,6 @@ def test_following_the_agent_opens_and_refreshes_what_it_writes(tmp_path, monkey
 def test_context_meter_and_desktop_notifications(tmp_path, monkeypatch):
     from pyzed.designer import agent_thread
     from pyzed import _platform
-    from pyzed.designer import agent_panel
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 

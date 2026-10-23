@@ -21,7 +21,7 @@ import json
 from dataclasses import dataclass, field, fields, replace
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 SyntaxStyle = Union[str, Tuple[str, str]]
 

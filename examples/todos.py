@@ -6,7 +6,7 @@ Tasks are saved as JSON next to your user config, so they survive restarts.
 """
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from itertools import count
 from pathlib import Path
 

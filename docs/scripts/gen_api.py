@@ -17,11 +17,9 @@ reports it.
 from __future__ import annotations
 
 import argparse
-import dataclasses
 import importlib
 import inspect
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -29,7 +27,7 @@ HERE = Path(__file__).resolve().parent
 DOCS = HERE.parent / "src" / "content" / "docs"
 sys.path.insert(0, str(HERE))
 
-import pyzed  # noqa: E402
+import pyzed  # noqa: E402, F401
 # The same helpers build the reference inside Pyzed Design (``pyzed.reference``), so both match.
 from pyzed.reference import (  # noqa: E402
     class_members,
@@ -38,7 +36,7 @@ from pyzed.reference import (  # noqa: E402
     member_signature,
     param_names,
     resolve,
-    rst_to_md,
+    rst_to_md,  # noqa: F401 - other scripts use it from here
     signature,
 )
 

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from benchkit import FOOTER, H, ROWS, TICK, W, A, Driver, color, hexc, label  # noqa: E402
+from benchkit import FOOTER, H, ROWS, TICK, W, Driver, color, hexc, label  # noqa: E402
 
 import pyzed as pz  # noqa: E402
 from pyzed import ui  # noqa: E402

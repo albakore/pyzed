@@ -69,3 +69,18 @@ features = ["pyo3/extension-module"]
 default-groups = ["test"]
 # Rebuild the Rust core on `uv sync`/`uv run` when it changes (Python files are picked up live).
 cache-keys = [{ file = "pyproject.toml" }, { file = "Cargo.toml" }, { file = "Cargo.lock" }, { file = "src/**/*.rs" }]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+# Mistakes rather than style: undefined names, unused imports and variables, syntax errors and bugbear.
+select = ["F", "E9", "B"]
+# Loop variables kept for readability, closures called right away in their loop, zip without strict=
+# (lengths are checked by hand where it matters), defaults computed once on purpose.
+ignore = ["B007", "B008", "B010", "B023", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests read properties for their side effects and spell negative numbers out.
+"tests/**" = ["B002", "B018"]

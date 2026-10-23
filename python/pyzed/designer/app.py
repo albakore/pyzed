@@ -297,6 +297,10 @@ class Designer(App):
         """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
         computer when the app starts; returns the commands."""
         self.startup["ready"] = time.perf_counter()
+        if self.logs.last_crash:
+            self.notify(tr("Pyzed Design closed unexpectedly last time"),
+                        tr("The details are in {path} and in the Logs panel",
+                           path=_logs.logs_dir() / _logs.PREVIOUS_CRASH_FILE), kind="warning", seconds=10, log=False)
         self.agent.on_start()
         return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
                 if c is not None]
@@ -1826,7 +1830,7 @@ class Designer(App):
         """
         if self.editing is None or not self._flush_code():
             return None
-        self.notify("Code applied", kind="success", seconds=1.5)
+        self.notify(tr("Code applied"), kind="success", seconds=1.5)
         formatted = self.assist.format(self.editing[1])
         if formatted == self.editing[1]:
             return None
@@ -1947,7 +1951,7 @@ class Designer(App):
     def _leave_doc(self) -> bool:
         """Closes what belongs to the active tab (the code editor, menus) before switching."""
         if not self._flush_code():
-            self.notify("Fix the code first", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code first"), self.code_error, kind="error", seconds=4)
             return False
         self.editing = None
         self.menu = None
@@ -2174,7 +2178,7 @@ class Designer(App):
                 doc.form.grid = self.prefs.grid
                 doc.save()
             except (OSError, ValueError, SyntaxError) as err:
-                self.notify("Could not create the component", str(err), kind="error", seconds=5)
+                self.notify(tr("Could not create the component"), str(err), kind="error", seconds=5)
                 return
             self.dialog = None
             self.open_path(path)
@@ -2215,7 +2219,7 @@ class Designer(App):
             try:
                 created = _new.new_form(path, title=s.get("title") or None, template=s.get("template", "blank"))
             except (OSError, ValueError, KeyError) as err:
-                self.notify("Could not create the form", str(err), kind="error", seconds=5)
+                self.notify(tr("Could not create the form"), str(err), kind="error", seconds=5)
                 return
             self.dialog = None
             self.open_path(created)
@@ -2276,7 +2280,7 @@ class Designer(App):
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
             _logs.log("document").warning("Could not open %s: %s", path, err)
-            self.notify("Could not open the form", str(err), kind="error", seconds=5)
+            self.notify(tr("Could not open the form"), str(err), kind="error", seconds=5)
             return
         _binding.load_texts(path)  # the form's own translations, for @key texts and Preview language
         self.dialog = None
@@ -2330,7 +2334,7 @@ class Designer(App):
             self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
             return
         if not self._flush_code():
-            self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code before saving"), self.code_error, kind="error", seconds=4)
             return
         self._convert_form_code()
         path = self.doc.save()
@@ -2427,6 +2431,31 @@ class Designer(App):
         self.doc.dirty = False
         return action() if action else None
 
+    def on_close(self) -> Optional[bool]:
+        """The window's close button (or Alt+F4): asks about each form and file with unsaved changes first,
+        one at a time, and closes once every answer was Save or Don't save."""
+        order = [self.active_doc] + [i for i in range(len(self.docs)) if i != self.active_doc]
+        for index in order:
+            if 0 <= index < len(self.docs) and self.docs[index].dirty:
+                self.select_doc(index)
+                if index == self.active_doc:  # (switching fails while the code shown has an error)
+                    self.pending = self._close_window
+                    self.dialog = "confirm"
+                return False
+        dirty = self.buffers.dirty
+        if dirty:
+            index = self.buffers.items.index(dirty[0])
+            self.buffers.select(index)
+            self.buffers.close(index, then=self._close_window)
+            return False
+        return None
+
+    def _close_window(self) -> Any:
+        """Closes the window once nothing is left unsaved (the next question otherwise)."""
+        if self.on_close() is False:
+            return None
+        return _core.Command.close_window(self)
+
     def pyzed_files(self, limit: int = 200) -> List[Path]:
         """Returns up to ``limit`` Pyzed files (forms, components, shaders, animation libraries) of the project
         (or the working folder), relative to the working folder when they are inside it.
@@ -2460,7 +2489,7 @@ class Designer(App):
     def run_form(self) -> Any:
         """Opens the form in a new window with its handlers loaded fresh (F5)."""
         if not self._flush_code():
-            self.notify("Fix the code before running", self.code_error, kind="error", seconds=4)
+            self.notify(tr("Fix the code before running"), self.code_error, kind="error", seconds=4)
             return None
         if scene_panel.is_scene(self):
             return scene_panel.run(self)
@@ -2501,7 +2530,7 @@ class Designer(App):
 
             self.console.event("error", "The code file has an error\n" + traceback.format_exc().rstrip())
             self.console.stop()
-            self.notify("The code file has an error", f"{type(err).__name__}: {err}", kind="error", seconds=6)
+            self.notify(tr("The code file has an error"), f"{type(err).__name__}: {err}", kind="error", seconds=6)
             return None
         commands = []
         if self.preview is not None and self.preview.is_open:
@@ -3179,13 +3208,14 @@ class Designer(App):
                                       self.close_dialog, theme=t)
         if self.dialog == "save_as":
             return ui.modal(
-                ui.field("File", ui.input(self.dialog_path, self.set_dialog_path,
+                ui.field(tr("File"), ui.input(self.dialog_path, self.set_dialog_path,
                                           on_submit=lambda: self.save_as(self.dialog_path), mono=True, width=280,
                                           theme=t),
-                         description=f"Relative to {Path.cwd()}. The code goes next to it as .py.", theme=t),
-                title="Save form", on_close=self.close_dialog, width=520, theme=t,
-                footer=[ui.button("Cancel", self.close_dialog, variant="ghost", theme=t),
-                        ui.button("Save", lambda: self.save_as(self.dialog_path), variant="solid", theme=t)])
+                         description=tr("Relative to {folder}. The code goes next to it as .py.", folder=Path.cwd()),
+                         theme=t),
+                title=tr("Save form"), on_close=self.close_dialog, width=520, theme=t,
+                footer=[ui.button(tr("Cancel"), self.close_dialog, variant="ghost", theme=t),
+                        ui.button(tr("Save"), lambda: self.save_as(self.dialog_path), variant="solid", theme=t)])
         if self.dialog == "open":
             rows = []
             for p in self.pyzed_files():

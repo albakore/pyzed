@@ -1,7 +1,6 @@
 """The Settings dialog: the project's renderer, the user's profiles, a project's own settings and Reset."""
 
 import json
-from pathlib import Path
 
 import pytest
 

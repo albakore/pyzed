@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 from . import indentation as _indentation
 from .locale import tr
@@ -89,6 +89,8 @@ class Buffers:
         self.active: Optional[int] = None
         #: The buffer waiting for the "unsaved changes" answer before it closes.
         self.closing: Optional[int] = None
+        #: What runs once the buffer being closed is closed (the designer's window closing, for one).
+        self.then: Optional[Callable[[], Any]] = None
 
     @property
     def current(self) -> Optional[Buffer]:
@@ -159,16 +161,18 @@ class Buffers:
     def save_all(self) -> bool:
         return all(self.save(i) for i, b in enumerate(self.items) if b.dirty)
 
-    def close(self, index: Optional[int] = None) -> None:
-        """Closes buffer ``index`` (the shown one by default), asking first when it has unsaved changes."""
+    def close(self, index: Optional[int] = None, then: Optional[Callable[[], Any]] = None) -> Any:
+        """Closes buffer ``index`` (the shown one by default), asking first when it has unsaved changes;
+        ``then`` runs once it is closed (not if the user cancels)."""
         index = self.active if index is None else index
         if index is None or not 0 <= index < len(self.items):
             return
         if self.items[index].dirty:
-            self.closing = index
+            self.closing, self.then = index, then
             self.d.dialog = "file:unsaved"
-            return
+            return None
         self._drop(index)
+        return then() if then else None
 
     def _drop(self, index: int) -> None:
         self.items.pop(index)
@@ -183,20 +187,24 @@ class Buffers:
         self.d.code_revision += 1
         self.d.assist.opened()
 
-    def confirm_save(self) -> None:
+    def confirm_save(self) -> Any:
         """"Save" in the unsaved-changes dialog: saves the buffer, then closes it."""
-        index, self.d.dialog = self.closing, None
+        index, then, self.then, self.d.dialog = self.closing, self.then, None, None
         if index is not None and self.save(index):
             self._drop(index)
+            return then() if then else None
+        return None
 
-    def confirm_discard(self) -> None:
+    def confirm_discard(self) -> Any:
         """"Don't save" in the unsaved-changes dialog: closes the buffer and drops its changes."""
-        index, self.d.dialog = self.closing, None
+        index, then, self.then, self.d.dialog = self.closing, self.then, None, None
         if index is not None:
             self._drop(index)
+            return then() if then else None
+        return None
 
     def cancel_close(self) -> None:
-        self.closing = None
+        self.closing, self.then = None, None
         self.d.dialog = None
 
     # -- the files changed on the disk --------------------------------------------------------

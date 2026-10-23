@@ -303,7 +303,7 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
 
 
 def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monkeypatch):
-    from pyzed.designer import agent_panel, agent_thread
+    from pyzed.designer import agent_thread
 
     d, c = _designer(tmp_path, monkeypatch, lambda *a, **k: llm.Turn([], "end_turn"))
     cursor = mcp_install.Client("cursor", "Cursor", "json", tmp_path / "mcp.json", tmp_path)
