@@ -16,11 +16,19 @@ stable version.
 
 ## [Unreleased]
 
+## [1.10.2] - 2026-10-23
+
+### Fixes
+
+- 🐛 Update Pyzed Design on Windows even while a process works in its folder ("Access is denied"): the updater swaps what is inside the folder when the folder itself cannot move, and writes in its log which programs run from it, naming another open Pyzed Design window. PR [#205](https://github.com/albakore/pyzed/pull/205) by [@albakore](https://github.com/albakore).
+
+> Updating from an older version still uses its own updater: if it fails, install this version with the setup program from the Download page.
+
 ## [1.10.1] - 2026-10-23
 
 ### Fixes
 
-- 🐛 Fix the Windows update failing with "Access is denied" while a process works in the app folder: the updater now swaps what is inside the folder when the folder itself cannot move, writes which programs run from it and names another open Pyzed Design window; agents use a copy of uv outside the app folder. PRs [#204](https://github.com/albakore/pyzed/pull/204) and [#205](https://github.com/albakore/pyzed/pull/205) by [@albakore](https://github.com/albakore).
+- 🐛 Fix the Windows update failing with "Access is denied" while a program runs from the app folder: the updater now stops the helpers left there (such as the bundled uv kept by an agent's MCP server), names another open Pyzed Design window instead of failing silently, and agents use a copy of uv outside the app folder. PR [#204](https://github.com/albakore/pyzed/pull/204) by [@albakore](https://github.com/albakore).
 
 > Updating from 1.9.0 or 1.10.0 still uses the old updater: if it fails, install this version with the setup program from the Download page.
 
