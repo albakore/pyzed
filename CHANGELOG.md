@@ -42,6 +42,8 @@ stable version.
 ### Docs
 
 - 💄 The docs site has the Pyzed brand: Graphite and Paper palettes, IBM Plex, a new home with the install command on an amber display, LED stats, brand code themes, new favicon, icons and social cards, and a Brand page in Contributing (en/es). PR [#206](https://github.com/albakore/pyzed/pull/206) by [@albakore](https://github.com/albakore).
+- 📝 The Library sidebar groups the components by category (Layout, Forms, Dates and times, System...). PR [#209](https://github.com/albakore/pyzed/pull/209) by [@albakore](https://github.com/albakore).
+- 🐛 Code blocks keep their colors on every page of the docs: the site build no longer reuses pages rendered with the previous code theme. PR [#209](https://github.com/albakore/pyzed/pull/209) by [@albakore](https://github.com/albakore).
 
 ## [1.10.1] - 2026-10-23
 
