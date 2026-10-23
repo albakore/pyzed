@@ -235,7 +235,11 @@ class UpdateController:
 
             folder = config_dir() / "updates" / release.version
             archive = updater.download(asset, folder, progress=set_progress)
-            return updater.extract(archive)
+            bundle = updater.extract(archive)
+            # Like Zed, the restart only swaps in files that are ready: read once now, they are cached and already
+            # checked by the antivirus, so the new version opens as fast as this one.
+            updater.prewarm(bundle)
+            return bundle
 
         def done(bundle: Path) -> None:
             self.bundle, self.status = bundle, "ready"

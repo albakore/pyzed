@@ -68,6 +68,7 @@ app. Add them under *Settings → Secrets and variables → Actions*.
 | `MACOS_CODESIGN_IDENTITY` | The identity that signs the `.app` with the hardened runtime. |
 | `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` | Notarize the signed app and staple the ticket. |
 | `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` | A base64 `.pfx` and its password: Authenticode signature with a timestamp. |
+| `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT`, `AZURE_SIGNING_PROFILE`, `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | Instead of a `.pfx`, sign on Windows with [Azure Artifact Signing](https://learn.microsoft.com/azure/artifact-signing/) (formerly Trusted Signing, what Zed uses): the account's endpoint (e.g. `https://eus.codesigning.azure.net/`), its name, the certificate profile, and an app registration with the "Artifact Signing Certificate Profile Signer" role. |
 
 The three OAuth values are written by `scripts/build_designer.py` as the
 `pyzed_oauth_apps` module and bundled **only into the Pyzed Design builds**; they

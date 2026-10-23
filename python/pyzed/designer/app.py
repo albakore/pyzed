@@ -11,6 +11,7 @@ new window with all its logic.
 from __future__ import annotations
 
 import ast
+import json
 import logging
 import os
 import re
@@ -151,8 +152,9 @@ class Designer(App):
 
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
-        #: When the designer's code started (``time.perf_counter()``), for the startup time in the Logs panel.
-        self.started = time.perf_counter()
+        #: When each part of the start ended (``time.perf_counter()``; ``"system"`` is seconds), for the startup
+        #: time in the Logs panel (see ``startup_times``).
+        self.startup: Dict[str, Any] = {"started": time.perf_counter(), "system": None}
         # the open documents: the main window's tabs, and those moved to windows of their own
         self.panes = PaneController(self)
         #: A file given to open that is not a document (a ``.pzanim``, a script): opened once the panels exist.
@@ -294,21 +296,44 @@ class Designer(App):
     def on_start(self) -> Any:
         """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
         computer when the app starts; returns the commands."""
-        self._log_startup()
+        self.startup["ready"] = time.perf_counter()
         self.agent.on_start()
         return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
                 if c is not None]
 
+    def on_open(self) -> None:
+        """The main window is on screen: writes how long that took in the Logs panel (once)."""
+        if "window" not in self.startup:
+            self.startup["window"] = time.perf_counter()
+            self._log_startup()
+
+    def startup_times(self) -> Dict[str, float]:
+        """How long each part of the start took, in seconds: ``"system"`` (from the process's start until the
+        designer's code ran: loading the app's files and Python, an antivirus scanning them the first time),
+        ``"editor"`` (its code and settings), ``"window"`` (the window and the graphics) and ``"total"``."""
+        marks = self.startup
+        ready = marks.get("ready", marks["started"])
+        times = {"editor": ready - marks["started"], "window": marks.get("window", ready) - ready}
+        if marks.get("system") is not None:
+            times["system"] = marks["system"]
+        times["total"] = sum(times.values())
+        return {k: round(v, 3) for k, v in times.items()}
+
     def _log_startup(self) -> None:
-        """Writes in the Logs panel how long the window took to open, and how much of it passed before the
-        designer's code ran (loading the app's files, an antivirus scanning them the first time...)."""
-        own = time.perf_counter() - self.started
-        total = _platform.process_age()
-        if total is None or total < own:
-            _logs.event("designer", "Pyzed Design opened in %.1f s", own)
+        times = self.startup_times()
+        if "system" in times:
+            _logs.event("designer", "Pyzed Design opened in %.1f s (%.1f s starting the app, %.1f s loading the "
+                        "editor, %.1f s opening the window)", times["total"], times["system"], times["editor"],
+                        times["window"])
         else:
-            _logs.event("designer", "Pyzed Design opened in %.1f s (%.1f s before its code started)", total,
-                        total - own)
+            _logs.event("designer", "Pyzed Design opened in %.1f s (%.1f s loading the editor, %.1f s opening the "
+                        "window)", times["total"], times["editor"], times["window"])
+        report = os.environ.get("PYZED_STARTUP_REPORT")
+        if report:  # measuring the start (benchmarks, CI): write the times and quit
+            try:
+                Path(report).write_text(json.dumps(times), encoding="utf-8")
+            finally:
+                os._exit(0)
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
@@ -3207,6 +3232,7 @@ class Designer(App):
 def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> None:
     """Opens the designer (on ``path`` if given; it is created on first save if missing)."""
     started = time.perf_counter()
+    before = _platform.process_age()  # the time the process took to get here (None where it can't be told)
     # opened from the desktop's menu, the app lacks the PATH of the user's shell (Node from nvm, ~/.local/bin...)
     threading.Thread(target=_platform.use_user_path, daemon=True, name="pyzed-user-path").start()
     if not _workspace.usable(Path.cwd()):
@@ -3215,7 +3241,7 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
         path = Path(path).resolve() if path is not None else None
         os.chdir(Path.home())
     designer = Designer(path, theme=theme)
-    designer.started = started
+    designer.startup.update(started=started, system=before)
     if path is None and designer.prefs.show_welcome:
         designer.welcome.open()
     telemetry = _telemetry.get()

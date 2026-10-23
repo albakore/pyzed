@@ -10,6 +10,7 @@ Pyzed Design uses it to keep the compiled editor up to date, and any app package
         asset = release.asset_for(updater.asset_name("my-app"))
         archive = updater.download(asset, progress=print)   # checks the SHA-256 GitHub publishes
         bundle = updater.extract(archive)            # the new app, unpacked next to the archive
+        updater.prewarm(bundle)                      # read once now, so the new version opens fast
         updater.replace_on_exit(bundle)              # swapped in when this process exits
         # ...then quit; the new version starts by itself
 
@@ -279,6 +280,24 @@ def extract(archive: Union[str, Path], folder: Optional[Union[str, Path]] = None
     if len(entries) != 1:
         raise UpdateError("the update does not contain exactly one app")
     return entries[0]
+
+
+def prewarm(bundle: Union[str, Path]) -> int:
+    """Reads every file of an unpacked update once (in the background, before the restart): the system keeps them
+    in its cache and the antivirus checks them now, instead of while the new version starts (Windows checks a
+    program's files the first time it runs them). Returns how many bytes it read; files it can't read are skipped.
+    """
+    total = 0
+    for path in sorted(Path(bundle).rglob("*")):
+        try:
+            if not path.is_file() or path.is_symlink():
+                continue
+            with open(path, "rb") as f:
+                while chunk := f.read(1 << 20):
+                    total += len(chunk)
+        except OSError:
+            continue
+    return total
 
 
 _POSIX_SCRIPT = """#!/bin/sh
