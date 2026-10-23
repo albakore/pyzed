@@ -298,6 +298,144 @@ pub fn cycle<T: Send + 'static>(window: window::Id, forward: bool) -> Task<T> {
     .discard()
 }
 
+/// A direction for the arrow keys and `Command.focus_direction` (TV remotes, rotary knobs).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    pub fn parse(name: &str) -> Option<Self> {
+        Some(match name {
+            "up" => Self::Up,
+            "down" => Self::Down,
+            "left" => Self::Left,
+            "right" => Self::Right,
+            _ => return None,
+        })
+    }
+}
+
+/// The field nearest to the focused one in `direction`, by position on the screen: the gap
+/// along the direction plus twice the offset across it, so fields in line win. Nothing
+/// focused: the first field going down or right, the last going up or left. `None` when no
+/// field lies that way.
+pub fn direction_target(
+    bounds: &[Rectangle],
+    focused: Option<usize>,
+    direction: Direction,
+) -> Option<usize> {
+    if bounds.is_empty() {
+        return None;
+    }
+    let Some(current) = focused.and_then(|i| bounds.get(i).map(|b| (i, *b))) else {
+        return Some(match direction {
+            Direction::Down | Direction::Right => 0,
+            Direction::Up | Direction::Left => bounds.len() - 1,
+        });
+    };
+    let (index, from) = current;
+    let center = from.center();
+    let overlap = |a0: f32, a1: f32, b0: f32, b1: f32| (a1.min(b1) - a0.max(b0)).max(0.0);
+    bounds
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| *i != index)
+        .filter_map(|(i, to)| {
+            let c = to.center();
+            let (ahead, gap, across, shared) = match direction {
+                Direction::Right => (
+                    c.x > center.x + 0.5,
+                    to.x - (from.x + from.width),
+                    (c.y - center.y).abs(),
+                    overlap(from.y, from.y + from.height, to.y, to.y + to.height),
+                ),
+                Direction::Left => (
+                    c.x < center.x - 0.5,
+                    from.x - (to.x + to.width),
+                    (c.y - center.y).abs(),
+                    overlap(from.y, from.y + from.height, to.y, to.y + to.height),
+                ),
+                Direction::Down => (
+                    c.y > center.y + 0.5,
+                    to.y - (from.y + from.height),
+                    (c.x - center.x).abs(),
+                    overlap(from.x, from.x + from.width, to.x, to.x + to.width),
+                ),
+                Direction::Up => (
+                    c.y < center.y - 0.5,
+                    from.y - (to.y + to.height),
+                    (c.x - center.x).abs(),
+                    overlap(from.x, from.x + from.width, to.x, to.x + to.width),
+                ),
+            };
+            ahead.then(|| {
+                let across = if shared > 0.0 { 0.0 } else { across };
+                (i, gap.max(0.0) + 2.0 * across)
+            })
+        })
+        .min_by(|a, b| a.1.total_cmp(&b.1))
+        .map(|(i, _)| i)
+}
+
+/// First pass of `step`: the place of every field of the window and the focused one.
+struct Locate {
+    window: window::Id,
+    direction: Direction,
+    inside: bool,
+    focused: Option<usize>,
+    bounds: Vec<Rectangle>,
+}
+
+impl Operation for Locate {
+    fn traverse(&mut self, operate: &mut dyn FnMut(&mut dyn Operation)) {
+        operate(self);
+    }
+
+    fn custom(&mut self, _id: Option<&Id>, _bounds: Rectangle, state: &mut dyn Any) {
+        if let Some(inside) = entered(state, self.window) {
+            self.inside = inside;
+        }
+    }
+
+    fn focusable(&mut self, _id: Option<&Id>, bounds: Rectangle, state: &mut dyn Focusable) {
+        if !self.inside {
+            return;
+        }
+        if state.is_focused() {
+            self.focused = Some(self.bounds.len());
+        }
+        self.bounds.push(bounds);
+    }
+
+    fn finish(&self) -> Outcome<()> {
+        match direction_target(&self.bounds, self.focused, self.direction) {
+            Some(target) => Outcome::Chain(Box::new(Apply {
+                window: self.window,
+                inside: false,
+                target,
+                current: 0,
+            })),
+            None => Outcome::None,
+        }
+    }
+}
+
+/// Moves the focus of `window` to the nearest field in `direction` (arrow keys, remotes).
+pub fn step<T: Send + 'static>(window: window::Id, direction: Direction) -> Task<T> {
+    iced::advanced::widget::operate(Locate {
+        window,
+        direction,
+        inside: false,
+        focused: None,
+        bounds: Vec::new(),
+    })
+    .discard()
+}
+
 /// A control that can have the keyboard focus (`pz.focusable`): a click or Tab gives it the
 /// focus, and while it has it the keys in `keys` go to `on_key(combo)` instead of the rest of
 /// the app. A ring is drawn around it once the keyboard is used on it, like a browser's
@@ -641,7 +779,40 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{next_index, normalize_combo, tab_target};
+    use super::{Direction, direction_target, next_index, normalize_combo, tab_target};
+    use iced::Rectangle;
+
+    #[test]
+    fn arrows_move_to_the_nearest_field_that_way() {
+        // a b c
+        // d   e
+        let cell =
+            |x: f32, y: f32| Rectangle::new(iced::Point::new(x, y), iced::Size::new(80.0, 40.0));
+        let fields = [
+            cell(0.0, 0.0),
+            cell(100.0, 0.0),
+            cell(200.0, 0.0),
+            cell(0.0, 60.0),
+            cell(200.0, 60.0),
+        ];
+        assert_eq!(
+            direction_target(&fields, Some(0), Direction::Right),
+            Some(1)
+        );
+        assert_eq!(
+            direction_target(&fields, Some(1), Direction::Right),
+            Some(2)
+        );
+        assert_eq!(direction_target(&fields, Some(2), Direction::Right), None);
+        assert_eq!(direction_target(&fields, Some(0), Direction::Down), Some(3));
+        // equally far: the first one in the tree
+        assert_eq!(direction_target(&fields, Some(1), Direction::Down), Some(3));
+        assert_eq!(direction_target(&fields, Some(4), Direction::Up), Some(2));
+        assert_eq!(direction_target(&fields, Some(4), Direction::Left), Some(3));
+        assert_eq!(direction_target(&fields, None, Direction::Down), Some(0));
+        assert_eq!(direction_target(&fields, None, Direction::Up), Some(4));
+        assert_eq!(direction_target(&[], None, Direction::Up), None);
+    }
 
     #[test]
     fn normalizes_combos() {

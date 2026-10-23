@@ -238,7 +238,11 @@ def settings(root: Path, path: str = ".") -> Dict[str, Any]:
         "project": project.name,
         "rendering": asdict(rendering.find(project.root)),
         "rendering_options": {"renderer": rendering.RENDERERS, "gpu_api": rendering.GPU_APIS,
-                              "power": rendering.POWER, "vsync": rendering.VSYNC},
+                              "power": rendering.POWER, "vsync": rendering.VSYNC, "present": rendering.PRESENT,
+                              "antialiasing": rendering.ANTIALIASING, "frame_latency": rendering.FRAME_LATENCY,
+                              "memory": rendering.MEMORY, "gpu": "part of the GPU's name, '' for any",
+                              "max_fps": "0 (follow the screen) to 1000",
+                              "background_fps": "None (same as max_fps), 0 (pause) to 1000"},
         "editor": store.project["editor"], "designer": store.project["designer"],
         "editor_keys": profiles.defaults("editor"), "designer_keys": profiles.defaults("designer"),
         "files": {"rendering": "pyproject.toml", "preferences": profiles.PROJECT_FILE.as_posix()},
@@ -246,7 +250,7 @@ def settings(root: Path, path: str = ".") -> Dict[str, Any]:
     }
 
 
-def set_settings(root: Path, path: str = ".", *, rendering: Optional[Dict[str, str]] = None,
+def set_settings(root: Path, path: str = ".", *, rendering: Optional[Dict[str, Any]] = None,
                  editor: Optional[Dict[str, Any]] = None, designer: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Changes the project's settings: ``rendering`` keys are merged into ``[tool.pyzed.rendering]`` ("auto"
     removes one); ``editor`` and ``designer`` keys into ``.pyzed/settings.json`` (``None`` removes one, so the
