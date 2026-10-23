@@ -62,6 +62,18 @@ focus_previous()
 
 Mueve el foco del teclado al campo anterior de la ventana (lo que hace Shift+Tab).
 
+### `focus_direction`
+
+```python
+focus_direction(direction)
+```
+
+Mueve el foco del teclado al campo más cercano en esa dirección de la pantalla (mandos de TV, ruedas giratorias). `App.arrow_focus` lo hace con las flechas. Ver [Dispositivos](/pyzed/es/guides/devices/#foco-con-las-flechas).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `direction` | `"up"`, `"down"`, `"left"` o `"right"`. |
+
 ### `select_all`
 
 ```python

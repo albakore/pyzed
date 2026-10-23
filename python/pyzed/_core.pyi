@@ -126,6 +126,12 @@ class Command:
         """Focuses the `text_input` (or editor) with the given `id`."""
         ...
     @staticmethod
+    def focus_direction(direction: Any) -> Any:
+        """Moves the keyboard focus to the nearest field `"up"`, `"down"`, `"left"` or `"right"`
+        on the screen (TV remotes, rotary knobs; `App.arrow_focus` does it with the arrows).
+        """
+        ...
+    @staticmethod
     def focus_next() -> Any:
         """Moves the keyboard focus to the next field of the window (what Tab does), wrapping around."""
         ...

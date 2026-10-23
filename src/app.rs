@@ -125,6 +125,8 @@ pub enum Message {
     Frame(iced::time::Instant),
     /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
     TabKey(String, bool),
+    /// An arrow no widget used, with `App.arrow_focus`: `on_key` first, then the focus moves.
+    ArrowKey(String, crate::focus::Direction),
     /// Android's back button: `on_back()` first, then the app goes to the background.
     #[cfg(target_os = "android")]
     BackKey,
@@ -525,6 +527,7 @@ enum CommandKind {
     Focus(String),
     /// Next (`true`) or previous field of the current window.
     FocusNext(bool),
+    FocusDirection(crate::focus::Direction),
     SelectAll(String),
     SetEditorText(String, String),
     SetEditorCursor(String, usize, usize),
@@ -614,6 +617,19 @@ impl Command {
     #[staticmethod]
     fn focus_previous() -> Self {
         cmd(CommandKind::FocusNext(false))
+    }
+
+    /// Moves the keyboard focus to the nearest field `"up"`, `"down"`, `"left"` or `"right"`
+    /// on the screen (TV remotes, rotary knobs; `App.arrow_focus` does it with the arrows).
+    #[staticmethod]
+    fn focus_direction(direction: &str) -> PyResult<Self> {
+        crate::focus::Direction::parse(direction)
+            .map(|d| cmd(CommandKind::FocusDirection(d)))
+            .ok_or_else(|| {
+                PyValueError::new_err(format!(
+                    "invalid direction {direction:?}: use \"up\", \"down\", \"left\" or \"right\""
+                ))
+            })
     }
 
     /// Focuses the `text_input` with the given `id` and selects all its text.
@@ -979,6 +995,7 @@ impl Command {
             CommandKind::Focus(_) => "Command.focus(...)",
             CommandKind::FocusNext(true) => "Command.focus_next()",
             CommandKind::FocusNext(false) => "Command.focus_previous()",
+            CommandKind::FocusDirection(_) => "Command.focus_direction(...)",
             CommandKind::SelectAll(_) => "Command.select_all(...)",
             CommandKind::SetEditorText(..) => "Command.set_editor_text(...)",
             CommandKind::SetEditorCursor(..) => "Command.set_editor_cursor(...)",
@@ -1106,6 +1123,10 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
         CommandKind::Focus(id) => iced::widget::operation::focus(id.clone()),
         CommandKind::FocusNext(forward) => match state.current.or(state.main) {
             Some(window) => crate::focus::cycle(window, *forward),
+            None => Task::none(),
+        },
+        CommandKind::FocusDirection(direction) => match state.current.or(state.main) {
+            Some(window) => crate::focus::step(window, *direction),
             None => Task::none(),
         },
         CommandKind::SelectAll(id) => Task::batch([
@@ -1364,6 +1385,12 @@ fn close_animated(py: Python<'_>, state: &State, id: window::Id) -> Task<Message
 }
 
 pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
+    // `Window.__pyzed_device__`: fills in what the device profile sets and the window leaves
+    match obj.call_method0("__pyzed_device__") {
+        Ok(_) => {}
+        Err(err) if err.is_instance_of::<pyo3::exceptions::PyAttributeError>(obj.py()) => {}
+        Err(err) => return Err(err),
+    }
     let attr = |name: &str| obj.getattr(name).ok().filter(|v| !v.is_none());
     let size_of = |name: &str| -> PyResult<Option<Size>> {
         attr(name)
@@ -1847,6 +1874,22 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             // Nothing to do: the views read the new insets when they are built again.
             #[cfg(target_os = "android")]
             Message::Insets => return Task::none(),
+            Message::ArrowKey(combo, direction) => {
+                let main = state.app.bind(py).clone();
+                let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
+                    None if !target.is(&main) => call_hook(&main, "on_key", (combo,)),
+                    other => other,
+                };
+                match hooked {
+                    Some(Ok(value)) if !value.is_none() => return command_task(py, state, &value),
+                    Some(Err(err)) => err.print(py),
+                    _ => {}
+                }
+                return match state.current.or(state.main) {
+                    Some(window) => crate::focus::step(window, direction),
+                    None => Task::none(),
+                };
+            }
             Message::TabKey(combo, back) => {
                 let main = state.app.bind(py).clone();
                 let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -2070,6 +2113,8 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             }
             Message::WindowResized(id, size) => {
                 let obj = state.window(id).bind(py).clone();
+                // the scale the size was measured with, for `design_size`
+                let _ = obj.setattr("_pyzed_size_scale", scale_factor(state, id));
                 let _ = obj.setattr("window_size", (size.width, size.height));
                 let hook = run_hook(
                     py,
@@ -2103,6 +2148,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     let _ = obj.setattr("window_position", (at.x, at.y));
                 }
                 if let Some(size) = size {
+                    let _ = obj.setattr("_pyzed_size_scale", scale_factor(state, id));
                     let _ = obj.setattr("window_size", (size.width, size.height));
                 }
                 return Task::none();
@@ -2374,12 +2420,13 @@ fn title(state: &State, id: window::Id) -> String {
 
 fn scale_factor(state: &State, id: window::Id) -> f32 {
     Python::attach(|py| {
-        state
-            .window(id)
-            .bind(py)
-            .getattr("scale")
-            .and_then(|s| s.extract::<f32>())
-            .unwrap_or(1.0)
+        let obj = state.window(id).bind(py);
+        // `Window.__pyzed_scale__`: `scale`, times the fit of `design_size` when it has one
+        match obj.call_method0("__pyzed_scale__") {
+            Ok(value) => value.extract::<f32>(),
+            Err(_) => obj.getattr("scale").and_then(|s| s.extract::<f32>()),
+        }
+        .unwrap_or(1.0)
     })
 }
 
@@ -2513,10 +2560,18 @@ static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
 static KEY_HOOKS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 const ON_KEY: u8 = 1;
 const ON_KEY_UP: u8 = 2;
+/// `App.arrow_focus`: the arrow keys no widget used move the focus.
+const ARROW_FOCUS: u8 = 4;
 
 fn key_hooks(obj: &Bound<'_, PyAny>) -> u8 {
     let has = |name: &str| obj.hasattr(name).unwrap_or(false);
-    (if has("on_key") { ON_KEY } else { 0 }) | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+    let arrows = obj
+        .getattr("arrow_focus")
+        .and_then(|v| v.is_truthy())
+        .unwrap_or(false);
+    (if has("on_key") { ON_KEY } else { 0 })
+        | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+        | (if arrows { ARROW_FOCUS } else { 0 })
 }
 
 fn key_message(event: keyboard::Event) -> Option<Message> {
@@ -2636,6 +2691,29 @@ fn key_event(
                 "tab"
             };
             Some(Message::TabKey(combo.into(), modifiers.shift()).in_window(window))
+        }
+        // with `App.arrow_focus`, the arrows no widget used move the focus (remotes, knobs)
+        iced::Event::Keyboard(keyboard::Event::KeyPressed {
+            key:
+                Key::Named(
+                    named @ (Named::ArrowUp
+                    | Named::ArrowDown
+                    | Named::ArrowLeft
+                    | Named::ArrowRight),
+                ),
+            modifiers,
+            ..
+        }) if status == iced::event::Status::Ignored
+            && modifiers.is_empty()
+            && KEY_HOOKS.load(std::sync::atomic::Ordering::Relaxed) & ARROW_FOCUS != 0 =>
+        {
+            let (combo, direction) = match named {
+                Named::ArrowUp => ("up", crate::focus::Direction::Up),
+                Named::ArrowDown => ("down", crate::focus::Direction::Down),
+                Named::ArrowLeft => ("left", crate::focus::Direction::Left),
+                _ => ("right", crate::focus::Direction::Right),
+            };
+            Some(Message::ArrowKey(combo.into(), direction).in_window(window))
         }
         iced::Event::Keyboard(event) => key_message(event).map(|m| m.in_window(window)),
         _ => None,

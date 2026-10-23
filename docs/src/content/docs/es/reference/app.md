@@ -30,6 +30,8 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
+| `arrow_focus` | `False` | Las flechas que ningún control usó mueven el foco al control más cercano en esa dirección (mandos, ruedas giratorias). |
+| `device` | `None` | El perfil de dispositivo: un nombre (`"touch"`, `"automotive"`, `"mobile"`, `"kiosk"`, `"tv"`) o un `pz.Device`. Ver [Dispositivos](/pyzed/es/guides/devices/). |
 | `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
 | `rendering` | `None` | Un [`Rendering`](#rendering): GPU o CPU, API gráfica, GPU y vsync. `None` lee `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto. |
 
@@ -180,6 +182,7 @@ reenvía a `app.update()`.
 | `skip_taskbar` | `False` | No aparece en la barra de tareas (Windows). |
 | `hide_cursor` | `False` | Oculta el puntero sobre ella (paneles táctiles). |
 | `kiosk` | `False` | Pantalla completa, sin marco ni botones, sobre las demás, y el usuario no puede cerrarla. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos). |
+| `design_size`, `stretch` | `None`, `"expand"` | Maqueta la vista para `design_size` y la escala a la ventana: `"expand"` crece en el espacio que sobra, `"fit"` mantiene el diseño centrado. Ver [Resolución de diseño](/pyzed/es/guides/devices/#resolución-de-diseño). |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
@@ -496,6 +499,87 @@ Monitor.position  # property
 ```
 
 `(x, y)` de la esquina superior izquierda en el escritorio.
+
+### `Device`
+
+```python
+@dataclass
+class Device(name='desktop', touch=False, pointer=True, kiosk=False, fullscreen=False, arrow_focus=False, scale=1.0, min_target=24.0, design_size=None, stretch='expand', quality='high', reduced_motion=None, rendering={})
+```
+
+Un perfil de dispositivo: cómo se usa (táctil, puntero, flechas) y cómo se dibuja en él (escala, tamaño de diseño, calidad). Pyzed completa las opciones de ventana y de renderizado que la app deja por defecto. Ver [Dispositivos](/pyzed/es/guides/devices/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Su nombre, para `pz.media("device: ...")`. |
+| `touch` | Se toca más de lo que se hace clic: `pz.media("pointer: coarse")` es verdadero. |
+| `pointer` | `False` oculta el puntero sobre las ventanas. |
+| `kiosk` | La ventana principal se abre como quiosco. |
+| `fullscreen` | La ventana principal se abre a pantalla completa. |
+| `arrow_focus` | Las flechas mueven el foco. |
+| `scale` | Escala de la interfaz de las ventanas que dejan `scale` en 1. |
+| `min_target` | El control más pequeño cómodo en píxeles lógicos. |
+| `design_size` | El tamaño de ventana para el que se diseñó la app. |
+| `stretch` | `"expand"`, `"fit"` o `"none"`. |
+| `quality` | `"high"`, `"medium"` o `"low"`: valores de renderizado. |
+| `reduced_motion` | `True` apaga las animaciones, `None` sigue al sistema. |
+| `rendering` | Campos de `pz.Rendering` encima del nivel de calidad. |
+
+```python
+class Panel(pz.App):
+    device = pz.Device("panel", touch=True, kiosk=True, quality="low")
+```
+
+**Métodos y propiedades**
+
+#### `Device.replace`
+
+```python
+Device.replace(**changes)
+```
+
+Una copia con algunos campos cambiados: `pz.devices.PROFILES["tv"].replace(scale=1.5)`.
+
+#### `Device.window_defaults`
+
+```python
+Device.window_defaults(main)
+```
+
+Las opciones de ventana que este perfil da a una ventana que las deja por defecto.
+
+#### `Device.tune`
+
+```python
+Device.tune(rendering)
+```
+
+`rendering` (un `pz.Rendering`) con el nivel de calidad y `self.rendering` completando los ajustes que deja por defecto.
+
+### `device`
+
+```python
+device()
+```
+
+El perfil de dispositivo con el que corre la app (`desktop` antes de que `pz.run` elija uno).
+
+```python
+if pz.device().touch:
+    padding = 20
+```
+
+### `set_device`
+
+```python
+set_device(choice)
+```
+
+Usa un perfil desde ahora (un nombre o un `pz.Device`; `None` vuelve a elegir como hace `pz.run`) y lo devuelve.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `choice` | El nombre de un perfil o un `pz.Device`. |
 
 ### `renderer_info`
 

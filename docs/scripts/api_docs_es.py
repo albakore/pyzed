@@ -189,6 +189,10 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                 "pyzed.Command.focus_previous": {
                     "desc": "Mueve el foco del teclado al campo anterior de la ventana (lo que hace Shift+Tab).",
                 },
+                "pyzed.Command.focus_direction": {
+                    "desc": "Mueve el foco del teclado al campo más cercano en esa dirección de la pantalla (mandos de TV, ruedas giratorias). `App.arrow_focus` lo hace con las flechas. Ver [Dispositivos](/pyzed/es/guides/devices/#foco-con-las-flechas).",
+                    "params": {"direction": '`"up"`, `"down"`, `"left"` o `"right"`.'},
+                },
                 "pyzed.Command.select_all": {
                     "desc": "Da el foco al `text_input` con ese `id` y selecciona todo su texto (lo que se escriba lo reemplaza).",
                     "params": {"id": "El `id` del campo."},
@@ -1064,6 +1068,8 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
+| `arrow_focus` | `False` | Las flechas que ningún control usó mueven el foco al control más cercano en esa dirección (mandos, ruedas giratorias). |
+| `device` | `None` | El perfil de dispositivo: un nombre (`"touch"`, `"automotive"`, `"mobile"`, `"kiosk"`, `"tv"`) o un `pz.Device`. Ver [Dispositivos](/pyzed/es/guides/devices/). |
 | `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
 | `rendering` | `None` | Un [`Rendering`](#rendering): GPU o CPU, API gráfica, GPU y vsync. `None` lee `[tool.pyzed.rendering]` del `pyproject.toml` del proyecto. |
 
@@ -1106,6 +1112,7 @@ reenvía a `app.update()`.
 | `skip_taskbar` | `False` | No aparece en la barra de tareas (Windows). |
 | `hide_cursor` | `False` | Oculta el puntero sobre ella (paneles táctiles). |
 | `kiosk` | `False` | Pantalla completa, sin marco ni botones, sobre las demás, y el usuario no puede cerrarla. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos). |
+| `design_size`, `stretch` | `None`, `"expand"` | Maqueta la vista para `design_size` y la escala a la ventana: `"expand"` crece en el espacio que sobra, `"fit"` mantiene el diseño centrado. Ver [Resolución de diseño](/pyzed/es/guides/devices/#resolución-de-diseño). |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
@@ -1191,6 +1198,39 @@ reenvía a `app.update()`.
     "pyzed.Monitor": {
         "desc": "Una pantalla de `pz.monitors()`. `size` y `position` dan `(ancho, alto)` y `(x, y)`.",
         "no_signature": True,
+    },
+    "pyzed.Device": {
+        "desc": "Un perfil de dispositivo: cómo se usa (táctil, puntero, flechas) y cómo se dibuja en él (escala, tamaño de diseño, calidad). Pyzed completa las opciones de ventana y de renderizado que la app deja por defecto. Ver [Dispositivos](/pyzed/es/guides/devices/).",
+        "params": {
+            "name": "Su nombre, para `pz.media(\"device: ...\")`.",
+            "touch": "Se toca más de lo que se hace clic: `pz.media(\"pointer: coarse\")` es verdadero.",
+            "pointer": "`False` oculta el puntero sobre las ventanas.",
+            "kiosk": "La ventana principal se abre como quiosco.",
+            "fullscreen": "La ventana principal se abre a pantalla completa.",
+            "arrow_focus": "Las flechas mueven el foco.",
+            "scale": "Escala de la interfaz de las ventanas que dejan `scale` en 1.",
+            "min_target": "El control más pequeño cómodo en píxeles lógicos.",
+            "design_size": "El tamaño de ventana para el que se diseñó la app.",
+            "stretch": '`"expand"`, `"fit"` o `"none"`.',
+            "quality": '`"high"`, `"medium"` o `"low"`: valores de renderizado.',
+            "reduced_motion": "`True` apaga las animaciones, `None` sigue al sistema.",
+            "rendering": "Campos de `pz.Rendering` encima del nivel de calidad.",
+        },
+        "example": """
+            class Panel(pz.App):
+                device = pz.Device("panel", touch=True, kiosk=True, quality="low")
+        """,
+    },
+    "pyzed.device": {
+        "desc": "El perfil de dispositivo con el que corre la app (`desktop` antes de que `pz.run` elija uno).",
+        "example": """
+            if pz.device().touch:
+                padding = 20
+        """,
+    },
+    "pyzed.set_device": {
+        "desc": "Usa un perfil desde ahora (un nombre o un `pz.Device`; `None` vuelve a elegir como hace `pz.run`) y lo devuelve.",
+        "params": {"choice": "El nombre de un perfil o un `pz.Device`."},
     },
     "pyzed.renderer_info": {
         "desc": "La GPU y la API gráfica que dibujan las ventanas, como `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, o `(\"CPU\", \"tiny-skia\")` con el renderizador de CPU; `None` hasta que se abre la primera ventana.",
@@ -2793,6 +2833,9 @@ MEMBERS = {
     "pyzed.Window.resolved_theme": "El tema concreto que usa ahora esta ventana (con los colores y tamaños de su estilo global).",
     "pyzed.Window.set_fullscreen": "Un comando que pone la ventana en pantalla completa (en `monitor`, un índice de `pz.monitors()`; `exclusive` toma la pantalla), o en ventana con `False`.",
     "pyzed.Window.set_window_level": "Un comando que mantiene la ventana sobre (`\"top\"`) o bajo (`\"bottom\"`) las demás, o la devuelve a `\"normal\"`.",
+    "pyzed.Device.replace": "Una copia con algunos campos cambiados: `pz.devices.PROFILES[\"tv\"].replace(scale=1.5)`.",
+    "pyzed.Device.window_defaults": "Las opciones de ventana que este perfil da a una ventana que las deja por defecto.",
+    "pyzed.Device.tune": "`rendering` (un `pz.Rendering`) con el nivel de calidad y `self.rendering` completando los ajustes que deja por defecto.",
     "pyzed.Monitor.size": "`(ancho, alto)` en píxeles lógicos.",
     "pyzed.Monitor.position": "`(x, y)` de la esquina superior izquierda en el escritorio.",
     "pyzed.Window.refresh": "Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo); las demás ventanas se dibujan tras cada actualización de todos modos.",

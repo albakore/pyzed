@@ -90,6 +90,8 @@ from ._async import loop as asyncio_loop, spawn
 from .app import App, Monitor, Window, monitors, renderer_info, run, safe_area, screenshot
 from .splash import Splash
 from .rendering import Rendering
+from . import devices
+from .devices import Device, device, set_device
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
@@ -271,6 +273,10 @@ __all__ = [
     "Window",
     "Splash",
     "Rendering",
+    "Device",
+    "device",
+    "devices",
+    "set_device",
     "Clipboard",
     "FileDialog",
     "FileWatcher",

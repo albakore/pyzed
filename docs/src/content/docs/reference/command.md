@@ -62,6 +62,18 @@ focus_previous()
 
 Moves the keyboard focus to the previous field of the window (what Shift+Tab does).
 
+### `focus_direction`
+
+```python
+focus_direction(direction)
+```
+
+Moves the keyboard focus to the nearest field that way on the screen (TV remotes, rotary knobs). `App.arrow_focus` does it with the arrow keys. See [Devices](/pyzed/guides/devices/#focus-with-the-arrow-keys).
+
+| Parameter | Description |
+| --- | --- |
+| `direction` | `"up"`, `"down"`, `"left"` or `"right"`. |
+
 ### `select_all`
 
 ```python

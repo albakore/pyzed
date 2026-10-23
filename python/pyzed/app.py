@@ -9,6 +9,7 @@ from . import _core
 from . import _platform
 from . import animation as _animation
 from . import component as _component
+from . import devices as _devices
 from . import style as _style
 from . import hot_reload as _hot_reload
 from . import rendering as _rendering
@@ -71,6 +72,12 @@ class Window:
     above the others, without buttons or taskbar entry, and the user cannot close it (only
     ``Command.close_window`` or ``Command.exit`` do).
 
+    ``design_size = (1920, 720)`` lays the view out for that size and scales it to the real
+    window, like Godot's stretch modes: ``stretch = "expand"`` (the default) lets it grow into
+    the space left, ``"fit"`` keeps the design's size centered with bars around it. The device
+    profile (``pz.device()``, see ``pyzed.devices``) fills in the options a window leaves at
+    their defaults: a kiosk on a ``kiosk`` device, no pointer on a TV...
+
     ``transition`` animates the window's content when it opens: a window transition
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
@@ -111,6 +118,9 @@ class Window:
     hide_cursor: bool = False
     kiosk: bool = False
     scale: float = 1.0
+    design_size: Optional[Tuple[float, float]] = None
+    stretch: str = "expand"
+    _pyzed_size_scale: float = 1.0
     theme: ThemeLike = None
     style: Any = None
     transition: Any = None
@@ -239,11 +249,37 @@ class Window:
         args, kwargs = self.__dict__.get("_pyzed_init", ((), {}))
         return type(self)(*args, **kwargs)
 
+    def __pyzed_device__(self) -> None:
+        _devices._apply_window(self)
+
+    def _pyzed_design(self) -> Optional[Tuple[float, float]]:
+        design = self.design_size
+        if not design or self.stretch == "none":
+            return None
+        return (float(design[0]), float(design[1]))
+
+    def __pyzed_scale__(self) -> float:
+        scale = float(self.scale or 1.0)
+        design = self._pyzed_design()
+        if design is None:
+            return scale
+        if not self.window_size:
+            return 1.0  # opens at ``size`` as it is, then fits the design to it
+        # the window's size in the system's logical pixels, before any scale of ours
+        base = float(self._pyzed_size_scale or 1.0)
+        width, height = self.window_size[0] * base, self.window_size[1] * base
+        return max(0.05, scale * min(width / design[0], height / design[1]))
+
     def __pyzed_view__(self):
         _hot_reload.note_window(self)
         _hot_reload.check()
         _theme.use(self.resolved_theme())
-        _style._viewport = tuple(self.window_size or _style._screen or self.size)
+        design = self._pyzed_design()
+        if design is not None and self.window_size:
+            ratio = float(self._pyzed_size_scale or 1.0) / self.__pyzed_scale__()
+            _style._viewport = (self.window_size[0] * ratio, self.window_size[1] * ratio)
+        else:
+            _style._viewport = tuple(self.window_size or _style._screen or self.size)
         from .ui import frame as _frame
 
         with _component.render_pass(self), _frame.drawing(self) as drawing:
@@ -251,6 +287,9 @@ class Window:
             if drawing.style is not None and not drawing.drawn:
                 root = _frame.window_frame(root, menus=self.frame_menus())
             root = _style.apply_global(root, self.resolved_style())
+        if design is not None and self.stretch == "fit":
+            root = _core.container(_core.container(root, width=design[0], height=design[1], clip=True),
+                                   width="fill", height="fill", center=True)
         return _animation._window_root(self, root)
 
     def __pyzed_frame__(self) -> Optional[str]:
@@ -304,6 +343,12 @@ class App(Window):
     #: Tab and Shift+Tab move the keyboard focus between the fields of the window
     #: (``on_key`` sees the key first; returning something from it keeps the focus).
     tab_focus: bool = True
+    #: The arrow keys no control used move the focus to the nearest control that way (TV remotes,
+    #: rotary knobs); ``on_key`` sees them first. The ``tv`` and ``automotive`` devices turn it on.
+    arrow_focus: bool = False
+    #: The device profile: a name (``"touch"``, ``"automotive"``, ``"mobile"``, ``"kiosk"``, ``"tv"``...)
+    #: or a ``pz.Device``; ``None`` follows ``PYZED_DEVICE``, ``pyproject.toml`` or the system.
+    device: Any = None
     #: A window shown while the app starts (see ``pz.Splash``); ``None`` for none.
     splash: Optional[Window] = None
     #: How the windows are drawn (GPU or CPU...); ``None`` follows the project's ``pyproject.toml``.
@@ -400,7 +445,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     """
     if _hot_reload.is_reloading():
         return  # the main script is being re-executed by a reload; the app already runs
-    (getattr(app, "rendering", None) or _rendering.find()).apply()
+    _devices._start(app).apply()
     if _platform.is_wsl():  # under WSL the window opens as a Windows program (see pyzed._wsl_windows)
         from . import _wsl_windows
 

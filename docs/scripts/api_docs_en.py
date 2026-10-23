@@ -189,6 +189,10 @@ If `view()` raises an exception, the window shows the traceback instead of closi
                 "pyzed.Command.focus_previous": {
                     "desc": "Moves the keyboard focus to the previous field of the window (what Shift+Tab does).",
                 },
+                "pyzed.Command.focus_direction": {
+                    "desc": "Moves the keyboard focus to the nearest field that way on the screen (TV remotes, rotary knobs). `App.arrow_focus` does it with the arrow keys. See [Devices](/pyzed/guides/devices/#focus-with-the-arrow-keys).",
+                    "params": {"direction": '`"up"`, `"down"`, `"left"` or `"right"`.'},
+                },
                 "pyzed.Command.select_all": {
                     "desc": "Focuses the `text_input` with that `id` and selects all its text (typing replaces it).",
                     "params": {"id": "The input's `id`."},
@@ -1064,6 +1068,8 @@ messages, `update(message)`. State lives in instance attributes.
 | `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
+| `arrow_focus` | `False` | The arrow keys no control used move the focus to the nearest control that way (remotes, rotary knobs). |
+| `device` | `None` | The device profile: a name (`"touch"`, `"automotive"`, `"mobile"`, `"kiosk"`, `"tv"`) or a `pz.Device`. See [Devices](/pyzed/guides/devices/). |
 | `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |
 | `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |
 
@@ -1106,6 +1112,7 @@ forwards them to `app.update()`.
 | `skip_taskbar` | `False` | Leaves it out of the taskbar (Windows). |
 | `hide_cursor` | `False` | Hides the pointer over it (touch panels). |
 | `kiosk` | `False` | Fullscreen, no frame or buttons, above the rest, and the user cannot close it. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks). |
+| `design_size`, `stretch` | `None`, `"expand"` | Lays the view out for `design_size` and scales it to the window: `"expand"` grows into the space left, `"fit"` keeps the design centered. See [Design resolution](/pyzed/guides/devices/#design-resolution). |
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
 | `style` | `None` | Its own global style; `None` uses the app's. |
@@ -1191,6 +1198,39 @@ forwards them to `app.update()`.
     "pyzed.Monitor": {
         "desc": "A screen from `pz.monitors()`. `size` and `position` give `(width, height)` and `(x, y)`.",
         "no_signature": True,
+    },
+    "pyzed.Device": {
+        "desc": "A device profile: how the device is used (touch, pointer, arrow keys) and drawn on (scale, design size, quality). Pyzed fills in the window and rendering options the app leaves at their defaults. See [Devices](/pyzed/guides/devices/).",
+        "params": {
+            "name": "Its name, for `pz.media(\"device: ...\")`.",
+            "touch": "Touched more than clicked: `pz.media(\"pointer: coarse\")` is true.",
+            "pointer": "`False` hides the pointer over the windows.",
+            "kiosk": "The main window opens as a kiosk.",
+            "fullscreen": "The main window opens fullscreen.",
+            "arrow_focus": "The arrow keys move the focus.",
+            "scale": "Interface scale of the windows that leave `scale` at 1.",
+            "min_target": "The smallest comfortable control in logical pixels.",
+            "design_size": "The window size the app was designed for.",
+            "stretch": '`"expand"`, `"fit"` or `"none"`.',
+            "quality": '`"high"`, `"medium"` or `"low"`: rendering defaults.',
+            "reduced_motion": "`True` turns animations off, `None` follows the system.",
+            "rendering": "`pz.Rendering` fields on top of the quality level.",
+        },
+        "example": """
+            class Panel(pz.App):
+                device = pz.Device("panel", touch=True, kiosk=True, quality="low")
+        """,
+    },
+    "pyzed.device": {
+        "desc": "The device profile the app runs with (`desktop` before `pz.run` picks one).",
+        "example": """
+            if pz.device().touch:
+                padding = 20
+        """,
+    },
+    "pyzed.set_device": {
+        "desc": "Uses a profile from now on (a name or a `pz.Device`; `None` picks one again as `pz.run` does) and returns it.",
+        "params": {"choice": "A profile name or a `pz.Device`."},
     },
     "pyzed.renderer_info": {
         "desc": "The GPU and the graphics API drawing the windows, like `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, or `(\"CPU\", \"tiny-skia\")` with the CPU renderer; `None` until the first window is open.",
