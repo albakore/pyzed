@@ -1035,8 +1035,8 @@ def browser_view(b: FolderBrowser, t: Theme, *, open_project: Optional[Callable[
                                     selected=b.path == p, theme=t) for label, p, icon in places()]
     recent = [r for r in recent if os.path.isdir(r)][:6]
     if recent:
-        side.append(_core.container(ui.label(tr("Recent").upper(), size="xs", weight="semibold", color="text_muted",
-                                             theme=t), padding=(10, 8, 2, 8)))
+        side.append(_core.container(ui.label(tr("Recent").upper(), size="xs", weight="medium", mono=True,
+                                             color="text_muted", theme=t), padding=(10, 8, 2, 8)))
         side += [ui.tooltip(ui.list_item(r.name, (lambda r=r: open_project(r)) if open_project else
                                          (lambda r=r: b.go(r.parent)), icon="folder-git-2", height=24, inset=True,
                                          theme=t), str(r), theme=t) for r in recent]

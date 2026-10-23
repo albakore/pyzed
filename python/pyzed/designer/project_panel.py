@@ -613,7 +613,7 @@ class ProjectController:
 
 def _section(title: str, t: Theme, end: Any = None) -> Any:
     return _core.container(
-        _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
+        _core.row([ui.label(title.upper(), size="xs", weight="medium", mono=True, color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
         padding=(12, 12, 4, 12), width="fill")
 

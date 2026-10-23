@@ -1927,8 +1927,8 @@ def server_status_items(a: CodeAssist, t: Theme, on_press: Any = None) -> List[A
         if status == "disabled":
             continue
         tip = f"{name}: {status}" + (f" — {detail}" if detail else "")
-        items.append(ui.status_item(f"● {name}", on_press, color=STATUS_COLORS.get(status, "text_muted"),
-                                    tooltip=tip, theme=t))
+        items.append(ui.status_item(name, on_press, led=STATUS_COLORS.get(status, "text_muted"), tooltip=tip,
+                                    theme=t))
     return items
 
 

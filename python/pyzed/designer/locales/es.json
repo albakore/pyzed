@@ -2615,6 +2615,10 @@
   "Hide the settings": "Ocultar los ajustes",
   "Name, type and access": "Nombre, tipo y acceso",
   "Pyzed Design closed unexpectedly last time": "Pyzed Design se cerró inesperadamente la última vez",
-  "The details are in {path} and in the Logs panel": "Los detalles están en {path} y en el panel Logs"
+  "The details are in {path} and in the Logs panel": "Los detalles están en {path} y en el panel Logs",
+  "Guides": "Guías",
+  "Form running": "Formulario en ejecución",
+  "The form is running: click to stop it": "El formulario se está ejecutando: haz clic para detenerlo",
+  "Renderer and interface size (a click goes back to 100%)": "Renderizador y tamaño de la interfaz (un clic vuelve al 100 %)"
  }
 }

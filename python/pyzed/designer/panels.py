@@ -41,9 +41,16 @@ ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#f
 def section(title: str, t: Theme, end: Any = None) -> Any:
     """Builds a section heading of a panel: ``title`` in small capitals, with ``end`` at the right."""
     return _core.container(
-        _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
+        _core.row([ui.label(title.upper(), size="xs", weight="medium", mono=True, color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
         padding=(10, spacing.GUTTER, 4, spacing.GUTTER), width="fill")
+
+
+def type_chip(spec: Any, t: Theme, size: float = 26) -> Any:
+    """The icon of a component type on a tint of its role's color, as the Properties header shows it."""
+    color = _roles.icon_color(spec, t)
+    return _core.container(_icon(spec.icon, size=size * 0.58, color=color), width=size, height=size, center=True,
+                           radius=t.radius_sm + 1, bg=alpha(color, 0.14))
 
 
 def doc_text(text: str, t: Theme, *, size: str = "xs", color: str = "text_muted") -> Any:
@@ -623,8 +630,11 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     assert c is not None
     spec = _components.spec(c.type)
     rows: List[Any] = [
-        _core.container(_core.row([_icon(spec.icon, size=16, color=_roles.icon_color(spec, t)),
-                                   _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
+        _core.container(_core.row([type_chip(spec, t),
+                                   _core.column([_core.row([ui.label(tr(spec.label), weight="semibold", theme=t),
+                                                            ui.label(c.name, size="xs", mono=True, color="text_muted",
+                                                                     wrap=False, theme=t)],
+                                                           spacing=8, align="center"),
                                                  doc_text(tr(spec.description), t)],
                                                 width="fill"),
                                    _help_button(d, c.name, t)],
