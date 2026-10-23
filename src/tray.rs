@@ -231,8 +231,8 @@ mod platform {
             let icon = &self.spec.icon;
             // ARGB32 in network byte order
             let mut data = Vec::with_capacity(icon.data.len());
-            for pixel in icon.data.chunks_exact(4) {
-                data.extend_from_slice(&[pixel[3], pixel[0], pixel[1], pixel[2]]);
+            for [r, g, b, a] in icon.data.as_chunks::<4>().0 {
+                data.extend_from_slice(&[*a, *r, *g, *b]);
             }
             vec![ksni::Icon {
                 width: icon.width as i32,
