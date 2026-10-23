@@ -197,3 +197,28 @@ def test_a_control_added_with_nothing_open_makes_a_new_form():
     d.doc.add("button", 10, 10)
     d.doc.dirty = True
     assert not d.nothing_open and len(d.doc_tab_items(d.panes.main, d.theme_obj)[0]) == 1
+
+
+def test_closing_the_designer_asks_about_each_unsaved_form():
+    d = designer_with("a", "b")
+    assert all(doc.dirty for doc in d.docs)
+    assert d.on_close() is False and d.dialog == "confirm" and d.doc.form.name == "b"  # the one in front first
+    assert d.confirm_discard() is None and d.dialog == "confirm" and d.doc.form.name == "a"
+    d.close_dialog()  # Cancel: the window stays open
+    assert d.dialog is None and d.on_close() is False
+    command = d.confirm_discard()
+    assert isinstance(command, _core.Command) and not any(doc.dirty for doc in d.docs)
+
+
+def test_closing_the_designer_asks_about_unsaved_files(tmp_path):
+    d = Designer(language_servers=False)
+    path = tmp_path / "notes.txt"
+    path.write_text("hi")
+    d.buffers.open(path)
+    assert d.on_close() is None  # nothing unsaved
+    d.set_code_buffer("changed")
+    assert d.on_close() is False and d.dialog == "file:unsaved"
+    d.buffers.cancel_close()
+    assert d.dialog is None and d.buffers.items and d.buffers.then is None
+    d.on_close()
+    assert isinstance(d.buffers.confirm_save(), _core.Command) and path.read_text() == "changed"

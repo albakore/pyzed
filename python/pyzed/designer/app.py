@@ -2402,6 +2402,31 @@ class Designer(App):
         self.doc.dirty = False
         return action() if action else None
 
+    def on_close(self) -> Optional[bool]:
+        """The window's close button (or Alt+F4): asks about each form and file with unsaved changes first,
+        one at a time, and closes once every answer was Save or Don't save."""
+        order = [self.active_doc] + [i for i in range(len(self.docs)) if i != self.active_doc]
+        for index in order:
+            if 0 <= index < len(self.docs) and self.docs[index].dirty:
+                self.select_doc(index)
+                if index == self.active_doc:  # (switching fails while the code shown has an error)
+                    self.pending = self._close_window
+                    self.dialog = "confirm"
+                return False
+        dirty = self.buffers.dirty
+        if dirty:
+            index = self.buffers.items.index(dirty[0])
+            self.buffers.select(index)
+            self.buffers.close(index, then=self._close_window)
+            return False
+        return None
+
+    def _close_window(self) -> Any:
+        """Closes the window once nothing is left unsaved (the next question otherwise)."""
+        if self.on_close() is False:
+            return None
+        return _core.Command.close_window(self)
+
     def pyzed_files(self, limit: int = 200) -> List[Path]:
         """Returns up to ``limit`` Pyzed files (forms, components, shaders, animation libraries) of the project
         (or the working folder), relative to the working folder when they are inside it.

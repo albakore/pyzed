@@ -220,7 +220,8 @@ class ExportController:
             try:
                 plan = await loop.run_in_executor(None, lambda: _build.prepare(project, opts))
             except Exception as err:  # noqa: BLE001 - shown to the user
-                return lambda: self._failed(str(err))
+                message = str(err)  # ``err`` is unbound once the except block ends
+                return lambda: self._failed(message)
             return lambda: self._start(plan)
 
         return prepare()
@@ -254,7 +255,8 @@ class ExportController:
             try:
                 notes = await loop.run_in_executor(None, lambda: _build.finish(plan))
             except Exception as err:  # noqa: BLE001 - shown to the user
-                return lambda: self._failed(str(err))
+                message = str(err)  # ``err`` is unbound once the except block ends
+                return lambda: self._failed(message)
             return lambda: self._done(plan, notes)
 
         return wait()
