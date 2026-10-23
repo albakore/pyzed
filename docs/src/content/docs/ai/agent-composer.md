@@ -21,7 +21,7 @@ This page is a summary. The complete manual, with every button, command and sett
 | Feature | What it does | Details |
 | --- | --- | --- |
 | **Composer** | A message box: <kbd>@</kbd> attaches the selection, the form, its code, a control or a file; <kbd>/</kbd> runs commands such as `/app`, `/fix`, `/tidy` and `/look`. | [The panel](/pyzed/editor/ai-agents/#the-panel) |
-| **Permission modes** | **Ask before writing** (the default), **Bypass permissions**, **Read only** and **Chat only**. Edits to the open form never ask, since they can be undone. | [Permission modes](/pyzed/editor/ai-agents/#the-panel) |
+| **Profiles** | **Write** (the default), **Ask** (reads only) and **Minimal** (no tools), plus **Ask before writing files**. Edits to the open form never ask, since they can be undone. | [Profiles](/pyzed/editor/ai-agents/#the-panel) |
 | **Many providers** | Anthropic, OpenAI, Gemini, Vertex AI, GitHub Copilot, OpenRouter, xAI, Mistral, DeepSeek, Groq, Ollama, LM Studio and any OpenAI-compatible server, with effort and fast mode on Claude. | [Providers](/pyzed/editor/ai-agents/#providers) |
 | **Sign in** | Sign in with the browser (the copied key is picked up), OpenRouter OAuth, **Sign in with GitHub** (device flow) and **Sign in with Google** for Vertex AI. | [Signing in](/pyzed/editor/ai-agents/#signing-in) |
 | **Claude without a key** | Workload identity federation exchanges your identity provider's token for a short-lived Claude token. | [Claude without an API key](/pyzed/editor/ai-agents/#claude-without-an-api-key) |

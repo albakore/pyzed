@@ -61,7 +61,7 @@ yourself before you ship it, especially anything that touches files, money or pe
    	</TabItem>
    </Tabs>
 
-   <Media src={emptyThread} alt="An empty agent thread with suggestions" caption="The Agent panel, ready for a request." />
+   <Media src={emptyThread} alt="An empty agent thread: only the message editor" caption="The Agent panel, ready for a request." />
 
 2. **Ask for the app.** Type `/app` and describe it. Say **what** it is for, **what** is on screen and **what**
    should happen; leave the "how" to the agent:
@@ -101,10 +101,10 @@ Name the screens and the fields, the rules ("amount must be positive"), where da
 the result. Ask for one change at a time when you refine. More advice in [Prompting](/pyzed/ai/prompting/).
 </Aside>
 
-<Aside type="note" title="Permission modes">
-**Ask before writing** (the default) asks before it creates files or runs the app; **Bypass permissions** never
-asks; **Read only** only answers and suggests; **Chat only** is a plain conversation. Pick one in the menu under
-the message box.
+<Aside type="note" title="Profiles">
+**Write** (the default) edits forms, code and files, and asks before it creates files or runs the app unless you
+turn off **Ask before writing files**; **Ask** only reads and answers; **Minimal** is a plain conversation with no
+tools. Pick one in the profile menu at the bottom of the message editor.
 </Aside>
 
 ## Next

@@ -1,6 +1,6 @@
 ---
 title: "Tool call"
-description: "One step of an AI agent: what it did, its result, and Allow or Deny. A Pyzed component for Python desktop GUIs, with examples and its API."
+description: "One step of an AI agent: what it did, its result, and Allow or Reject. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
   order: 107
   label: "Tool call"
@@ -17,10 +17,10 @@ import VariantGrid from '../../../components/library/VariantGrid.astro';
 import Variant from '../../../components/library/Variant.astro';
 
 :::tip[In plain words]
-One thing an AI assistant did, like reading or changing a file. Click it to see the details; if it needs your permission, it asks with Allow and Deny buttons.
+One thing an AI assistant did, like reading or changing a file. Click it to see the details; if it needs your permission, it asks with Allow and Reject buttons.
 :::
 
-`ui.ToolCall` is a component for one action of an AI agent (reading a file, editing it, running a command). Its header shows the status, the `title` and what it works on (`detail`), and a click unfolds the `input` and the `output` (plus any `images`). `diffs` show the edits it made as colored diffs, and while it runs `progress` shows the last lines a command printed. While `status` is `"waiting"` it asks right on the card: Allow, Always allow or Deny, reported through `on_allow`, `on_allow_always` and `on_deny`. The component remembers whether it is unfolded; your app only keeps the data.
+`ui.ToolCall` is a component for one action of an AI agent (reading a file, editing it, running a command), drawn like in Zed: a line with its status, the `title` and what it works on (`detail`), and a click unfolds the `input` and the `output` (plus any `images`). Edits, commands (`kind` `edit`, `delete`, `move` or `execute`) and calls that wait are cards instead. `diffs` show the edits it made as colored diffs, and while it runs `progress` shows the last lines a command printed. While `status` is `"waiting"` it asks right on the card: Always allow, Allow or Reject, reported through `on_allow`, `on_allow_always` and `on_deny`. The component remembers whether it is unfolded; your app only keeps the data.
 
 `ui.ToolCall` · Category: [AI agents](/pyzed/library/#ai-agents) · [Full reference →](/pyzed/reference/ui/#toolcall)
 
@@ -83,7 +83,7 @@ Each capture is recorded by pyzed itself, off-screen at 2x, in One Dark or One L
 
 ### State
 
-Pending and running show a spinner, waiting asks with Allow, Always allow and Deny, failed and rejected say so in red.
+Pending and running show a spinner, waiting asks with Always allow, Allow and Reject, failed and rejected say so in red.
 
 <VariantGrid>
 <Variant name="tool-call-v1-1" caption={"status=\"pending\""} alt={"Tool call: status=\"pending\""} code="Code" mono>
@@ -278,7 +278,7 @@ It is a `pz.Component`, so it also raises `on_mount` and `on_unmount`, and its h
 | --- | --- | --- |
 | `on_allow` | `(event)` | Allow was pressed. |
 | `on_allow_always` | `(event)` | Always allow was pressed. |
-| `on_deny` | `(event)` | Deny was pressed. |
+| `on_deny` | `(event)` | Reject was pressed. |
 
 **Handler gets** is what Pyzed passes to your callable: `()` means nothing. Any handler can also be a message (a value that is not callable), which goes to `update()`.
 
@@ -348,7 +348,7 @@ def view(state, set_state):
 ## Tips
 
 :::tip
-`status` is yours: set it from what the agent reports (`pending`, then `running`, then `done` or `failed`; `rejected` after a Deny). `kind` only picks the icon: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch`, `switch_mode` or `other`. The header only unfolds when there is something to show (`input`, `output`, `images` or `diffs`).
+`status` is yours: set it from what the agent reports (`pending`, then `running`, then `done` or `failed`; `rejected` after a Reject). `kind` only picks the icon: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch`, `switch_mode` or `other`. The header only unfolds when there is something to show (`input`, `output`, `images` or `diffs`).
 :::
 
 ## Properties and API
@@ -359,7 +359,7 @@ def view(state, set_state):
 class ToolCall
 ```
 
-A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `"waiting"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).
+A component for one action of an AI agent, drawn like in Zed's Agent panel: a line with its icon, what it does and where (it unfolds to show the input and the output), or a card for edits and commands, with the diff or the output. While `status` is `"waiting"` it asks right on the card: Always allow, Allow or Reject. See [AI agents](/pyzed/editor/ai-agents/).
 
 | Property | Default | Description |
 | --- | --- | --- |

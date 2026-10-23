@@ -20,8 +20,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from . import acp, llm, login, mcp_client, providers, secrets
+from . import acp, entries, llm, login, mcp_client, providers, secrets
 from .agent import PROFILES, Agent, Event, Image, Tool, image_block, tool
+from .entries import thread_entries
 from .llm import AgentError, Turn, list_models, stream_turn
 from .providers import DEFAULT_MODEL, PROVIDERS, AgentSettings, Provider, split_model
 from .threads import Thread, ThreadStore
@@ -29,9 +30,9 @@ from .tools import file_tools, pyzed_tools
 
 __all__ = [
     "PROFILES", "PROVIDERS", "DEFAULT_MODEL", "Agent", "AgentError", "AgentSettings", "Event", "Image", "Provider",
-    "Thread", "ThreadStore", "Tool", "Turn", "acp", "delete_key", "file_tools", "get_key", "image_block",
+    "Thread", "ThreadStore", "Tool", "Turn", "acp", "delete_key", "entries", "file_tools", "get_key", "image_block",
     "list_models", "llm", "login", "mcp_client", "providers", "pyzed_tools", "secrets", "set_key", "split_model",
-    "stream_turn", "tool",
+    "stream_turn", "thread_entries", "tool",
 ]
 
 

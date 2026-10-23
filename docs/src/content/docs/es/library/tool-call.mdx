@@ -20,7 +20,7 @@ import Variant from '../../../../components/library/Variant.astro';
 Una cosa que hizo un asistente de IA, como leer o cambiar un archivo. Púlsala para ver los detalles; si necesita tu permiso, pregunta con botones de Permitir y Rechazar.
 :::
 
-`ui.ToolCall` es un componente para una acción de un agente de IA (leer un archivo, editarlo, ejecutar un comando). Su cabecera muestra el estado, el título (`title`) y sobre qué trabaja (`detail`), y un clic despliega la entrada (`input`) y la salida (`output`), más las imágenes (`images`) si las hay. `diffs` muestra los cambios que hizo como diferencias de colores y, mientras se ejecuta, `progress` muestra las últimas líneas que imprimió un comando. Mientras `status` es `"waiting"` pregunta en la misma tarjeta: Permitir, Permitir siempre o Rechazar, que llegan a `on_allow`, `on_allow_always` y `on_deny`. El componente recuerda si está desplegado; tu app solo guarda los datos.
+`ui.ToolCall` es un componente para una acción de un agente de IA (leer un archivo, editarlo, ejecutar un comando), dibujado como en Zed: una línea con el estado, el título (`title`) y sobre qué trabaja (`detail`), y un clic despliega la entrada (`input`) y la salida (`output`), más las imágenes (`images`) si las hay. Las ediciones, los comandos (`kind` `edit`, `delete`, `move` o `execute`) y las llamadas que esperan son tarjetas. `diffs` muestra los cambios que hizo como diferencias de colores y, mientras se ejecuta, `progress` muestra las últimas líneas que imprimió un comando. Mientras `status` es `"waiting"` pregunta en la misma tarjeta: Permitir siempre, Permitir o Rechazar, que llegan a `on_allow`, `on_allow_always` y `on_deny`. El componente recuerda si está desplegado; tu app solo guarda los datos.
 
 `ui.ToolCall` · Categoría: [Agentes de IA](/pyzed/es/library/#agentes-de-ia) · [Referencia completa →](/pyzed/es/reference/ui/#toolcall)
 
@@ -359,14 +359,14 @@ def view(state, set_state):
 class ToolCall
 ```
 
-Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
+Un componente para una acción de un agente de IA, dibujada como en el panel Agent de Zed: una línea con su icono, lo que hace y dónde (se despliega para mostrar la entrada y la salida), o una tarjeta para las ediciones y los comandos, con el diff o la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir siempre, Permitir o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
 
 | Propiedad | Por defecto | Descripción |
 | --- | --- | --- |
 | `title` | `""` | Lo que hace ("Editar archivo"). |
 | `detail` | `""` | Sobre qué trabaja, en letra monoespaciada. |
 | `kind` | `""` | El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono). |
-| `status` | `"done"` | `pending`, `running`, `waiting`, `done`, `failed` o `rejected`. |
+| `status` | `"done"` | `pending`, `running`, `waiting`, `done`, `failed`, `rejected` o `canceled`. |
 | `input` | `None` | Los argumentos (un dict o texto). |
 | `output` | `None` | La respuesta (texto o un dict). |
 | `images` | `None` | Bytes PNG que se muestran bajo la salida. |

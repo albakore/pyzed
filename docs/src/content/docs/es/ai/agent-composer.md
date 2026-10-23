@@ -21,7 +21,7 @@ Esta página es un resumen. El manual completo, con cada botón, comando y ajust
 | Función | Qué hace | Detalles |
 | --- | --- | --- |
 | **Compositor** | Un cuadro de mensaje: <kbd>@</kbd> adjunta la selección, el formulario, su código, un control o un archivo; <kbd>/</kbd> ejecuta comandos como `/app`, `/fix`, `/tidy` y `/look`. | [El panel](/pyzed/es/editor/ai-agents/#el-panel) |
-| **Modos de permisos** | **Preguntar antes de escribir** (por defecto), **Omitir permisos**, **Solo lectura** y **Solo conversación**. Los cambios en el formulario abierto nunca preguntan, porque se pueden deshacer. | [Modos de permisos](/pyzed/es/editor/ai-agents/#el-panel) |
+| **Perfiles** | **Escribir** (por defecto), **Preguntar** (solo lee) y **Mínimo** (sin herramientas), más **Preguntar antes de escribir archivos**. Los cambios en el formulario abierto nunca preguntan, porque se pueden deshacer. | [Perfiles](/pyzed/es/editor/ai-agents/#el-panel) |
 | **Muchos proveedores** | Anthropic, OpenAI, Gemini, Vertex AI, GitHub Copilot, OpenRouter, xAI, Mistral, DeepSeek, Groq, Ollama, LM Studio y cualquier servidor compatible con OpenAI, con esfuerzo y modo rápido en Claude. | [Proveedores](/pyzed/es/editor/ai-agents/#proveedores) |
 | **Inicio de sesión** | Iniciar sesión con el navegador (se recoge la clave copiada), OAuth de OpenRouter, **Iniciar sesión con GitHub** (flujo de dispositivo) e **Iniciar sesión con Google** para Vertex AI. | [Iniciar sesión](/pyzed/es/editor/ai-agents/#iniciar-sesión) |
 | **Claude sin clave** | La federación de identidad de cargas de trabajo cambia el token de tu proveedor de identidad por un token de Claude de corta duración. | [Claude sin clave de API](/pyzed/es/editor/ai-agents/#claude-sin-clave-de-api) |

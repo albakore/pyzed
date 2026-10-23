@@ -59,7 +59,7 @@ _i18n.add("en", {"pyzed": {"agent": {
     "no_match": "Nothing matches “{query}”.", "delete": "Delete",
     "groups": {"today": "Today", "yesterday": "Yesterday", "week": "This week", "month": "This month",
                "older": "Older"},
-    "allow": "Allow", "allow_always": "Always allow", "deny": "Deny", "failed": "Failed", "rejected": "Rejected",
+    "allow": "Allow", "allow_always": "Always allow", "deny": "Reject", "failed": "Failed", "rejected": "Rejected", "canceled": "Canceled",
     "waiting": "Waiting for your answer", "input": "Input", "output": "Output", "more_lines": "… {count} more lines",
     "plan": "Plan", "files_changed": {"one": "{count} file changed", "other": "{count} files changed"},
     "keep_all": "Keep all", "reject_all": "Reject all", "keep": "Keep", "reject": "Reject", "open": "Open",
@@ -74,7 +74,7 @@ _i18n.add("es", {"pyzed": {"agent": {
     "search_threads": "Buscar hilos…", "no_threads": "Todavía no hay hilos",
     "no_match": "Nada coincide con “{query}”.", "delete": "Eliminar",
     "groups": {"today": "Hoy", "yesterday": "Ayer", "week": "Esta semana", "month": "Este mes", "older": "Antes"},
-    "allow": "Permitir", "allow_always": "Permitir siempre", "deny": "Rechazar", "failed": "Falló",
+    "allow": "Permitir", "allow_always": "Permitir siempre", "deny": "Rechazar", "failed": "Falló", "canceled": "Cancelado",
     "rejected": "Rechazado", "waiting": "Esperando tu respuesta", "input": "Entrada", "output": "Salida",
     "more_lines": "… {count} líneas más",
     "plan": "Plan", "files_changed": {"one": "{count} archivo cambiado", "other": "{count} archivos cambiados"},
@@ -221,25 +221,37 @@ class ThreadHistory(Component):
 
 # -- a tool call -------------------------------------------------------------------------------------
 
-#: The icon of each kind of tool call (ACP's tool kinds).
-KIND_ICONS = {"read": "file-text", "edit": "pencil", "delete": "trash-2", "move": "move", "search": "search",
-              "execute": "terminal", "think": "brain", "fetch": "globe", "switch_mode": "arrow-left-right",
-              "other": "wrench"}
+#: The icon of each kind of tool call (ACP's tool kinds), like Zed's.
+KIND_ICONS = {"read": "search", "edit": "pencil", "delete": "file-x", "move": "arrow-left-right", "search": "search",
+              "execute": "square-terminal", "think": "brain", "fetch": "globe", "switch_mode": "arrow-left-right",
+              "other": "hammer"}
+
+#: Kinds drawn as a card (a border around a header and what it did), like Zed's edits and commands.
+CARD_KINDS = ("edit", "delete", "move", "execute")
+
+
+def indented(content: Any, *, theme: Optional[Theme] = None, indent: float = 6) -> _core.Widget:
+    """``content`` hanging from a thin line on its left, like what Zed unfolds under a tool call or a
+    thought."""
+    t = _th(theme)
+    line = _core.container(None, width=1, height="fill", bg=t.border_variant)
+    return _core.stack([_core.container(content, padding=(0, 0, 0, indent + 12), width="fill"),
+                        _core.container(line, padding=(0, 0, 0, indent), height="fill")], width="fill")
 
 
 class ToolCall(Component):
-    """One action of an agent: a header (status, title and what it works on) that unfolds to show what it
-    got and what it answered. While ``status`` is ``"waiting"`` it asks right there, like Zed: Allow,
-    Always allow or Deny.
+    """One action of an agent, drawn like Zed's: a line with its icon, what it does and where (unfolds to
+    show what it got and what it answered), or a card for edits and commands with the diff or the output.
+    While ``status`` is ``"waiting"`` the card asks right there: Always allow, Allow or Reject.
 
-    ``status`` is ``"pending"``, ``"running"``, ``"waiting"``, ``"done"``, ``"failed"`` or ``"rejected"``.
-    ``diffs`` (``{"path", "old", "new"}``) are the edits it made, shown as colored diffs; ``progress`` is what
-    it printed so far (a command's output), shown under the header while it runs.
+    ``status`` is ``"pending"``, ``"running"``, ``"waiting"``, ``"done"``, ``"failed"``, ``"rejected"`` or
+    ``"canceled"``. ``diffs`` (``{"path", "old", "new"}``) are the edits it made, shown as colored diffs;
+    ``progress`` is what it printed so far (a command's output), shown while it runs.
 
     Events:
         ``on_allow(event)``: Allow was pressed.
         ``on_allow_always(event)``: Always allow was pressed.
-        ``on_deny(event)``: Deny was pressed.
+        ``on_deny(event)``: Reject was pressed.
     """
 
     title: str = ""
@@ -254,7 +266,7 @@ class ToolCall(Component):
     allow_always: bool = True
     theme: Any = None
     events = {"allow": "Allow was pressed.", "allow_always": "Always allow was pressed.",
-              "deny": "Deny was pressed."}
+              "deny": "Reject was pressed."}
     icon = "wrench"
     category = "Agent"
     designer = False
@@ -266,75 +278,92 @@ class ToolCall(Component):
         """Unfolds or folds the input and output."""
         self.expanded = not self.expanded
 
+    @property
+    def card(self) -> bool:
+        """Whether it is drawn as a card: an edit, a command, or a call waiting for an OK."""
+        return self.kind in CARD_KINDS or bool(self.diffs) or self.status == "waiting"
+
     def _lead(self, t: Theme) -> Any:
         if self.status in ("running", "pending"):
             from .display import spinner
 
             return spinner(size=12, theme=t)
-        if self.status == "waiting":
-            return _icon("hand", size=12, color=t.warning)
-        if self.status in ("failed", "rejected"):
-            return _icon("circle-x", size=12, color=t.error)
-        return _icon(KIND_ICONS.get(self.kind, "check"), size=12, color=t.text_muted)
+        return _icon(KIND_ICONS.get(self.kind, "hammer"), size=13, color=t.text_muted)
+
+    def _has_body(self) -> bool:
+        return self.input not in (None, {}, "") or self.output not in (None, "") or bool(self.images) \
+            or bool(self.diffs) or bool(self.progress)
+
+    def _label(self, t: Theme, has_body: bool) -> Any:
+        failed = self.status in ("failed", "rejected", "canceled")
+        detail = _core.container(label(self.detail, size="xs", mono=True, color="text_muted", wrap=False, theme=t),
+                                 padding=(0, 4), bg=alpha(t.text, 0.06), radius=3) if self.detail else None
+        return _core.row([
+            self._lead(t),
+            label(self.title, size="sm", color="text_muted", wrap=False, theme=t),
+            detail,
+            _core.space(width="fill"),
+            tooltip_text(_icon("x", size=13, color=t.error if self.status == "failed" else t.text_placeholder),
+                         _t(f"pyzed.agent.{self.status}"), theme=t) if failed else None,
+            _icon("chevron-up" if self.expanded else "chevron-down", size=12, color=t.text_placeholder)
+            if has_body and self.status != "waiting" else None,
+        ], spacing=6, align="center")
 
     def render(self) -> Any:
         t = _th(self.theme)
-        end = None
-        if self.status in ("failed", "rejected"):
-            end = label(_t(f"pyzed.agent.{self.status}"), size="xs", color="error", theme=t)
-        has_body = self.input not in (None, {}, "") or self.output not in (None, "") or bool(self.images) \
-            or bool(self.diffs)
-        head = _core.row([
-            self._lead(t),
-            label(self.title, size="sm", color="text_muted", wrap=False, theme=t),
-            label(self.detail, size="sm", mono=True, color="text_placeholder", wrap=False, theme=t)
-            if self.detail else None,
-            _core.space(width="fill"),
-            end,
-            _icon("chevron-down" if self.expanded else "chevron-right", size=11, color=t.text_placeholder)
-            if has_body else None,
-        ], spacing=6, align="center")
-        rows: List[Any] = [_core.button(head, self.toggle if has_body else None, padding=(3, 6), width="fill", bg=None,
-                                        hover_bg=t.element_hover, radius=t.radius)]
-        if self.expanded and has_body:
-            rows.append(self._body(t))
-        elif self.status in ("running", "waiting") and (self.diffs or self.progress):
-            # what it is doing right now, without unfolding it: the edit, or the last lines it printed
-            rows.append(_core.container(_core.column(
-                [diff_view(d, theme=t, max_lines=12) for d in self.diffs or []] if self.diffs else
-                [label("\n".join(self.progress.rstrip().splitlines()[-6:]), size="xs", mono=True, color="text_muted",
-                       theme=t)], spacing=4), padding=(4, 8), width="fill", bg=t.editor, radius=t.radius))
+        has_body = self._has_body()
+        if not self.card:
+            head = _core.button(self._label(t, has_body), self.toggle if has_body else None, padding=(3, 4),
+                                width="fill", bg=None, hover_bg=t.element_hover, radius=t.radius)
+            if not (self.expanded and has_body):
+                return head
+            return _core.column([head, indented(self._raw(t), theme=t)], spacing=4, width="fill")
+        # a card: the header, the edit or the output, and the question while it waits
+        header = _core.button(self._label(t, has_body), self.toggle if has_body and self.status != "waiting" else None,
+                              padding=(4, 8), width="fill", bg=t.element, hover_bg=t.element_hover,
+                              radius=(t.radius + 1, t.radius + 1, 0, 0))
+        rows: List[Any] = [header]
+        live = self.status in ("running", "waiting", "pending")
+        if self.diffs and (self.expanded or live or self.status == "done"):
+            limit = 12 if not self.expanded else 120
+            rows.append(_core.container(_core.column([diff_view(d, theme=t, max_lines=limit) for d in self.diffs],
+                                                     spacing=6, width="fill"), padding=(6, 8), width="fill"))
+        elif self.kind == "execute" and (self.progress or self.output) and (self.expanded or live):
+            text = (self.progress if live else str(self.output or "")).rstrip()
+            lines = text.splitlines()[-(200 if self.expanded else 8):]
+            rows.append(_core.container(label("\n".join(lines), size="xs", mono=True, color="text_muted", theme=t),
+                                        padding=(6, 8), width="fill"))
+        elif self.expanded and has_body:
+            rows.append(_core.container(self._raw(t), padding=(6, 8), width="fill"))
         if self.status == "waiting":
-            rows.append(_core.container(_core.row([
-                label(_t("pyzed.agent.waiting"), size="xs", color="text_muted", theme=t),
-                _core.space(width="fill"),
-                button(_t("pyzed.agent.deny"), lambda: self.emit("deny"), variant="ghost", size="sm", theme=t),
-                button(_t("pyzed.agent.allow_always"), lambda: self.emit("allow_always"), variant="ghost", size="sm",
-                       theme=t) if self.allow_always else None,
-                button(_t("pyzed.agent.allow"), lambda: self.emit("allow"), variant="solid", size="sm", theme=t),
-            ], spacing=4, align="center", wrap=True), padding=(4, 6), width="fill", bg=alpha(t.warning, 0.08),
-                radius=t.radius))
-        border = t.warning if self.status == "waiting" else None
-        column = _core.column(rows, spacing=2, width="fill")
-        if border is None:
-            return column
-        return _core.container(column, padding=2, width="fill", border_color=alpha(border, 0.5), border_width=1,
-                               radius=t.radius + 2)
+            rows.append(_core.rule(thickness=1, color=t.border_variant))
+            rows.append(_core.column([
+                button(_t("pyzed.agent.allow_always"), lambda: self.emit("allow_always"), icon="check-check",
+                       icon_color="success", variant="ghost", size="sm", theme=t) if self.allow_always else None,
+                button(_t("pyzed.agent.allow"), lambda: self.emit("allow"), icon="check", icon_color="success",
+                       variant="ghost", size="sm", theme=t),
+                button(_t("pyzed.agent.deny"), lambda: self.emit("deny"), icon="x", icon_color="error",
+                       variant="ghost", size="sm", theme=t),
+            ], spacing=1, padding=4))
+        failed = self.status in ("failed", "rejected", "canceled")
+        return _core.container(_core.column(rows, spacing=0, width="fill"), padding=1, width="fill", bg=t.editor,
+                               border_color=alpha(t.error, 0.45) if self.status == "failed" else
+                               t.border_variant if failed else t.border, border_width=1, radius=t.radius + 2,
+                               clip=True)
 
-    def _body(self, t: Theme) -> Any:
-        parts: List[Any] = [diff_view(d, theme=t) for d in self.diffs or []]
-        for name, value in (("input", None if self.diffs else self.input), ("output", self.output)):
+    def _raw(self, t: Theme) -> Any:
+        """What it got (``Raw Input``) and what it answered (``Output``), like Zed's unfolded tool call."""
+        parts: List[Any] = []
+        for name, value in (("input", None if self.diffs else self.input), ("output", self.output or self.progress)):
             if value in (None, {}, ""):
                 continue
             text = value if isinstance(value, str) else json.dumps(value, indent=1, ensure_ascii=False)
-            parts.append(label(_t(f"pyzed.agent.{name}"), size="xs", weight="medium", color="text_placeholder",
-                               theme=t))
+            parts.append(label(_t(f"pyzed.agent.{name}"), size="xs", mono=True, color="text_placeholder", theme=t))
             parts.append(label(text[:4000], size="xs", mono=True, color="text_muted", theme=t))
         pictures = [_core.image(data, height=160, content_fit="contain", radius=4) for data in self.images or [] if data]
         if pictures:
             parts.append(_core.row(pictures, spacing=6, wrap=True))
-        return _core.container(_core.column(parts, spacing=4), padding=(6, 8), width="fill", bg=t.editor,
-                               radius=t.radius)
+        return _core.column(parts, spacing=4, width="fill")
 
 
 def diff_view(diff: Mapping[str, Any], *, theme: Optional[Theme] = None, max_lines: int = 120) -> _core.Widget:

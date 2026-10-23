@@ -3131,22 +3131,25 @@ add(
     category="agents",
     api=["pyzed.ui.ToolCall"],
     badge="new",
-    blurb=T("One step of an AI agent: what it did, its result, and Allow or Deny.",
+    blurb=T("One step of an AI agent: what it did, its result, and Allow or Reject.",
             "Un paso de un agente de IA: qué hizo, su resultado y Permitir o Rechazar."),
     desc=T(
         "`ui.ToolCall` is a component for one action of an AI agent (reading a file, editing it, running a "
-        "command). Its header shows the status, the `title` and what it works on (`detail`), and a click "
-        "unfolds the `input` and the `output` (plus any `images`). `diffs` show the edits it made as colored "
+        "command), drawn like in Zed: a line with its status, the `title` and what it works on (`detail`), "
+        "and a click unfolds the `input` and the `output` (plus any `images`). Edits, commands (`kind` "
+        "`edit`, `delete`, `move` or `execute`) and calls that wait are cards instead. `diffs` show the edits it made as colored "
         "diffs, and while it runs `progress` shows the last lines a command printed. While `status` is "
-        "`\"waiting\"` it asks right on the card: Allow, Always allow or Deny, reported through `on_allow`, "
+        "`\"waiting\"` it asks right on the card: Always allow, Allow or Reject, reported through `on_allow`, "
         "`on_allow_always` and `on_deny`. The component remembers whether it is unfolded; your app only keeps "
         "the data.",
         "`ui.ToolCall` es un componente para una acción de un agente de IA (leer un archivo, editarlo, ejecutar "
-        "un comando). Su cabecera muestra el estado, el título (`title`) y sobre qué trabaja (`detail`), y un "
-        "clic despliega la entrada (`input`) y la salida (`output`), más las imágenes (`images`) si las hay. "
+        "un comando), dibujado como en Zed: una línea con el estado, el título (`title`) y sobre qué trabaja "
+        "(`detail`), y un clic despliega la entrada (`input`) y la salida (`output`), más las imágenes "
+        "(`images`) si las hay. Las ediciones, los comandos (`kind` `edit`, `delete`, `move` o `execute`) y las "
+        "llamadas que esperan son tarjetas. "
         "`diffs` muestra los cambios que hizo como diferencias de colores y, mientras se ejecuta, `progress` "
         "muestra las últimas líneas que imprimió un comando. Mientras `status` es `\"waiting\"` pregunta en la "
-        "misma tarjeta: Permitir, Permitir siempre o Rechazar, que llegan a `on_allow`, `on_allow_always` y "
+        "misma tarjeta: Permitir siempre, Permitir o Rechazar, que llegan a `on_allow`, `on_allow_always` y "
         "`on_deny`. El componente recuerda si está desplegado; tu app solo guarda los datos.",
     ),
     when=T(
@@ -3182,7 +3185,7 @@ add(
                            on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))""",
     notes=T(
         "`status` is yours: set it from what the agent reports (`pending`, then `running`, then `done` or "
-        "`failed`; `rejected` after a Deny). `kind` only picks the icon: `read`, `edit`, `delete`, `move`, "
+        "`failed`; `rejected` after a Reject). `kind` only picks the icon: `read`, `edit`, `delete`, `move`, "
         "`search`, `execute`, `think`, `fetch`, `switch_mode` or `other`. The header only unfolds when there is "
         "something to show (`input`, `output`, `images` or `diffs`).",
         "`status` es tuyo: ponlo según lo que diga el agente (`pending`, luego `running`, luego `done` o "
@@ -4441,7 +4444,7 @@ PLAIN = {
                       "Una ventana que aparece cuando algo falla, diciendo qué salió mal y dónde, con un botón para "
                       "copiarlo en un informe de error."),
     "tool-call": T("One thing an AI assistant did, like reading or changing a file. Click it to see the details; "
-                   "if it needs your permission, it asks with Allow and Deny buttons.",
+                   "if it needs your permission, it asks with Allow and Reject buttons.",
                    "Una cosa que hizo un asistente de IA, como leer o cambiar un archivo. Púlsala para ver los "
                    "detalles; si necesita tu permiso, pregunta con botones de Permitir y Rechazar."),
     "diff-view": T("Shows what changed in a file: new lines in green, deleted lines in red.",
@@ -5935,7 +5938,7 @@ VARIANTS.update({
                                 '             width=360)'),
             ('status="rejected"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="rejected"),\n'
                                   '             width=360)'),
-        ], T("Pending and running show a spinner, waiting asks with Allow, Always allow and Deny, failed and "
+        ], T("Pending and running show a spinner, waiting asks with Always allow, Allow and Reject, failed and "
              "rejected say so in red.",
              "Pendiente y en marcha muestran un spinner, esperando pregunta con Permitir, Permitir siempre y "
              "Rechazar, y fallida y rechazada lo dicen en rojo.")),
