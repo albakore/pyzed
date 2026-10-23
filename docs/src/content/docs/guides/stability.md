@@ -32,9 +32,9 @@ older ones, and refuses a file saved by a newer Pyzed instead of silently droppi
 
 | Area | Limitation |
 | --- | --- |
-| Accessibility | No screen reader support yet, and focus moves between fields only from code (`Command.focus`), not with Tab. |
-| Effects | `glass`, `bloom` and `glow` are drawn with gradients and shadows: nothing behind a panel is blurred. |
-| Animations | 11 properties can be animated (opacity, position, scale, colors, radius, border width and glow); size, rotation and padding cannot. |
+| Accessibility | No screen reader support yet: Iced does not expose accessibility information. The keyboard works (Tab moves between fields, see [Accessibility](/pyzed/guides/accessibility/)). |
+| Effects | With the GPU renderer, shadows are not drawn under boxes filled with a gradient. |
+| Animations | 17 properties can be animated (opacity, position, scale, rotation, blur, colors, radius, border width, glow, size, padding and font size); any other style property changes at once. |
 | Large data | Virtual lists and tables need rows of the same height. Every update still calls `view()`; [`@pz.memo`](/pyzed/guides/performance/) skips the subtrees that did not change. |
-| Platforms | Linux wheels need glibc 2.28 or newer, or musl (Alpine), where the audio engine has no sound devices. Pyzed Design builds are not signed yet. |
+| Platforms | Linux wheels need glibc 2.28 or newer, or musl (Alpine), where the audio engine has no sound devices. Pyzed Design builds are not signed yet. Android is a prototype (`android/build_apk.py`); iOS and the browser are not targets yet. |
 | Python | Free-threaded Python (3.13t, 3.14t) is not supported. Pyzed needs Python 3.10 or newer. |

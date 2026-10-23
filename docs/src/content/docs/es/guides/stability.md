@@ -34,9 +34,9 @@ no conoce.
 
 | Área | Limitación |
 | --- | --- |
-| Accesibilidad | Todavía no hay soporte para lectores de pantalla, y el foco solo pasa de un campo a otro desde el código (`Command.focus`), no con Tab. |
-| Efectos | `glass`, `bloom` y `glow` se dibujan con degradados y sombras: no se desenfoca lo que hay detrás de un panel. |
-| Animaciones | Se pueden animar 11 propiedades (opacidad, posición, escala, colores, radio, grosor del borde y glow); el tamaño, la rotación y el padding no. |
+| Accesibilidad | Todavía no hay soporte para lectores de pantalla: Iced no expone información de accesibilidad. El teclado sí funciona (Tab pasa de un campo a otro, ver [Accesibilidad](/pyzed/es/guides/accessibility/)). |
+| Efectos | Con el renderizador de GPU no se dibujan sombras bajo cajas rellenas con un degradado. |
+| Animaciones | Se pueden animar 17 propiedades (opacidad, posición, escala, rotación, desenfoque, colores, radio, grosor del borde, glow, tamaño, padding y tamaño de fuente); cualquier otra propiedad de estilo cambia de golpe. |
 | Muchos datos | Las listas y tablas virtuales necesitan filas de la misma altura. Cada actualización sigue llamando a `view()`; [`@pz.memo`](/pyzed/es/guides/performance/) se salta los subárboles que no cambiaron. |
-| Plataformas | En Linux los wheels necesitan glibc 2.28 o posterior, o musl (Alpine), donde el motor de audio no tiene dispositivos de sonido. Las builds de Pyzed Design todavía no están firmadas. |
+| Plataformas | En Linux los wheels necesitan glibc 2.28 o posterior, o musl (Alpine), donde el motor de audio no tiene dispositivos de sonido. Las builds de Pyzed Design todavía no están firmadas. Android es un prototipo (`android/build_apk.py`); iOS y el navegador todavía no son destinos. |
 | Python | Python free-threaded (3.13t, 3.14t) no está soportado. Pyzed necesita Python 3.10 o posterior. |
