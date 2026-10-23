@@ -3467,7 +3467,7 @@ ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: self.photos.append(e.value)
 class ToolCall
 ```
 
-A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `"waiting"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).
+A component for one action of an AI agent, drawn like in Zed's Agent panel: a line with its icon, what it does and where (it unfolds to show the input and the output), or a card for edits and commands, with the diff or the output. While `status` is `"waiting"` it asks right on the card: Always allow, Allow or Reject. See [AI agents](/pyzed/editor/ai-agents/).
 
 | Parameter | Description |
 | --- | --- |
@@ -3484,7 +3484,7 @@ A component for one action of an AI agent, like the cards in Zed's Agent panel: 
 | `theme` | Theme. |
 | `on_allow` | Allow was pressed. |
 | `on_allow_always` | Always allow was pressed. |
-| `on_deny` | Deny was pressed. |
+| `on_deny` | Reject was pressed. |
 
 ```python
 ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
@@ -3500,6 +3500,14 @@ ToolCall.toggle()
 ```
 
 Unfolds or folds the input and output.
+
+#### `ToolCall.card`
+
+```python
+ToolCall.card  # property
+```
+
+Whether it is drawn as a card: an edit, a command, or a call waiting for an OK.
 
 ### `Plan`
 

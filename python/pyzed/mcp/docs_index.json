@@ -531,7 +531,7 @@
   {
    "slug": "editor/non-visual-components",
    "title": "Non-visual components",
-   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing.",
+   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications, tray icons, system information, the launcher and network and battery monitors in Pyzed Design: components with properties and events that draw nothing.",
    "path": "docs/src/content/docs/editor/non-visual-components.md"
   },
   {
@@ -825,7 +825,7 @@
   {
    "slug": "guides/services",
    "title": "Services",
-   "description": "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps with Pyzed, with events delivered on the UI thread.",
+   "description": "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps with Pyzed, with events delivered on the UI thread.",
    "path": "docs/src/content/docs/guides/services.md"
   },
   {
@@ -1557,7 +1557,7 @@
   {
    "slug": "library/tool-call",
    "title": "Tool call",
-   "description": "One step of an AI agent: what it did, its result, and Allow or Deny. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "description": "One step of an AI agent: what it did, its result, and Allow or Reject. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/tool-call.mdx"
   },
   {
@@ -1707,7 +1707,7 @@
   {
    "slug": "reference/services",
    "title": "Services (pyzed.services)",
-   "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps.",
+   "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps.",
    "path": "docs/src/content/docs/reference/services.md"
   },
   {
@@ -5451,7 +5451,7 @@
     "example": "ui.DropZone(accept=[\"png\", \"jpg\"], on_drop=lambda e: self.photos.append(e.value))"
    },
    "pyzed.ui.ToolCall": {
-    "desc": "A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `\"waiting\"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).",
+    "desc": "A component for one action of an AI agent, drawn like in Zed's Agent panel: a line with its icon, what it does and where (it unfolds to show the input and the output), or a card for edits and commands, with the diff or the output. While `status` is `\"waiting\"` it asks right on the card: Always allow, Allow or Reject. See [AI agents](/pyzed/editor/ai-agents/).",
     "params": {
      "title": "What it does (\"Edit file\").",
      "detail": "What it works on, in a monospace font.",
@@ -5466,7 +5466,7 @@
      "theme": "Theme.",
      "on_allow": "Allow was pressed.",
      "on_allow_always": "Always allow was pressed.",
-     "on_deny": "Deny was pressed."
+     "on_deny": "Reject was pressed."
     },
     "example": "\n            ui.ToolCall(title=\"Edit file\", detail=\"ui/main.py\", kind=\"edit\", status=self.status,\n                        on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))\n        "
    },
@@ -6152,6 +6152,12 @@
    },
    "pyzed.Notification": {
     "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."
+   },
+   "pyzed.TrayIcon": {
+    "desc": "An icon in the system tray with a `tooltip` and a `menu` (a list, or text with one item per line: `-` separator, `[x]` check, indented submenu): `show()` returns whether it could, `hide()`, `checked(item)`; raises `click`, `double_click` (Windows), `menu` and `failed`. On Linux it is a StatusNotifierItem, without GTK."
+   },
+   "pyzed.TrayItem": {
+    "desc": "An entry of a `TrayIcon` menu: `text`, `id` (what `menu` receives), `enabled`, `checked` and `items` for a submenu."
    },
    "pyzed.SystemInfo": {
     "desc": "What the computer is: `os` (`\"Windows\"`, `\"macOS\"`, `\"Linux\"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, plus `memory_available`, `disk_free` and `disk_total` read when asked. `env(name)` reads a variable, `folder(\"documents\")` finds the user's folders. With `interval` above 0, `start()` raises `update` with `snapshot()` every so often."

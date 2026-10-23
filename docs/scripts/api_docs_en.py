@@ -2113,7 +2113,7 @@ _section("ui", "System", {
 
 _section("ui", "Agent", {
     "pyzed.ui.ToolCall": {
-        "desc": "A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `\"waiting\"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).",
+        "desc": "A component for one action of an AI agent, drawn like in Zed's Agent panel: a line with its icon, what it does and where (it unfolds to show the input and the output), or a card for edits and commands, with the diff or the output. While `status` is `\"waiting\"` it asks right on the card: Always allow, Allow or Reject. See [AI agents](/pyzed/editor/ai-agents/).",
         "params": {"title": "What it does (\"Edit file\").", "detail": "What it works on, in a monospace font.",
                    "kind": "ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon).",
                    "status": "`pending`, `running`, `waiting`, `done`, `failed` or `rejected`.",
@@ -2123,7 +2123,7 @@ _section("ui", "Agent", {
                    "progress": "What it printed so far (a command's output); its last lines show under the header while it runs.",
                    "allow_always": "Shows Always allow.",
                    "theme": "Theme.", "on_allow": "Allow was pressed.", "on_allow_always": "Always allow was pressed.",
-                   "on_deny": "Deny was pressed."},
+                   "on_deny": "Reject was pressed."},
         "example": """
             ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
                         on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))

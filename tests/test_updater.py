@@ -66,6 +66,7 @@ def test_download_checks_the_sha256_and_extracts(tmp_path):
     assert updater.download(offline, tmp_path / "dl") == got  # downloaded before: reused, not fetched
     app = updater.extract(got)
     assert app.name == "Pyzed Design" and (app / "pyzed-design").is_file()
+    assert updater.prewarm(app) == (app / "pyzed-design").stat().st_size  # read once before the restart
     if updater.os.name != "nt":  # Windows has no executable bit
         assert (app / "pyzed-design").stat().st_mode & 0o111
 
@@ -279,22 +280,30 @@ def test_designer_stops_its_processes_before_an_update(monkeypatch):
     assert stopped == ["language servers", "run", "agents"]
 
 
-def test_designer_logs_how_long_it_took_to_open(monkeypatch):
-    """The Logs panel says how long the window took and how much passed before the designer's code ran (a slow
-    first start after installing is the antivirus scanning the new files, not something compiling)."""
-    from pyzed import _platform
+def test_designer_logs_how_long_it_took_to_open(tmp_path, monkeypatch):
+    """The Logs panel says how long the window took to open, split in the time before the designer's code ran (a
+    slow first start after installing is the antivirus scanning the new files), the editor and the window."""
     from pyzed.designer import app as designer_app
     from pyzed.designer.app import Designer
 
     app = Designer(language_servers=False)
     lines = []
     monkeypatch.setattr(designer_app._logs, "event", lambda kind, message, *args: lines.append(message % args))
-    app.started = designer_app.time.perf_counter() - 2.0
-    monkeypatch.setattr(_platform, "process_age", lambda: 5.0)
-    app._log_startup()
-    monkeypatch.setattr(_platform, "process_age", lambda: None)
-    app._log_startup()
+    now = designer_app.time.perf_counter()
+    app.startup.update(started=now - 2.5, system=3.0, ready=now - 0.5)
+    app.on_open()
+    app.on_open()  # other windows opening later don't count
     lines = [line for line in lines if line.startswith("Pyzed Design opened")]  # not other messages of the app
-    assert lines[0] == "Pyzed Design opened in 5.0 s (3.0 s before its code started)"
-    assert lines[1].startswith("Pyzed Design opened in 2.0 s")
+    assert len(lines) == 1 and lines[0].startswith("Pyzed Design opened in 5.5 s (3.0 s starting the app, 2.0 s")
+    times = app.startup_times()
+    assert times["system"] == 3.0 and times["editor"] == 2.0 and 0.5 <= times["window"] < 1.0
+
+    # PYZED_STARTUP_REPORT writes the times and quits (for measuring the start)
+    report = tmp_path / "startup.json"
+    monkeypatch.setenv("PYZED_STARTUP_REPORT", str(report))
+    monkeypatch.setattr(designer_app.os, "_exit", lambda code: lines.append(f"exit {code}"))
+    app._log_startup()
+    assert lines[-1] == "exit 0" and set(designer_app.json.loads(report.read_text())) == set(times)
+    from pyzed import _platform
+
     assert _platform.process_age() is None or _platform.process_age() >= 0

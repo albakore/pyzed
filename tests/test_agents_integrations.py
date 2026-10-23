@@ -623,7 +623,7 @@ def test_release_builds_bundle_the_oauth_apps(tmp_path, monkeypatch):
 
 
 def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
-    from pyzed.designer import agent_panel, agent_tools
+    from pyzed.designer import agent_thread, agent_tools
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 
@@ -645,10 +645,10 @@ def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
     c.settings.mode = "bypass"
     c.send("Build me an app")
     _until(lambda: agent_tools.plan_of(c.thread.messages) == plan, d)
-    assert agent_panel._plan_card(c, d.theme) is not None  # shown while the agent works
+    assert agent_thread._plan(c, d.theme) is not None  # shown while the agent works
     _until(lambda: not c.running, d, limit=20000)
     assert agent_tools.plan_of(c.thread.messages)[1]["status"] == "done"
-    assert agent_panel._plan_card(c, d.theme) is None  # all done: folded away
+    assert agent_thread._plan(c, d.theme) is None  # all done: folded away
     results = stream.calls[1]["messages"][2]["content"]
     run = results[4]
     assert not run.get("is_error"), run
@@ -1125,8 +1125,8 @@ def test_following_the_agent_opens_and_refreshes_what_it_writes(tmp_path, monkey
 
 
 def test_context_meter_and_desktop_notifications(tmp_path, monkeypatch):
+    from pyzed.designer import agent_thread
     from pyzed import _platform
-    from pyzed.designer import agent_panel
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 
@@ -1150,7 +1150,7 @@ def test_context_meter_and_desktop_notifications(tmp_path, monkeypatch):
     monkeypatch.setattr(_platform, "notify", lambda title, body: shown.append((title, body)) or True)
     c._on_event(agents.Event("turn", usage={"input": 40_000, "cache_read": 7_000, "output": 1_000}))
     assert c.thread.context == 48_000 and c.context_window == providers.context_window(c.settings.model)
-    assert agent_panel._composer(c, d.theme) is not None  # the meter shows next to the model
+    assert agent_thread.message_editor(c, d.theme) is not None  # the meter shows next to the model
     c.running = True
     c._on_event(agents.Event("done"))
     assert shown == []  # the window has the focus: nothing to tell

@@ -2113,10 +2113,10 @@ _section("ui", "Sistema", {
 
 _section("ui", "Agente", {
     "pyzed.ui.ToolCall": {
-        "desc": "Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `\"waiting\"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).",
+        "desc": "Un componente para una acción de un agente de IA, dibujada como en el panel Agent de Zed: una línea con su icono, lo que hace y dónde (se despliega para mostrar la entrada y la salida), o una tarjeta para las ediciones y los comandos, con el diff o la salida. Mientras `status` es `\"waiting\"` pregunta en la propia tarjeta: Permitir siempre, Permitir o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).",
         "params": {"title": "Lo que hace (\"Editar archivo\").", "detail": "Sobre qué trabaja, en letra monoespaciada.",
                    "kind": "El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono).",
-                   "status": "`pending`, `running`, `waiting`, `done`, `failed` o `rejected`.",
+                   "status": "`pending`, `running`, `waiting`, `done`, `failed`, `rejected` o `canceled`.",
                    "input": "Los argumentos (un dict o texto).", "output": "La respuesta (texto o un dict).",
                    "images": "Bytes PNG que se muestran bajo la salida.",
                    "diffs": "Los cambios que hizo: dicts `{\"path\", \"old\", \"new\"}`, que se muestran como diffs de colores (mira `ui.diff_view`).",
@@ -2825,6 +2825,7 @@ MEMBERS = {
     # ColorPicker
     # IconPicker
     "pyzed.ui.ToolCall.toggle": "Despliega o pliega la entrada y la salida de la herramienta.",
+    "pyzed.ui.ToolCall.card": "Si se dibuja como tarjeta: una edición, un comando o una llamada que espera tu permiso.",
     "pyzed.ui.Plan.toggle": "Despliega o pliega la lista de pasos.",
     "pyzed.ui.EditsBar.toggle": "Despliega o pliega la lista de archivos cambiados.",
     "pyzed.ui.ThreadHistory.set_query": "Filtra el historial por `text`.",
