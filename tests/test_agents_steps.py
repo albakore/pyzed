@@ -325,3 +325,22 @@ def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monk
         c.poll()
         time.sleep(0.01)
     assert mcp_install.status(cursor) == "missing"
+
+
+def test_agents_never_run_the_uv_inside_pyzed_design(tmp_path, monkeypatch):
+    """An agent keeps its MCP server running: the bundled uv it starts is copied out of the app folder first,
+    or Windows could not replace that folder when Pyzed Design updates."""
+    from pyzed import project, updater
+
+    app = tmp_path / "Pyzed Design"
+    app.mkdir()
+    (app / "uv.exe").write_bytes(b"uv")
+    monkeypatch.setenv("PYZED_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setattr(updater, "install_dir", lambda: app)
+    monkeypatch.setattr(mcp_install._platform, "which", lambda name: None)
+    monkeypatch.setattr(project, "find_uv", lambda: str(app / "uv.exe"))
+    command = mcp_install.server_command()
+    assert command[0] == str(tmp_path / "config" / "bin" / "uv.exe")
+    assert (tmp_path / "config" / "bin" / "uv.exe").read_bytes() == b"uv"
+    outside = tmp_path / "uv"
+    assert mcp_install._outside_app(str(outside)) == str(outside)

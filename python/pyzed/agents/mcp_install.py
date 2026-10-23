@@ -96,7 +96,7 @@ def server_command() -> Optional[List[str]]:
 
     uv = find_uv()
     if uv:
-        return [uv, "tool", "run", "--no-build-package", "pyzed-ui", "--from", PACKAGE, "pyzed", "mcp"]
+        return [_outside_app(uv), "tool", "run", "--no-build-package", "pyzed-ui", "--from", PACKAGE, "pyzed", "mcp"]
     if not getattr(sys, "frozen", False):
         try:
             import mcp  # noqa: F401
@@ -104,6 +104,26 @@ def server_command() -> Optional[List[str]]:
             return None
         return [sys.executable, "-m", "pyzed", "mcp"]
     return None
+
+
+def _outside_app(program: str) -> str:
+    """``program``, copied out of Pyzed Design's folder when it is inside: the agent keeps it running, and on
+    Windows a program running from the app folder keeps it from being replaced by an update."""
+    from .. import updater
+    from ..project import config_dir
+
+    app = updater.install_dir()
+    path = Path(program)
+    if app is None or not path.resolve().is_relative_to(app.resolve()):
+        return program
+    copy = config_dir() / "bin" / path.name
+    try:
+        if not copy.is_file() or copy.stat().st_size != path.stat().st_size:
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, copy)
+    except OSError:
+        return program
+    return str(copy)
 
 
 def _entry(client: Client, command: List[str]) -> Dict[str, Any]:

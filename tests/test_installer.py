@@ -162,6 +162,35 @@ def test_windows_swap_script_gives_up_on_a_folder_in_use(tmp_path, monkeypatch):
     assert (old / "pyzed-design.exe").read_text() == "old" and (new / "pyzed-design.exe").exists()
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
+def test_windows_swap_script_stops_a_program_running_from_the_app_folder(tmp_path, monkeypatch):
+    """A helper still running from the app folder (the bundled uv kept by another app) is stopped, so the update
+    goes in instead of failing with "Access is denied"."""
+    old, new = tmp_path / "app", tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    (new / "pyzed-design.exe").write_text("new")
+    helper = old / "helper.exe"
+    shutil.copy2(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "PING.EXE", helper)
+    busy = subprocess.Popen([str(helper), "-n", "120", "127.0.0.1"], stdout=subprocess.DEVNULL)
+    try:
+        monkeypatch.setattr(updater, "SWAP_TRIES", 15)
+        done = _windows_swap(tmp_path, monkeypatch)
+    finally:
+        busy.kill()
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Stopping helper.exe" in done.stdout
+    assert (old / "pyzed-design.exe").read_text() == "new" and not (old / "helper.exe").exists()
+
+
+def test_windows_swap_script_names_the_programs_in_use():
+    """The script stops the helpers left in the app folder but only names another window of the app."""
+    script = updater._WINDOWS_SCRIPT
+    assert "{free}" in script and 'set "PYZED_APP={app}"' in script
+    assert "Stop-Process" in updater._FREE_FOLDER and "$env:PYZED_EXE" in updater._FREE_FOLDER
+    assert 1 < updater.FREE_AFTER < updater.SWAP_TRIES
+
+
 def test_installer_removes_the_old_version_first():
     """Copying over an older install left its pyzed_ui-X.Y.Z.dist-info behind, which reported the old version."""
     text = ISS.read_text(encoding="utf-8")
