@@ -5,6 +5,7 @@ mod android;
 mod animation;
 mod app;
 mod audio;
+mod crash;
 mod editor;
 mod editor_widgets;
 mod events;
@@ -47,6 +48,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let _ = std::thread::Builder::new()
         .name("pyzed-fonts".into())
         .spawn(fonts::ensure_loaded);
+    crash::install();
     widget::register(m)?;
     extra::register(m)?;
     shader::register(m)?;
@@ -66,9 +68,11 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(recorder::record, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
+    m.add_function(wrap_pyfunction!(app::safe_area, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_set, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_remove, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_supported, m)?)?;
+    m.add_function(wrap_pyfunction!(crash::set_crash_file, m)?)?;
     m.add("UNCHANGED", Py::new(m.py(), app::Unchanged)?)?;
     m.add_function(wrap_pyfunction!(fonts::load_font, m)?)?;
     m.add_function(wrap_pyfunction!(fonts::set_fonts, m)?)?;

@@ -117,6 +117,10 @@ The same lines (events and up) are written to `logs/pyzed-design.log` in the Pyz
 renewed past 1 MB, keeping the last three): attach it to a bug report. **Settings → Logs and errors → Write a log
 file** turns it off.
 
+If Pyzed Design itself crashes (an error in its native core, or a fatal error of Python), what happened goes to
+`logs/crash.log` in the same folder. The next time it opens, Pyzed Design says so, moves the file to
+`logs/crash-previous.log` and shows it in the Logs panel.
+
 When errors or warnings have been logged, the status bar shows their count at the left; click it to open the panel.
 
 ## When the editor itself fails

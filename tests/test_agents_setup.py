@@ -65,7 +65,7 @@ def test_an_agent_without_node_says_what_to_install(tmp_path, monkeypatch):
 
 
 def test_retry_does_not_repeat_the_message_and_pyzed_agent_takes_over(tmp_path, monkeypatch):
-    from pyzed.designer import agent_panel, agent_thread
+    from pyzed.designer import agent_thread
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 

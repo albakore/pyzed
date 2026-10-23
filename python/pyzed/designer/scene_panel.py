@@ -13,7 +13,6 @@ code, so the designer and the code stay the same thing.
 
 from __future__ import annotations
 
-import ast
 import time
 import types
 from pathlib import Path
@@ -53,7 +52,8 @@ def _guard(d: "Designer", action: Callable[[], Any]) -> Any:
     try:
         return action()
     except SyntaxError as err:
-        d.notify("Fix the code first", f"The component class does not parse: {err.msg}", kind="error", seconds=4)
+        d.notify(tr("Fix the code first"), tr("The component class does not parse: {error}", error=err.msg),
+                 kind="error", seconds=4)
     except KeyError:
         return None
     return None
@@ -81,9 +81,9 @@ def field(title: str, editor: Any, t: Theme, *, tip: str = "", inset: float = 0)
 
     ``inset`` is how far the row is pushed right (inside a card), so its editor still lines up.
     """
-    text = ui.label(title, color="text_muted", wrap=False, theme=t)
+    text = ui.label(tr(title), color="text_muted", wrap=False, theme=t)
     if tip:
-        text = ui.tooltip(text, tip, theme=t)
+        text = ui.tooltip(text, tr(tip), theme=t)
     return _core.row([_core.container(text, width=LABEL - inset, clip=True), _core.container(editor, width="fill")],
                      spacing=8, align="center", width="fill")
 
@@ -141,32 +141,32 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
     ], spacing=10, align="center"), padding=spacing.HEADER_PADDING, width="fill")
     warning = None
     if not doc.code_ok:
-        warning = _core.container(ui.callout("The class does not parse",
+        warning = _core.container(ui.callout(tr("The class does not parse"),
                                              "Showing its last good version; fix the code to edit it here.",
                                              tint="warning", theme=t), padding=(0, 12, 12, 12))
     sections = [
         ui.AccordionSection("class", "Class", _stack([
-            field("Name", ui.input(scene.name, lambda v: _guard(d, lambda: doc.set_class_name(v)),
+            field(tr("Name"), ui.input(scene.name, lambda v: _guard(d, lambda: doc.set_class_name(v)),
                                    mono=True, theme=t), t, tip="The Python class name (CamelCase)."),
-            field("Description", ui.input(scene.description, lambda v: _guard(d, lambda: doc.set_description(v)),
-                                          placeholder="What it is for", theme=t), t,
+            field(tr("Description"), ui.input(scene.description, lambda v: _guard(d, lambda: doc.set_description(v)),
+                                          placeholder=tr("What it is for"), theme=t), t,
                   tip="The docstring of the class; the toolbox shows it as a tooltip."),
-            field("Inherits", _base_picker(d, t), t,
+            field(tr("Inherits"), _base_picker(d, t), t,
                   tip="A designed component to extend: this one gets its controls, properties, events and methods."),
         ]), icon="braces"),
         ui.AccordionSection("toolbox", "Toolbox", _stack([
-            field("Label", ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name),
+            field(tr("Label"), ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name),
                                     theme=t), t),
-            field("Icon", _icon_editor(d, scene.icon, scene_setter("icon"), t, placeholder="component", size="md"),
+            field(tr("Icon"), _icon_editor(d, scene.icon, scene_setter("icon"), t, placeholder="component", size="md"),
                   t),
-            field("Category", ui.input(scene.category, scene_setter("category"), theme=t), t),
+            field(tr("Category"), ui.input(scene.category, scene_setter("category"), theme=t), t),
         ]), icon="component"),
         ui.AccordionSection("layout", "Layout", _stack([
-            field("Width", _number(scene.width, lambda v: d.set_form("width", float(v)), t, min=16, step=8), t),
-            field("Height", _number(scene.height, lambda v: d.set_form("height", float(v)), t, min=16, step=8), t),
-            field("Background", ui.input(scene.background or "", lambda v: d.set_form("background", v or None),
+            field(tr("Width"), _number(scene.width, lambda v: d.set_form("width", float(v)), t, min=16, step=8), t),
+            field(tr("Height"), _number(scene.height, lambda v: d.set_form("height", float(v)), t, min=16, step=8), t),
+            field(tr("Background"), ui.input(scene.background or "", lambda v: d.set_form("background", v or None),
                                          placeholder="transparent", mono=True, theme=t), t),
-            field("Grid size", _number(scene.grid, lambda v: d.set_form("grid", int(v)), t, min=2, max=64), t),
+            field(tr("Grid size"), _number(scene.grid, lambda v: d.set_form("grid", int(v)), t, min=2, max=64), t),
         ]), icon="ruler"),
         inherited_section(d, t),
         member_section(d, t),
@@ -192,7 +192,7 @@ def _base_picker(d: "Designer", t: Theme) -> Any:
         try:
             _guard(d, lambda: doc.set_base(options.get(label)))
         except (ValueError, OSError) as err:
-            d.notify("Cannot inherit from it", str(err), kind="error", seconds=4)
+            d.notify(tr("Cannot inherit from it"), str(err), kind="error", seconds=4)
 
     return ui.select(list(options), chosen, pick, width="fill", theme=t)
 
@@ -306,7 +306,7 @@ def _member_rows(d: "Designer", m: scene_code.Member, ctx: _type_editor.Context,
                       f"{m.name}: {m.type}" + (f"\n{m.description}" if m.description else ""), theme=t)
     label = _core.row([w for w in [
         ui.icon_button("chevron-down" if opened else "chevron-right", flip, size="xs",
-                       tooltip="Hide the settings" if opened else "Name, type and access", theme=t),
+                       tooltip=tr("Hide the settings") if opened else tr("Name, type and access"), theme=t),
         _type_editor.type_badge(kind, t),
         _core.container(name, width="fill", clip=True),
         None if m.public else _icon("lock", size=11, color=t.icon_muted),
@@ -351,27 +351,27 @@ def _member_settings(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
                           lambda v: update(public=v == "public"), theme=t)
     actions = _core.row([
         ui.icon_button("chevron-up", lambda: _guard(d, lambda: doc.move_member(m.name, -1)), size="xs",
-                       tooltip="Move up", theme=t),
+                       tooltip=tr("Move up"), theme=t),
         ui.icon_button("chevron-down", lambda: _guard(d, lambda: doc.move_member(m.name, 1)), size="xs",
-                       tooltip="Move down", theme=t),
+                       tooltip=tr("Move down"), theme=t),
         _core.space(width="fill"),
-        ui.button("Remove", lambda: _guard(d, lambda: doc.remove_member(m.name)), icon="trash-2", variant="ghost",
+        ui.button(tr("Remove"), lambda: _guard(d, lambda: doc.remove_member(m.name)), icon="trash-2", variant="ghost",
                   size="sm", theme=t),
     ], spacing=4, align="center", width="fill")
     return _card([
-        field("Name", ui.input(m.name, lambda v: update(name=v), mono=True, size="sm", theme=t), t,
+        field(tr("Name"), ui.input(m.name, lambda v: update(name=v), mono=True, size="sm", theme=t), t,
               inset=CARD_INSET),
-        field("Type", ui.select([*PRESETS, "Custom"], preset, pick, width="fill", size="sm", theme=t), t,
+        field(tr("Type"), ui.select([*PRESETS, "Custom"], preset, pick, width="fill", size="sm", theme=t), t,
               inset=CARD_INSET, tip="Like Godot's export hints and Unreal's variable types, the type picks the "
                                     "editor this property gets."),
-        field("Annotation", ui.input(drafts.get(key, m.type), set_annotation, mono=True, size="sm",
+        field(tr("Annotation"), ui.input(drafts.get(key, m.type), set_annotation, mono=True, size="sm",
                                      placeholder="int | None", theme=t), t, inset=CARD_INSET,
               tip="Any Python annotation: int | str, Optional[float], list[str], dict[str, int], a class..."),
         *_kind_rows(m, kind, update, t),
-        field("Access", access, t, inset=CARD_INSET,
+        field(tr("Access"), access, t, inset=CARD_INSET,
               tip="Public: a prop the parent passes. Private: state declared with pz.state."),
-        field("Description", ui.input(m.description, lambda v: update(description=v), size="sm",
-                                      placeholder="Shown as a tooltip", theme=t), t, inset=CARD_INSET),
+        field(tr("Description"), ui.input(m.description, lambda v: update(description=v), size="sm",
+                                      placeholder=tr("Shown as a tooltip"), theme=t), t, inset=CARD_INSET),
         actions,
     ], t)
 
@@ -386,7 +386,7 @@ def _kind_rows(m: scene_code.Member, kind: str, update: Callable[..., None], t: 
             if picked:
                 update(type=scene_code.choice_type(picked))
 
-        return [field("Options", ui.input(", ".join(options), set_options, placeholder="small, medium, large",
+        return [field(tr("Options"), ui.input(", ".join(options), set_options, placeholder="small, medium, large",
                                           theme=t), t, inset=CARD_INSET, tip="The choices, separated by commas.")]
     if kind == "Range":
         base, low, high, step = scene_code.range_of(m.type)
@@ -399,11 +399,11 @@ def _kind_rows(m: scene_code.Member, kind: str, update: Callable[..., None], t: 
             return change
 
         return [
-            field("Number", ui.select(["int", "float"], base, lambda v: update(type=scene_code.range_type(
+            field(tr("Number"), ui.select(["int", "float"], base, lambda v: update(type=scene_code.range_type(
                 v, low, high, step)), width="fill", theme=t), t, inset=CARD_INSET),
-            field("Min", _number(low, limit(0), t), t, inset=CARD_INSET),
-            field("Max", _number(high, limit(1), t), t, inset=CARD_INSET),
-            field("Step", _number(step, limit(2), t, min=0.001, step=0.1 if base == "float" else 1), t,
+            field(tr("Min"), _number(low, limit(0), t), t, inset=CARD_INSET),
+            field(tr("Max"), _number(high, limit(1), t), t, inset=CARD_INSET),
+            field(tr("Step"), _number(step, limit(2), t, min=0.001, step=0.1 if base == "float" else 1), t,
                   inset=CARD_INSET),
         ]
     return []
@@ -558,7 +558,7 @@ def binding_section(d: "Designer", t: Theme) -> Any:
                                 width="fill"),
                 ui.icon_button("x", lambda k=key, p=prop.name: (expressions.pop(k, None),
                                                                 doc.set_binding(control.name, p, None)),
-                               size="xs", tooltip="Remove the binding", theme=t),
+                               size="xs", tooltip=tr("Remove the binding"), theme=t),
             ], spacing=4, align="center")
         else:
             def pick(value: str, p: str = prop.name, k: Any = key) -> None:
@@ -606,7 +606,7 @@ class ComponentPreview(Window):
                               theme=t)
         stage = _core.container(body, width="fill", height="fill", center=True, bg=t.background)
         lines = [ui.label(line, mono=True, theme=t) for line in reversed(self.log)] or [
-            ui.label("Custom events raised by the component show up here.", color="text_muted",
+            ui.label(tr("Custom events raised by the component show up here."), color="text_muted",
                      theme=t)]
         log = _core.column([
             ui.panel_header("Events", icon="zap", theme=t),
@@ -640,7 +640,7 @@ def run(d: "Designer") -> Any:
     try:
         cls = compile_class(doc)
     except Exception as err:  # noqa: BLE001 - show any error to the user
-        d.notify("The component code has an error", f"{type(err).__name__}: {err}", kind="error", seconds=6)
+        d.notify(tr("The component code has an error"), f"{type(err).__name__}: {err}", kind="error", seconds=6)
         return None
     commands = []
     if d.preview is not None and d.preview.is_open:

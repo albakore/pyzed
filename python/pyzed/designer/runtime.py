@@ -880,7 +880,7 @@ def open_form(path: Union[str, Path]) -> FormApp:
 
     from .scene import discover_project
 
-    project = activate_for(path)
+    activate_for(path)
     discover_project(path, fresh=True)  # designed components and the project's pz.Component classes
     form = load(path)
     return FormApp(form, load_handlers(path, form), path)

@@ -437,7 +437,6 @@ def transition_clip(t):
     toggles = [(0, False), (1.1, True), (4.3, False)]
     open_now, width_anim = _frozen_change(t, [(a, 220 if v else 64) for a, v in toggles], "width")
     _, fade_anim = _frozen_change(t, [(a, 1 if v else 0) for a, v in toggles], "opacity")
-    selected = 1 if t < 2.6 else 2
     items = []
     for i, (icon, name) in enumerate([("house", "Home"), ("inbox", "Inbox"), ("chart-line", "Reports"),
                                       ("settings", "Settings")]):

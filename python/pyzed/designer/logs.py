@@ -21,6 +21,10 @@ Errors nobody expected are caught at three places and never close the designer:
 
 Each one is logged with its traceback and shown in an error dialog with buttons to copy it, to open
 the file and line it comes from, and to see it in the Logs panel.
+
+A crash of the process itself (a panic of the native core, a fatal error of Python) is written to
+``logs/crash.log``; the next start moves it to ``crash-previous.log`` and tells the user about it
+(``LogCenter.last_crash``).
 """
 
 from __future__ import annotations
@@ -65,6 +69,10 @@ _LEVELS = ((logging.ERROR, "error"), (logging.WARNING, "warning"), (logging.INFO
 
 #: Name of the log file in the logs folder.
 LOG_FILE = "pyzed-design.log"
+#: Where a crash of the process is written (native panics and Python's faulthandler), in the logs folder.
+CRASH_FILE = "crash.log"
+#: The crash of the previous session, moved aside when the designer starts.
+PREVIOUS_CRASH_FILE = "crash-previous.log"
 #: Seconds before the same error, failing again, is logged again (a panel that fails on every frame).
 REPEAT_AFTER = 60.0
 
@@ -164,6 +172,10 @@ class LogCenter:
         self._seen: Dict[str, float] = {}
         self._hooks: Optional[Tuple[Any, Any]] = None
         self._file: Optional[logging.Handler] = None
+        self._crash: Optional[Any] = None
+        self._faulthandler = False
+        #: What the previous session wrote when it crashed (``None`` if it closed normally).
+        self.last_crash: Optional[str] = None
         self.pinned = False
         _HANDLER.center = self
         root = logging.getLogger("pyzed")
@@ -196,6 +208,7 @@ class LogCenter:
             logging.getLogger("pyzed").addHandler(handler)
             logging.getLogger("py.warnings").addHandler(handler)
             self._file = handler
+            self._watch_crashes(folder)
         event("designer", "Pyzed Design started (Python %s, %s)", sys.version.split()[0], sys.platform)
 
     def uninstall(self) -> None:
@@ -210,6 +223,39 @@ class LogCenter:
                 logging.getLogger(name).removeHandler(self._file)
             self._file.close()
             self._file = None
+        if self._crash is not None:
+            import faulthandler
+
+            from .. import _core
+
+            if self._faulthandler:
+                faulthandler.disable()
+                self._faulthandler = False
+            _core.set_crash_file(None)
+            self._crash.close()
+            self._crash = None
+
+    def _watch_crashes(self, folder: Path) -> None:
+        """Keeps what the last session left in ``crash.log`` (it crashed) and writes this session's crashes
+        there: native panics and Python's fatal errors (a segmentation fault, for one)."""
+        import faulthandler
+
+        from .. import _core
+
+        crash = folder / CRASH_FILE
+        try:
+            text = crash.read_text(encoding="utf-8", errors="replace").strip() if crash.is_file() else ""
+            if text:
+                os.replace(crash, folder / PREVIOUS_CRASH_FILE)
+                self.last_crash = text
+                log("designer").error("Pyzed Design closed unexpectedly last time:\n%s", text)
+            self._crash = open(crash, "a", encoding="utf-8")  # noqa: SIM115 - open while the designer runs
+        except OSError:
+            return
+        if not faulthandler.is_enabled():  # (pytest or ``-X faulthandler`` already write them somewhere)
+            faulthandler.enable(self._crash)
+            self._faulthandler = True
+        _core.set_crash_file(str(crash))
 
     @property
     def file(self) -> Optional[Path]:

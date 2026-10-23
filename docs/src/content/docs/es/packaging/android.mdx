@@ -1,0 +1,127 @@
+---
+title: Compilar para Android
+description: "Empaqueta una app Pyzed para móviles Android: pyzed build --target android-arm64 crea un APK para instalar, o un AAB firmado con tu clave para Google Play. Qué necesita, la zona segura, el teclado en pantalla y el botón Atrás."
+sidebar:
+  order: 5
+  badge:
+    text: Avance
+    variant: caution
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+`pyzed build --target android-arm64` crea `dist/shop.apk`, una app que instalas en un móvil. A diferencia de las
+compilaciones de escritorio, funciona desde **cualquier** computadora: Windows, macOS o Linux crean el mismo APK.
+
+<Aside type="caution" title="Un avance">
+El soporte de Android es nuevo. Los diálogos de archivos, el portapapeles, los dispositivos de audio y MIDI todavía no
+funcionan en un móvil, y los paquetes con código compilado (NumPy, Pillow…) quedan fuera, porque los de tu `.venv`
+están compilados para tu computadora.
+</Aside>
+
+## Qué necesitas
+
+- El **SDK de Android** con build-tools y una plataforma. Android Studio lo instala; solo con las herramientas de
+  línea de comandos:
+
+  ```bash
+  sdkmanager "build-tools;36.0.0" "platforms;android-36"
+  ```
+
+  Después apunta `ANDROID_HOME` a él (las carpetas por defecto de Android Studio se encuentran sin él).
+- **Java** 17 o más nuevo (`keytool`, y `jarsigner` para un AAB). Sirve el Java del propio Android Studio.
+
+La primera compilación descarga Python para Android (unos 20 MB) y el motor de Pyzed para Android desde la release de
+Pyzed, y los guarda en `~/.cache/pyzed/android`.
+
+## Compilar y probar
+
+<Steps>
+
+1. En la carpeta del proyecto:
+
+   ```bash
+   uv run pyzed build --target android-arm64
+   ```
+
+   `android-x64` compila para un emulador en un PC.
+
+2. Instálalo en un móvil con la depuración USB activada:
+
+   ```bash
+   adb install -r dist/shop.apk
+   ```
+
+   O copia el APK al móvil y ábrelo (Android pide permitir apps de ese origen).
+
+</Steps>
+
+El APK va firmado con la **clave de depuración** habitual: sirve para probarlo, no para Google Play.
+
+## Google Play: un AAB con tu propia clave
+
+Google Play acepta un Android App Bundle (`.aab`) firmado con una clave tuya. Crea la clave una vez y guárdala bien
+(cada actualización debe firmarse con ella):
+
+```bash
+keytool -genkeypair -keystore release.jks -alias upload -keyalg RSA -validity 10000
+```
+
+Luego indícala en `pyproject.toml`:
+
+```toml
+[tool.pyzed.build.android]
+package = "com.acme.shop"    # el identificador de la app; no puede cambiar después de la primera subida
+format = "aab"
+keystore = "release.jks"
+key-alias = "upload"
+```
+
+Las contraseñas quedan fuera del proyecto: defínelas antes de compilar.
+
+```bash
+export PYZED_KEYSTORE_PASSWORD=...
+export PYZED_KEY_PASSWORD=...     # solo si la clave tiene la suya
+uv run pyzed build --target android-arm64
+```
+
+En Pyzed Design, **Archivo → Exportar app → Android** tiene los mismos ajustes y un botón **Compilar para Android**.
+
+| Ajuste | Qué hace |
+| --- | --- |
+| `package` | El identificador de la app (por defecto: el `identifier` de la compilación). |
+| `abis` | `["arm64-v8a"]` para móviles (por defecto); añade `"x86_64"` para emuladores. |
+| `format` | `"apk"` (por defecto) o `"aab"`. |
+| `version-code` | El número que compara Google Play; por defecto se calcula a partir de la versión (`1.2.3` → `1002003`). |
+| `keystore`, `key-alias` | La clave de release. Sin ella, la clave de depuración. |
+| `min-sdk` | El Android más antiguo en el que se instala (por defecto 26, Android 8). |
+
+## En el móvil
+
+- **Zona segura.** Las ventanas apartan su contenido de la barra de estado, el recorte de la cámara, la barra de
+  navegación y el teclado en pantalla. Pon `safe_area = False` en una ventana para dibujar debajo, y lee
+  `pz.safe_area()` (arriba, derecha, abajo, izquierda) para colocar las cosas tú.
+- **Teclado en pantalla.** Se abre cuando un campo de texto recibe el foco, y la ventana le hace sitio.
+- **Botón Atrás.** Llama a `on_back()` de la ventana. Devuelve `False`, o no lo definas, y la app pasa a segundo
+  plano, como cualquier app en su primera pantalla:
+
+  ```python
+  def on_back(self):
+      if self.page != "home":
+          self.page = "home"   # Atrás vuelve a la primera página
+          return None
+      return False             # en la primera página, sal de la app
+  ```
+
+- **Segundo plano.** Salir de la app y volver conserva su estado y la vuelve a dibujar.
+
+## Cuando no arranca
+
+`print` y los errores van al registro del sistema:
+
+```bash
+adb logcat -s pyzed python.stdout python.stderr
+```
+
+Sin `adb`, conecta el móvil por USB (transferencia de archivos) y abre
+`Android/data/<paquete>/files/pyzed-log.txt`.

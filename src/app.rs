@@ -125,6 +125,12 @@ pub enum Message {
     Frame(iced::time::Instant),
     /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
     TabKey(String, bool),
+    /// Android's back button: `on_back()` first, then the app goes to the background.
+    #[cfg(target_os = "android")]
+    BackKey,
+    /// The system bars or the soft keyboard moved: the views keep clear of them again.
+    #[cfg(target_os = "android")]
+    Insets,
     /// A message produced inside the given window.
     Windowed(window::Id, Box<Message>),
     WindowOpened(window::Id),
@@ -1442,6 +1448,38 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 }
             }
             Message::Frame(now) => return frame_tick(py, state, now),
+            #[cfg(target_os = "android")]
+            Message::BackKey => {
+                let main = state.app.bind(py).clone();
+                let owner = if target.hasattr("on_back").unwrap_or(false) {
+                    Some(&target)
+                } else if main.hasattr("on_back").unwrap_or(false) {
+                    Some(&main)
+                } else {
+                    None
+                };
+                let handled = owner.map(|owner| {
+                    owner.call_method0("on_back").and_then(|value| {
+                        let declined = value.is_instance_of::<pyo3::types::PyBool>()
+                            && !value.is_truthy().unwrap_or(true);
+                        if declined {
+                            Ok(None)
+                        } else {
+                            dispatch(owner, &value).map(Some)
+                        }
+                    })
+                });
+                match handled {
+                    Some(Ok(Some(value))) => return command_task(py, state, &value),
+                    Some(Err(err)) => err.print(py),
+                    _ => {}
+                }
+                crate::android::move_to_back();
+                return Task::none();
+            }
+            // Nothing to do: the views read the new insets when they are built again.
+            #[cfg(target_os = "android")]
+            Message::Insets => return Task::none(),
             Message::TabKey(combo, back) => {
                 let main = state.app.bind(py).clone();
                 let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1837,11 +1875,72 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
             }
         }
     });
+    #[cfg(target_os = "android")]
+    let element = keep_clear(state, id, element);
     if state.windows.contains_key(&id) && Some(id) != state.main {
         element.map(move |m| m.in_window(id))
     } else {
         element
     }
+}
+
+/// Pads the window's content clear of the status bar, the camera cutout, the navigation bar and
+/// the soft keyboard, unless the window draws under them (`safe_area = False`).
+#[cfg(target_os = "android")]
+fn keep_clear<'a>(
+    state: &State,
+    id: window::Id,
+    element: Element<'a, Message>,
+) -> Element<'a, Message> {
+    let keep = Python::attach(|py| {
+        state
+            .window(id)
+            .bind(py)
+            .getattr("safe_area")
+            .and_then(|v| v.is_truthy())
+            .unwrap_or(true)
+    });
+    if !keep {
+        return element;
+    }
+    let scale = scale_factor(state, id).max(0.1);
+    let [top, right, bottom, left] = crate::android::current_insets().map(|v| v / scale);
+    container(element)
+        .padding(iced::Padding {
+            top,
+            right,
+            bottom,
+            left,
+        })
+        .into()
+}
+
+/// Watches the insets (Android tells a NativeActivity nothing when they change).
+#[cfg(target_os = "android")]
+fn insets_stream() -> impl Stream<Item = Message> {
+    let (sender, receiver) = mpsc::unbounded::<Message>();
+    std::thread::spawn(move || {
+        loop {
+            if crate::android::insets_changed() && sender.unbounded_send(Message::Insets).is_err() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(200));
+        }
+    });
+    receiver
+}
+
+/// The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`
+/// (the status and navigation bars, the camera cutout and the soft keyboard; zeros on a desktop).
+#[pyfunction]
+pub fn safe_area() -> (f32, f32, f32, f32) {
+    #[cfg(target_os = "android")]
+    {
+        let [top, right, bottom, left] = crate::android::current_insets();
+        (top, right, bottom, left)
+    }
+    #[cfg(not(target_os = "android"))]
+    (0.0, 0.0, 0.0, 0.0)
 }
 
 pub(crate) fn palette_key(obj: &Bound<'_, PyAny>) -> Option<Vec<String>> {
@@ -1990,6 +2089,8 @@ fn key_name(key: &Key) -> Option<String> {
             Named::End => "end".into(),
             Named::PageUp => "pageup".into(),
             Named::PageDown => "pagedown".into(),
+            // Android's back button
+            Named::BrowserBack => "back".into(),
             Named::Shift | Named::Control | Named::Alt | Named::Super | Named::Meta => return None,
             other => format!("{other:?}").to_lowercase(),
         },
@@ -2132,6 +2233,11 @@ fn key_event(
         return None;
     }
     match event {
+        #[cfg(target_os = "android")]
+        iced::Event::Keyboard(keyboard::Event::KeyPressed {
+            key: Key::Named(Named::BrowserBack),
+            ..
+        }) => Some(Message::BackKey.in_window(window)),
         // Tab that no widget used (a code editor indents with it) moves the focus.
         iced::Event::Keyboard(keyboard::Event::KeyPressed {
             key: Key::Named(Named::Tab),
@@ -2426,6 +2532,8 @@ fn subscription(state: &State) -> Subscription<Message> {
         iced::event::listen_with(window_moved),
         iced::system::theme_changes().map(Message::SystemTheme),
     ];
+    #[cfg(target_os = "android")]
+    subscriptions.push(Subscription::run(insets_stream));
     Python::attach(|py| {
         let mut recipes = python_subscriptions(py, state.app.bind(py), None);
         let mut hooks = key_hooks(state.app.bind(py));

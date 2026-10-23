@@ -116,6 +116,36 @@ jobs:
           name: dist-${{ matrix.name }}
           path: dist/*.whl
 
+  # The engine for Android apps (`pyzed build --target android-*` downloads it from the release).
+  android:
+    name: Android engine ${{ matrix.abi }}
+    needs: meta
+    runs-on: ubuntu-latest
+    # Android is new: a failed build must not hold back the release.
+    continue-on-error: true
+    strategy:
+      matrix:
+        abi: [arm64-v8a, x86_64]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.meta.outputs.tag }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: NDK
+        run: echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.14206865" > /dev/null
+      - name: Build the engine
+        run: |
+          python android/build_apk.py --engine-only --abi ${{ matrix.abi }}
+          mkdir -p android-dist
+          case "${{ matrix.abi }}" in arm64-v8a) triple=aarch64-linux-android ;; *) triple=x86_64-linux-android ;; esac
+          cp "target/$triple/release/lib_core.so" "android-dist/pyzed-android-engine-${{ matrix.abi }}.so"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ matrix.abi }}
+          path: android-dist/*
+
   sdist:
     name: sdist
     needs: meta
@@ -274,8 +304,8 @@ jobs:
 
   github-release:
     name: GitHub Release
-    needs: [meta, sdist, changelog, designer]
-    # A failed designer build must not hold back the release of the library.
+    needs: [meta, sdist, changelog, designer, android]
+    # A failed designer or Android build must not hold back the release of the library.
     if: ${{ !cancelled() && needs.changelog.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
@@ -301,6 +331,12 @@ jobs:
         continue-on-error: true
         with:
           pattern: designer-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: android-*
           merge-multiple: true
           path: dist
       # The Linux installer (also served by the docs site), the icon it adds to the menu and the

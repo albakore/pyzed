@@ -10,7 +10,8 @@ small launcher that opens the main form. Two backends do the freezing:
 
 Builds are native: run it on Windows for a ``.exe``, on macOS for a ``.app`` and on Linux
 for an ELF executable. Every platform and architecture builds on its own machine, so
-``workflow()`` writes a GitHub Actions workflow that builds the chosen ``TARGETS``.
+``workflow()`` writes a GitHub Actions workflow that builds the chosen ``TARGETS``. Android is the
+exception: ``build_android`` packs an APK or AAB on any computer (see ``pyzed.android``).
 
 Form handlers are loaded from their ``.py`` files at runtime, so the backends cannot see
 what they import. This module reads them with ``ast`` and passes every imported module as
@@ -122,6 +123,9 @@ TARGETS: Tuple[Target, ...] = (
     # The oldest Ubuntu runners: an app built against an older glibc runs on more distributions.
     Target("linux-x64", "linux", "x64", "Linux x64", "ubuntu-22.04"),
     Target("linux-arm64", "linux", "arm64", "Linux ARM64", "ubuntu-22.04-arm"),
+    # Android builds on any computer (``pyzed.android``): an APK or AAB for each processor.
+    Target("android-arm64", "android", "arm64", "Android (phones and tablets)", "ubuntu-latest"),
+    Target("android-x64", "android", "x64", "Android x86_64 (emulators)", "ubuntu-latest"),
 )
 BY_TARGET: Dict[str, Target] = {t.id: t for t in TARGETS}
 
@@ -917,6 +921,64 @@ def build(project: Project, opts: Optional[BuildOptions] = None) -> Result:
         return result
     notes = [*plan.warnings, *finish(plan)]
     return Result(result.args, result.code, "\n".join(filter(None, [result.output, *notes])))
+
+
+def android_options(opts: BuildOptions):
+    """``[tool.pyzed.build.android]`` as ``pyzed.android.AndroidOptions``."""
+    from . import android
+
+    return android.AndroidOptions.from_table(dict(opts.extra.get("android") or {}))
+
+
+def android_output(project: Project, opts: BuildOptions) -> Path:
+    """Where the Android app ends up: ``dist/<name>.apk`` (or ``.aab``)."""
+    return project.root / "dist" / f"{module_name(app_name(project, opts))}.{android_options(opts).format}"
+
+
+def site_packages(project: Project) -> Optional[Path]:
+    """The ``site-packages`` of the project's ``.venv``, if it has one."""
+    venv = project.venv
+    for site in [venv / "Lib" / "site-packages", *sorted(venv.glob("lib/python3*/site-packages"))]:
+        if site.is_dir():
+            return site
+    return None
+
+
+def build_android(project: Project, opts: Optional[BuildOptions] = None, abis: Optional[Sequence[str]] = None, *,
+                  report=print) -> Result:
+    """Packs ``project`` as an Android app (``dist/<name>.apk`` or ``.aab``) for ``abis`` (default: the project's)."""
+    from . import android
+
+    opts = opts or BuildOptions.from_project(project)
+    settings = android_options(opts)
+    if project.script is None and not project.main_form.exists():
+        return Result([], 1, f"{project.main_form} does not exist; set [tool.pyzed] main in pyproject.toml")
+    notes: List[str] = []
+    site = site_packages(project)
+    if site is not None:
+        compiled = android.binary_packages(site)
+        if compiled:
+            notes.append("Left out (compiled for this computer, not for Android): " + ", ".join(compiled))
+    icon = project.root / opts.icon if opts.icon else None
+    if icon is not None and (icon.suffix.lower() != ".png" or not icon.is_file()):
+        notes.append(f"The icon {opts.icon} is not a PNG file; the app keeps Android's default icon")
+        icon = None
+    out = android_output(project, opts)
+    try:
+        signing = (android.Signing.release(project.root / settings.keystore, settings.key_alias)
+                   if settings.keystore else None)
+        app = android.project_app(project, project.root / "build" / "pyzed" / "android" / "app")
+        android.package(app, out, name=app_name(project, opts),
+                        package=android.package_name(settings.package or app_identifier(project, opts)),
+                        version=app_version(project, opts), code=settings.version_code, icon=icon,
+                        abis=list(abis or settings.abis), fmt=settings.format, signing=signing,
+                        min_sdk=settings.min_sdk, site_packages=site, forms=project.script is None, report=report)
+    except android.AndroidError as err:
+        return Result([], 1, str(err))
+    notes.append(f"Signed with {settings.keystore}" if settings.keystore else
+                 "Signed with the debug key: fine for trying it on a phone; set keystore in "
+                 "[tool.pyzed.build.android] for Google Play")
+    return Result([], 0, "\n".join(notes))
 
 
 def _execute_with(args: Sequence[str], cwd: Path, env: Dict[str, str]) -> Result:

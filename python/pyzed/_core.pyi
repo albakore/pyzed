@@ -600,6 +600,11 @@ def rule(*, vertical: Any = ..., thickness: Any = ..., color: Any = ...) -> Any:
 def run(app: Any) -> Any:
     """Opens the app's window and runs it until it is closed."""
     ...
+def safe_area() -> Any:
+    """The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`
+    (the status and navigation bars, the camera cutout and the soft keyboard; zeros on a desktop).
+    """
+    ...
 def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ...) -> Any:
     """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
     ...
@@ -625,6 +630,9 @@ def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any
     - `on_start()`: A drag begins.
     - `on_end()`: The button is released after a drag.
     """
+    ...
+def set_crash_file(path: Any = ...) -> Any:
+    """Writes the panics of the native core to the end of ``path`` (``None`` stops it)."""
     ...
 def set_fonts(ui: Any = ..., code: Any = ...) -> Any:
     """Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`

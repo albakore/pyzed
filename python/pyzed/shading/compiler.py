@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from . import library
 from . import nodes as _nodes
-from .types import GENERIC, SIZE, WGSL, convert, literal, parse_color, widest
+from .types import GENERIC, WGSL, convert, literal, parse_color, widest
 
 if TYPE_CHECKING:  # pragma: no cover
     from .graph import Graph, Node, Variable

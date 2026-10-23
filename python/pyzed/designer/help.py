@@ -14,7 +14,6 @@ control or property shows up without writing anything:
 
 from __future__ import annotations
 
-import inspect
 import re
 from typing import Any, Dict, List, Optional
 
@@ -233,7 +232,7 @@ def control_markdown(spec: _components.Component, name: Optional[str] = None) ->
         out.append(tr(spec.description))
     first = next((p for p in spec.props if p.kind in ("text", "number", "bool", "multiline")), None)
     example = [f"def {name}_{spec.default_event}(form, event):" if spec.default_event else
-               f"def form_load(form, event):"]
+               "def form_load(form, event):"]
     if first is not None:
         value = {"text": '"Hello"', "multiline": '"Hello"', "number": "10", "bool": "True"}[first.kind]
         example.append(f"    form.{name}.{first.name} = {value}")

@@ -8,7 +8,8 @@ faster apps), the icon, the splash screen and the files to bundle. The settings 
 **Build** packages the app for this computer: ``ExportController`` prepares the build off the
 UI thread (``build.prepare``), runs the backend with its output in the Console, then
 ``build.finish`` puts the app in ``dist/``. The backends do not cross-compile, so the
-other platforms are built by a GitHub Actions workflow the dialog writes.
+other platforms are built by a GitHub Actions workflow the dialog writes. Android is built here
+from any computer (``build.build_android``): an APK to try, or an AAB signed for Google Play.
 """
 
 from __future__ import annotations
@@ -29,9 +30,10 @@ from .locale import tr
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
-SECTIONS = ("general", "platforms", "backend", "icon", "splash", "files", "command")
+SECTIONS = ("general", "platforms", "backend", "icon", "splash", "files", "android", "command")
 IMAGE_FILTERS = [("Images", ["png", "jpg", "jpeg", "webp", "bmp"])]
 ICON_FILTERS = [("Images", ["png", "jpg", "jpeg", "webp", "ico", "icns"])]
+KEYSTORE_FILTERS = [("Keystores", ["jks", "keystore", "p12"])]
 PREVIEW_SIZES = (16, 24, 32, 48, 64, 128)
 
 
@@ -53,6 +55,8 @@ class ExportController:
         self.message = ""
         #: What is typed in the "add" field of each list (include, hidden imports...).
         self.adding: Dict[str, str] = {}
+        #: The last app built (shown in the file manager by "Show in folder").
+        self.output: Optional[Path] = None
 
     # -- state ------------------------------------------------------------------------
     @property
@@ -136,6 +140,44 @@ class ExportController:
 
         return set_value
 
+    @property
+    def android(self) -> Dict[str, Any]:
+        """``[tool.pyzed.build.android]`` as it is edited."""
+        assert self.opts is not None
+        table = self.opts.extra.get("android")
+        if not isinstance(table, dict):
+            table = self.opts.extra["android"] = {}
+        return table
+
+    def android_setter(self, key: str, convert: Callable[[Any], Any] = lambda v: v) -> Callable[[Any], None]:
+        """Returns a callback that sets ``key`` of the Android settings (an empty value clears it)."""
+        def set_value(value: Any) -> None:
+            value = convert(value)
+            if value in (None, "", []):
+                self.android.pop(key, None)
+            else:
+                self.android[key] = value
+            self.dirty = True
+
+        return set_value
+
+    def toggle_abi(self, abi: str, on: bool) -> None:
+        from .. import android
+
+        chosen = [a for a in self.android.get("abis", ["arm64-v8a"]) if a != abi] + ([abi] if on else [])
+        chosen = [a for a in android.ABIS if a in chosen] or ["arm64-v8a"]
+        self.android_setter("abis")(chosen if chosen != ["arm64-v8a"] else None)
+
+    def pick_keystore(self) -> Any:
+        project = self.project
+
+        def chosen(paths: List[str]) -> None:
+            if paths:
+                self.android_setter("keystore")(self.relative(paths[0]))
+
+        return _core.Command.pick_files(chosen, title=tr("Choose the keystore"), filters=KEYSTORE_FILTERS,
+                                        multiple=False, directory=str(project.root) if project else None)
+
     def set_backend_args(self, text: str) -> None:
         assert self.opts is not None
         self.opts.backend_options.setdefault(self.opts.backend, {})["args"] = text.split()
@@ -199,7 +241,7 @@ class ExportController:
         found: List[str] = []
         if project is None:
             return [tr("Open a project first")]
-        if not project.main_form.exists():
+        if project.script is None and not project.main_form.exists():
             found.append(tr("The startup form {path} does not exist", path=project.main_form.name))
         if _project.find_uv() is None and not project.environment.remote:
             found.append(tr("uv is not installed"))
@@ -220,10 +262,57 @@ class ExportController:
             try:
                 plan = await loop.run_in_executor(None, lambda: _build.prepare(project, opts))
             except Exception as err:  # noqa: BLE001 - shown to the user
-                return lambda: self._failed(str(err))
+                message = str(err)  # ``err`` is unbound once the except block ends
+                return lambda: self._failed(message)
             return lambda: self._start(plan)
 
         return prepare()
+
+    def build_android(self) -> Any:
+        """Saves the settings and packs the app for Android (APK or AAB) in the background."""
+        project, opts = self.project, self.opts
+        if project is None or opts is None or self.running or self.problems():
+            return None
+        self.save()
+        self.state, self.message, self.started, self.elapsed = "building", "", time.monotonic(), 0.0
+        self.plan, self.output = None, None
+        console = self.d.console
+        console.start(tr("Export {name}", name=_build.app_name(project, opts)), "Android")
+        if self.d.prefs.console_on_run:
+            self.d.show_panel("console")
+        _logs.event("export", "Exporting %s for Android", project.name)
+        lines: List[str] = []
+
+        async def run() -> Callable[[], Any]:
+            loop = asyncio.get_running_loop()
+            try:
+                result = await loop.run_in_executor(None, lambda: _build.build_android(project, opts,
+                                                                                       report=lines.append))
+            except Exception as err:  # noqa: BLE001 - shown to the user
+                return lambda: self._failed(str(err))
+            for line in lines:
+                console.log.write("info", line)
+            if self.state != "building":
+                return lambda: None
+            if not result.ok:
+                return lambda: self._failed(result.output)
+            return lambda: self._android_done(_build.android_output(project, opts), result.output.splitlines())
+
+        return run()
+
+    def _android_done(self, out: Path, notes: List[str]) -> None:
+        self.state, self.output = "done", out
+        self.elapsed = time.monotonic() - self.started
+        project = self.project
+        self.message = tr("{path} · {size} · {seconds} s", path=_relative(out, project.root) if project else str(out),
+                          size=_build.human_size(_build.size_of(out)) if out.exists() else "",
+                          seconds=round(self.elapsed))
+        for note in notes:
+            self.d.console.log.write("info", note)
+        self.d.console.log.write("info", f"✓ {out}")
+        self.d.console.stop(quiet=True)
+        _logs.event("export", "Exported %s in %.0f s", out, self.elapsed)
+        self.d.notify(tr("{name} is ready", name=out.name), self.message, kind="success", seconds=6)
 
     def _start(self, plan: _build.Plan) -> Any:
         if self.state != "preparing":  # cancelled meanwhile
@@ -254,13 +343,14 @@ class ExportController:
             try:
                 notes = await loop.run_in_executor(None, lambda: _build.finish(plan))
             except Exception as err:  # noqa: BLE001 - shown to the user
-                return lambda: self._failed(str(err))
+                message = str(err)  # ``err`` is unbound once the except block ends
+                return lambda: self._failed(message)
             return lambda: self._done(plan, notes)
 
         return wait()
 
     def _done(self, plan: _build.Plan, notes: List[str]) -> None:
-        self.state, self.process = "done", None
+        self.state, self.process, self.output = "done", None, plan.output
         self.elapsed = time.monotonic() - self.started
         size = _build.human_size(_build.size_of(plan.output)) if plan.output.exists() else ""
         self.message = tr("{path} · {size} · {seconds} s", path=_relative(plan.output, plan.project.root), size=size,
@@ -292,8 +382,8 @@ class ExportController:
 
     def reveal(self) -> None:
         """Shows the exported app in the file manager."""
-        if self.plan is not None and self.plan.output.exists():
-            _workspace.reveal(self.plan.output)
+        if self.output is not None and self.output.exists():
+            _workspace.reveal(self.output)
 
     def copy_command(self) -> Any:
         """Returns the command that copies the backend's command line to the clipboard."""
@@ -336,6 +426,7 @@ def _titles() -> Dict[str, tuple]:
         "icon": (tr("Icon"), "image"),
         "splash": (tr("Splash screen"), "gallery-horizontal-end"),
         "files": (tr("Files and modules"), "files"),
+        "android": ("Android", "smartphone"),
         "command": (tr("Command line"), "square-terminal"),
     }
 
@@ -544,6 +635,60 @@ def files(e: ExportController, t: Theme) -> List[Any]:
     ]
 
 
+def android(e: ExportController, t: Theme) -> List[Any]:
+    from .. import android as _android
+
+    assert e.opts is not None and e.project is not None
+    project, table = e.project, e.android
+    abis = table.get("abis", ["arm64-v8a"])
+    labels = {"arm64-v8a": tr("Phones and tablets (arm64-v8a)"), "x86_64": tr("Emulators on a PC (x86_64)")}
+    formats = {tr("APK, to install on a phone"): "apk", tr("AAB, for Google Play"): "aab"}
+    keystore = table.get("keystore")
+    missing = keystore is not None and not (project.root / keystore).is_file()
+    sdk = _android.find_sdk()
+    app = ui.settings_group(tr("The app"), [
+        ui.field(tr("Package"), ui.input(table.get("package", ""), e.android_setter("package"),
+                                         placeholder=_android.package_name(_build.app_identifier(project, e.opts)),
+                                         width=300, mono=True, theme=t),
+                 description=tr("The application id on Google Play; it cannot change after the first upload"),
+                 theme=t),
+        ui.field(tr("Processors"), _core.column([
+            _core.row([ui.checkbox(abi in abis, lambda on, a=abi: e.toggle_abi(a, on), theme=t),
+                       ui.label(labels[abi], theme=t)], spacing=8, align="center") for abi in _android.ABIS
+        ], spacing=6), theme=t),
+        ui.field(tr("Format"), ui.select(list(formats), next(k for k, v in formats.items()
+                                                             if v == table.get("format", "apk")),
+                                         lambda v: e.android_setter("format")(None if formats[v] == "apk" else "aab"),
+                                         width=260, theme=t), theme=t),
+        ui.field(tr("Version code"), ui.input(str(table.get("version-code", "")),
+                                              e.android_setter("version-code", lambda v: int(v) if v.isdigit() else None),
+                                              placeholder=str(_android.version_code(_build.app_version(project, e.opts))),
+                                              width=140, mono=True, theme=t),
+                 description=tr("A number that grows with each upload; empty: made from the version"), theme=t),
+    ], theme=t)
+    signing = ui.settings_group(tr("Signing"), [
+        ui.field(tr("Keystore"), _core.row([
+            ui.input(keystore or "", e.android_setter("keystore"), placeholder=tr("Debug key"), width=240, mono=True,
+                     theme=t),
+            ui.button(tr("Browse…"), e.pick_keystore, icon="folder-search", size="sm", theme=t),
+        ], spacing=6, align="center"), error=tr("The file does not exist") if missing else None,
+            description=tr("Empty: the debug key, enough to try the app. Google Play needs your own key"), theme=t),
+        ui.field(tr("Key alias"), ui.input(table.get("key-alias", ""), e.android_setter("key-alias"),
+                                           placeholder="upload", width=200, mono=True, theme=t), theme=t),
+    ], theme=t)
+    notes = [ui.callout(tr("The passwords stay out of the project"),
+                        tr("Set PYZED_KEYSTORE_PASSWORD (and PYZED_KEY_PASSWORD if the key has its own) before "
+                           "building. Make a key with: keytool -genkeypair -keystore release.jks -alias upload "
+                           "-keyalg RSA -validity 10000"), tint="hint", theme=t)] if keystore else []
+    if sdk is None:
+        notes.append(ui.callout(tr("The Android SDK is missing"),
+                                tr("Install Android Studio (or its command line tools) and set ANDROID_HOME; the "
+                                   "build needs build-tools and a platform."), tint="warning", theme=t))
+    build = ui.button(tr("Build for Android"), e.build_android, icon="smartphone", variant="solid",
+                      disabled=e.running or sdk is None or bool(e.problems()), theme=t)
+    return [app, signing, *notes, _core.row([_core.space(width="fill"), build])]
+
+
 def command(e: ExportController, t: Theme) -> List[Any]:
     project, opts = e.project, e.opts
     assert project is not None and opts is not None
@@ -563,7 +708,7 @@ def command(e: ExportController, t: Theme) -> List[Any]:
 
 
 BUILDERS = {"general": general, "platforms": platforms, "backend": backend, "icon": icon, "splash": splash,
-            "files": files, "command": command}
+            "files": files, "android": android, "command": command}
 
 
 def _status(e: ExportController, t: Theme) -> Any:
@@ -574,9 +719,8 @@ def _status(e: ExportController, t: Theme) -> Any:
         return ui.label(tr("Builds {target} into dist/", target=tr(e.target.label)), size="sm",
                         color="text_muted", theme=t)
     if e.running:
-        what = {"preparing": tr("Preparing…"), "building": tr("Building with {backend}…",
-                                                              backend=_build.BACKEND_LABELS[e.opts.backend]
-                                                              if e.opts else ""),
+        backend = _build.BACKEND_LABELS[e.opts.backend] if e.opts and e.plan is not None else "Android"
+        what = {"preparing": tr("Preparing…"), "building": tr("Building with {backend}…", backend=backend),
                 "finishing": tr("Finishing…")}[e.state or "preparing"]
         return _core.row([ui.spinner(size=14, theme=t),
                           ui.label(f"{what}  {round(time.monotonic() - e.started)} s", size="sm", theme=t)],

@@ -43,7 +43,7 @@ RESERVED = {
     "uv", "px", "size", "time", "mouse", "shade", "fn", "let", "var", "const", "if", "else", "for", "while",
     "loop", "return", "break", "continue", "switch", "case", "default", "true", "false", "struct", "alias",
     "discard", "enable", "override", "f32", "i32", "u32", "bool", "vec2", "vec3", "vec4", "mat2x2", "mat3x3",
-    "mat4x4", "array", "ptr", "texture", "sampler", "pyzed", "self", "loop", "continuing", "diagnostic",
+    "mat4x4", "array", "ptr", "texture", "sampler", "pyzed", "self", "continuing", "diagnostic",
     "requires", "const_assert", "fallthrough",
 }
 
