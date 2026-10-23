@@ -131,6 +131,9 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("designer", "console_on_run", "running", "Open the console on Run"),
     Setting("designer", "log_events", "running", "Log events in the console",
             "Every event the running form handles, with its value"),
+    Setting("designer", "restricted_mode", "running", "Restricted mode",
+            "Asks before installing the packages of a project you did not create, importing its components or "
+            "running it", project=False),
     # logs
     Setting("designer", "error_dialogs", "logs", "Show a dialog on errors",
             "With buttons to copy the error and go to its line; errors are always in View → Logs"),

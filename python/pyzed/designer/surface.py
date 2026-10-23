@@ -33,6 +33,7 @@ from . import components as _components
 from . import layout as _layout
 from . import roles as _roles
 from . import styling
+from . import tab_order as _tab_order
 from .geometry import HANDLES
 from .locale import tr
 from .model import Control
@@ -247,7 +248,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x - 1, y=y - 1))
         if c.locked:
             layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=x + cw - 12, y=y - 14))
-    if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked:  # type: ignore[union-attr]
+    if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked \
+            and not d.tab_order_mode:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
     # 5. grip tabs on containers, above everything they hold
     shown_grips = d.shown_grips[id(doc)] = grips(d, rects)
@@ -268,6 +270,11 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     if raised:  # centered at the top of the form (the width is a guess: pin needs a point)
         text = len(front) + len(tr("hidden until code shows it"))
         layers.append(_core.pin(hidden_chip(d, front, t), x=max((w - (text * 6.5 + 64)) / 2, 4), y=6))
+    if d.tab_order_mode:  # 6. Edit tab order: the number of every field and what to do
+        layers.extend(tab_order_layers(d, rects, {c.name for c in shown}, t))
+        text = len(tr("Tab order: click the fields in order")) + len(tr("Reset")) + len(tr("Done"))
+        layers.append(_core.pin(_tab_order.banner(d, t), x=max((w - (text * 6.5 + 110)) / 2, 4),
+                                y=max(h - 34, 6)))
 
     client = _core.mouse_area(
         _core.container(_core.stack(layers, width=w, height=h), width=w, height=h, clip=True, color=ft.text),
@@ -298,6 +305,24 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         on_release=d.release,
         on_move=d.pointer_moved_view,
     )
+
+
+def tab_order_layers(d: "Designer", rects: Dict[str, Tuple[float, float, float, float]], shown: set,
+                     t: Theme) -> List[Any]:
+    """The tab order badges: a numbered circle at the top-left corner of each field drawn on the canvas, which
+    numbers it next when clicked."""
+    editor = d.tab_editor
+    out = []
+    for number, name in enumerate(_tab_order.sequence(d.doc.form), start=1):
+        if name not in shown or name not in rects:
+            continue
+        x, y, cw, ch = rects[name]
+        out.append(_core.pin(_core.container(width=cw, height=ch, border_color=t.accent, border_width=1,
+                                             radius=2), x=x, y=y))
+        out.append(_core.pin(_core.mouse_area(_tab_order.badge(number, name in editor.clicked, t),
+                                              on_press=lambda n=name: d.press_control(n), cursor="pointer"),
+                             x=x - _tab_order.BADGE / 3, y=y - _tab_order.BADGE / 3))
+    return out
 
 
 def tray_rows(names: List[str], width: float) -> List[List[str]]:

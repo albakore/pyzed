@@ -13,6 +13,7 @@ from .. import project as _project
 from ..icons import icon as _icon
 from ..theme import Theme
 from . import samples as _samples
+from . import trust as _trust
 from . import workspace as _workspace
 from .locale import tr
 from .samples import Sample
@@ -123,6 +124,7 @@ class Welcome:
             self.d.notify(tr("Could not create the project"), str(err), kind="error", seconds=5)
             return None
         self.d.dialog = None
+        _trust.trust(folder)  # a copy of Pyzed's own example: nothing to ask
         commands = list(self.d.projects.open(str(folder)) or [])  # it also installs the packages (uv sync)
         project = self.d.projects.project
         if project is not None and project.root.resolve() == folder.resolve():

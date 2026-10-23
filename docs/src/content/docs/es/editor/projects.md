@@ -24,13 +24,32 @@ que abriste o por encima, o por encima de la carpeta actual. Si lo encuentra:
   cualquier dependencia de su `.venv`;
 - **descubre sus componentes**: cada `.pzcomp` del proyecto se suma a la caja de herramientas;
 - **comprueba sus herramientas** en segundo plano (uv, git, ruff y ty, con sus versiones);
-- **prepara su entorno**, como Zed al abrir un proyecto: si falta uv lo instala con su instalador oficial, y si el
+- **prepara su entorno** (cuando [confías en él](#modo-restringido)), como Zed al abrir un proyecto: si falta uv lo instala con su instalador oficial, y si el
   proyecto todavía no tiene `.venv` ejecuta `uv sync`, que también instala ruff y ty. Una notificación avisa
   cuando el proyecto está listo.
 
 La barra de título muestra entonces el nombre del proyecto, su rama de git y, en un
 [worktree de git](https://git-scm.com/docs/git-worktree) enlazado, el nombre del worktree, cada uno por separado,
 como en Zed.
+
+## Modo restringido
+
+Abrir un proyecto puede ejecutar su código: `uv sync` instala sus paquetes (y puede compilarlos, ejecutando sus
+scripts de compilación), la caja de herramientas importa sus componentes y **Ejecutar** arranca sus formularios. Por
+eso, como Zed y VS Code, Pyzed Design pregunta antes cuando el proyecto viene de otro sitio (un repositorio clonado,
+una carpeta descargada): **¿Confías en los autores de los archivos de esta carpeta?**
+
+- **Seguir en modo restringido**: puedes leer y editar todos los archivos, pero el editor no prepara el entorno, no
+  importa los módulos del proyecto, no lo ejecuta, compila ni exporta y no usa las herramientas de su `.venv` (el
+  editor de código usa su propio ruff y ty). Una franja en el panel Proyecto lo indica; **Confiar…** vuelve a
+  preguntar, y también **Ejecutar**.
+- **Confiar en este proyecto**: la carpeta pasa a tus carpetas de confianza y el editor hace lo que había dejado en
+  espera.
+
+Los proyectos creados en el editor (**Nuevo proyecto**, un ejemplo de la galería) son de confianza desde el
+principio, y una carpeta dentro de una de confianza también lo es. La lista está en `trusted.json`, en la carpeta de
+configuración de Pyzed. **Ajustes → Ejecución → Modo restringido** quita la pregunta (el `.pyzed/settings.json` de un
+proyecto no puede hacerlo), y `PYZED_TRUST_ALL=1` hace lo mismo en scripts y CI.
 
 ## Varios proyectos en una ventana
 

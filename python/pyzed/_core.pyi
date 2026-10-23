@@ -414,12 +414,16 @@ def event_names() -> Any:
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
     ...
-def focusable(content: Any, on_key: Any = ..., *, keys: Any = ..., id: Any = ..., ring_color: Any = ..., ring_radius: Any = ..., ring_offset: Any = ...) -> Any:
+def focusable(content: Any, on_key: Any = ..., *, keys: Any = ..., id: Any = ..., ring_color: Any = ..., ring_radius: Any = ..., ring_offset: Any = ..., tab_index: Any = ...) -> Any:
     """Lets ``content`` have the keyboard focus like a text field: a click or Tab focuses it
     (``Command.focus(id)`` too) and, while focused, the key combos in ``keys`` (``"space"``,
     ``"up"``, ``"shift-right"``...; ``"*"`` for every key) call ``on_key(combo)`` instead of
     reaching the app's ``on_key``. A ring in ``ring_color`` is drawn ``ring_offset`` pixels
     around it once the keyboard is used on it. Without ``on_key`` it is just ``content``.
+
+    ``tab_index`` gives ``content`` (and every field inside it) its place in the order Tab moves
+    the focus in: lower numbers first, then the fields without one, each group in the order they
+    are drawn. It works with or without ``on_key``.
 
     Events:
     - `on_key(combo)`: Callable that receives one of ``keys`` pressed while it has the focus.

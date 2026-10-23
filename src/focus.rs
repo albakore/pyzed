@@ -21,6 +21,13 @@ use crate::widget::PyMsg;
 /// The marker a window's root reports to operations.
 struct Marker(window::Id);
 
+/// Reported around the content of a `focusable` with a `tab_index`: the fields inside come in
+/// that place of the Tab order (`Start`) until the matching `End`.
+enum TabGroup {
+    Start(i32),
+    End,
+}
+
 /// Wraps the root of a window's view so focus operations know which window they are in.
 pub struct Scope<'a, Message, Theme, Renderer> {
     window: window::Id,
@@ -167,13 +174,17 @@ fn entered(state: &dyn Any, window: window::Id) -> Option<bool> {
         .map(|marker| marker.0 == window)
 }
 
-/// First pass: counts the fields of the window and finds the focused one.
+/// First pass: counts the fields of the window, their place in the Tab order and the focused one.
 struct Count {
     window: window::Id,
     forward: bool,
     inside: bool,
     focused: Option<usize>,
     total: usize,
+    /// The `tab_index` of each field, by position in the tree (`i32::MAX`: none, after the rest).
+    keys: Vec<i32>,
+    /// The `tab_index` groups the operation is in, innermost last.
+    groups: Vec<i32>,
 }
 
 impl Operation for Count {
@@ -184,6 +195,14 @@ impl Operation for Count {
     fn custom(&mut self, _id: Option<&Id>, _bounds: Rectangle, state: &mut dyn Any) {
         if let Some(inside) = entered(state, self.window) {
             self.inside = inside;
+            self.groups.clear();
+        }
+        match state.downcast_ref::<TabGroup>() {
+            Some(TabGroup::Start(index)) => self.groups.push(*index),
+            Some(TabGroup::End) => {
+                self.groups.pop();
+            }
+            None => {}
         }
     }
 
@@ -194,6 +213,8 @@ impl Operation for Count {
         if state.is_focused() {
             self.focused = Some(self.total);
         }
+        self.keys
+            .push(self.groups.last().copied().unwrap_or(i32::MAX));
         self.total += 1;
     }
 
@@ -201,7 +222,7 @@ impl Operation for Count {
         if self.total == 0 {
             return Outcome::None;
         }
-        let target = next_index(self.focused, self.total, self.forward);
+        let target = tab_target(&self.keys, self.focused, self.forward);
         Outcome::Chain(Box::new(Apply {
             window: self.window,
             inside: false,
@@ -254,6 +275,15 @@ pub fn next_index(focused: Option<usize>, total: usize, forward: bool) -> usize 
     }
 }
 
+/// The tree position of the field that gets the focus: the fields go in the order of their
+/// `tab_index` (`keys`), the ones with the same index (or none) in tree order.
+pub fn tab_target(keys: &[i32], focused: Option<usize>, forward: bool) -> usize {
+    let mut order: Vec<usize> = (0..keys.len()).collect();
+    order.sort_by_key(|&i| (keys[i], i));
+    let rank = focused.and_then(|f| order.iter().position(|&i| i == f));
+    order[next_index(rank, keys.len(), forward)]
+}
+
 /// Moves the focus to the next (`forward`) or previous field of `window`.
 pub fn cycle<T: Send + 'static>(window: window::Id, forward: bool) -> Task<T> {
     iced::advanced::widget::operate(Count {
@@ -262,6 +292,8 @@ pub fn cycle<T: Send + 'static>(window: window::Id, forward: bool) -> Task<T> {
         inside: false,
         focused: None,
         total: 0,
+        keys: Vec::new(),
+        groups: Vec::new(),
     })
     .discard()
 }
@@ -278,6 +310,7 @@ pub struct KeyFocus<'a> {
     ring: Option<Color>,
     radius: f32,
     offset: f32,
+    tab_index: Option<i32>,
 }
 
 #[derive(Default)]
@@ -313,6 +346,7 @@ impl<'a> KeyFocus<'a> {
             ring: props.ring,
             radius: props.radius,
             offset: props.offset,
+            tab_index: props.tab_index,
         }
     }
 
@@ -366,6 +400,9 @@ impl Widget<crate::app::Message, iced::Theme, Rend> for KeyFocus<'_> {
         renderer: &Rend,
         operation: &mut dyn Operation,
     ) {
+        if let Some(index) = self.tab_index {
+            operation.custom(None, layout.bounds(), &mut TabGroup::Start(index));
+        }
         if self.on_key.is_some() {
             let state = tree.state.downcast_mut::<KeyState>();
             operation.focusable(self.id.as_ref(), layout.bounds(), state);
@@ -373,6 +410,9 @@ impl Widget<crate::app::Message, iced::Theme, Rend> for KeyFocus<'_> {
         self.content
             .as_widget_mut()
             .operate(&mut tree.children[0], layout, renderer, operation);
+        if self.tab_index.is_some() {
+            operation.custom(None, layout.bounds(), &mut TabGroup::End);
+        }
     }
 
     fn update(
@@ -513,6 +553,7 @@ pub struct FocusProps {
     pub ring: Option<Color>,
     pub radius: f32,
     pub offset: f32,
+    pub tab_index: Option<i32>,
 }
 
 /// Lets ``content`` have the keyboard focus like a text field: a click or Tab focuses it
@@ -521,11 +562,15 @@ pub struct FocusProps {
 /// reaching the app's ``on_key``. A ring in ``ring_color`` is drawn ``ring_offset`` pixels
 /// around it once the keyboard is used on it. Without ``on_key`` it is just ``content``.
 ///
+/// ``tab_index`` gives ``content`` (and every field inside it) its place in the order Tab moves
+/// the focus in: lower numbers first, then the fields without one, each group in the order they
+/// are drawn. It works with or without ``on_key``.
+///
 /// Events:
 /// - `on_key(combo)`: Callable that receives one of ``keys`` pressed while it has the focus.
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
-#[pyo3(signature = (content, on_key=None, *, keys=None, id=None, ring_color=None, ring_radius=4.0, ring_offset=2.0))]
+#[pyo3(signature = (content, on_key=None, *, keys=None, id=None, ring_color=None, ring_radius=4.0, ring_offset=2.0, tab_index=None))]
 pub fn focusable(
     py: Python<'_>,
     content: &Bound<'_, PyAny>,
@@ -535,6 +580,7 @@ pub fn focusable(
     ring_color: crate::style::Any<'_>,
     ring_radius: f32,
     ring_offset: f32,
+    tab_index: Option<i32>,
 ) -> PyResult<Py<crate::widget::Widget>> {
     let keys: Vec<String> = keys
         .unwrap_or_else(|| {
@@ -558,6 +604,7 @@ pub fn focusable(
                 ring: crate::style::opt_color(&ring_color)?,
                 radius: ring_radius,
                 offset: ring_offset,
+                tab_index,
             }),
         },
     )
@@ -594,7 +641,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{next_index, normalize_combo};
+    use super::{next_index, normalize_combo, tab_target};
 
     #[test]
     fn normalizes_combos() {
@@ -611,5 +658,18 @@ mod tests {
         assert_eq!(next_index(Some(2), 3, true), 0);
         assert_eq!(next_index(Some(0), 3, false), 2);
         assert_eq!(next_index(Some(1), 3, true), 2);
+    }
+
+    #[test]
+    fn follows_tab_index() {
+        // tree order: a(2) b(none) c(1) d(none) -> Tab order: c a b d
+        let keys = [2, i32::MAX, 1, i32::MAX];
+        assert_eq!(tab_target(&keys, None, true), 2);
+        assert_eq!(tab_target(&keys, Some(2), true), 0);
+        assert_eq!(tab_target(&keys, Some(0), true), 1);
+        assert_eq!(tab_target(&keys, Some(1), true), 3);
+        assert_eq!(tab_target(&keys, Some(3), true), 2);
+        assert_eq!(tab_target(&keys, Some(2), false), 3);
+        assert_eq!(tab_target(&keys, None, false), 3);
     }
 }

@@ -140,6 +140,26 @@ segundo. Pueden ir más lentas que la repetición de teclas del sistema, no más
   [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed) o con
   <kbd>F1</kbd> en el diseñador.
 
+## Buscar en el proyecto
+
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> (**Buscar en el proyecto…** en la paleta de comandos, o el botón de
+búsqueda del panel Proyecto) abre el panel **Buscar** en el dock
+izquierdo, como la búsqueda de proyecto de Zed: busca en todos los archivos de texto del proyecto (la carpeta del
+formulario abierto si no hay proyecto), sin entrar en `.venv`, cachés ni carpetas ocultas.
+
+- Escribe el texto; los botones distinguen mayúsculas, buscan palabras completas o usan una expresión regular, como
+  la barra de búsqueda. **Archivos a incluir** acota la búsqueda: `*.py`, `ui/`, `main.py`, separados por comas.
+- Los resultados se agrupan por archivo, con las líneas que coinciden. Haz clic en uno para abrir el archivo en el
+  panel Código con la coincidencia seleccionada.
+- <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> (o la flecha delante del campo) muestra el campo de reemplazo.
+  **Reemplazar todo** cambia todas las coincidencias de la lista, y el botón de un archivo solo las de ese archivo.
+  Con una expresión regular, `\1` en el reemplazo inserta un grupo.
+
+Los archivos abiertos en el editor y el código de los formularios abiertos se buscan con sus cambios sin guardar y
+se reemplazan ahí, así que todavía puedes deshacer el cambio o no guardarlo. Los demás archivos se escriben en el
+momento: **Deshacer reemplazo** devuelve lo que escribió el último reemplazo. Un reemplazo nunca cambia los
+formularios ni los componentes abiertos.
+
 ## Autocompletado
 
 ![Completando una función del módulo re, con su firma y su docstring](../../../../../screenshots/designer-completion.png)

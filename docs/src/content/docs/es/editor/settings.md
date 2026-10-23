@@ -148,6 +148,7 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 | **Guardar antes de ejecutar** | <kbd>F5</kbd> guarda antes el documento. |
 | **Abrir la consola al ejecutar** | Trae la consola al frente cuando arranca un formulario. |
 | **Registrar los eventos en la consola** | Escribe cada evento que atiende el formulario en ejecución, con su valor y su manejador. |
+| **Modo restringido** | Pregunta antes de instalar los paquetes de un proyecto que no creaste, importar sus componentes o ejecutarlo ([modo restringido](/pyzed/es/editor/projects/#modo-restringido)). Activado por defecto; solo tus propios ajustes pueden apagarlo. |
 
 ## Logs y errores
 

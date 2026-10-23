@@ -119,7 +119,7 @@ def find_environment(path: Optional[Path]) -> Environment:
     folder = here if here.is_dir() else here.parent
     project = _pyzed_project(folder)
     if project is not None:
-        return project
+        return _restricted(project)
     root = find_root(folder)
     venv = None
     for candidate in (root / ".venv", folder / ".venv", Path(os.environ.get("VIRTUAL_ENV", "") or "/nonexistent")):
@@ -131,6 +131,17 @@ def find_environment(path: Optional[Path]) -> Environment:
         extra.append(root / "src")
     env = Environment(root=root, venv=venv, extra_paths=extra)
     if venv is None:
+        designer_fallback(env)
+    return _restricted(env)
+
+
+def _restricted(env: Environment) -> Environment:
+    """In restricted mode (a folder not trusted, see ``designer.trust``), the tools and Python of the folder's
+    own ``.venv`` do not run: the designer's take their place."""
+    from . import trust
+
+    if env.venv is not None and not trust.is_trusted(env.root):
+        env.venv = None
         designer_fallback(env)
     return env
 

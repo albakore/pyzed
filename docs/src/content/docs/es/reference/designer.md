@@ -120,7 +120,7 @@ Abre el diseñador visual, opcionalmente sobre un archivo `.pzform` (que se crea
 
 ```python
 @dataclass
-class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='')
+class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[])
 ```
 
 Una ventana diseñada visualmente: sus ajustes, sus controles (en orden z) y sus eventos.
@@ -225,7 +225,23 @@ Renombra un control y devuelve el nombre usado en realidad (único y válido).
 Form.reorder(names, where)
 ```
 
-Mueve controles al frente (`"front"`) o al fondo (`"back"`) del orden z.
+Mueve controles en el orden z: al frente (`"front"`) o al fondo (`"back"`), o un paso adelante (`"forward"`) o atrás (`"backward"`) pasando al siguiente hermano (un control del mismo contenedor) que se solape o, si ninguno se solapa, al siguiente. Solo cuenta el orden entre hermanos: cada contenedor dibuja el suyo.
+
+#### `Form.tab_sequence`
+
+```python
+Form.tab_sequence(eligible=None)
+```
+
+Los controles que recorre Tab, en orden: primero los de `tab_order` y después los demás de `eligible` (todos por defecto) en el orden en que se dibujan.
+
+#### `Form.set_tab_order`
+
+```python
+Form.set_tab_order(names)
+```
+
+Guarda `names` como orden de tabulación (se quitan los nombres desconocidos y repetidos; vacío: el orden de dibujo).
 
 #### `Form.to_dict`
 
@@ -839,6 +855,14 @@ Document.set_form(key, value)
 ```
 
 Fija el atributo `key` del formulario (un `name` nuevo se convierte antes en un identificador válido).
+
+#### `Document.set_tab_order`
+
+```python
+Document.set_tab_order(names, *, group=None)
+```
+
+Guarda el orden en que Tab mueve el foco (ver `Form.tab_order`); `[]` vuelve al orden de dibujo. Las ediciones con el mismo `group` se unen en un paso de deshacer.
 
 #### `Document.reflow`
 
@@ -1481,7 +1505,7 @@ Añade a la clase un método reutilizable (no un handler de evento); devuelve su
 
 ```python
 @dataclass
-class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', label='', icon='component', category='Custom', description='', extends='', bindings={})
+class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[], label='', icon='component', category='Custom', description='', extends='', bindings={})
 ```
 
 El layout de un componente diseñado: un `Form` cuyo `name` es el nombre de la clase.

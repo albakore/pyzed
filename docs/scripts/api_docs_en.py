@@ -1358,6 +1358,7 @@ dict(_w)["Layout"].update({
             "ring_color": "Color of the focus ring (none by default).",
             "ring_radius": "Corner radius of the ring.",
             "ring_offset": "Pixels between the control and the ring.",
+            "tab_index": "Its place (and that of every field inside it) in the order Tab moves the focus in: lower numbers first, then the fields without one, in the order they are drawn. Works without `on_key` too.",
         },
         "example": 'pz.focusable(stars, lambda combo: self.rate(+1 if combo == "right" else -1), keys=["left", "right"], ring_color="#528bff")',
     },

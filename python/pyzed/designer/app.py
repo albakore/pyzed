@@ -71,6 +71,9 @@ from .. import reference as _reference
 from .. import animation_player as _animation_player
 from . import indentation as _indentation
 from . import help as _help
+from . import tab_order as _tab_order
+from .project_search import ProjectSearch
+from . import trust as _trust
 
 Rect = Tuple[float, float, float, float]
 TITLE_HEIGHT = 34.0
@@ -173,6 +176,8 @@ class Designer(App):
         # tools and gestures
         self.tool: Optional[str] = None
         self.drag: Optional[Drag] = None
+        #: Edit → Edit tab order: numbering the fields on the canvas.
+        self.tab_editor = _tab_order.TabOrderEditor(self)
         #: The Shader view's gestures, search and menus (when a .pzshad is open).
         self.shading = shader_editor.ShaderEditor(self)
         self.pointer: Tuple[float, float] = (0.0, 0.0)
@@ -266,6 +271,8 @@ class Designer(App):
         from .timeline import TimelineEditor
 
         self.timeline = TimelineEditor(self)
+        # restricted mode: the code of a folder the user did not trust does not run
+        self.trust = _trust.TrustController(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.projects.on_change(self.agent.project_changed)  # the agents work on the active project
@@ -273,6 +280,8 @@ class Designer(App):
         self.projects.on_change(self._project_settings)  # a project may set its own preferences
         # File → Export app…: package the project for each platform (pyzed build)
         self.exporter = _export.ExportController(self)
+        # Edit → Find in project…: the Search panel
+        self.search = ProjectSearch(self)
         self.updates = UpdateController(self)
         # the welcome window and its gallery of example projects (Help → Welcome)
         self.welcome = Welcome(self)
@@ -285,8 +294,12 @@ class Designer(App):
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
-        # The project's components (.pzcomp and pz.Component classes) join the toolbox.
-        _scene.discover_project(found.root if found is not None else Path(path).resolve().parent if path else None)
+        # The project's components (.pzcomp and pz.Component classes) join the toolbox (once trusted).
+        start = found.root if found is not None else Path(path).resolve().parent if path else None
+        if self.trust.trusted(start or Path.cwd()):
+            _scene.discover_project(start)
+        elif start is not None and found is None:
+            self.trust.opened(start)
         self.title = self.window_title
         if opened_later is not None:
             self.open_path(opened_later)
@@ -448,6 +461,7 @@ class Designer(App):
                 self.add_non_visual(type_)  # it has no place on the form: straight to the tray
                 return
             self.tool = None if self.tool == type_ else type_
+            self.tab_editor.stop()
             self.focus = "canvas"
         return pick
 
@@ -747,6 +761,9 @@ class Designer(App):
         """
         self.focus = "canvas"
         self.menu = None
+        if self.tab_editor.active:
+            self.tab_editor.click(name)
+            return
         if self.tool:
             self.press_empty()
             return
@@ -792,6 +809,8 @@ class Designer(App):
         """
         self.focus = "canvas"
         self.menu = None
+        if self.tab_editor.active:  # numbering fields: an empty spot does nothing
+            return
         if self.tool:
             self._start("create")
         else:
@@ -1019,8 +1038,14 @@ class Designer(App):
             ui.MenuItem(tr("Paste"), self._menu_action(self.paste), icon="clipboard", keys="ctrl-v"),
             ui.MenuItem(tr("Duplicate"), self._menu_action(self.duplicate), icon="copy-plus", keys="ctrl-d"),
             ui.SEPARATOR,
-            ui.MenuItem(tr("Bring to front"), self._menu_action(lambda: self.reorder("front")), icon="bring-to-front"),
-            ui.MenuItem(tr("Send to back"), self._menu_action(lambda: self.reorder("back")), icon="send-to-back"),
+            ui.MenuItem(tr("Bring forward"), self._menu_action(lambda: self.reorder("forward")), icon="move-up",
+                        keys=_keymap.shown_keys("bring_forward")),
+            ui.MenuItem(tr("Send backward"), self._menu_action(lambda: self.reorder("backward")), icon="move-down",
+                        keys=_keymap.shown_keys("send_backward")),
+            ui.MenuItem(tr("Bring to front"), self._menu_action(lambda: self.reorder("front")), icon="bring-to-front",
+                        keys=_keymap.shown_keys("bring_to_front")),
+            ui.MenuItem(tr("Send to back"), self._menu_action(lambda: self.reorder("back")), icon="send-to-back",
+                        keys=_keymap.shown_keys("send_to_back")),
             ui.MenuItem(tr("Unlock") if locked else tr("Lock"), self._menu_action(
                 lambda: self.set_field(name, "locked", not locked)), icon="lock-open" if locked else "lock"),
             ui.SEPARATOR,
@@ -1127,8 +1152,33 @@ class Designer(App):
         self.doc.center(axis)
 
     def reorder(self, where: str) -> None:
-        """Moves the selected controls to the front or the back (``where`` is "front" or "back")."""
+        """Moves the selected controls in the z-order: to the ``"front"`` or ``"back"``, or one step ``"forward"``
+        or ``"backward"`` (see ``Form.reorder``)."""
         self.doc.reorder(where)
+
+    def guarded(self, action: Callable[[], Any]) -> Any:
+        """Runs ``action`` (Export, Build) when the project may run code; in restricted mode asks first and runs it
+        once trusted."""
+        return action() if self.trust.allow(action) else None
+
+    def trust_changed(self, then: Optional[Callable[[], Any]] = None) -> Any:
+        """The active folder was just trusted: its components join the toolbox, its environment gets ready, the
+        code editor's servers use its ``.venv``, and ``then`` (what restricted mode held back) runs."""
+        folder = self.trust.folder()
+        if folder is not None:
+            _scene.discover_project(folder)
+        self.assist.environment_changed()
+        commands = [self.projects.prepare(), self.projects.load_tools(), then() if then is not None else None]
+        return [c for c in commands if c is not None]
+
+    @property
+    def tab_order_mode(self) -> bool:
+        """Whether the canvas is numbering the fields' tab order (Edit → Edit tab order)."""
+        return self.tab_editor.active
+
+    def toggle_tab_order(self) -> None:
+        """Turns the tab order mode of the canvas on or off."""
+        self.tab_editor.toggle()
 
     def set_field(self, name: str, key: str, value: Any) -> None:
         """Sets the field ``key`` (``locked``, ``visible``, ...) of the control ``name`` to ``value``."""
@@ -2246,7 +2296,10 @@ class Designer(App):
             return self._show_tab(*found)  # already open: keep its unsaved changes
         if not self._leave_doc():
             return
-        _scene.discover_project(path)  # a form of another folder may use its components
+        if self.trust.trusted(path.resolve().parent):
+            _scene.discover_project(path)  # a form of another folder may use its components
+        else:
+            self.trust.opened(path.resolve().parent)
         try:
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
@@ -2434,6 +2487,8 @@ class Designer(App):
     # -- running ------------------------------------------------------------
     def run_form(self) -> Any:
         """Opens the form in a new window with its handlers loaded fresh (F5)."""
+        if not self.trust.allow(self.run_form):  # restricted mode: asks first
+            return None
         if not self._flush_code():
             self.notify("Fix the code before running", self.code_error, kind="error", seconds=4)
             return None
@@ -2506,7 +2561,7 @@ class Designer(App):
         """Runs the project's ``script`` with ``uv run`` (F5 when no form is open), its output in the console;
         the project's files with unsaved changes are saved first."""
         project = self.projects.project
-        if project is None or project.script is None:
+        if project is None or project.script is None or not self.trust.allow(self.run_script):
             return None
         for index, buffer in enumerate(self.buffers.items):
             if buffer.dirty and Path(buffer.path).resolve().is_relative_to(project.root.resolve()):
@@ -2633,7 +2688,9 @@ class Designer(App):
                 return self.logs.close_menu()
             if self.drag:
                 return self.cancel_drag()
-            if self.tool:
+            if self.tab_editor.active:
+                self.tab_editor.stop()
+            elif self.tool:
                 self.tool = None
             elif self.focus == "canvas" and self.revealed[0] is not None:
                 self.select_form()  # leave the hidden dialog being edited
@@ -3037,8 +3094,8 @@ class Designer(App):
                            "Distribute vertically") if count > 2 else None,
                       tool("stretch-horizontal", lambda: self.same_size("width"), "Same width") if count > 1 else None,
                       tool("stretch-vertical", lambda: self.same_size("height"), "Same height") if count > 1 else None),
-                group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front"),
-                      tool("send-to-back", lambda: self.reorder("back"), "Send to back"),
+                group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front", command="bring_to_front"),
+                      tool("send-to-back", lambda: self.reorder("back"), "Send to back", command="send_to_back"),
                       tool("trash-2", self.delete, "Delete", command="delete")),
             ]
         else:
@@ -3055,6 +3112,8 @@ class Designer(App):
                        selected=doc.follow_anchors),
                   tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
+            tool("list-ordered", self.toggle_tab_order, "Edit tab order", selected=self.tab_order_mode,
+                 enabled=not getattr(doc, "is_scene", False)),
             tool("code", self.edit_whole_file, "Edit code file", command="code_file"),
         ]
         # The editing tools scroll sideways when the window is too narrow; the canvas toggles stay at the end.
@@ -3135,6 +3194,8 @@ class Designer(App):
 
     def dialog_view(self, t) -> Any:
         """Returns the widget of the open dialog, or ``None`` when no dialog is open."""
+        if self.dialog == "trust" and self.trust.asking is not None:
+            return _trust.dialog(self, t)
         if self.dialog == "error":
             return _logs.error_dialog(self, t)
         if self.dialog and self.dialog.split(":", 1)[0] == "welcome":

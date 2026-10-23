@@ -30,6 +30,8 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> | [Editor de keymap](/pyzed/es/editor/keymap/) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Paleta de comandos |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> | Añadir control |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> | [Buscar en el proyecto](/pyzed/es/editor/code-editor/#buscar-en-el-proyecto) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> | Reemplazar en el proyecto |
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Mostrar u ocultar el dock izquierdo |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> | Mostrar u ocultar el dock derecho |
 | <kbd>Ctrl</kbd>+<kbd>J</kbd> | Mostrar u ocultar el dock inferior |
@@ -66,11 +68,13 @@ en el lienzo para recuperar sus atajos.
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Agrupar la selección en un panel invisible |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Desagrupar: sacar los hijos del contenedor seleccionado |
 | <kbd>Shift</kbd>+<kbd>A</kbd> | Añadir auto layout: envolver la selección en una fila o columna flex |
+| <kbd>Ctrl</kbd>+<kbd>]</kbd>, <kbd>Ctrl</kbd>+<kbd>[</kbd> | Traer la selección adelante, enviarla atrás ([orden z](/pyzed/es/editor/toolbox-and-canvas/#orden-z)) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> | Traerla al frente, enviarla al fondo |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Deshacer |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Rehacer |
 | <kbd>Enter</kbd> | Abrir el código del evento principal del control seleccionado |
 | <kbd>G</kbd> | Mostrar u ocultar la cuadrícula |
-| <kbd>Esc</kbd> | Cancelar un arrastre, cerrar un menú o soltar la herramienta de colocar y volver al puntero |
+| <kbd>Esc</kbd> | Cancelar un arrastre, cerrar un menú, salir del modo [orden de tabulación](/pyzed/es/editor/toolbox-and-canvas/#orden-de-tabulación) o soltar la herramienta de colocar y volver al puntero |
 
 ## Ratón
 

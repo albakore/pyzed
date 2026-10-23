@@ -178,6 +178,8 @@ class Form:
     animations: List[Dict[str, Any]] = field(default_factory=list)
     #: The clip that plays when the form opens (``""``: none).
     autoplay: str = ""
+    #: The order Tab moves the keyboard focus in, by control name (``[]``: the order controls are drawn in).
+    tab_order: List[str] = field(default_factory=list)
 
     # -- lookup -------------------------------------------------------------
     def get(self, name: str) -> Optional[Control]:
@@ -276,6 +278,7 @@ class Form:
             names.update(c.name for c in self.descendants(name))
         removed = [c for c in self.controls if c.name in names]
         self.controls = [c for c in self.controls if c.name not in names]
+        self.tab_order = [n for n in self.tab_order if n not in names]
         return removed
 
     def rename(self, old: str, new: str) -> str:
@@ -290,20 +293,59 @@ class Form:
         for child in self.controls:
             if child.parent == old:
                 child.parent = new
+        self.tab_order = [new if n == old else n for n in self.tab_order]
         return new
 
     def reorder(self, names: Iterable[str], where: str) -> None:
-        """Moves controls to the ``"front"`` or ``"back"`` of the z-order."""
+        """Moves controls in the z-order: to the ``"front"`` or ``"back"``, or one step ``"forward"`` or
+        ``"backward"`` past the next sibling (a control in the same container) they overlap or, when none
+        does, the next sibling. Only the order among siblings matters: each container draws its own."""
         names = set(names)
-        picked = [c for c in self.controls if c.name in names]
-        rest = [c for c in self.controls if c.name not in names]
-        self.controls = rest + picked if where == "front" else picked + rest
+        if where in ("front", "back"):
+            picked = [c for c in self.controls if c.name in names]
+            rest = [c for c in self.controls if c.name not in names]
+            self.controls = rest + picked if where == "front" else picked + rest
+            return
+        if where not in ("forward", "backward"):
+            raise ValueError(f"unknown z-order move {where!r}")
+        forward = where == "forward"
+        order = list(self.controls)
+        moving = [c for c in order if c.name in names]
+        for control in reversed(moving) if forward else moving:  # the nearest to the edge moves first
+            siblings = [c for c in order if c.parent == control.parent]
+            at = siblings.index(control)
+            ahead = siblings[at + 1:] if forward else siblings[:at][::-1]
+            ahead = [c for c in ahead if c.name not in names] if ahead else []
+            if not ahead:
+                continue
+            past = next((c for c in ahead if _overlap(c.rect, control.rect)), ahead[0])
+            order.remove(control)
+            index = order.index(past)
+            order.insert(index + 1 if forward else index, control)
+        self.controls = order
+
+    # -- tab order ----------------------------------------------------------
+    def tab_sequence(self, eligible: Optional[Iterable[str]] = None) -> List[str]:
+        """The controls Tab goes through, in order: those of ``tab_order`` first, then the other ``eligible``
+        ones (every control by default) in the order they are drawn."""
+        drawn = [c.name for c, _ in self.walk()]
+        allowed = set(drawn if eligible is None else eligible)
+        listed = [n for n in self.tab_order if n in allowed and self.get(n) is not None]
+        return listed + [n for n in drawn if n in allowed and n not in listed]
+
+    def set_tab_order(self, names: Iterable[str]) -> None:
+        """Saves ``names`` as the tab order (unknown names and repeats are dropped; empty: drawing order)."""
+        out: List[str] = []
+        for name in names:
+            if self.get(name) is not None and name not in out:
+                out.append(name)
+        self.tab_order = out
 
     # -- serialization ------------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
         """Returns the form as JSON-ready data: ``{"format", "form": settings, "controls": [...]}``."""
         data = {k: v for k, v in asdict(self).items() if k not in ("controls",)}
-        for key in ("style", "animations", "autoplay"):
+        for key in ("style", "animations", "autoplay", "tab_order"):
             if not data[key]:
                 del data[key]
         return {
@@ -325,6 +367,7 @@ class Form:
         form.animations = [dict(a) for a in form.animations or ()]
         form.controls = [Control.from_dict(c) for c in data.get("controls", [])]
         form._repair_parents()
+        form.set_tab_order(n for n in form.tab_order or () if isinstance(n, str))
         return form
 
     def to_json(self) -> str:
@@ -339,6 +382,10 @@ class Form:
     def copy(self) -> "Form":
         """Returns a deep copy of the form and its controls."""
         return copy.deepcopy(self)
+
+
+def _overlap(a: Tuple[float, float, float, float], b: Tuple[float, float, float, float]) -> bool:
+    return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
 
 def identifier(text: str) -> str:
