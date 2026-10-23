@@ -146,3 +146,75 @@ PYZED_THEMES: List[Theme] = [
                  red="#c9404e", orange="#b8652a", yellow="#8f7414", green="#3d8a4e", cyan="#1f8597",
                  purple="#7c4fc4"),
 ]
+
+
+def _brand(name: str, appearance: str, *, background: str, surface: str, panel: str, raised: str, border: str,
+           text: str, muted: str, faint: str, accent: str, accent_text: str, tint: str, error: str, warning: str,
+           success: str, info: str, syntax: dict, ansi: dict, instruments: dict) -> Theme:
+    dark = appearance == "dark"
+    base = ONE_DARK if dark else ONE_LIGHT
+    return base.derive(
+        name=name, appearance=appearance,
+        background=background, surface=panel, elevated=raised if dark else surface, editor=surface,
+        title_bar=panel, status_bar=panel, tab_bar=panel, tab_active=surface, tab_inactive=panel, panel=panel,
+        terminal=surface,
+        border=border, border_variant=mix(panel, border, 0.5), border_focused=accent_text,
+        border_selected=alpha(accent_text, 0.32),
+        element=surface, element_hover=raised, element_active=border, element_selected=border,
+        ghost_hover=raised, ghost_active=border, ghost_selected=tint,
+        text=text, text_muted=muted, text_placeholder=faint, text_disabled=faint, text_accent=accent_text,
+        icon=text, icon_muted=muted, accent=accent, on_accent="#ffffff",
+        error=error, warning=warning, success=success, info=info, hint=syntax["comment"],
+        created=success, modified=warning, deleted=error, conflict=warning, ignored=faint,
+        editor_text=syntax["primary"], line_number=faint, line_number_active=text, active_line=alpha(panel, 0.75),
+        selection=alpha(accent_text, 0.24), scrollbar=alpha(text, 0.2), scrollbar_hover=alpha(text, 0.4),
+        search_match=alpha(accent_text, 0.32), shadow="#00000080" if dark else "#0f172a24",
+        syntax=syntax,
+        players=(accent_text, info, success, warning, instruments["guide"], syntax["type"], syntax["keyword"], error),
+        ansi=ansi, radius=8.0, radius_sm=5.0, **instruments,
+    )
+
+
+#: The brand's themes (assets/brand/tokens.json): graphite surfaces in layers like a code editor, indigo for the
+#: brand and amber kept for LEDs and displays. ``Pyzed Dark`` is the default theme.
+PYZED_DARK = _brand(
+    "Pyzed Dark", "dark", background="#0d0e11", surface="#14161b", panel="#191c22", raised="#222630",
+    border="#2a2f39", text="#e7e9ee", muted="#9aa1ae", faint="#5c6370", accent="#5b50f0", accent_text="#8b83ff",
+    tint="#8b83ff1f", error="#f26d85", warning="#f5a524", success="#3fcf8e", info="#6fc3ff",
+    syntax={
+        "primary": "#dcdfe5", "attribute": "#8b83ff", "boolean": "#f5b547", "comment": "#7c8491",
+        "comment.doc": "#8e96a3", "constant": "#f5b547", "constructor": "#6fc3ff", "emphasis": ("#8b83ff", "italic"),
+        "emphasis.strong": ("#f5b547", "bold"), "enum": "#62d2c4", "function": "#6fc3ff", "keyword": "#b4a9ff",
+        "label": "#8b83ff", "link_uri": "#6fc3ff", "number": "#f5b547", "operator": "#9aa1ae", "property": "#f28fad",
+        "punctuation": "#9aa1ae", "punctuation.bracket": "#b3b9c4", "punctuation.list_marker": "#8b83ff",
+        "string": "#9fd88b", "string.escape": "#f5b547", "string.regex": "#f5b547", "string.special": "#f5b547",
+        "tag": "#8b83ff", "text.literal": "#9fd88b", "title": ("#8b83ff", "bold"), "type": "#62d2c4",
+        "variable": "#dcdfe5", "variable.special": "#f28fad", "created": "#3fcf8e", "deleted": "#f26d85",
+        "modified": "#f5a524",
+    },
+    ansi={"black": "#14161b", "red": "#f26d85", "green": "#3fcf8e", "yellow": "#f5a524", "blue": "#6fc3ff",
+          "magenta": "#b4a9ff", "cyan": "#62d2c4", "white": "#e7e9ee", "bright_black": "#5c6370", "dim": "#9aa1ae"},
+    instruments={"led": "#f5a524", "led_off": "#3a3f4a", "display": "#07080a", "display_text": "#f5b547",
+                 "canvas": "#101216", "canvas_grid": "#262a33", "guide": "#ff6b9a"},
+)
+
+PYZED_LIGHT = _brand(
+    "Pyzed Light", "light", background="#f6f7f9", surface="#ffffff", panel="#f1f3f6", raised="#e7eaf0",
+    border="#dce0e7", text="#14161b", muted="#576070", faint="#9aa1ae", accent="#4f46e5", accent_text="#4f46e5",
+    tint="#eef0ff", error="#d0344f", warning="#b45f00", success="#12805c", info="#0b6bcb",
+    syntax={
+        "primary": "#24272e", "attribute": "#4f46e5", "boolean": "#9a5b00", "comment": "#6b7280",
+        "comment.doc": "#576070", "constant": "#9a5b00", "constructor": "#0b6bcb", "emphasis": ("#4f46e5", "italic"),
+        "emphasis.strong": ("#9a5b00", "bold"), "enum": "#0f766e", "function": "#0b6bcb", "keyword": "#6d28d9",
+        "label": "#4f46e5", "link_uri": "#0b6bcb", "number": "#9a5b00", "operator": "#576070", "property": "#b42359",
+        "punctuation": "#576070", "punctuation.bracket": "#424954", "punctuation.list_marker": "#4f46e5",
+        "string": "#2f7d32", "string.escape": "#9a5b00", "string.regex": "#9a5b00", "string.special": "#9a5b00",
+        "tag": "#4f46e5", "text.literal": "#2f7d32", "title": ("#4f46e5", "bold"), "type": "#0f766e",
+        "variable": "#24272e", "variable.special": "#b42359", "created": "#12805c", "deleted": "#d0344f",
+        "modified": "#b45f00",
+    },
+    ansi={"black": "#14161b", "red": "#d0344f", "green": "#12805c", "yellow": "#9a5b00", "blue": "#0b6bcb",
+          "magenta": "#6d28d9", "cyan": "#0f766e", "white": "#f6f7f9", "bright_black": "#9aa1ae", "dim": "#576070"},
+    instruments={"led": "#f5a524", "led_off": "#c9ced8", "display": "#14161b", "display_text": "#f5b547",
+                 "canvas": "#eef0f4", "canvas_grid": "#cdd3dc", "guide": "#e0457b"},
+)

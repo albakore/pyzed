@@ -137,7 +137,7 @@ def component(name: str, *, description: str = "", props: Sequence[Mapping[str, 
     return {"code": "\n".join(lines), "usage": usage, "class_name": cls}
 
 
-def app(title: str = "My App", *, size: Sequence[int] = (900, 600), theme: str = "One Dark",
+def app(title: str = "My App", *, size: Sequence[int] = (900, 600), theme: str = "Pyzed Dark",
         layout: str = "simple") -> str:
     """A ``pz.App`` script. ``layout`` is ``"simple"`` (a centered counter) or ``"workspace"``
     (a Zed-like window with a sidebar, tabs, a status bar and a command palette)."""
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 '''
 
 
-def form(name: str, *, title: str = "", width: float = 480, height: float = 320, theme: str = "One Dark",
+def form(name: str, *, title: str = "", width: float = 480, height: float = 320, theme: str = "Pyzed Dark",
          controls: Sequence[Mapping[str, Any]] = (), form_events: Sequence[str] = ()) -> Dict[str, Any]:
     """A designer form: the ``.pzform`` JSON and its handlers module.
 

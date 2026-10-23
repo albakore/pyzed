@@ -20,7 +20,7 @@ class App(pz.App):
         self.page = page
 
     def toggle_theme(self):
-        self.theme = pz.themes.ONE_LIGHT if self.theme.is_dark else pz.themes.ONE_DARK
+        self.theme = pz.themes.PYZED_LIGHT if self.theme.is_dark else pz.themes.PYZED_DARK
 
     def on_key(self, combo):
         if combo in ("ctrl-shift-p", "cmd-shift-p"):

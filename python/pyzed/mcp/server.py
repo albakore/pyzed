@@ -184,7 +184,7 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
 
     # -- generators ------------------------------------------------------------------------------------
     @tool()
-    def new_app(title: str = "My App", layout: str = "simple", theme: str = "One Dark",
+    def new_app(title: str = "My App", layout: str = "simple", theme: str = "Pyzed Dark",
                 width: int = 900, height: int = 600) -> str:
         """The code of a runnable pz.App script. layout: "simple" (a counter to build on) or "workspace"
         (a Zed-like window with sidebar, tabs, status bar and command palette)."""
@@ -203,7 +203,7 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
 
     @tool()
     def new_form(name: str, title: str = "", controls: Optional[List[Dict[str, Any]]] = None,
-                 width: float = 480, height: float = 320, theme: str = "One Dark",
+                 width: float = 480, height: float = 320, theme: str = "Pyzed Dark",
                  form_events: Optional[List[str]] = None) -> str:
         """A visual-designer form: the <name>.pzform layout and the <name>.py handlers module.
 

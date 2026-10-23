@@ -163,7 +163,7 @@ class Form:
     title: str = "Form1"
     width: float = 640.0
     height: float = 420.0
-    theme: str = "One Dark"
+    theme: str = "Pyzed Dark"
     accent: Optional[str] = None
     background: Optional[str] = None
     radius: Optional[float] = None

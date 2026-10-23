@@ -82,8 +82,8 @@ and its documentation instead of guessing parameters.
 - Every color in `pz.ui` comes from the current `Theme`. Prefer theme **tokens**
   (`"accent"`, `"panel"`, `"elevated"`, `"border"`, `"text_muted"`...) over hex colors so the UI
   follows theme switches. `list_themes` shows the themes and tokens.
-- `App.theme = "One Dark"` (or `"One Light"`, `pz.themes.auto(...)`, a `pz.Theme`). Zed theme
-  JSON files load with `pz.themes.load_zed(path)`.
+- `App.theme = "Pyzed Dark"` (the default; or `"Pyzed Light"`, `"One Dark"`, `pz.themes.auto(...)`, a
+  `pz.Theme`). Zed theme JSON files load with `pz.themes.load_zed(path)`.
 - `widget.style(background="elevated", radius=10, padding=16, border=(1, "border"))` styles like
   CSS. Reuse styles with `pz.Style(...)` and `pz.define_style("card", ...)`.
 - States like CSS: `.style(hover={...}, pressed={...}, focus={...}, transition=120)`.

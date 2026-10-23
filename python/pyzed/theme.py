@@ -3,7 +3,7 @@
 Every component reads its colors from the *current* theme, so switching
 ``App.theme`` restyles the whole UI. Ways to get a theme:
 
-    themes.AYU_DARK                                   # built-in (Zed's own themes)
+    themes.PYZED_DARK                                 # built-in (the default; Zed's own themes too)
     themes.get("Gruvbox Light")                       # by name
     themes.ONE_DARK.derive(name="Ocean", accent="#4fb3ff")   # tweak tokens
     themes.ONE_DARK.with_accent("#e5c07b")            # recolor accents only
@@ -117,6 +117,21 @@ class Theme:
     ui_font_size: float = 14.0
     buffer_font_size: float = 14.0
 
+    # Instrument panel: LEDs, LCD displays, the designer's canvas and its alignment guides. Left empty they
+    # follow the other colors (``led`` the warning color, ``canvas`` the background...), so every theme has them.
+    led: str = ""
+    led_off: str = ""
+    display: str = ""
+    display_text: str = ""
+    canvas: str = ""
+    canvas_grid: str = ""
+    guide: str = ""
+
+    def __post_init__(self) -> None:
+        for name in _INSTRUMENT:
+            if not getattr(self, name):
+                object.__setattr__(self, name, _instrument(self, name))
+
     @property
     def is_dark(self) -> bool:
         """Whether the theme's appearance is dark."""
@@ -128,6 +143,9 @@ class Theme:
             changes["syntax"] = {**self.syntax, **changes["syntax"]}
         if "ansi" in changes:
             changes["ansi"] = {**self.ansi, **changes["ansi"]}
+        for name in _INSTRUMENT:  # the ones that followed the old colors follow the new ones
+            if name not in changes and getattr(self, name) == _instrument(self, name):
+                changes[name] = ""
         return replace(self, **changes)
 
     def with_accent(self, accent: str) -> "Theme":
@@ -303,6 +321,94 @@ class Theme:
             if style is not None:
                 out[selector] = style
         return out
+
+
+# ---------------------------------------------------------------------------
+# Color helpers
+# ---------------------------------------------------------------------------
+
+
+def _rgba(color: str):
+    h = color.lstrip("#")
+    if len(h) in (3, 4):
+        h = "".join(c * 2 for c in h)
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    a = int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
+    return r, g, b, a
+
+
+def _hex(r, g, b, a=1.0) -> str:
+    clamp = lambda v: max(0, min(255, int(round(v))))  # noqa: E731
+    out = f"#{clamp(r):02x}{clamp(g):02x}{clamp(b):02x}"
+    return out if a >= 1.0 else out + f"{clamp(a * 255):02x}"
+
+
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
+def alpha(color: str, value: float) -> str:
+    """``color`` with its opacity multiplied by ``value``."""
+    r, g, b, a = _rgba(color)
+    return _hex(r, g, b, a * value)
+
+
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
+def mix(a: str, b: str, amount: float = 0.5) -> str:
+    """Blends two colors; ``amount=0`` is ``a`` and ``amount=1`` is ``b``."""
+    ra, ga, ba, aa = _rgba(a)
+    rb, gb, bb, ab = _rgba(b)
+    t = amount
+    return _hex(ra + (rb - ra) * t, ga + (gb - ga) * t, ba + (bb - ba) * t, aa + (ab - aa) * t)
+
+
+def luminance(color: str) -> float:
+    """Relative luminance (0 = black, 1 = white) as defined by WCAG."""
+    def channel(c: float) -> float:
+        c /= 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b, _ = _rgba(color)
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def contrast(a: str, b: str) -> float:
+    """WCAG contrast ratio between two colors (1 to 21)."""
+    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
+def readable_on(background: str, light: str = "#fafafa", dark: str = "#1c2025") -> str:
+    """Whichever of ``light``/``dark`` text reads better on ``background``."""
+    return light if contrast(background, light) >= contrast(background, dark) else dark
+
+
+def lighten(color: str, amount: float = 0.1) -> str:
+    """Mixes ``color`` with white by ``amount`` (0 to 1)."""
+    return mix(color, "#ffffff", amount)
+
+
+def darken(color: str, amount: float = 0.1) -> str:
+    """Mixes ``color`` with black by ``amount`` (0 to 1)."""
+    return mix(color, "#000000", amount)
+
+
+_INSTRUMENT = ("led", "led_off", "display", "display_text", "canvas", "canvas_grid", "guide")
+
+
+def _instrument(theme: "Theme", name: str) -> str:
+    """The instrument color ``name`` made from the rest of ``theme``."""
+    dark = theme.is_dark
+    if name == "led":
+        return theme.warning
+    if name == "led_off":
+        return mix(theme.border, theme.text_muted, 0.2)
+    if name == "display":
+        return darken(theme.editor, 0.45) if dark else theme.text
+    if name == "display_text":
+        return theme.led or theme.warning
+    if name == "canvas":
+        return theme.background
+    if name == "canvas_grid":
+        return mix(theme.background, theme.text, 0.12)
+    return theme.error  # guide
 
 
 # TextMate scope selector -> Zed syntax token. Later, more specific selectors win.
@@ -644,73 +750,6 @@ class AutoTheme:
 
 
 # ---------------------------------------------------------------------------
-# Color helpers
-# ---------------------------------------------------------------------------
-
-
-def _rgba(color: str):
-    h = color.lstrip("#")
-    if len(h) in (3, 4):
-        h = "".join(c * 2 for c in h)
-    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    a = int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
-    return r, g, b, a
-
-
-def _hex(r, g, b, a=1.0) -> str:
-    clamp = lambda v: max(0, min(255, int(round(v))))  # noqa: E731
-    out = f"#{clamp(r):02x}{clamp(g):02x}{clamp(b):02x}"
-    return out if a >= 1.0 else out + f"{clamp(a * 255):02x}"
-
-
-@lru_cache(maxsize=4096)  # views mix the same few colors on every render
-def alpha(color: str, value: float) -> str:
-    """``color`` with its opacity multiplied by ``value``."""
-    r, g, b, a = _rgba(color)
-    return _hex(r, g, b, a * value)
-
-
-@lru_cache(maxsize=4096)  # views mix the same few colors on every render
-def mix(a: str, b: str, amount: float = 0.5) -> str:
-    """Blends two colors; ``amount=0`` is ``a`` and ``amount=1`` is ``b``."""
-    ra, ga, ba, aa = _rgba(a)
-    rb, gb, bb, ab = _rgba(b)
-    t = amount
-    return _hex(ra + (rb - ra) * t, ga + (gb - ga) * t, ba + (bb - ba) * t, aa + (ab - aa) * t)
-
-
-def luminance(color: str) -> float:
-    """Relative luminance (0 = black, 1 = white) as defined by WCAG."""
-    def channel(c: float) -> float:
-        c /= 255
-        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-    r, g, b, _ = _rgba(color)
-    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-
-
-def contrast(a: str, b: str) -> float:
-    """WCAG contrast ratio between two colors (1 to 21)."""
-    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
-    return (la + 0.05) / (lb + 0.05)
-
-
-@lru_cache(maxsize=4096)  # views mix the same few colors on every render
-def readable_on(background: str, light: str = "#fafafa", dark: str = "#1c2025") -> str:
-    """Whichever of ``light``/``dark`` text reads better on ``background``."""
-    return light if contrast(background, light) >= contrast(background, dark) else dark
-
-
-def lighten(color: str, amount: float = 0.1) -> str:
-    """Mixes ``color`` with white by ``amount`` (0 to 1)."""
-    return mix(color, "#ffffff", amount)
-
-
-def darken(color: str, amount: float = 0.1) -> str:
-    """Mixes ``color`` with black by ``amount`` (0 to 1)."""
-    return mix(color, "#000000", amount)
-
-
-# ---------------------------------------------------------------------------
 # Zed theme files
 # ---------------------------------------------------------------------------
 
@@ -838,8 +877,10 @@ def _load_bundled(file: str) -> List[Theme]:
 
 
 class themes:  # noqa: N801 - namespace
-    """Built-in themes (Zed's One, Ayu and Gruvbox families, and Pyzed's own) and the theme registry."""
+    """Built-in themes (Pyzed's own, and Zed's One, Ayu and Gruvbox families) and the theme registry."""
 
+    PYZED_DARK: Theme
+    PYZED_LIGHT: Theme
     ONE_DARK = ONE_DARK
     ONE_LIGHT = ONE_LIGHT
     GRUVBOX_DARK = GRUVBOX_DARK
@@ -877,7 +918,7 @@ class themes:  # noqa: N801 - namespace
         return [themes.register(_from_zed_style(entry)) for entry in family.get("themes", [family])]
 
     @staticmethod
-    def auto(light: Union[Theme, str] = "One Light", dark: Union[Theme, str] = "One Dark") -> AutoTheme:
+    def auto(light: Union[Theme, str] = "Pyzed Light", dark: Union[Theme, str] = "Pyzed Dark") -> AutoTheme:
         """A theme that follows the OS light/dark setting."""
         return AutoTheme(
             light if isinstance(light, Theme) else themes.get(light),
@@ -885,21 +926,26 @@ class themes:  # noqa: N801 - namespace
         )
 
 
-for _theme in (ONE_DARK, ONE_LIGHT):
+from .theme_palettes import PYZED_DARK, PYZED_LIGHT  # noqa: E402 - needs the helpers above
+from .theme_palettes import PYZED_THEMES as _PYZED_THEMES  # noqa: E402
+
+themes.PYZED_DARK, themes.PYZED_LIGHT = PYZED_DARK, PYZED_LIGHT
+for _theme in (PYZED_DARK, PYZED_LIGHT, ONE_DARK, ONE_LIGHT):
     themes.register(_theme)
 for _theme in _load_bundled("ayu.json") + _load_bundled("gruvbox.json"):
     themes.register(_theme)
     setattr(themes, _theme.name.upper().replace(" ", "_"), _theme)
 GRUVBOX_DARK = themes.GRUVBOX_DARK = _registry.get("Gruvbox Dark", GRUVBOX_DARK)
-from .theme_palettes import PYZED_THEMES as _PYZED_THEMES  # noqa: E402 - needs the helpers above
 
-for _theme in _PYZED_THEMES:  # Pyzed's own: Midnight, Graphite, Forest, Rosé, Dawn and Glacier
+for _theme in _PYZED_THEMES:  # Pyzed's palettes: Midnight, Graphite, Forest, Rosé, Dawn and Glacier
     themes.register(_theme)
     setattr(themes, _theme.name.upper().replace(" ", "_").replace("É", "E"), _theme)
 del _theme
 
+#: The theme used when an app sets none: the brand's dark theme (``DEFAULT_LIGHT`` on a light OS with ``"auto"``).
+DEFAULT_DARK, DEFAULT_LIGHT = PYZED_DARK, PYZED_LIGHT
 
-_current: Theme = ONE_DARK
+_current: Theme = PYZED_DARK
 _stack: List[Theme] = []
 
 
@@ -917,13 +963,13 @@ def use(theme: Theme) -> None:
 def resolve(value: Union[Theme, AutoTheme, str, None], *, dark: bool = True) -> Theme:
     """Turns an ``App.theme`` value (theme, name, ``AutoTheme`` or ``None``) into a ``Theme``."""
     if value is None:
-        return ONE_DARK if dark else ONE_LIGHT
+        return DEFAULT_DARK if dark else DEFAULT_LIGHT
     if isinstance(value, Theme):
         return value
     if isinstance(value, AutoTheme):
         return value.pick(dark)
     if isinstance(value, str):
         if value == "auto":
-            return ONE_DARK if dark else ONE_LIGHT
+            return DEFAULT_DARK if dark else DEFAULT_LIGHT
         return themes.get(value)
     raise TypeError(f"expected a Theme, AutoTheme or theme name, got {type(value).__name__}")

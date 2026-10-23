@@ -64,7 +64,7 @@ def theme_for(form: Form, theme_name: Optional[str] = None) -> Theme:
     try:
         theme = themes.get(form.theme)
     except KeyError:
-        theme = themes.get("One Dark")
+        theme = themes.get("Pyzed Dark")
     if form.accent:
         theme = theme.with_accent(form.accent)
     changes: Dict[str, Any] = {}
