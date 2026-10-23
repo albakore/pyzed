@@ -144,7 +144,9 @@ class UpdateController:
         """Tells that the last "Restart to update" could not replace the app (and where the details are)."""
         detail = ""
         try:
-            detail = Path(str(log)).read_text(encoding="utf-8", errors="replace").strip().splitlines()[-1]
+            lines = Path(str(log)).read_text(encoding="utf-8", errors="replace").strip().splitlines()
+            # another window of the app kept the folder in use: say that rather than the generic last line
+            detail = next((line for line in lines if line.startswith("Another ")), lines[-1])
         except (OSError, IndexError, TypeError):
             pass
         self.error = tr("Pyzed Design {version} could not replace this version: {detail}", version=version,
