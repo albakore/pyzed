@@ -52,6 +52,19 @@ def test_log_entries_keep_source_detail_and_origin():
     assert "[project] boom" in log.text() and log.text([]) == ""
 
 
+def test_capture_without_a_console(monkeypatch):
+    # In an app without a console (pythonw, a windowed bundle on Windows) sys.stdout/stderr are None.
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+    log = ui.Log().capture()
+    print("hello")
+    sys.stderr.write("partial")
+    assert not sys.stdout.isatty()
+    log.release()
+    assert sys.stdout is None and sys.stderr is None
+    assert [(e.level, e.text) for e in log.entries] == [("stdout", "hello"), ("stderr", "partial")]
+
+
 def test_log_selection_click_shift_ctrl_and_keep():
     log = ui.Log()
     ids = [log.write("info", f"line {i}").id for i in range(5)]

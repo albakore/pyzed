@@ -74,19 +74,24 @@ class LogEntry:
 
 
 class _Tee:
-    """A text stream that writes to the original stream and, line by line, to a ``Log``."""
+    """A text stream that writes to the original stream and, line by line, to a ``Log``.
 
-    def __init__(self, log: "Log", level: str, original: TextIO) -> None:
+    ``original`` is ``None`` in an app without a console (``pythonw``, a windowed bundle on Windows): then the
+    lines only go to the log.
+    """
+
+    def __init__(self, log: "Log", level: str, original: Optional[TextIO]) -> None:
         self.log = log
         self.level = level
         self.original = original
         self._buffer = ""
 
     def write(self, text: str) -> int:
-        try:
-            self.original.write(text)
-        except (OSError, ValueError):  # pragma: no cover - a closed console
-            pass
+        if self.original is not None:
+            try:
+                self.original.write(text)
+            except (OSError, ValueError):  # pragma: no cover - a closed console
+                pass
         self._buffer += text
         while "\n" in self._buffer:
             line, self._buffer = self._buffer.split("\n", 1)
@@ -97,12 +102,21 @@ class _Tee:
         if self._buffer:
             self.log.write(self.level, self._buffer)
             self._buffer = ""
+        if self.original is not None:
+            try:
+                self.original.flush()
+            except (OSError, ValueError):  # pragma: no cover
+                pass
+
+    def isatty(self) -> bool:
         try:
-            self.original.flush()
+            return self.original is not None and self.original.isatty()
         except (OSError, ValueError):  # pragma: no cover
-            pass
+            return False
 
     def __getattr__(self, name: str) -> Any:
+        if self.original is None:
+            raise AttributeError(name)
         return getattr(self.original, name)
 
 
