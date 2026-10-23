@@ -1,4 +1,4 @@
-"""Writes docs/src/components/theme-tokens.json: the One Dark and One Light value of every color token.
+"""Writes docs/src/components/theme-tokens.json: the Pyzed Dark and Pyzed Light value of every color token.
 
     python docs/scripts/gen_theme_tokens.py            # rewrite it
     python docs/scripts/gen_theme_tokens.py --check    # fail if it is out of date
@@ -39,7 +39,7 @@ def _color(style) -> str:
 
 def tokens() -> dict:
     theme = _theme_module()
-    dark, light = theme.themes.get("One Dark"), theme.themes.get("One Light")
+    dark, light = theme.themes.get("Pyzed Dark"), theme.themes.get("Pyzed Light")
     out = {k: [v, getattr(light, k)] for k, v in dark.tokens().items() if isinstance(v, str) and v.startswith("#")}
     out.update({f"syntax.{k}": [_color(v), _color(light.syntax.get(k))] for k, v in dark.syntax.items()})
     out.update({f"ansi.{k}": [v, light.ansi.get(k, v)] for k, v in dark.ansi.items()})

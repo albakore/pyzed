@@ -1935,7 +1935,7 @@
   {
    "slug": "theming/tokens",
    "title": "Theme tokens",
-   "description": "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in One Dark and One Light.",
+   "description": "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in Pyzed Dark and Pyzed Light.",
    "path": "docs/src/content/docs/theming/tokens.mdx"
   },
   {
@@ -2965,7 +2965,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.PYZED_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -5038,7 +5038,8 @@
     "desc": "An icon and/or text in the status bar (diagnostics, cursor position, language…).",
     "params": {
      "content": "Text.",
-     "tooltip": "Tooltip text."
+     "tooltip": "Tooltip text.",
+     "led": "Color token or hex of a small LED before it (`\"success\"` for a running server)."
     }
    },
    "pyzed.ui.panel": {
@@ -5584,6 +5585,49 @@
     },
     "example": "ui.diff_view({\"path\": \"main.py\", \"old\": \"x = 1\\n\", \"new\": \"x = 2\\n\"})"
    },
+   "pyzed.ui.led": {
+    "desc": "A round LED from Pyzed's brand: lit with a soft glow in the theme's `led` color (amber in the Pyzed themes) or dark in `led_off`.",
+    "params": {
+     "on": "Lit or not.",
+     "color": "Color token or hex instead of `led`.",
+     "size": "Diameter.",
+     "glow": "`False` draws it without the glow."
+    },
+    "example": "\n            pz.row([ui.led(self.recording), ui.label(\"REC\", mono=True)], spacing=6, align=\"center\")\n        "
+   },
+   "pyzed.ui.led_toggle": {
+    "desc": "A toggle that shows its state with an LED next to a small mono label in capitals, like the SNAP and GUIDES switches of Pyzed Design's canvas.",
+    "params": {
+     "label": "Text (shown in capitals).",
+     "on": "The state.",
+     "on_toggle": "Receives the new state.",
+     "color": "LED color token or hex.",
+     "tooltip": "Tooltip text.",
+     "keys": "Shortcut shown in the tooltip.",
+     "height": "Height."
+    },
+    "example": "\n            ui.led_toggle(\"Snap\", self.snap, lambda on: setattr(self, \"snap\", on))\n        "
+   },
+   "pyzed.ui.lcd": {
+    "desc": "An LCD readout: the parts in amber mono on the theme's `display` color, split by dim bars (`None` and `\"\"` are skipped).",
+    "params": {
+     "parts": "Texts or numbers.",
+     "size": "Text size.",
+     "height": "Height (`None` fits the text).",
+     "color": "Text color token or hex instead of `display_text`."
+    },
+    "example": "\n            ui.lcd(f\"{self.fps} FPS\", \"wgpu\")\n        "
+   },
+   "pyzed.ui.theme_rack": {
+    "desc": "Themes to pick from as a rack of modules: an LED lit on the current one, its name, eight swatches of its colors and a moon or a sun for dark and light. Pyzed Design's Settings use it.",
+    "params": {
+     "themes": "`Theme` objects (`pz.themes.all()`).",
+     "current": "Name of the current theme.",
+     "on_pick": "Called with the clicked theme's name.",
+     "columns": "Modules per row."
+    },
+    "example": "\n            ui.theme_rack(pz.themes.all(), self.theme.name, lambda name: setattr(self, \"theme\", name))\n        "
+   },
    "pyzed.ui.IconPicker": {
     "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",
     "params": {
@@ -5701,7 +5745,7 @@
     }
    },
    "pyzed.themes": {
-    "desc": "Namespace with the built-in themes (the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
+    "desc": "Namespace with the built-in themes (Pyzed's own and the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.PYZED_DARK` (the default), `themes.PYZED_LIGHT`, `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
    },
    "pyzed.themes.all": {
     "desc": "List of all built-in themes."
@@ -5802,6 +5846,22 @@
      "background": "Background color.",
      "light": "Light text.",
      "dark": "Dark text."
+    }
+   },
+   "pyzed.brand.mark": {
+    "desc": "Pyzed's mark (the python that draws the “p”) as an SVG widget tinted with a theme color.",
+    "params": {
+     "size": "Height in pixels.",
+     "color": "Color token or hex (`text_accent` by default).",
+     "theme": "Theme."
+    },
+    "example": "\n            ui.title_bar([pz.brand.mark(16), ui.label(\"My app\")], [])\n        "
+   },
+   "pyzed.brand.wordmark": {
+    "desc": "The “pyzed” wordmark, with the python as its “p”; the dark version on dark themes.",
+    "params": {
+     "height": "Height in pixels.",
+     "theme": "Theme."
     }
    },
    "pyzed.icons.icon": {

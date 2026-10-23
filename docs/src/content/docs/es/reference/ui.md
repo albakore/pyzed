@@ -2314,6 +2314,7 @@ status_item(
     selected=False,
     tooltip=None,
     keys=None,
+    led=None,
     theme=None,
 )
 ```
@@ -2330,6 +2331,7 @@ Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, l
 | `selected` | Lo marca como seleccionado. |
 | `tooltip` | Texto del tooltip. |
 | `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `led` | Token de color o hex de un LED pequeño delante (`"success"` para un servidor en marcha). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `panel`
@@ -3781,6 +3783,101 @@ Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las línea
 
 ```python
 ui.diff_view({"path": "main.py", "old": "x = 1\n", "new": "x = 2\n"})
+```
+
+## Instrumentos
+
+### `led`
+
+```python
+led(on=True, *, color=None, size=7, glow=True, theme=None)
+```
+
+Un LED redondo de la marca Pyzed: encendido con un brillo suave en el color `led` del tema (ámbar en los temas Pyzed) o apagado en `led_off`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `on` | Encendido o no. |
+| `color` | Token de color o hex en lugar de `led`. |
+| `size` | Diámetro. |
+| `glow` | `False` lo dibuja sin brillo. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+pz.row([ui.led(self.recording), ui.label("REC", mono=True)], spacing=6, align="center")
+```
+
+### `led_toggle`
+
+```python
+led_toggle(
+    label,
+    on,
+    on_toggle=None,
+    *,
+    color=None,
+    tooltip=None,
+    keys=None,
+    height=24,
+    theme=None,
+)
+```
+
+Un interruptor que muestra su estado con un LED junto a una etiqueta mono en mayúsculas, como los de SNAP y GUÍAS del lienzo de Pyzed Design.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `label` | Texto (se muestra en mayúsculas). |
+| `on` | El estado. |
+| `on_toggle` | Recibe el estado nuevo. |
+| `color` | Token de color o hex del LED. |
+| `tooltip` | Texto del tooltip. |
+| `keys` | Atajo que muestra el tooltip. |
+| `height` | Alto. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.led_toggle("Snap", self.snap, lambda on: setattr(self, "snap", on))
+```
+
+### `lcd`
+
+```python
+lcd(*parts, size=12, height=24, color=None, theme=None)
+```
+
+Un display LCD: las partes en mono ámbar sobre el color `display` del tema, separadas por barras tenues (`None` y `""` se omiten).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `parts` | Textos o números. |
+| `size` | Tamaño del texto. |
+| `height` | Alto (`None` se ajusta al texto). |
+| `color` | Token de color o hex del texto en lugar de `display_text`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.lcd(f"{self.fps} FPS", "wgpu")
+```
+
+### `theme_rack`
+
+```python
+theme_rack(themes, current, on_pick=None, *, columns=2, theme=None)
+```
+
+Temas para elegir como un rack de módulos: un LED encendido en el actual, su nombre, ocho muestras de sus colores y una luna o un sol para oscuro y claro. Lo usan los Ajustes de Pyzed Design.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `themes` | Objetos `Theme` (`pz.themes.all()`). |
+| `current` | Nombre del tema actual. |
+| `on_pick` | Se llama con el nombre del tema pulsado. |
+| `columns` | Módulos por fila. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.theme_rack(pz.themes.all(), self.theme.name, lambda name: setattr(self, "theme", name))
 ```
 
 ## Selector de iconos

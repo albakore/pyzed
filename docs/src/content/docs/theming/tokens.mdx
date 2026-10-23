@@ -1,6 +1,6 @@
 ---
 title: Theme tokens
-description: "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in One Dark and One Light."
+description: "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in Pyzed Dark and Pyzed Light."
 sidebar:
   order: 2
 ---
@@ -143,6 +143,24 @@ For [`pz.code_editor`](/pyzed/library/editor/), `ui.terminal` and code blocks.
 	]}
 />
 
+## Instrument panel
+
+LEDs, LCD displays and Pyzed Design's canvas take these. A theme that leaves them empty (themes from Zed, for
+example) gets them from its other colors: `led` is its `warning` color, `display` a dark shade of the editor,
+`canvas` its `background` and `guide` its `error` color. Change those colors with `derive` and they follow.
+
+<TokenTable
+	rows={[
+		['led', 'A lit LED (<code>ui.led</code>, <code>ui.led_toggle</code>, the status bar).'],
+		['led_off', 'An LED that is off.'],
+		['display', 'The background of an LCD readout (<code>ui.lcd</code>).'],
+		['display_text', 'The text of an LCD readout.'],
+		['canvas', "The designer's canvas around the form."],
+		['canvas_grid', 'The dots of a grid on the canvas.'],
+		['guide', 'Alignment guides while moving controls.'],
+	]}
+/>
+
 ## Syntax, terminal and people
 
 These three are collections instead of single colors.
@@ -174,8 +192,8 @@ These three are collections instead of single colors.
 
 | Token | Default | What it sets |
 | --- | --- | --- |
-| `radius` | `6.0` | Corner radius of cards, dialogs and large surfaces (cards use `radius + 2`). |
-| `radius_sm` | `4.0` | Corner radius of buttons, inputs, chips and list rows. |
+| `radius` | `6.0` (`8.0` in the Pyzed themes) | Corner radius of cards, dialogs and large surfaces (cards use `radius + 2`). |
+| `radius_sm` | `4.0` (`5.0` in the Pyzed themes) | Corner radius of buttons, inputs, chips and list rows. |
 | `ui_font_size` | `14.0` | The base size of interface text; a form's **Font size** and the global style's `size` set it. |
 | `buffer_font_size` | `14.0` | Text size in the code editor. |
 | `name` | | The name used by `pz.themes.get` and `theme = "..."`. |
@@ -184,8 +202,8 @@ These three are collections instead of single colors.
 ## From Python
 
 ```python
-t = pz.themes.get("One Dark")
-t.accent                 # '#74ade8'
+t = pz.themes.get("Pyzed Dark")
+t.accent                 # '#5b50f0'
 t.color("text_muted")    # the same as t.text_muted; hex colors pass through unchanged
 t.tokens()               # every token as a dictionary
 t.to_dict()              # JSON-friendly, the format Theme.save writes

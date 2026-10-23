@@ -1,6 +1,6 @@
 ---
 title: Tokens del tema
-description: "Cada token de color y tamaño de un tema de Pyzed, qué pinta en la interfaz y su valor en One Dark y One Light."
+description: "Cada token de color y tamaño de un tema de Pyzed, qué pinta en la interfaz y su valor en Pyzed Dark y Pyzed Light."
 sidebar:
   order: 2
 ---
@@ -146,6 +146,24 @@ Para [`pz.code_editor`](/pyzed/es/library/editor/), `ui.terminal` y los bloques 
 	]}
 />
 
+## Panel de instrumentos
+
+Los usan los LEDs, los displays LCD y el lienzo de Pyzed Design. Un tema que los deja vacíos (los temas de Zed,
+por ejemplo) los toma de sus otros colores: `led` es su color `warning`, `display` un tono oscuro del editor,
+`canvas` su `background` y `guide` su color `error`. Si cambias esos colores con `derive`, ellos los siguen.
+
+<TokenTable
+	rows={[
+		['led', 'Un LED encendido (<code>ui.led</code>, <code>ui.led_toggle</code>, la barra de estado).'],
+		['led_off', 'Un LED apagado.'],
+		['display', 'El fondo de un display LCD (<code>ui.lcd</code>).'],
+		['display_text', 'El texto de un display LCD.'],
+		['canvas', 'El lienzo del diseñador alrededor del formulario.'],
+		['canvas_grid', 'Los puntos de una cuadrícula en el lienzo.'],
+		['guide', 'Las guías de alineación al mover controles.'],
+	]}
+/>
+
 ## Sintaxis, terminal y personas
 
 Estos tres son colecciones en lugar de colores sueltos.
@@ -177,8 +195,8 @@ Estos tres son colecciones en lugar de colores sueltos.
 
 | Token | Por defecto | Qué fija |
 | --- | --- | --- |
-| `radius` | `6.0` | Radio de las esquinas de tarjetas, diálogos y superficies grandes (las tarjetas usan `radius + 2`). |
-| `radius_sm` | `4.0` | Radio de botones, campos, chips y filas de listas. |
+| `radius` | `6.0` (`8.0` en los temas Pyzed) | Radio de las esquinas de tarjetas, diálogos y superficies grandes (las tarjetas usan `radius + 2`). |
+| `radius_sm` | `4.0` (`5.0` en los temas Pyzed) | Radio de botones, campos, chips y filas de listas. |
 | `ui_font_size` | `14.0` | El tamaño base del texto de la interfaz; lo fijan el **Tamaño de fuente** de un formulario y el `size` del estilo global. |
 | `buffer_font_size` | `14.0` | Tamaño del texto en el editor de código. |
 | `name` | | El nombre que usan `pz.themes.get` y `theme = "..."`. |
@@ -187,8 +205,8 @@ Estos tres son colecciones en lugar de colores sueltos.
 ## Desde Python
 
 ```python
-t = pz.themes.get("One Dark")
-t.accent                 # '#74ade8'
+t = pz.themes.get("Pyzed Dark")
+t.accent                 # '#5b50f0'
 t.color("text_muted")    # lo mismo que t.text_muted; los colores hex pasan sin cambios
 t.tokens()               # todos los tokens como diccionario
 t.to_dict()              # apto para JSON, el formato que escribe Theme.save

@@ -1,406 +1,434 @@
 {
  "background": [
-  "#3b414d",
-  "#dcdcdd"
+  "#0d0e11",
+  "#f6f7f9"
  ],
  "surface": [
-  "#2f343e",
-  "#ebebec"
+  "#191c22",
+  "#f1f3f6"
  ],
  "elevated": [
-  "#2f343e",
-  "#ebebec"
+  "#222630",
+  "#ffffff"
  ],
  "editor": [
-  "#282c33",
-  "#fafafa"
+  "#14161b",
+  "#ffffff"
  ],
  "title_bar": [
-  "#3b414d",
-  "#dcdcdd"
+  "#191c22",
+  "#f1f3f6"
  ],
  "status_bar": [
-  "#3b414d",
-  "#dcdcdd"
+  "#191c22",
+  "#f1f3f6"
  ],
  "tab_bar": [
-  "#2f343e",
-  "#ebebec"
+  "#191c22",
+  "#f1f3f6"
  ],
  "tab_active": [
-  "#282c33",
-  "#fafafa"
+  "#14161b",
+  "#ffffff"
  ],
  "tab_inactive": [
-  "#2f343e",
-  "#ebebec"
+  "#191c22",
+  "#f1f3f6"
  ],
  "panel": [
-  "#2f343e",
-  "#ebebec"
+  "#191c22",
+  "#f1f3f6"
  ],
  "terminal": [
-  "#282c33",
-  "#fafafa"
+  "#14161b",
+  "#ffffff"
  ],
  "border": [
-  "#464b57",
-  "#c9c9ca"
+  "#2a2f39",
+  "#dce0e7"
  ],
  "border_variant": [
-  "#363c46",
-  "#dfdfe0"
+  "#22262e",
+  "#e6eaee"
  ],
  "border_focused": [
-  "#47679e",
-  "#7d82e8"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "border_selected": [
-  "#293b5b",
-  "#cbcdf6"
+  "#8b83ff52",
+  "#4f46e552"
  ],
  "element": [
-  "#2e343e",
-  "#ebebec"
+  "#14161b",
+  "#ffffff"
  ],
  "element_hover": [
-  "#363c46",
-  "#dfdfe0"
+  "#222630",
+  "#e7eaf0"
  ],
  "element_active": [
-  "#454a56",
-  "#cacaca"
+  "#2a2f39",
+  "#dce0e7"
  ],
  "element_selected": [
-  "#454a56",
-  "#cacaca"
+  "#2a2f39",
+  "#dce0e7"
  ],
  "ghost_hover": [
-  "#363c46",
-  "#dfdfe0"
+  "#222630",
+  "#e7eaf0"
  ],
  "ghost_active": [
-  "#454a56",
-  "#cacaca"
+  "#2a2f39",
+  "#dce0e7"
  ],
  "ghost_selected": [
-  "#454a56",
-  "#cacaca"
+  "#8b83ff1f",
+  "#eef0ff"
  ],
  "text": [
-  "#dce0e5",
-  "#242529"
+  "#e7e9ee",
+  "#14161b"
  ],
  "text_muted": [
-  "#a9afbc",
-  "#58585a"
+  "#9aa1ae",
+  "#576070"
  ],
  "text_placeholder": [
-  "#878a98",
-  "#7e8086"
+  "#5c6370",
+  "#9aa1ae"
  ],
  "text_disabled": [
-  "#878a98",
-  "#7e8086"
+  "#5c6370",
+  "#9aa1ae"
  ],
  "text_accent": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "icon": [
-  "#dce0e5",
-  "#242529"
+  "#e7e9ee",
+  "#14161b"
  ],
  "icon_muted": [
-  "#a9afbc",
-  "#58585a"
+  "#9aa1ae",
+  "#576070"
  ],
  "accent": [
-  "#74ade8",
-  "#5c78e2"
+  "#5b50f0",
+  "#4f46e5"
  ],
  "on_accent": [
-  "#1c2025",
-  "#fafafa"
+  "#ffffff",
+  "#ffffff"
  ],
  "error": [
-  "#d07277",
-  "#d36151"
+  "#f26d85",
+  "#d0344f"
  ],
  "warning": [
-  "#dec184",
-  "#a48819"
+  "#f5a524",
+  "#b45f00"
  ],
  "success": [
-  "#a1c181",
-  "#669f59"
+  "#3fcf8e",
+  "#12805c"
  ],
  "info": [
-  "#74ade8",
-  "#5c78e2"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "hint": [
-  "#788ca6",
-  "#7274a7"
+  "#7c8491",
+  "#6b7280"
  ],
  "created": [
-  "#a1c181",
-  "#669f59"
+  "#3fcf8e",
+  "#12805c"
  ],
  "modified": [
-  "#dec184",
-  "#a48819"
+  "#f5a524",
+  "#b45f00"
  ],
  "deleted": [
-  "#d07277",
-  "#d36151"
+  "#f26d85",
+  "#d0344f"
  ],
  "conflict": [
-  "#dec184",
-  "#a48819"
+  "#f5a524",
+  "#b45f00"
  ],
  "ignored": [
-  "#878a98",
-  "#7e8086"
+  "#5c6370",
+  "#9aa1ae"
  ],
  "editor_text": [
-  "#acb2be",
-  "#242529"
+  "#dcdfe5",
+  "#24272e"
  ],
  "line_number": [
-  "#4e5a5f",
-  "#a2a3a7"
+  "#5c6370",
+  "#9aa1ae"
  ],
  "line_number_active": [
-  "#d0d4da",
-  "#242529"
+  "#e7e9ee",
+  "#14161b"
  ],
  "active_line": [
-  "#2f343ebf",
-  "#ebebecbf"
+  "#191c22bf",
+  "#f1f3f6bf"
  ],
  "selection": [
-  "#74ade83d",
-  "#5c78e23d"
+  "#8b83ff3d",
+  "#4f46e53d"
  ],
  "scrollbar": [
-  "#c8ccd44c",
-  "#2425294c"
+  "#e7e9ee33",
+  "#14161b33"
  ],
  "scrollbar_hover": [
-  "#c8ccd480",
-  "#24252980"
+  "#e7e9ee66",
+  "#14161b66"
  ],
  "search_match": [
-  "#74ade866",
-  "#5c78e266"
+  "#8b83ff52",
+  "#4f46e552"
  ],
  "shadow": [
-  "#0000004d",
-  "#00000026"
+  "#00000080",
+  "#0f172a24"
+ ],
+ "led": [
+  "#f5a524",
+  "#f5a524"
+ ],
+ "led_off": [
+  "#3a3f4a",
+  "#c9ced8"
+ ],
+ "display": [
+  "#07080a",
+  "#14161b"
+ ],
+ "display_text": [
+  "#f5b547",
+  "#f5b547"
+ ],
+ "canvas": [
+  "#101216",
+  "#eef0f4"
+ ],
+ "canvas_grid": [
+  "#262a33",
+  "#cdd3dc"
+ ],
+ "guide": [
+  "#ff6b9a",
+  "#e0457b"
  ],
  "syntax.primary": [
-  "#acb2be",
-  "#242529"
+  "#dcdfe5",
+  "#24272e"
  ],
  "syntax.attribute": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.boolean": [
-  "#bf956a",
-  "#ad6e25"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.comment": [
-  "#5d636f",
-  "#a2a3a7"
+  "#7c8491",
+  "#6b7280"
  ],
  "syntax.comment.doc": [
-  "#878e98",
-  "#7c7e86"
+  "#8e96a3",
+  "#576070"
  ],
  "syntax.constant": [
-  "#dfc184",
-  "#c18401"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.constructor": [
-  "#73ade9",
-  "#5c78e2"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "syntax.emphasis": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.emphasis.strong": [
-  "#bf956a",
-  "#ad6e25"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.enum": [
-  "#d07277",
-  "#d3604f"
+  "#62d2c4",
+  "#0f766e"
  ],
  "syntax.function": [
-  "#73ade9",
-  "#5b79e3"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "syntax.keyword": [
-  "#b477cf",
-  "#a449ab"
+  "#b4a9ff",
+  "#6d28d9"
  ],
  "syntax.label": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.link_uri": [
-  "#6eb4bf",
-  "#3882b7"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "syntax.number": [
-  "#bf956a",
-  "#ad6e25"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.operator": [
-  "#6eb4bf",
-  "#3882b7"
+  "#9aa1ae",
+  "#576070"
  ],
  "syntax.property": [
-  "#d07277",
-  "#d3604f"
+  "#f28fad",
+  "#b42359"
  ],
  "syntax.punctuation": [
-  "#acb2be",
-  "#242529"
+  "#9aa1ae",
+  "#576070"
  ],
  "syntax.punctuation.bracket": [
-  "#b2b9c6",
-  "#4d4f52"
+  "#b3b9c4",
+  "#424954"
  ],
  "syntax.punctuation.list_marker": [
-  "#d07277",
-  "#d3604f"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.string": [
-  "#a1c181",
-  "#649f57"
+  "#9fd88b",
+  "#2f7d32"
  ],
  "syntax.string.escape": [
-  "#878e98",
-  "#7c7e86"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.string.regex": [
-  "#bf956a",
-  "#ad6e25"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.string.special": [
-  "#bf956a",
-  "#ad6e25"
+  "#f5b547",
+  "#9a5b00"
  ],
  "syntax.tag": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.text.literal": [
-  "#a1c181",
-  "#649f57"
+  "#9fd88b",
+  "#2f7d32"
  ],
  "syntax.title": [
-  "#d07277",
-  "#d3604f"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "syntax.type": [
-  "#6eb4bf",
-  "#3882b7"
+  "#62d2c4",
+  "#0f766e"
  ],
  "syntax.variable": [
-  "#acb2be",
-  "#242529"
+  "#dcdfe5",
+  "#24272e"
  ],
  "syntax.variable.special": [
-  "#bf956a",
-  "#ad6e25"
+  "#f28fad",
+  "#b42359"
  ],
  "syntax.created": [
-  "#a1c181",
-  "#669f59"
+  "#3fcf8e",
+  "#12805c"
  ],
  "syntax.deleted": [
-  "#d07277",
-  "#d36151"
+  "#f26d85",
+  "#d0344f"
  ],
  "syntax.modified": [
-  "#dec184",
-  "#a48819"
+  "#f5a524",
+  "#b45f00"
  ],
  "ansi.black": [
-  "#282c33",
-  "#242529"
+  "#14161b",
+  "#14161b"
  ],
  "ansi.red": [
-  "#d07277",
-  "#d36151"
+  "#f26d85",
+  "#d0344f"
  ],
  "ansi.green": [
-  "#a1c181",
-  "#669f59"
+  "#3fcf8e",
+  "#12805c"
  ],
  "ansi.yellow": [
-  "#dec184",
-  "#a48819"
+  "#f5a524",
+  "#9a5b00"
  ],
  "ansi.blue": [
-  "#74ade8",
-  "#5c78e2"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "ansi.magenta": [
-  "#b477cf",
-  "#a449ab"
+  "#b4a9ff",
+  "#6d28d9"
  ],
  "ansi.cyan": [
-  "#6eb4bf",
-  "#3a82b7"
+  "#62d2c4",
+  "#0f766e"
  ],
  "ansi.white": [
-  "#dce0e5",
-  "#fafafa"
+  "#e7e9ee",
+  "#f6f7f9"
  ],
  "ansi.bright_black": [
-  "#636d83",
-  "#7e8086"
+  "#5c6370",
+  "#9aa1ae"
  ],
  "ansi.dim": [
-  "#878a98",
-  "#7e8086"
+  "#9aa1ae",
+  "#576070"
  ],
  "players.0": [
-  "#74ade8",
-  "#5c78e2"
+  "#8b83ff",
+  "#4f46e5"
  ],
  "players.1": [
-  "#be5046",
-  "#984ea5"
+  "#6fc3ff",
+  "#0b6bcb"
  ],
  "players.2": [
-  "#bf956a",
-  "#a44f2d"
+  "#3fcf8e",
+  "#12805c"
  ],
  "players.3": [
-  "#b477cf",
-  "#a449ab"
+  "#f5a524",
+  "#b45f00"
  ],
  "players.4": [
-  "#6eb4bf",
-  "#3a82b7"
+  "#ff6b9a",
+  "#e0457b"
  ],
  "players.5": [
-  "#d07277",
-  "#d36151"
+  "#62d2c4",
+  "#0f766e"
  ],
  "players.6": [
-  "#dec184",
-  "#a48819"
+  "#b4a9ff",
+  "#6d28d9"
  ],
  "players.7": [
-  "#a1c181",
-  "#669f59"
+  "#f26d85",
+  "#d0344f"
  ]
 }
