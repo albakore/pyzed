@@ -289,7 +289,8 @@ class ExportController:
                 result = await loop.run_in_executor(None, lambda: _build.build_android(project, opts,
                                                                                        report=lines.append))
             except Exception as err:  # noqa: BLE001 - shown to the user
-                return lambda: self._failed(str(err))
+                message = str(err)  # ``err`` is gone once the except block ends
+                return lambda: self._failed(message)
             for line in lines:
                 console.log.write("info", line)
             if self.state != "building":
