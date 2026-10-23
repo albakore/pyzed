@@ -65,8 +65,15 @@ arboard = { version = "3.7", features = ["wayland-data-control"] }
 cpal = "0.18"
 midir = "0.11"
 
+# Tray icons (pz.TrayIcon): the system's own tray on Windows and macOS.
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tray-icon = { version = "0.24", default-features = false }
+
 # PulseAudio is a pure-Rust client (it also reaches PipeWire); ALSA is the fallback.
 [target.'cfg(target_os = "linux")'.dependencies]
+# Tray icons over D-Bus (StatusNotifierItem), without GTK.
+ksni = { version = "0.3", default-features = false, features = ["async-io", "blocking"] }
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 cpal = { version = "0.18", features = ["pulseaudio", "realtime"], optional = true }
 midir = { version = "0.11", optional = true }
 

@@ -2439,7 +2439,7 @@ _V = {"docstring": True, "members": False}
 PAGES.append({
     "slug": "services",
     "title": "Services (pyzed.services)",
-    "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps.",
+    "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps.",
     "order": 10.5,
     "intro": """
         Services raise events but draw nothing: they are the non-visual components of Pyzed Design
@@ -2471,6 +2471,8 @@ PAGES.append({
             "pyzed.Settings": {**_V, "desc": "Values kept between runs: a dict saved as JSON in the user's settings folder at every change, with `defaults`; raises `change` with `(key, value)`."},
             "pyzed.FileDialog": {**_V, "desc": 'The system\'s file dialog: `show()` returns the command that opens it in `mode` `"open"`, `"open_many"`, `"save"` or `"folder"`; raises `chosen` or `cancelled`.'},
             "pyzed.Notification": {**_V, "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."},
+            "pyzed.TrayIcon": {**_V, "desc": "An icon in the system tray with a `tooltip` and a `menu` (a list, or text with one item per line: `-` separator, `[x]` check, indented submenu): `show()` returns whether it could, `hide()`, `checked(item)`; raises `click`, `double_click` (Windows), `menu` and `failed`. On Linux it is a StatusNotifierItem, without GTK."},
+            "pyzed.TrayItem": {**_V, "desc": "An entry of a `TrayIcon` menu: `text`, `id` (what `menu` receives), `enabled`, `checked` and `items` for a submenu."},
         }),
         ("Operating system (pyzed.system)", {
             "pyzed.SystemInfo": {**_V, "desc": 'What the computer is: `os` (`"Windows"`, `"macOS"`, `"Linux"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, plus `memory_available`, `disk_free` and `disk_total` read when asked. `env(name)` reads a variable, `folder("documents")` finds the user\'s folders. With `interval` above 0, `start()` raises `update` with `snapshot()` every so often.'},

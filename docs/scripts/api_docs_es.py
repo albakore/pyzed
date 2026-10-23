@@ -3196,7 +3196,7 @@ _V = {"docstring": True, "members": False}
 PAGES.append({
     "slug": "services",
     "title": "Servicios (pyzed.services)",
-    "description": "Referencia de la API de pyzed.services: temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos y notificaciones.",
+    "description": "Referencia de la API de pyzed.services: temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos, notificaciones e iconos de bandeja.",
     "order": 10.5,
     "intro": """
         Los servicios lanzan eventos pero no dibujan nada: son los componentes no visuales de Pyzed
@@ -3228,6 +3228,8 @@ PAGES.append({
             "pyzed.Settings": {**_V, "desc": "Valores que se guardan entre ejecuciones: un diccionario guardado como JSON en la carpeta de ajustes del usuario en cada cambio, con `defaults`; lanza `change` con `(clave, valor)`."},
             "pyzed.FileDialog": {**_V, "desc": 'El diálogo de archivos del sistema: `show()` devuelve el comando que lo abre en el modo `"open"`, `"open_many"`, `"save"` o `"folder"`; lanza `chosen` o `cancelled`.'},
             "pyzed.Notification": {**_V, "desc": "Una notificación de escritorio: `show(text)` la muestra y devuelve si pudo; lanza `shown` o `failed`."},
+            "pyzed.TrayIcon": {**_V, "desc": "Un icono en la bandeja del sistema con `tooltip` y `menu` (una lista, o un texto con un elemento por línea: `-` separador, `[x]` casilla, con sangría un submenú): `show()` devuelve si pudo, `hide()`, `checked(item)`; lanza `click`, `double_click` (Windows), `menu` y `failed`. En Linux es un StatusNotifierItem, sin GTK."},
+            "pyzed.TrayItem": {**_V, "desc": "Un elemento del menú de un `TrayIcon`: `text`, `id` (lo que recibe `menu`), `enabled`, `checked` e `items` para un submenú."},
         }),
         ("Sistema operativo (pyzed.system)", {
             "pyzed.SystemInfo": {**_V, "desc": 'Qué es el equipo: `os` (`"Windows"`, `"macOS"`, `"Linux"`), `os_version`, `machine`, `hostname`, `user`, `home`, `language`, `cpu_count`, `python_version`, `memory_total`, más `memory_available`, `disk_free` y `disk_total`, que se leen al pedirlos. `env(name)` lee una variable de entorno y `folder("documents")` encuentra las carpetas del usuario. Con `interval` mayor que 0, `start()` lanza `update` con `snapshot()` cada cierto tiempo.'},

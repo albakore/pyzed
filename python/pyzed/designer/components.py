@@ -108,6 +108,11 @@ EVENT_DOCS = {
     "cancelled": "Runs when {name} is closed without choosing.",
     "shown": "Runs after {name} is shown (``event.value`` is the text).",
     ("notification", "failed"): "Runs when this system cannot show {name}.",
+    ("tray_icon", "click"): "Runs when {name} is clicked in the tray (its menu opens with the right button).",
+    ("tray_icon", "double_click"): "Runs when {name} is double-clicked (Windows only).",
+    ("tray_icon", "menu"): "Runs when an item of the menu of {name} is chosen (``event.value`` is its text).",
+    ("tray_icon", "failed"): "Runs when {name} cannot be shown (``event.value`` says why; on GNOME, the "
+                             "AppIndicator extension adds tray icons).",
     ("date_picker", "change"): "Runs when the date of {name} changes (``event.value`` is its text, such as "
                                "``\"2026-10-22\"``, or ``\"\"``).",
     ("date_range", "change"): "Runs when the range of {name} changes (``event.value`` is ``(start, end)`` as text; "
@@ -1566,6 +1571,14 @@ for _component in (
     Component("notification", "Notification", "bell", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("title", "text", "", group="Behavior"), Prop("text", "text", "", group="Behavior")),
               ("shown", "failed"), "A desktop notification.", visual=False),
+    Component("tray_icon", "Tray icon", "monitor-dot", SYSTEM, _non_visual, TRAY_SIZE,
+              (Prop("icon", "file", "", group="Behavior", accept="image"),
+               Prop("tooltip", "text", "", group="Behavior"),
+               Prop("menu", "multiline", "Open\n-\nQuit", group="Behavior"),
+               Prop("show_on_load", "bool", True, label="Show when the form opens", group="Behavior")),
+              ("click", "double_click", "menu", "failed"),
+              "An icon in the system tray with a menu: one item per line, - for a separator, [x] for a check.",
+              visual=False),
     Component("system_info", "System info", "monitor", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("interval", "number", 0, label="Check every (ms, 0 = once)", min=0, group="Behavior"),
                Prop("disk_path", "folder", "", label="Disk of", group="Behavior")),

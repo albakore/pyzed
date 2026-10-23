@@ -685,6 +685,20 @@ def text_input(value: Any, *, placeholder: Any = ..., on_input: Any = ..., on_su
     ...
 def toggler(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any = ..., text_size: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., knob_color: Any = ..., color: Any = ...) -> Any: ...
 def tooltip(content: Any, tip: Any, *, position: Any = ..., gap: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ...) -> Any: ...
+def tray_remove(id: Any) -> Any:
+    """Removes tray icon `id` (nothing when it is not shown)."""
+    ...
+def tray_set(id: Any, on_event: Any, tooltip: Any = ..., title: Any = ..., icon: Any = ..., menu: Any = ...) -> Any:
+    """Shows tray icon `id` with `tooltip`, `title` (next to the icon where the system shows one),
+    `icon` (a path or bytes, or `None` for a plain dot) and `menu`, or updates it when it is
+    already shown. Raises `RuntimeError` when this system has no tray to show it in.
+    """
+    ...
+def tray_supported() -> Any:
+    """Whether this system can show tray icons (on Linux, whether a StatusNotifierItem host such as
+    KDE's panel, Cinnamon's or GNOME's AppIndicator extension is running).
+    """
+    ...
 def virtual_column(count: Any, item: Any, *, item_height: Any, spacing: Any = ..., overscan: Any = ..., width: Any = ...) -> Any:
     """A column of `count` rows of the same height that only builds the rows in view:
     `item(index)` is called when row `index` scrolls into view. Put it in a `scrollable`.

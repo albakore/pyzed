@@ -126,6 +126,11 @@ PROP_DOCS: Dict[Any, str] = {
     ("file_dialog", "file_name"): "The name suggested when saving.",
     ("notification", "title"): "The notification's title.",
     ("notification", "text"): "The text of the notification (show() can also be given one).",
+    ("tray_icon", "icon"): "The picture in the tray (empty: a blue dot).",
+    ("tray_icon", "tooltip"): "The text shown when the pointer rests on the icon.",
+    ("tray_icon", "menu"): "The menu of the icon, one item per line: - is a separator, [x] or [ ] makes a check "
+                           "item and lines indented under an item make it a submenu. menu receives the item's text.",
+    ("tray_icon", "show_on_load"): "Puts the icon in the tray when the form opens; otherwise call show() from code.",
 }
 
 #: Fields every control has, besides its own properties (read and written like them).

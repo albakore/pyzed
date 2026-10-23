@@ -229,12 +229,89 @@ def test_events_from_threads_run_without_an_app():
     assert got == ["pyzed-worker"]  # no app running: called where it was raised
 
 
+class FakeTray:
+    """``_core``'s tray functions, recording what the service asks for."""
+
+    def __init__(self, fail=None):
+        self.shown, self.fail = {}, fail
+
+    def tray_set(self, id, on_event, tooltip="", title="", icon=None, menu=None):
+        if self.fail:
+            raise RuntimeError(self.fail)
+        self.shown[id] = {"on_event": on_event, "tooltip": tooltip, "title": title, "icon": icon, "menu": menu}
+
+    def tray_remove(self, id):
+        self.shown.pop(id, None)
+
+    def post(self, call):
+        raise RuntimeError("no app")
+
+
+@pytest.fixture
+def tray(monkeypatch):
+    fake = FakeTray()
+    for name in ("tray_set", "tray_remove", "post"):
+        monkeypatch.setattr(services._core, name, getattr(fake, name))
+    return fake
+
+
+def test_tray_menu_from_text_and_lists():
+    menu = services.parse_tray_menu("Open\n[x] Pause\n---\nSpeed\n  Slow\n  [ ] Fast\nQuit")
+    assert [getattr(e, "text", e) for e in menu] == ["Open", "Pause", "-", "Speed", "Quit"]
+    assert menu[1].checked is True and menu[0].checked is None
+    assert [i.text for i in menu[3].items] == ["Slow", "Fast"] and menu[3].items[1].checked is False
+    item = services.TrayItem("Exit", id="quit")
+    assert services.parse_tray_menu(["A", "-", item]) == [services.TrayItem("A"), "-", item]
+    assert item.key == "quit" and services.parse_tray_menu(None) == []
+
+
+def test_tray_icon_shows_updates_and_hides(tray):
+    icon = pz.TrayIcon(tooltip="Backups", menu="Open\n-\n[x] Pause\nMore\n  Logs")
+    assert not tray.shown and icon.show() and icon.visible
+    shown = tray.shown[icon._number]
+    assert shown["tooltip"] == "Backups" and shown["icon"] is None
+    assert shown["menu"] == [("item", "Open", "Open", True, False, []), ("separator", "", "", True, False, []),
+                             ("check", "Pause", "Pause", True, True, []),
+                             ("submenu", "More", "More", True, False, [("item", "Logs", "Logs", True, False, [])])]
+    icon.tooltip = "Backing up"  # shown at once
+    assert tray.shown[icon._number]["tooltip"] == "Backing up"
+    assert icon.item("Logs").text == "Logs" and icon.item("nope") is None
+    icon.set_checked("Pause", False)
+    assert not icon.checked("Pause") and tray.shown[icon._number]["menu"][2][4] is False
+    icon.hide()
+    assert not icon.visible and icon._number not in tray.shown
+
+
+def test_tray_icon_events_flip_checks(tray):
+    got = []
+    icon = pz.TrayIcon(menu=["Open", services.TrayItem("Pause", checked=False)], on_click=lambda: got.append("click"),
+                       on_menu=got.append)
+    icon.show()
+    on_event = tray.shown[icon._number]["on_event"]
+    for event, value in (("click", None), ("menu", "Pause"), ("menu", "Open")):
+        on_event(event, value)
+    for _ in range(100):  # no app: handled on a thread of its own
+        if len(got) == 3:
+            break
+        threading.Event().wait(0.02)
+    assert got == ["click", "Pause", "Open"] and icon.checked("Pause")
+
+
+def test_tray_icon_reports_why_it_cannot_show(tray):
+    tray.fail = "the desktop shows no tray icons"
+    got = []
+    icon = pz.TrayIcon(on_failed=got.append)
+    assert icon.show() is False and not icon.visible
+    assert got == [tray.fail] and icon.error == tray.fail
+
+
 # -- the designer's non-visual components ------------------------------------------------------------------------------
 NON_VISUAL = ("timer", "shortcut", "file_watcher", "process", "worker", "http_request", "clipboard", "settings",
-              "file_dialog", "notification", "system_info", "launcher", "network_monitor", "power_monitor")
+              "file_dialog", "notification", "tray_icon", "system_info", "launcher", "network_monitor",
+              "power_monitor")
 #: The ones that reach the operating system share the System category with the file picker and the drop zone.
-SYSTEM = ("shortcut", "file_watcher", "process", "clipboard", "file_dialog", "notification", "system_info", "launcher",
-          "network_monitor", "power_monitor")
+SYSTEM = ("shortcut", "file_watcher", "process", "clipboard", "file_dialog", "notification", "tray_icon", "system_info",
+          "launcher", "network_monitor", "power_monitor")
 
 
 def test_every_non_visual_component_has_a_service():
@@ -246,7 +323,8 @@ def test_every_non_visual_component_has_a_service():
         service = nonvisual.FACTORIES[type_](spec.create(type_ + "1", 0, 0, 10, 10))
         for prop in spec.props:  # each property is the service's attribute or read when the form opens
             attr = nonvisual.ALIASES.get((type_, prop.name), prop.name)
-            assert hasattr(service, attr) or prop.name in ("autostart", "send_on_load", "remember"), (type_, prop)
+            assert hasattr(service, attr) or prop.name in ("autostart", "send_on_load", "remember",
+                                                                                   "show_on_load"), (type_, prop)
         for event in spec.events:
             assert event in service.events or event == "work", (type_, event)
         assert spec.all_events == spec.events  # no mouse events: they are never on screen
@@ -366,6 +444,20 @@ def test_settings_remember_controls_between_runs(tmp_path, monkeypatch):
     again = FormApp(make(), {})
     again.runtime.load()
     assert again.form.name_box.text == "Ada"
+
+
+def test_runtime_tray_icon_shows_when_the_form_opens(tray):
+    form = _form(Control("tray", "tray_icon", props={"tooltip": "Hi", "menu": "Open\n-\nQuit"},
+                         events={"menu": "on_menu"}),
+                 Control("quiet", "tray_icon", props={"show_on_load": False}))
+    app = FormApp(form, {})
+    app.runtime.load()
+    tray_icon, quiet = app.runtime.services["tray"], app.runtime.services["quiet"]
+    assert tray_icon.visible and tray.shown[tray_icon._number]["tooltip"] == "Hi"
+    assert tray_icon.icon is None and [getattr(e, "text", e) for e in tray_icon.menu] == ["Open", "-", "Quit"]
+    assert not quiet.visible
+    app.form.tray.hide()
+    assert not tray_icon.visible
 
 
 def test_reload_rebuilds_the_services(tmp_path):
