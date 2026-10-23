@@ -487,7 +487,7 @@ def agent_shots(scale):
         {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "c", "content": "{}"}]},
         {"role": "assistant", "provider": "anthropic", "content": [{"type": "text", "text": (
             "Added a **Remember me** switch (`remember`) under the password and wired `remember_change`, "
-            "which keeps the choice in `form.state`.")}]},
+            "which keeps the choice in `form.state`.")}], "stats": {"seconds": 18.4, "tokens": 1240}},
     ]
     app.agent.snapshot = [(app.doc, app.doc.form.copy(), app.doc.code)]
     app.agent.changed = True
@@ -500,10 +500,9 @@ def agent_shots(scale):
     app.agent.set_input("Validate @")
     app.screenshot(OUT / "designer-agent-mention.png", size=(1440, 900), scale=scale)
     app.agent.set_input("")
-    app.agent.provider_open = "openrouter"
-    app.dialog = "agent_settings"
+    app.agent.open_settings("openrouter")
     app.screenshot(OUT / "designer-agent-settings.png", size=(1440, 900), scale=scale)
-    app.dialog = None
+    app.agent.view = "thread"
     # signing in to a provider that is not set up yet: the key page is open and the copied key is picked up
     import time
 

@@ -65,7 +65,7 @@ def test_an_agent_without_node_says_what_to_install(tmp_path, monkeypatch):
 
 
 def test_retry_does_not_repeat_the_message_and_pyzed_agent_takes_over(tmp_path, monkeypatch):
-    from pyzed.designer import agent_panel
+    from pyzed.designer import agent_panel, agent_thread
     from pyzed.designer.agent_panel import AgentController
     from pyzed.designer.app import Designer
 
@@ -96,7 +96,7 @@ def test_retry_does_not_repeat_the_message_and_pyzed_agent_takes_over(tmp_path, 
     wait()
     assert c.needs_node and len(asked()) == 1
     t = d.theme
-    assert agent_panel._thread_view(c, d, t, None) is not None  # with Install Node.js and Use Pyzed Agent
+    assert agent_thread.thread_view(c, t) is not None  # with Install Node.js and Use Pyzed Agent
     for _ in range(3):
         c.retry()
         wait()

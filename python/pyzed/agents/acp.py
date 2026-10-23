@@ -515,22 +515,18 @@ class ACPAgent:
             text = _text_of(update.get("content"))
             if not text:
                 return
-            if kind == "agent_thought_chunk":
-                self._emit(Event("thinking", text))
-                return
             with self._lock:
-                if self._results:  # text after tool calls starts the next assistant message
-                    pending = True
-                else:
-                    pending = False
+                pending = bool(self._results)  # text after tool calls starts the next assistant message
             if pending:
                 self._flush()
+            # the reasoning is kept in the thread too (as Zed does), as "thinking" blocks
+            block_type, key = ("thinking", "thinking") if kind == "agent_thought_chunk" else ("text", "text")
             with self._lock:
-                if self._blocks and self._blocks[-1].get("type") == "text":
-                    self._blocks[-1]["text"] += text
+                if self._blocks and self._blocks[-1].get("type") == block_type:
+                    self._blocks[-1][key] += text
                 else:
-                    self._blocks.append({"type": "text", "text": text})
-            self._emit(Event("text", text))
+                    self._blocks.append({"type": block_type, key: text})
+            self._emit(Event("thinking" if block_type == "thinking" else "text", text))
         elif kind == "tool_call":
             call_id = str(update.get("toolCallId") or "")
             title = str(update.get("title") or update.get("kind") or "Tool")

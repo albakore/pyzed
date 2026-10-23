@@ -127,6 +127,14 @@ class Attachment:
 
 
 @dataclass
+class Queued:
+    """A message sent while the agent works: it waits its turn, like Zed's message queue."""
+
+    text: str
+    content: List[Dict[str, Any]]
+
+
+@dataclass
 class DeviceLogin:
     """GitHub sign-in in progress: the code the user types on GitHub."""
 
@@ -238,6 +246,25 @@ class AgentController:
         #: tool call id -> "running" | "done" | "error" | "waiting"
         self.tool_status: Dict[str, str] = {}
         self.open_blocks: set = set()  # thinking / tool cards the user expanded
+        self.closed_blocks: set = set()  # streaming thoughts the user folded
+        # Zed's thread view: the message being edited (its index in the thread) and its new text, the
+        # documents as they were before each message (to restore that checkpoint), the messages waiting
+        # their turn, the activity bar's folds, the expanded message editor and the title being renamed
+        self.editing: Optional[int] = None
+        self.edit_text = ""
+        self.edit_focused = False
+        self.checkpoints: Dict[int, List[Tuple[Any, Any, str]]] = {}
+        self._run_docs: List[Tuple[Any, Any, str]] = []
+        self._run_at = 0
+        self.queued: List[Queued] = []
+        self.plan_expanded = False
+        self.edits_expanded = False
+        self.queue_expanded = False
+        self.editor_expanded = False
+        self.title_editing = False
+        self.title_buffer = ""
+        #: the tokens the agent wrote in this turn (shown under it, like Zed)
+        self.turn_tokens = 0
         self.pending: Optional[Confirmation] = None
         self.always_allow: set = set()  # tools allowed for the rest of the session
         #: (document, form copy, code) before the agent's first change, for "Reject"
@@ -580,6 +607,8 @@ class AgentController:
         doc = self.d.doc
         if not any(entry[0] is doc for entry in self.snapshot):
             self.snapshot.append((doc, doc.form.copy(), doc.code))
+        if not any(entry[0] is doc for entry in self._run_docs):
+            self._run_docs.append((doc, doc.form.copy(), doc.code))
 
     def _on_event(self, event: _agents.Event) -> None:
         if event.kind == "text":
@@ -597,6 +626,7 @@ class AgentController:
             used = sum(event.usage.get(k, 0) for k in ("input", "cache_read", "cache_write", "output"))
             if used:
                 self.thread.context = used
+            self.turn_tokens += int(event.usage.get("output", 0) or 0) if event.usage else 0
         elif event.kind == "tool_call":
             _logs.event("agent", "Tool %s%s", event.tool, f" ({_log_args(event.args)})" if event.args else "")
             self.tool_status[event.call_id] = "running"
@@ -636,6 +666,7 @@ class AgentController:
             else:
                 self._notify_desktop(tr("The agent finished"), self.thread.display_title)
             self.running = False
+            self._end_turn()
             self.live_text = self.live_thinking = self.live_tool = ""
             self.live_plan = []
             self._agent = None
@@ -643,6 +674,7 @@ class AgentController:
             projects = getattr(self.d, "projects", None)
             if projects is not None:  # it may have run uv in a terminal: the Dependencies tab reads it again
                 projects.poll(force=True)
+            self._send_next()
 
     # -- the active project ---------------------------------------------------------------------------
     def project_key(self) -> str:
@@ -672,6 +704,7 @@ class AgentController:
             return
         self._keep()
         self.thread = self._fresh_thread(self.thread.model or self.settings.model)
+        self._reset_thread_view()
         self.view = "thread" if self.view == "history" else self.view
         self.error = ""
         self.snapshot = []
@@ -703,6 +736,16 @@ class AgentController:
         if files is not None and found is None:
             files.refresh()
 
+    def _reset_thread_view(self) -> None:
+        """Forgets what belonged to the thread on screen (another one is shown)."""
+        self.editing = None
+        self.edit_focused = False
+        self.title_editing = False
+        self.checkpoints = {}
+        self.queued = []
+        self.open_blocks = set()
+        self.closed_blocks = set()
+
     def _keep(self) -> None:
         """Saves the current thread, unless the settings say not to keep conversations."""
         if self.settings.keep_history:
@@ -714,12 +757,14 @@ class AgentController:
             self.picked = 0
         self.input = text
         self.menu = None
+        self.edit_focused = False
         self.d.focus = "agent"
         # a mention whose @label was deleted from the text is dropped
         self.mentions = [m for m in self.mentions if f"@{m.label}" in text]
 
     def focus_box(self, *_: Any) -> None:
         """The message box got the keyboard (its cursor moved)."""
+        self.edit_focused = False
         self.d.focus = "agent"
 
     def _box(self, text: str) -> Any:
@@ -745,6 +790,8 @@ class AgentController:
 
     def on_key(self, combo: str) -> Tuple[bool, Any]:
         """A key the message box left to the designer: ``(handled, command)``."""
+        if self.editing is not None and self.edit_focused and combo in ("enter", "escape"):
+            return True, self.submit_edit() if combo == "enter" else self.cancel_edit()
         if combo == "enter":
             return True, self.send()
         if combo in ("up", "down") and self.popup_open:
@@ -767,7 +814,7 @@ class AgentController:
             if items:
                 return items[min(self.picked, len(items) - 1)][3]()
         prompt = (text if text is not None else self.input).strip()
-        if (not prompt and not (text is None and self.attachments)) or self.running:
+        if not prompt and not (text is None and self.attachments):
             return None
         if not self.ready:
             self.error = tr("Set up a model provider first.")
@@ -790,6 +837,10 @@ class AgentController:
         note = agent_tools.context_note(self.d)
         content = [{"type": "text", "text": prompt or tr("Look at the attached images.")}, *extra, *images,
                    {"type": "text", "text": f"<context>{note}</context>"}]
+        if self.running:  # sent while the agent works: it waits its turn, like Zed's queue
+            self.queued.append(Queued(prompt, content))
+            _logs.event("agent", "Queued: %s", _brief(prompt))
+            return _core.Command.set_editor_text(INPUT_ID, "")
         return self._launch(content)
 
     def _launch(self, content: List[Dict[str, Any]]) -> Any:
@@ -797,8 +848,14 @@ class AgentController:
         self.error = ""
         self.view = "thread"
         self.running = True
-        self.snapshot = []
-        self.changed = False
+        self.editing = None
+        self.title_editing = False
+        # the documents as they are now are this message's checkpoint (kept once the agent changes them);
+        # the edits bar keeps adding up until Keep or Reject, like Zed's
+        self._run_at = len(self.thread.messages)
+        self._run_docs = []
+        self.turn_tokens = 0
+        self.closed_blocks = set()
         self.tool_status = {}
         self.agent_auth = None
         self.live_tool = ""
@@ -932,6 +989,7 @@ class AgentController:
         elif agent == "" and model.startswith("acp:"):
             model = next((m for m in self.models() if not m.startswith("acp:")), _providers.DEFAULT_MODEL)
         self.thread = self._fresh_thread(model)
+        self._reset_thread_view()
         _logs.event("agent", "New thread with %s", model)
         if agent is not None and model != self.settings.model:
             self.settings.model = model
@@ -950,6 +1008,7 @@ class AgentController:
         found = self.store.load(thread_id)
         if found is not None:
             self.thread = found
+            self._reset_thread_view()
             self.view = "thread"
             self.error = ""
 
@@ -971,8 +1030,247 @@ class AgentController:
     def toggle_advanced(self) -> None:
         self.advanced_open = not self.advanced_open
 
-    def toggle_block(self, key: str) -> None:
-        self.open_blocks ^= {key}
+    def toggle_block(self, key: str, live: bool = False) -> None:
+        """Unfolds or folds a thought (one still streaming starts open)."""
+        if live:
+            self.closed_blocks ^= {key}
+        else:
+            self.open_blocks ^= {key}
+
+    # -- Zed's thread view: the agent, editing a message, checkpoints, the queue, the title ------------
+    @property
+    def is_external(self) -> bool:
+        """Whether the thread is with an external agent (Claude Code, Codex, Gemini CLI…)."""
+        return (self.thread.model or self.settings.model).startswith("acp:")
+
+    def agent_label(self) -> str:
+        """Who answers the thread: "Pyzed Agent" or the external agent's name."""
+        provider_id, name = _providers.split_model(self.thread.model or self.settings.model)
+        if provider_id == "acp":
+            agent = self.settings.acp_agent(name)
+            return agent.label if agent else name
+        return tr("Pyzed Agent")
+
+    def agent_icon(self) -> str:
+        return "terminal" if self.is_external else "sparkles"
+
+    def placeholder(self) -> str:
+        """The message editor's hint, like Zed's: who it talks to, then @ and /."""
+        return tr("Message {agent} — @ to include context", agent=self.agent_label())
+
+    @property
+    def can_edit(self) -> bool:
+        """Whether the user's messages can be edited and sent again (an external agent keeps its own history
+        of the conversation, so not with one, like Zed)."""
+        return not self.is_external
+
+    def live_blocks(self) -> Optional[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]:
+        """What an external agent wrote and did so far in this turn (``None`` for Pyzed's agent)."""
+        return self._agent.live() if self.running and hasattr(self._agent, "live") else None
+
+    def waiting_calls(self) -> List[str]:
+        """The ids of the tool calls waiting for the user's OK (shown with the question on their card)."""
+        if self.pending is None or not _pending_on_card(self):
+            return []
+        return [i for i, status in self.tool_status.items() if status == "running"
+                and any(b.get("id") == i and b.get("name") == self.pending.tool.name
+                        for m in self.thread.messages[-1:] for b in m.get("content", []))]
+
+    def toggle_flag(self, name: str) -> None:
+        """Folds or unfolds a part of the activity bar (``plan_expanded``, ``edits_expanded``...)."""
+        setattr(self, name, not getattr(self, name))
+
+    def toggle_editor_expanded(self) -> Any:
+        self.editor_expanded = not self.editor_expanded
+        return _core.Command.focus(INPUT_ID)
+
+    def start_edit(self, index: int) -> Any:
+        """Edits the user's message at ``index``: Enter sends it again from that point (what followed it is
+        replaced and the documents go back to its checkpoint), Escape cancels."""
+        if self.running or not self.can_edit or not 0 <= index < len(self.thread.messages):
+            return None
+        message = self.thread.messages[index]
+        text = "\n".join(b.get("text", "") for b in message.get("content", [])
+                         if b.get("type") == "text" and not b.get("text", "").startswith("<context>"))
+        self.editing = index
+        self.edit_text = text
+        self.edit_focused = True
+        self.d.focus = "agent"
+        from .agent_thread import EDIT_ID
+
+        lines = text.split("\n")
+        return _core.Command.batch([_core.Command.set_editor_text(EDIT_ID, text),
+                                    _core.Command.set_editor_cursor(EDIT_ID, len(lines), len(lines[-1]) + 1),
+                                    _core.Command.focus(EDIT_ID)])
+
+    def set_edit_text(self, text: str) -> None:
+        self.edit_text = text
+        self.edit_focused = True
+        self.d.focus = "agent"
+
+    def cancel_edit(self) -> Any:
+        self.editing = None
+        self.edit_focused = False
+        return _core.Command.focus(INPUT_ID)
+
+    def submit_edit(self) -> Any:
+        """Sends the edited message again: the thread goes back to that point, and so do the documents."""
+        index, text = self.editing, self.edit_text.strip()
+        self.editing = None
+        self.edit_focused = False
+        if index is None or not text or self.running or index >= len(self.thread.messages):
+            return None
+        old = self.thread.messages[index]
+        extra = [b for b in old.get("content", []) if b.get("type") == "image"
+                 or (b.get("type") == "text" and b.get("text", "").startswith("<context>"))]
+        if self.has_checkpoint(index):
+            self.restore_checkpoint(index, notify=False)
+        del self.thread.messages[index:]
+        self.checkpoints = {k: v for k, v in self.checkpoints.items() if k < index}
+        _logs.event("agent", "Edited a message and sent it again: %s", _brief(text))
+        return self._launch([{"type": "text", "text": text}, *extra])
+
+    def has_checkpoint(self, index: int) -> bool:
+        """Whether the agent changed documents after the user's message at ``index``."""
+        return any(k >= index and docs for k, docs in self.checkpoints.items())
+
+    def restore_checkpoint(self, index: int, notify: bool = True) -> None:
+        """Puts the documents back as they were when the user's message at ``index`` was sent (Zed's
+        "Restore Checkpoint"); the thread stays as it is."""
+        if self.running:
+            return
+        restored: List[Tuple[Any, Any, str]] = []
+        for key in sorted(k for k in self.checkpoints if k >= index):
+            for entry in self.checkpoints[key]:
+                if not any(r[0] is entry[0] for r in restored):
+                    restored.append(entry)
+        if not restored:
+            return
+        rest, self.snapshot = self.snapshot, restored
+        self.reject(notify=False)
+        self.snapshot = [e for e in rest if not any(r[0] is e[0] for r in restored)]
+        self.changed = bool(self.snapshot)
+        self.checkpoints = {k: v for k, v in self.checkpoints.items() if k < index}
+        _logs.event("agent", "Restored the checkpoint of message %d", index)
+        if notify:
+            self.d.notify(tr("Checkpoint restored"), kind="info", seconds=3)
+
+    def _end_turn(self) -> None:
+        """At the end of a run: how long it took and the tokens written go on its last answer (shown under
+        it), and the documents it changed become the checkpoint of the message that started it."""
+        if self._run_docs:
+            self.checkpoints[self._run_at] = list(self._run_docs)
+            self._run_docs = []
+        for m in reversed(self.thread.messages[self._run_at:]):
+            if m.get("role") == "assistant":
+                m["stats"] = {"seconds": round(time.monotonic() - self.started, 1), "tokens": self.turn_tokens}
+                break
+
+    def _send_next(self) -> None:
+        """Sends the next queued message once the agent is done (not after an error or a sign-in)."""
+        if self.queued and not self.running and not self.error and self.agent_auth is None:
+            self._launch(self.queued.pop(0).content)
+
+    def send_queued_now(self) -> None:
+        """Stops the agent so the next queued message goes right away."""
+        if self.running:
+            self.stop()
+        else:
+            self._send_next()
+
+    def clear_queue(self) -> None:
+        self.queued = []
+
+    def remove_queued(self, index: int) -> None:
+        if 0 <= index < len(self.queued):
+            del self.queued[index]
+
+    def edit_queued(self, index: int) -> Any:
+        """Takes a queued message back into the message editor."""
+        if not 0 <= index < len(self.queued):
+            return None
+        item = self.queued.pop(index)
+        return self._box(item.text)
+
+    def start_rename(self) -> Any:
+        """Edits the thread's title in the toolbar (Enter saves it, an empty title goes back to the
+        automatic one)."""
+        from .agent_thread import TITLE_ID
+
+        self.menu = None
+        self.title_editing = True
+        self.title_buffer = self.thread.display_title
+        return _core.Command.select_all(TITLE_ID)
+
+    def set_title_buffer(self, text: str) -> None:
+        self.title_buffer = text
+
+    def save_title(self) -> Any:
+        self.title_editing = False
+        self.thread.title = self.title_buffer.strip()
+        self._keep()
+        return _core.Command.focus(INPUT_ID)
+
+    def cancel_rename(self) -> None:
+        self.title_editing = False
+
+    def scroll_to_top(self) -> Any:
+        return _core.Command.scroll_to(SCROLL_ID, 0, 1e9)
+
+    def review_changes(self) -> None:
+        """Shows the documents the agent changed, one row each (Zed's Review Changes)."""
+        self.edits_expanded = True
+        if self.snapshot:
+            self.open_file(self.snapshot[0][0].display_name)
+
+    def set_profile_key(self, profile: str) -> None:
+        """Picks Zed's profile: ``"write"``, ``"ask"`` (reads only) or ``"minimal"`` (no tools)."""
+        self.settings.profile = profile
+        self.menu = None
+        _logs.event("agent", "Profile: %s", profile)
+        self.save_settings()
+
+    def toggle_confirm_writes(self) -> None:
+        self.settings.confirm_writes = not self.settings.confirm_writes
+        self.save_settings()
+
+    def open_markdown(self) -> None:
+        """Opens the thread as Markdown in the code editor (Zed's "Open Thread as Markdown")."""
+        import tempfile
+
+        self.menu = None
+        folder = Path(tempfile.gettempdir()) / "pyzed-threads"
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            path = folder / f"{self.thread.id}.md"
+            path.write_text(self.thread_markdown(), encoding="utf-8")
+        except OSError as err:
+            self.d.notify(tr("Could not open the thread"), str(err), kind="error", seconds=5)
+            return
+        self.d.buffers.open(path)
+
+    def reauthenticate(self) -> None:
+        """Asks the external agent to sign in again (its ways to sign in show in the panel)."""
+        self.menu = None
+        agent = self.current_external()
+        if agent is None or self.running:
+            self.prepare_agent()
+            return
+        methods = list(getattr(agent, "auth_methods", []) or [])
+        if methods:
+            self.agent_auth = AgentAuth(agent.config.name, agent.config.label, methods)
+        else:
+            self.reload_agent()
+
+    def reload_agent(self) -> None:
+        """Starts the external agent's program again (Zed's "Reload Agent")."""
+        self.menu = None
+        if self.running:
+            return
+        _logs.event("agent", "Reloaded %s", self.agent_label())
+        self.close_external_agents()
+        self.agent_auth = None
+        self.prepare_agent()
 
     def set_model(self, label: str) -> None:
         """Picks the model of the current thread (and of new threads)."""
@@ -1056,8 +1354,8 @@ class AgentController:
         self.snapshot = []
         self.changed = False
 
-    def reject(self) -> None:
-        """Puts every document the agent changed back as it was before this run."""
+    def reject(self, notify: bool = True) -> None:
+        """Puts every document the agent changed back as it was before its changes (since the last Keep)."""
         for doc, form, code in self.snapshot:
             doc.form = form
             doc.code = code
@@ -1069,7 +1367,8 @@ class AgentController:
         if self.d.editing is not None:
             agent_tools._sync_editor(self.d)
         self.d._selection_changed()
-        self.d.notify(tr("Changes rejected"), kind="info")
+        if notify:
+            self.d.notify(tr("Changes rejected"), kind="info")
 
     def retry(self) -> Any:
         """Sends the last user message again (in place of it when it got no answer, so it is not repeated)."""
@@ -1104,8 +1403,9 @@ class AgentController:
         self.menu = None
         if provider in _providers.PROVIDERS:
             self.provider_open = provider
-        if section == "agents":
+        if section in ("agents", "mcp", "skills"):
             self.advanced_open = True
+        if section == "agents":
             self.toggle_registry(True)
         self.d.dialog = None  # e.g. the designer's Settings, where the button that opens these is
         self.d.layout.show("agent")
@@ -2354,45 +2654,6 @@ def _kind_of(name: str, tool_: Optional[_agents.Tool]) -> str:
     return "other"
 
 
-def _tool_card(c: AgentController, block: Dict[str, Any], result: Optional[Dict[str, Any]],
-               tools: Dict[str, _agents.Tool], t: Theme) -> Any:
-    """One tool call of the thread as ``ui.ToolCall``: it asks right on the card while it waits for an OK."""
-    call_id = block.get("id", "")
-    status = c.tool_status.get(call_id) or ("error" if result and result.get("is_error") else
-                                            "done" if result else "running" if c.running else "error")
-    if c.pending is not None and c.running and status == "running" and c.pending.tool.name == block.get("name"):
-        status = "waiting"
-    output: Any = None
-    images: List[bytes] = []
-    if result is not None:
-        content = result.get("content")
-        if isinstance(content, list):
-            images = [data for data in (_image_bytes(b) for b in content if b.get("type") == "image") if data]
-            content = "".join(b.get("text", "") for b in content if b.get("type") == "text")
-        output = content
-    kind = block.get("kind") or _kind_of(block.get("name", ""), tools.get(block.get("name", "")))
-    return ui.ToolCall(title=_tool_title(block.get("name", ""), tools), detail=_call_detail(c, block),
-                       kind=kind, status={"error": "failed"}.get(status, status), input=block.get("input") or None,
-                       output=output, images=images, diffs=block.get("diffs") or [],
-                       progress=str(block.get("progress") or "") if result is None else "", theme=t,
-                       key=f"tool:{call_id}",
-                       on_allow=lambda _e: c.answer(True), on_allow_always=lambda _e: c.answer(True, True),
-                       on_deny=lambda _e: c.answer(False))
-
-
-def _thinking_card(c: AgentController, key: str, text: str, t: Theme, live: bool = False) -> Any:
-    opened = key in c.open_blocks
-    head = _core.row([_icon("brain", size=12, color=t.text_muted),
-                      ui.label(tr("Thinking…") if live else tr("Thought"), size="sm", color="text_muted", theme=t),
-                      _icon("chevron-down" if opened else "chevron-right", size=12, color=t.text_placeholder)],
-                     spacing=6, align="center")
-    body = ui.label(text.strip(), size="sm", color="text_muted", selectable=SELECTION, theme=t) \
-        if opened and text.strip() else None
-    return _core.column([_core.button(head, lambda: c.toggle_block(key), padding=(3, 6), bg=None,
-                                      hover_bg=t.element_hover, radius=t.radius),
-                         _core.container(body, padding=(0, 0, 0, 24)) if body else None], spacing=2, width="fill")
-
-
 #: Decoded images of the thread, by their base64 text (decoded once, not on every frame).
 _IMAGES: Dict[int, bytes] = {}
 
@@ -2414,92 +2675,6 @@ def _image_bytes(block: Dict[str, Any]) -> Optional[bytes]:
 
 #: The selection group of the thread's text: one drag can select across its messages.
 SELECTION = "agent-thread"
-
-
-def _user_bubble(text: str, t: Theme, images: Sequence[Dict[str, Any]] = ()) -> Any:
-    pictures = [_core.image(data, height=72, content_fit="contain", radius=4)
-                for data in (_image_bytes(b) for b in images) if data]
-    return _core.container(_core.column([
-        ui.label(text, size="sm", selectable=SELECTION, theme=t) if text else None,
-        _core.row(pictures, spacing=6, wrap=True) if pictures else None,
-    ], spacing=6), padding=(8, 10), width="fill", bg=t.element, border_color=t.border_variant, border_width=1,
-        radius=t.radius + 2)
-
-
-def _messages(c: AgentController, t: Theme) -> List[Any]:
-    """The thread drawn from its messages, then what is streaming now: an external agent's text and tool calls
-    as they happen, the call the model is writing, or what it is doing."""
-    tools = c.tool_index()
-    messages = list(c.thread.messages)
-    live = c._agent.live() if c.running and hasattr(c._agent, "live") else None
-    if live is not None and (live[0] or live[1]):
-        messages.append({"role": "assistant", "content": live[0]})
-        messages.append({"role": "user", "content": live[1]})
-    results: Dict[str, Dict[str, Any]] = {}
-    for m in messages:
-        if m.get("role") == "user":
-            for b in m.get("content", []):
-                if b.get("type") == "tool_result":
-                    results[b.get("tool_use_id", "")] = b
-    rows: List[Any] = []
-    answer: List[str] = []  # the text of the agent's answer since the last user message
-
-    def end_answer() -> None:
-        if answer:
-            rows.append(_answer_actions(c, "\n\n".join(answer), t))
-            answer.clear()
-
-    for i, m in enumerate(messages):
-        blocks = m.get("content", [])
-        if m.get("role") == "user":
-            texts = [b.get("text", "") for b in blocks if b.get("type") == "text"
-                     and not b.get("text", "").startswith("<context>")]
-            images = [b for b in blocks if b.get("type") == "image"]
-            if texts or images:
-                end_answer()
-                rows.append(_user_bubble("\n".join(texts), t, images))
-            continue
-        for j, b in enumerate(blocks):
-            kind = b.get("type")
-            if kind == "text" and b.get("text", "").strip():
-                answer.append(b["text"].strip())
-                rows.append(ui.markdown(b["text"], size=13, selectable=SELECTION, theme=t))
-            elif kind == "thinking" and c.settings.show_thinking and b.get("thinking", "").strip():
-                rows.append(_thinking_card(c, f"think:{i}:{j}", b["thinking"], t))
-            elif kind == "tool_use":
-                rows.append(_tool_card(c, b, results.get(b.get("id", "")), tools, t))
-    if not c.running:
-        end_answer()
-    if c.running:
-        if c.live_thinking and c.settings.show_thinking:
-            rows.append(_thinking_card(c, "think:live", c.live_thinking, t, live=True))
-        if c.live_text and live is None:  # an external agent's text is already in its live blocks
-            rows.append(ui.markdown(c.live_text, size=13, selectable=SELECTION, theme=t))
-        if c.live_tool:
-            rows.append(ui.ToolCall(title=_tool_title(c.live_tool, tools), detail=tr("preparing…"), status="running",
-                                    kind=_kind_of(c.live_tool, tools.get(c.live_tool)), theme=t, key="tool:live"))
-        elif not c.live_text or live is not None:
-            rows.append(_working(c, t))
-    return rows
-
-
-def _answer_actions(c: AgentController, text: str, t: Theme) -> Any:
-    """Under each answer of the agent: a button that copies it (its text can also be selected)."""
-    return _core.row([ui.icon_button("copy", lambda: c.copy_text(text), size="sm", tooltip=tr("Copy the answer"),
-                                     theme=t)], width="fill")
-
-
-def _working(c: AgentController, t: Theme) -> Any:
-    """What the agent is doing while nothing streams: waiting for an answer, a tool running, or thinking."""
-    waiting = c.pending is not None
-    running = [i for i, status in c.tool_status.items() if status == "running"]
-    text = tr("Waiting for your answer") if waiting else tr("Running a tool…") if running else \
-        tr("Thinking…") if c.live_thinking else tr("Working…")
-    seconds = int(time.monotonic() - c.started) if c.started else 0
-    return _core.row([ui.spinner(size=12, theme=t), ui.label(text, size="sm", color="text_muted", theme=t),
-                      ui.label(f"{seconds // 60}:{seconds % 60:02d}" if seconds >= 60 else f"{seconds}s", size="xs",
-                               color="text_placeholder", theme=t) if seconds >= 3 else None],
-                     spacing=6, align="center")
 
 
 SUBSCRIPTION_TEXT = "Claude Pro or Max through Claude Code, Anthropic's own agent; it controls the editor"
@@ -2551,36 +2726,6 @@ def _empty(c: AgentController, t: Theme) -> Any:
                      spacing=6, align="center", width="fill", padding=(20, 12, 10, 12)),
         _core.column(items, spacing=2, width="fill"),
     ], spacing=8, width="fill")
-
-
-def _confirmation(c: AgentController, t: Theme) -> Any:
-    p = c.pending
-    assert p is not None
-    preview = _args_preview(p.args) or ", ".join(p.args)
-    detail = f"{_tool_title(p.tool.name, {p.tool.name: p.tool})}: {preview}" if preview else \
-        _tool_title(p.tool.name, {p.tool.name: p.tool})
-    return ui.callout(tr("Allow the agent to continue?"), detail, tint="warning", icon="shield-question", actions=[
-                          ui.button(tr("Allow"), lambda: c.answer(True), variant="solid", size="sm", theme=t),
-                          ui.button(tr("Always allow"), lambda: c.answer(True, True), variant="ghost", size="sm",
-                                    theme=t),
-                          ui.button(tr("Deny"), lambda: c.answer(False), variant="ghost", size="sm", theme=t),
-                      ], theme=t)
-
-
-def _plan_card(c: AgentController, t: Theme) -> Optional[Any]:
-    """The agent's plan (its last ``update_plan``) above the message box, while it runs or has steps left."""
-    steps = c.live_plan if c.running and c.live_plan else agent_tools.plan_of(c.thread.messages)
-    done = sum(1 for s in steps if s["status"] == "done")
-    if not steps or (done == len(steps) and not c.running):
-        return None
-    return ui.Plan(steps=steps, running=c.running, theme=t, key="agent-plan")
-
-
-def _review_bar(c: AgentController, t: Theme) -> Any:
-    """The documents the agent changed, to keep or reject (all, or one by one) like Zed's edits bar."""
-    return ui.EditsBar(files=c.file_changes(), theme=t, key="agent-edits", on_keep=lambda _e: c.keep(),
-                       on_reject=lambda _e: c.reject(), on_keep_file=lambda e: c.keep_file(e.value),
-                       on_reject_file=lambda e: c.reject_file(e.value), on_open=lambda e: c.open_file(e.value))
 
 
 def _history(c: AgentController, t: Theme) -> Any:
@@ -2760,65 +2905,6 @@ def _mentions_row(c: AgentController, t: Theme) -> Optional[Any]:
     return _core.row(chips, spacing=4, wrap=True)
 
 
-#: Lines the message box grows to before it scrolls.
-BOX_LINES = 10
-
-
-def _box_height(text: str, chars: int = 52, line: float = 20.0) -> float:
-    """The message box's height for ``text``: one line per wrapped line, up to ``BOX_LINES``."""
-    lines = sum(max(1, -(-len(part) // chars)) for part in text.split("\n")) if text else 1
-    return min(max(lines, 1), BOX_LINES) * line + 10
-
-
-def _composer(c: AgentController, t: Theme) -> Any:
-    """The message box, like Zed's: the text (Enter sends, Shift+Enter breaks the line), then the + menu,
-    the permission mode, model, effort and fast mode."""
-    s = c.settings
-    send = ui.icon_button("square", c.stop, size="sm", tooltip=tr("Stop"), theme=t) if c.running else \
-        ui.icon_button("arrow-up", c.send, size="sm", variant="solid", tooltip=tr("Send (Enter)"),
-                       disabled=not (c.input.strip() or c.attachments), theme=t)
-    box = ui.editor(INPUT_ID, c.input, on_change=c.set_input, on_cursor=c.focus_box, wrap=True, gutter=False,
-                    active_line=False, folding=False, auto_close=False, match_brackets=False,
-                    selection_highlight=False, font="sans", font_size=13, line_height=20,
-                    height=_box_height(c.input), capture_keys=c.captured_keys(),
-                    placeholder=tr("Message the agent (@ context, / commands, Shift+Enter for a new line)"), theme=t)
-    field_ = _core.row([_core.container(box, width="fill"), send], spacing=4, align="end")
-    model = c.thread.model or s.model
-    provider_id, name = _providers.split_model(model)
-    claude = _providers.PROVIDERS[provider_id].protocol == "anthropic"
-    external = provider_id == "acp"
-    mode_label, mode_icon, mode_text = MODE_TEXT[s.mode]
-    agent = s.acp_agent(name) if external else None
-    # an external agent's own options, like Zed shows Claude Code's: its mode on the left, the rest by the agent
-    options = c.agent_options() if external else []
-    own_mode = next((o for o in options if o["category"] == "mode"), None)
-    others = [o for o in options if o is not own_mode]
-    controls = _core.row([
-        ui.icon_button("plus", c.toggle_add_menu, size="sm", selected=c.menu == "add",
-                       tooltip=tr("Add context or images"), theme=t),
-        _option_chip(c, own_mode, t) if own_mode else
-        _chip(tr(mode_label), lambda: c.toggle_menu("mode"), t, icon=mode_icon, selected=c.menu == "mode",
-              tooltip=tr(mode_text)),
-        _core.space(width="fill"),
-        ui.context_meter(c.thread.context, c.context_window, theme=t)
-        if c.thread.context and c.context_window and not external else None,
-        _chip(agent.label if agent else model_label(model), lambda: c.toggle_menu("model"), t,
-              icon="terminal" if external else None, selected=c.menu == "model", tooltip=tr("Model")),
-        *[_option_chip(c, o, t) for o in others],
-        None if external else _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t,
-                                    selected=c.menu == "effort", tooltip=tr("Effort"), disabled=not claude),
-        None if external or not claude else _chip(tr("Thinking"), c.toggle_thinking, t, icon="brain",
-                                                  selected=s.thinking, menu=False,
-                                                  tooltip=tr("Let Claude think before answering; off answers sooner")),
-        None if external else _chip(tr("Fast"), c.toggle_fast, t, icon="zap",
-                                    selected=s.fast and name in _providers.FAST_MODELS, menu=False,
-                                    disabled=name not in _providers.FAST_MODELS,
-                                    tooltip=tr("Fast mode: faster answers at a higher price (Claude Opus)")),
-    ], spacing=2, align="center", wrap=True)
-    return _core.container(_core.column([_mentions_row(c, t), field_, controls], spacing=6), padding=(6, 6, 4, 4),
-                           width="fill", bg=t.editor, border_color=t.border, border_width=1, radius=t.radius + 2)
-
-
 def _device_callout(c: AgentController, t: Theme) -> Optional[Any]:
     """While signing in to GitHub: the code to type on github.com."""
     login = c.device
@@ -2890,134 +2976,11 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         border_width=1, radius=t.radius + 2)
 
 
-def _new_menu(c: AgentController, t: Theme) -> Any:
-    """The + menu: a new thread with the built-in agent or an external one, like Zed's."""
-    items: List[Any] = [tr("New thread"),
-                        ui.MenuItem(tr("Pyzed Agent"), lambda: c.new_thread(""), icon="sparkles")]
-    for agent in c.settings.acp_agents:
-        if agent.enabled:
-            items.append(ui.MenuItem(agent.label, lambda name=agent.name: c.new_thread(f"acp:{name}"),
-                                     icon="terminal"))
-    items += [ui.SEPARATOR, ui.MenuItem(tr("Add more agents…"), lambda: c.open_settings(section="agents"),
-                                        icon="plus")]
-    return ui.menu(items, width=230, theme=t)
-
-
-def _options_menu(c: AgentController, t: Theme) -> Any:
-    """The ⋯ menu of the panel: settings and the panel's options."""
-    s = c.settings
-    return ui.menu([
-        ui.MenuItem(tr("Agent settings"), lambda: c.open_settings(), icon="settings-2"),
-        ui.MenuItem(tr("Rules…"), lambda: c.open_settings(), icon="scroll-text"),
-        ui.SEPARATOR,
-        ui.MenuItem(tr("Show thinking"), lambda: c.toggle_option("show_thinking"), checked=s.show_thinking),
-        ui.SEPARATOR,
-        ui.MenuItem(tr("Copy thread as Markdown"), c.copy_markdown, icon="copy", disabled=not c.thread.messages),
-        ui.MenuItem(tr("Back to the dock") if c.expanded else tr("Expand the panel"), c.toggle_expand,
-                    icon="minimize-2" if c.expanded else "maximize-2"),
-    ], width=240, theme=t)
-
-
-def _header(c: AgentController, t: Theme) -> Any:
-    """The panel's toolbar, like Zed's: back (from the history or the settings), the title, then the +
-    menu, the history and the ⋯ menu."""
-    if c.view == "history":
-        title = tr("History")
-    elif c.view == "settings":
-        title = tr("Agent settings")
-    else:
-        title = c.thread.display_title if c.thread.messages else tr("New thread")
-    title = title if len(title) <= 28 else title[:27].rstrip() + "…"
-    lead = ui.icon_button("arrow-left", c.back, size="sm", tooltip=tr("Back to the thread"), theme=t) \
-        if c.view != "thread" else _icon("terminal" if (c.thread.model or "").startswith("acp:") else "sparkles",
-                                         size=14, color=t.text_accent)
-    return _core.container(_core.row([
-        lead,
-        _core.container(ui.label(title, size="sm", weight="medium", wrap=False, theme=t), width="fill"),
-        ui.icon_button("crosshair", c.toggle_follow, size="sm", selected=c.settings.follow_agent,
-                       tooltip=tr("Follow the agent: open what it writes as it works"), theme=t)
-        if c.view == "thread" else None,
-        ui.icon_button("plus", lambda: c.toggle_menu("new"), size="sm", selected=c.menu == "new",
-                       tooltip=tr("New thread"), theme=t),
-        ui.icon_button("history", c.toggle_history, size="sm", selected=c.view == "history",
-                       tooltip=tr("History"), theme=t),
-        ui.icon_button("ellipsis", lambda: c.toggle_menu("options"), size="sm", selected=c.menu == "options",
-                       tooltip=tr("Options"), theme=t),
-    ], spacing=4, align="center"), padding=(4, 6, 4, 10), height=36, width="fill", bg=t.panel,
-        border_color=t.border_variant, border_width=0)
-
-
-
 def view(d: "Designer", t: Theme) -> Any:
-    """The Agent panel: the toolbar, then the thread, the history or the agent settings."""
-    c = d.agent
-    header = _header(c, t)
-    if c.view == "history":
-        body = _core.column([header, _history(c, t)], width="fill", height="fill")
-    elif c.view == "settings":
-        body = _core.column([header, settings_view(d, t)], width="fill", height="fill")
-    else:
-        body = _thread_view(c, d, t, header)
-    menus = {"new": _new_menu, "options": _options_menu}
-    if c.menu in menus:
-        body = ui.popover(body, menus[c.menu](c, t), x=8, y=34, align_x="end", on_dismiss=c.close_menu)
-    if c.expanded:  # a readable column in the middle of the window, like Zed's zoomed panel
-        body = _core.container(_core.container(body, max_width=860, width="fill", height="fill"), width="fill",
-                               height="fill", align_x="center")
-    return body
+    """The Agent panel, drawn like Zed's (see ``agent_thread``)."""
+    from . import agent_thread
 
-
-def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> Any:
-    rows = _messages(c, t) if c.thread.messages else [_empty(c, t)]
-    if c.error and not c.running:
-        actions = [
-            ui.button(tr("Retry"), c.retry, icon="refresh-cw", variant="ghost", size="sm", theme=t),
-            ui.button(tr("Settings"), lambda: c.open_settings(), variant="ghost", size="sm", theme=t),
-        ]
-        if c.needs_node:
-            actions = [
-                ui.button(tr("Install Node.js"), lambda: _agents.login.open_browser(NODE_URL), icon="download",
-                          variant="tinted", size="sm", theme=t),
-                ui.button(tr("Use Pyzed Agent"), c.use_pyzed_agent, variant="ghost", size="sm", theme=t),
-                *actions]
-        if c.needs_claude_login:
-            actions.insert(0, ui.button(tr("Sign in to Claude"), c.open_claude_login, icon="log-in",
-                                        variant="tinted", size="sm", theme=t))
-        rows.append(ui.callout(tr("The agent stopped"), c.error, tint="error", icon="triangle-alert", actions=actions,
-                               theme=t))
-    thread = _core.scrollable(_core.column(rows, spacing=10, width="fill", padding=(10, 12)), height="fill",
-                              id=SCROLL_ID, anchor_bottom=True, scrollbar_width=4)
-    bottom: List[Any] = []
-    if c.capture is not None:
-        bottom.append(_capture_callout(c, t))
-    if c.claude_login is not None:
-        bottom.append(_claude_login_callout(c, t))
-    if c.agent_auth is not None:
-        bottom.append(_auth_card(c, t))
-    if c.mcp_added:
-        bottom.append(ui.callout(tr("Restart your agents to use Pyzed's MCP"), tr(
-            "Pyzed's MCP server was added to {names}. Close and open them again (agents running in Pyzed restart "
-            "with the button).", names=", ".join(c.mcp_added)), tint="info", icon="plug", actions=[
-            ui.button(tr("Restart agents"), c.restart_agents, icon="refresh-cw", variant="tinted", size="sm",
-                      theme=t),
-            ui.button(tr("Later"), c.dismiss_mcp_added, variant="ghost", size="sm", theme=t)], theme=t))
-    if c.device is not None:
-        bottom.append(_device_callout(c, t))
-    bottom.append(_plan_card(c, t))
-    if c.pending is not None and not _pending_on_card(c):
-        bottom.append(_confirmation(c, t))
-    if c.snapshot and c.changed and not c.running:
-        bottom.append(_review_bar(c, t))
-    menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu, "add": _add_menu}
-    if c.menu in menus:
-        bottom.append(menus[c.menu](c, t))
-    elif c.menu and c.menu.startswith("option:"):
-        bottom.append(_option_menu(c, t, c.menu[len("option:"):]))
-    else:
-        bottom.append(_popup(c, t))
-    bottom.append(_composer(c, t))
-    return _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
-                        width="fill", height="fill")
+    return agent_thread.panel(d.agent, t)
 
 
 def _auth_card(c: AgentController, t: Theme) -> Any:

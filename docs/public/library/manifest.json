@@ -13146,326 +13146,326 @@
   "width": 480
  },
  "tool-call-v1-1.dark": {
-  "bytes": 6364,
-  "frames": 35,
-  "height": 104,
-  "ms": 2333,
-  "width": 294
+  "bytes": 6022,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v1-1.light": {
-  "bytes": 6272,
-  "frames": 35,
-  "height": 104,
-  "ms": 2333,
-  "width": 294
+  "bytes": 6206,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v1-2.dark": {
-  "bytes": 6368,
-  "frames": 35,
-  "height": 104,
-  "ms": 2333,
-  "width": 294
+  "bytes": 6030,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v1-2.light": {
-  "bytes": 6254,
-  "frames": 35,
-  "height": 104,
-  "ms": 2333,
-  "width": 294
+  "bytes": 6210,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v1-3.dark": {
-  "bytes": 4118,
+  "bytes": 6230,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 800
  },
  "tool-call-v1-3.light": {
-  "bytes": 4298,
+  "bytes": 6230,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 800
  },
  "tool-call-v1-4.dark": {
-  "bytes": 21620,
+  "bytes": 17414,
   "frames": 4,
-  "height": 240,
+  "height": 286,
   "ms": 4200,
   "width": 800
  },
  "tool-call-v1-4.light": {
-  "bytes": 21954,
+  "bytes": 17276,
   "frames": 4,
-  "height": 240,
+  "height": 286,
   "ms": 4200,
   "width": 800
  },
  "tool-call-v1-5.dark": {
-  "bytes": 7172,
+  "bytes": 7702,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 774
+  "width": 800
  },
  "tool-call-v1-5.light": {
-  "bytes": 7474,
+  "bytes": 7578,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 774
+  "width": 800
  },
  "tool-call-v1-6.dark": {
-  "bytes": 7920,
+  "bytes": 6444,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 774
+  "width": 800
  },
  "tool-call-v1-6.light": {
-  "bytes": 8324,
+  "bytes": 6338,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 774
+  "width": 800
  },
  "tool-call-v2-1.dark": {
-  "bytes": 4594,
+  "bytes": 5360,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 304
+  "width": 316
  },
  "tool-call-v2-1.light": {
-  "bytes": 4762,
+  "bytes": 5488,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 304
+  "width": 316
  },
  "tool-call-v2-10.dark": {
-  "bytes": 3370,
+  "bytes": 4102,
   "frames": 4,
-  "height": 102,
+  "height": 108,
   "ms": 4200,
-  "width": 260
+  "width": 270
  },
  "tool-call-v2-10.light": {
-  "bytes": 3492,
+  "bytes": 4240,
   "frames": 4,
-  "height": 102,
+  "height": 108,
   "ms": 4200,
-  "width": 260
+  "width": 270
  },
  "tool-call-v2-2.dark": {
-  "bytes": 4118,
+  "bytes": 6054,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 680
  },
  "tool-call-v2-2.light": {
-  "bytes": 4298,
+  "bytes": 6130,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 680
  },
  "tool-call-v2-3.dark": {
-  "bytes": 4672,
+  "bytes": 6648,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 320
+  "width": 680
  },
  "tool-call-v2-3.light": {
-  "bytes": 4840,
+  "bytes": 6788,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 320
+  "width": 680
  },
  "tool-call-v2-4.dark": {
-  "bytes": 5100,
+  "bytes": 6800,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 380
+  "width": 680
  },
  "tool-call-v2-4.light": {
-  "bytes": 5358,
+  "bytes": 6990,
   "frames": 4,
-  "height": 104,
+  "height": 132,
   "ms": 4200,
-  "width": 380
+  "width": 680
  },
  "tool-call-v2-5.dark": {
-  "bytes": 4976,
+  "bytes": 5336,
   "frames": 4,
-  "height": 100,
+  "height": 108,
   "ms": 4200,
-  "width": 314
+  "width": 324
  },
  "tool-call-v2-5.light": {
-  "bytes": 5238,
+  "bytes": 5480,
   "frames": 4,
-  "height": 100,
+  "height": 108,
   "ms": 4200,
-  "width": 314
+  "width": 324
  },
  "tool-call-v2-6.dark": {
-  "bytes": 3682,
+  "bytes": 5582,
   "frames": 4,
-  "height": 102,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 680
  },
  "tool-call-v2-6.light": {
-  "bytes": 3902,
+  "bytes": 5588,
   "frames": 4,
-  "height": 102,
+  "height": 132,
   "ms": 4200,
-  "width": 294
+  "width": 680
  },
  "tool-call-v2-7.dark": {
-  "bytes": 2398,
+  "bytes": 2746,
   "frames": 4,
-  "height": 102,
+  "height": 104,
   "ms": 4200,
-  "width": 174
+  "width": 176
  },
  "tool-call-v2-7.light": {
-  "bytes": 2418,
+  "bytes": 2764,
   "frames": 4,
-  "height": 102,
+  "height": 104,
   "ms": 4200,
-  "width": 174
+  "width": 176
  },
  "tool-call-v2-8.dark": {
-  "bytes": 7216,
+  "bytes": 8394,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 460
+  "width": 456
  },
  "tool-call-v2-8.light": {
-  "bytes": 7518,
+  "bytes": 8520,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 460
+  "width": 456
  },
  "tool-call-v2-9.dark": {
-  "bytes": 5348,
+  "bytes": 5644,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 320
+  "width": 334
  },
  "tool-call-v2-9.light": {
-  "bytes": 5576,
+  "bytes": 5830,
   "frames": 4,
-  "height": 104,
+  "height": 108,
   "ms": 4200,
-  "width": 320
+  "width": 334
  },
  "tool-call-v3-1.dark": {
-  "bytes": 7562,
-  "frames": 35,
-  "height": 204,
-  "ms": 2333,
-  "width": 318
+  "bytes": 12778,
+  "frames": 4,
+  "height": 242,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v3-1.light": {
-  "bytes": 7452,
-  "frames": 35,
-  "height": 204,
-  "ms": 2333,
-  "width": 318
+  "bytes": 12586,
+  "frames": 4,
+  "height": 242,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v3-2.dark": {
-  "bytes": 8080,
-  "frames": 35,
-  "height": 264,
-  "ms": 2333,
-  "width": 770
+  "bytes": 14070,
+  "frames": 4,
+  "height": 298,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v3-2.light": {
-  "bytes": 7918,
-  "frames": 35,
-  "height": 264,
-  "ms": 2333,
-  "width": 770
+  "bytes": 13992,
+  "frames": 4,
+  "height": 298,
+  "ms": 4200,
+  "width": 800
  },
  "tool-call-v3-3.dark": {
-  "bytes": 18038,
+  "bytes": 11906,
   "frames": 4,
   "height": 240,
   "ms": 4200,
   "width": 800
  },
  "tool-call-v3-3.light": {
-  "bytes": 18490,
+  "bytes": 11928,
   "frames": 4,
   "height": 240,
   "ms": 4200,
   "width": 800
  },
  "tool-call-v3-4.dark": {
-  "bytes": 19734,
+  "bytes": 20280,
   "frames": 4,
-  "height": 380,
+  "height": 376,
   "ms": 4200,
-  "width": 768
+  "width": 776
  },
  "tool-call-v3-4.light": {
-  "bytes": 19784,
+  "bytes": 19876,
   "frames": 4,
-  "height": 380,
+  "height": 376,
   "ms": 4200,
-  "width": 768
+  "width": 776
  },
  "tool-call-v3-5.dark": {
-  "bytes": 12266,
+  "bytes": 14082,
   "frames": 4,
-  "height": 270,
+  "height": 298,
   "ms": 4200,
-  "width": 770
+  "width": 800
  },
  "tool-call-v3-5.light": {
-  "bytes": 12336,
+  "bytes": 13986,
   "frames": 4,
-  "height": 270,
+  "height": 298,
   "ms": 4200,
-  "width": 770
+  "width": 800
  },
  "tool-call.dark": {
-  "bytes": 74988,
-  "frames": 70,
+  "bytes": 53714,
+  "frames": 24,
   "height": 840,
   "ms": 3500,
   "width": 1440
  },
  "tool-call.light": {
-  "bytes": 77162,
-  "frames": 70,
+  "bytes": 54186,
+  "frames": 24,
   "height": 840,
   "ms": 3500,
   "width": 1440
  },
  "tool-call.thumb.dark": {
-  "bytes": 23528,
-  "frames": 35,
+  "bytes": 11472,
+  "frames": 14,
   "height": 240,
   "ms": 3500,
-  "width": 480
+  "width": 473
  },
  "tool-call.thumb.light": {
-  "bytes": 24902,
-  "frames": 35,
+  "bytes": 12104,
+  "frames": 14,
   "height": 240,
   "ms": 3500,
-  "width": 480
+  "width": 472
  },
  "toolbar-v1-1.dark": {
   "bytes": 3834,

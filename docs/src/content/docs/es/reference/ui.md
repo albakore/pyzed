@@ -3493,14 +3493,14 @@ ui.DropZone(accept=["png", "jpg"], on_drop=lambda e: self.photos.append(e.value)
 class ToolCall
 ```
 
-Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
+Un componente para una acción de un agente de IA, dibujada como en el panel Agent de Zed: una línea con su icono, lo que hace y dónde (se despliega para mostrar la entrada y la salida), o una tarjeta para las ediciones y los comandos, con el diff o la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir siempre, Permitir o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
 
 | Parámetro | Descripción |
 | --- | --- |
 | `title` | Lo que hace ("Editar archivo"). |
 | `detail` | Sobre qué trabaja, en letra monoespaciada. |
 | `kind` | El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono). |
-| `status` | `pending`, `running`, `waiting`, `done`, `failed` o `rejected`. |
+| `status` | `pending`, `running`, `waiting`, `done`, `failed`, `rejected` o `canceled`. |
 | `input` | Los argumentos (un dict o texto). |
 | `output` | La respuesta (texto o un dict). |
 | `images` | Bytes PNG que se muestran bajo la salida. |
@@ -3526,6 +3526,14 @@ ToolCall.toggle()
 ```
 
 Despliega o pliega la entrada y la salida de la herramienta.
+
+#### `ToolCall.card`
+
+```python
+ToolCall.card  # property
+```
+
+Si se dibuja como tarjeta: una edición, un comando o una llamada que espera tu permiso.
 
 ### `Plan`
 
