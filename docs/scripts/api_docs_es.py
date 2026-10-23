@@ -95,7 +95,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `decorations` | `True` | Muestra el marco y los botones del sistema. |
 | `scale` | `1.0` | Factor de escala de toda la interfaz. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
-| `theme` | `themes.ONE_DARK` | Tema actual. Cámbialo en cualquier momento. |
+| `theme` | `themes.PYZED_DARK` | Tema actual. Cámbialo en cualquier momento. |
 
 | Método | Descripción |
 | --- | --- |
@@ -727,7 +727,8 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                 "pyzed.ui.status_bar": {"desc": "La barra de estado inferior.", "params": {"height": "Alto."}},
                 "pyzed.ui.status_item": {
                     "desc": "Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, lenguaje…).",
-                    "params": {"content": "Texto.", "tooltip": "Texto del tooltip."},
+                    "params": {"content": "Texto.", "tooltip": "Texto del tooltip.",
+                               "led": "Token de color o hex de un LED pequeño delante (`\"success\"` para un servidor en marcha)."},
                 },
                 "pyzed.ui.panel": {
                     "desc": "Un panel acoplable. `side` decide en qué borde va la línea; con un `width` numérico (`height` para el inferior) ese borde se arrastra para cambiar su tamaño.",
@@ -1064,7 +1065,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `title` | `"Pyzed"` | Título de la ventana. Puede ser un callable (o propiedad) que devuelva el texto. |
 | `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
-| `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
+| `theme` | `themes.PYZED_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
@@ -1727,8 +1728,9 @@ dict(_t["sections"])["Temas incluidos"].update({
     "pyzed.AutoTheme": {"desc": "Lo que devuelve `themes.auto`: un par `(light, dark)`. `pick(dark)` devuelve el que toca.", "no_signature": True},
 })
 _t["sections"][1][1]["pyzed.themes"]["desc"] = (
-    "Espacio de nombres con los temas incluidos (las familias One, Ayu y Gruvbox) y el registro de "
-    "temas. Los incluidos también están como atributos: `themes.ONE_DARK`, `themes.ONE_LIGHT`, "
+    "Espacio de nombres con los temas incluidos (los de Pyzed y las familias One, Ayu y Gruvbox) y el registro de "
+    "temas. Los incluidos también están como atributos: `themes.PYZED_DARK` (el predeterminado), "
+    "`themes.PYZED_LIGHT`, `themes.ONE_DARK`, `themes.ONE_LIGHT`, "
     "`themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
 )
 dict(_t["sections"])["Utilidades (pyzed.theme)"].update({
@@ -2286,6 +2288,56 @@ _section("ui", "Agente", {
                                       "max_lines": "Líneas que se muestran antes de `… N líneas más`."},
                            "example": 'ui.diff_view({"path": "main.py", "old": "x = 1\\n", "new": "x = 2\\n"})'},
 })
+
+_section("ui", "Instrumentos", {
+    "pyzed.ui.led": {
+        "desc": "Un LED redondo de la marca Pyzed: encendido con un brillo suave en el color `led` del tema (ámbar en los temas Pyzed) o apagado en `led_off`.",
+        "params": {"on": "Encendido o no.", "color": "Token de color o hex en lugar de `led`.", "size": "Diámetro.",
+                   "glow": "`False` lo dibuja sin brillo."},
+        "example": """
+            pz.row([ui.led(self.recording), ui.label("REC", mono=True)], spacing=6, align="center")
+        """,
+    },
+    "pyzed.ui.led_toggle": {
+        "desc": "Un interruptor que muestra su estado con un LED junto a una etiqueta mono en mayúsculas, como los de SNAP y GUÍAS del lienzo de Pyzed Design.",
+        "params": {"label": "Texto (se muestra en mayúsculas).", "on": "El estado.", "on_toggle": "Recibe el estado nuevo.",
+                   "color": "Token de color o hex del LED.", "tooltip": "Texto del tooltip.", "keys": "Atajo que muestra el tooltip.",
+                   "height": "Alto."},
+        "example": """
+            ui.led_toggle("Snap", self.snap, lambda on: setattr(self, "snap", on))
+        """,
+    },
+    "pyzed.ui.lcd": {
+        "desc": "Un display LCD: las partes en mono ámbar sobre el color `display` del tema, separadas por barras tenues (`None` y `\"\"` se omiten).",
+        "params": {"parts": "Textos o números.", "size": "Tamaño del texto.", "height": "Alto (`None` se ajusta al texto).",
+                   "color": "Token de color o hex del texto en lugar de `display_text`."},
+        "example": """
+            ui.lcd(f"{self.fps} FPS", "wgpu")
+        """,
+    },
+    "pyzed.ui.theme_rack": {
+        "desc": "Temas para elegir como un rack de módulos: un LED encendido en el actual, su nombre, ocho muestras de sus colores y una luna o un sol para oscuro y claro. Lo usan los Ajustes de Pyzed Design.",
+        "params": {"themes": "Objetos `Theme` (`pz.themes.all()`).", "current": "Nombre del tema actual.",
+                   "on_pick": "Se llama con el nombre del tema pulsado.", "columns": "Módulos por fila."},
+        "example": """
+            ui.theme_rack(pz.themes.all(), self.theme.name, lambda name: setattr(self, "theme", name))
+        """,
+    },
+})
+_section("theme", "Logo (pyzed.brand)", {
+    "pyzed.brand.mark": {
+        "desc": "La marca de Pyzed (la pitón que dibuja la «p») como widget SVG teñido con un color del tema.",
+        "params": {"size": "Alto en píxeles.", "color": "Token de color o hex (`text_accent` por defecto).", "theme": "Tema."},
+        "example": """
+            ui.title_bar([pz.brand.mark(16), ui.label("Mi app")], [])
+        """,
+    },
+    "pyzed.brand.wordmark": {
+        "desc": "El logotipo «pyzed», con la pitón como su «p»; la versión oscura en temas oscuros.",
+        "params": {"height": "Alto en píxeles.", "theme": "Tema."},
+    },
+})
+
 
 _section("ui", "Selector de iconos", {
     "pyzed.ui.IconPicker": {

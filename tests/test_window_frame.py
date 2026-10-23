@@ -173,9 +173,10 @@ def test_designer_title_center_and_palette_places():
     from pyzed.designer.app import Designer
 
     d = Designer(language_servers=False)
-    # Run, Stop and the search field sit in the middle of the bar, with both frames
+    # Run, Stop and the search field sit in the middle of the bar, with both frames; the LCD, View, Help and
+    # Settings at the end
     start, end = d.title_items(d.theme_obj)
-    assert len(end) == 3 and isinstance(d.title_center(d.theme_obj), _core.Widget)
+    assert len(end) == 4 and isinstance(d.title_center(d.theme_obj), _core.Widget)
     assert isinstance(d.title_bar(d.theme_obj), _core.Widget)
     d.open_palette()
     assert d.dialog == "palette" and d.dialog_view(d.theme_obj) is not None

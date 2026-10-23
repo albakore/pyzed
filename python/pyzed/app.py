@@ -338,7 +338,7 @@ class App(Window):
 
     size: Tuple[float, float] = (1280, 800)
     font_size: float = 14
-    theme: ThemeLike = _theme.ONE_DARK
+    theme: ThemeLike = _theme.PYZED_DARK
     #: Whether the OS is in dark mode (updated by the runtime).
     system_dark: bool = True
     #: Tab and Shift+Tab move the keyboard focus between the fields of the window

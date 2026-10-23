@@ -1168,7 +1168,8 @@ def toolbox(d: "Designer", t: Theme) -> Any:
         head = _core.button(
             _core.row([_icon("chevron-right" if folded else "chevron-down", size=12, color=t.icon_muted),
                        _icon(icon, size=13, color=color),
-                       ui.label(str_(category).upper(), size="xs", weight="semibold", color="text_muted", theme=t),
+                       ui.label(str_(category).upper(), size="xs", weight="medium", mono=True, color="text_muted",
+                                theme=t),
                        _core.space(width="fill"),
                        ui.label(str(len(items)), size="xs", color="text_muted", theme=t)], spacing=6, align="center"),
             lambda c=category: ed.toggle_category(c), padding=(8, spacing.GUTTER, 4, spacing.GUTTER), width="fill",
@@ -1416,7 +1417,7 @@ def node_properties(d: "Designer", node_id: str, t: Theme) -> Any:
 
 
 def _section(title: str, t: Theme) -> Any:
-    return _core.container(ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
+    return _core.container(ui.label(title.upper(), size="xs", weight="medium", mono=True, color="text_muted", theme=t),
                            padding=(12, 0, 2, 0), width="fill")
 
 

@@ -353,7 +353,7 @@ def list_themes() -> Dict[str, Any]:
     return {
         "themes": [{"name": t.name, "dark": t.is_dark} for t in themes.all()],
         "tokens": tokens,
-        "usage": 'App.theme = "One Dark"; widget.style(background="panel", color="text_muted")',
+        "usage": 'App.theme = "Pyzed Dark"; widget.style(background="panel", color="text_muted")',
     }
 
 

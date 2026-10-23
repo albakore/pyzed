@@ -2640,6 +2640,10 @@
   "Pause": "Pausa",
   "For windows without the focus: Pause stops their animations until they get it back": "Para ventanas sin el foco: Pausa detiene sus animaciones hasta que lo recuperan",
   "Quality and frame rate": "Calidad y frames por segundo",
-  "Lower them on touch panels, phones and laptops on battery": "Bájalos en paneles táctiles, móviles y portátiles con batería"
+  "Lower them on touch panels, phones and laptops on battery": "Bájalos en paneles táctiles, móviles y portátiles con batería",
+  "Guides": "Guías",
+  "Form running": "Formulario en ejecución",
+  "The form is running: click to stop it": "El formulario se está ejecutando: haz clic para detenerlo",
+  "Renderer and interface size (a click goes back to 100%)": "Renderizador y tamaño de la interfaz (un clic vuelve al 100 %)"
  }
 }

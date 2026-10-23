@@ -23,10 +23,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from .. import _core, _platform, ui
-from ..app import App
+from ..app import App, renderer_info
 from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
+from .. import brand
 from . import binding as _binding
 from . import spacing
 from . import code as _code
@@ -152,6 +153,9 @@ class Designer(App):
     title = "Pyzed Design"
     size = (1440, 900)
     min_size = (960, 600)
+    icon = brand.ICON
+    #: Matches the ``dev.pyzed.design.desktop`` file that install.sh writes (Wayland takes the icon from it).
+    app_id = "dev.pyzed.design"
 
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
@@ -2902,7 +2906,7 @@ class Designer(App):
             if shader_editor.is_shader(self):
                 content = shader_editor.view(self, t)
             else:
-                canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
+                canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.canvas)
                 content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
                                        width="fill", height="fill")
         return self.panes.asleep(pane, content)
@@ -3061,7 +3065,7 @@ class Designer(App):
             hover_border_color=t.border, radius=t.radius_sm,
         )
         return _core.row([
-            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm",
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="accent", size="sm",
                       keys=_keymap.shown_keys("run"), theme=t),
             ui.icon_button("square", self.stop_form, size="sm", tooltip=tr("Stop"), keys=_keymap.shown_keys("stop"),
                            disabled=self.console.running is None, theme=t),
@@ -3076,7 +3080,7 @@ class Designer(App):
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
                            tooltip=None if self.app_menu else tr("Menu"), theme=t),
-            _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
+            _core.container(brand.mark(16, theme=t), padding=(0, 4, 0, 6)),
             *_project_picker.title_items(self, t),
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(tr("Open…") if self.nothing_open else doc.display_name, self.open_dialog, icon="file",
@@ -3088,6 +3092,7 @@ class Designer(App):
         ]
         end = [
             *self.updates.title_items(t),
+            self.title_display(t),
             ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
@@ -3096,6 +3101,21 @@ class Designer(App):
                            theme=t),
         ]
         return start, end
+
+    def title_display(self, t) -> Any:
+        """The title bar's LCD: the graphics API drawing the window (or CPU) and the interface size; a click goes
+        back to 100%."""
+        info = renderer_info()  # None until the window is open (and in screenshots)
+        if info is not None:
+            renderer = "cpu" if info[0] == "CPU" else info[1].lower()
+            tip = f"{info[0]} · {info[1]}"
+        else:
+            renderer = "tiny-skia" if "tiny" in os.environ.get("ICED_BACKEND", "").lower() else "wgpu"
+            tip = renderer
+        return ui.tooltip(_core.button(ui.lcd(renderer, f"{self.scale * 100:.0f}%", size=11, height=22, theme=t),
+                                       lambda: self.zoom_ui(0), padding=0, bg="transparent", radius=t.radius_sm),
+                          f"{tip}: " + tr("Renderer and interface size (a click goes back to 100%)"),
+                          keys=_keymap.shown_keys("reset_ui_zoom"), theme=t)
 
     def set_designer_theme(self, name: str) -> None:
         """Switches the designer to the theme ``name`` and saves it in the preferences."""
@@ -3158,11 +3178,16 @@ class Designer(App):
         start: List[Any] = []
         for g in groups:
             start += [sep, g] if start else [g]
+        def switch(label: str, key: str, tip: str, command: Optional[str] = None) -> Any:
+            keys = _keymap.shown_keys(command) if command else None
+            return ui.led_toggle(tr(label), getattr(self, key), lambda _on: self.toggle(key)(), tooltip=tr(tip),
+                                 keys=keys, theme=t)
+
         end = [
-            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, command="grid"),
-                  tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
-                  tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
-                  tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
+            _core.row([switch("Snap", "snap", "Snap to grid"), switch("Guides", "smart_guides", "Smart guides"),
+                       switch("Grid", "show_grid", "Show grid", "grid")], spacing=4, align="center"),
+            _core.space(width=6),
+            group(tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
                        selected=doc.follow_anchors),
                   tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
@@ -3218,6 +3243,9 @@ class Designer(App):
             info = f"{doc.form.name}  {doc.form.width:g}×{doc.form.height:g}"
         tool = tr(_components.get(self.tool).label) if self.tool else None
         start = [
+            ui.status_item(tr("Form running"), self.stop_form, led="success",
+                           tooltip=tr("The form is running: click to stop it"), keys=_keymap.shown_keys("stop"),
+                           theme=t) if self.console.running is not None else None,
             ui.status_item(f"{x:.0f}, {y:.0f}", icon="mouse-pointer-2"),
             ui.status_item(info, icon="square-dashed"),
             ui.status_item(tr("Placing {tool}: click or drag on the form", tool=tool), icon="plus",

@@ -128,7 +128,7 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
         return knowledge.read_example(name)
 
     @tool(title="Writing an app skeleton")
-    def new_app(title: str = "My App", layout: str = "simple", theme: str = "One Dark") -> str:
+    def new_app(title: str = "My App", layout: str = "simple", theme: str = "Pyzed Dark") -> str:
         """The code of a runnable pz.App script.
 
         layout: "simple" (a counter to build on) or "workspace" (a Zed-like window).
@@ -147,7 +147,7 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
 
     @tool(title="Writing a form")
     def new_form(name: str, title: str = "", controls: Optional[List[Any]] = None, width: float = 480,
-                 height: float = 320, theme: str = "One Dark", form_events: Optional[List[Any]] = None) -> Any:
+                 height: float = 320, theme: str = "Pyzed Dark", form_events: Optional[List[Any]] = None) -> Any:
         """A visual designer form as files: the <name>.pzform layout and the <name>.py handlers module.
 
         controls: [{"type": "input", "name": "email", "props": {"placeholder": "Email"}}, {"type": "button", "name": "send", "props": {"text": "Send"}, "events": ["click"]}] (x/y/width/height optional, stacked when missing).

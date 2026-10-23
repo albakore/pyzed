@@ -8,6 +8,7 @@ from .. import _core
 from ..icons import icon as _icon
 from ..theme import Theme
 from .base import _theme, tooltip_text
+from .instruments import led as _led
 
 
 def title_bar(
@@ -103,9 +104,11 @@ def status_item(
     selected: bool = False,
     tooltip: Optional[str] = None,
     keys: Optional[str] = None,
+    led: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """An icon and/or label in the status bar (diagnostics, cursor position, language...).
+    """An icon and/or label in the status bar (diagnostics, cursor position, language...). ``led`` (a color
+    token or hex, such as ``"success"``) puts a small LED before it, for a state like a running server.
 
     Events:
         ``on_press()``: Message or callable sent on press. ``None`` disables the control.
@@ -113,6 +116,7 @@ def status_item(
     t = _theme(theme)
     text_color = t.color(color) if color else t.text_muted
     parts = [
+        _led(True, color=led, size=6, theme=t) if led else None,
         _icon(icon, size=14, color=t.color(icon_color) if icon_color else (t.icon if selected else t.icon_muted)) if icon else None,
         _core.text(content, size=12.5, color=text_color, wrap=False) if content is not None else None,
     ]

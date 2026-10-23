@@ -188,7 +188,7 @@ Lee un tema escrito con `save` (para temas de Zed usa `from_zed`).
 
 ### `themes`
 
-Espacio de nombres con los temas incluidos (las familias One, Ayu y Gruvbox) y el registro de temas. Los incluidos también están como atributos: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…
+Espacio de nombres con los temas incluidos (los de Pyzed y las familias One, Ayu y Gruvbox) y el registro de temas. Los incluidos también están como atributos: `themes.PYZED_DARK` (el predeterminado), `themes.PYZED_LIGHT`, `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…
 
 ### `all`
 
@@ -245,7 +245,7 @@ Carga y registra todos los temas de un archivo de familia de Zed.
 ### `auto`
 
 ```python
-auto(light='One Light', dark='One Dark')
+auto(light='Pyzed Light', dark='Pyzed Dark')
 ```
 
 Un tema que sigue el modo claro/oscuro del sistema.
@@ -399,3 +399,36 @@ Devuelve `light` u `dark`, el que más contraste tenga sobre `background`.
 | `background` | Color de fondo. |
 | `light` | Texto claro. |
 | `dark` | Texto oscuro. |
+
+## Logo (pyzed.brand)
+
+### `mark`
+
+```python
+mark(size=20, *, color=None, theme=None)
+```
+
+La marca de Pyzed (la pitón que dibuja la «p») como widget SVG teñido con un color del tema.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `size` | Alto en píxeles. |
+| `color` | Token de color o hex (`text_accent` por defecto). |
+| `theme` | Tema. |
+
+```python
+ui.title_bar([pz.brand.mark(16), ui.label("Mi app")], [])
+```
+
+### `wordmark`
+
+```python
+wordmark(height=28, *, theme=None)
+```
+
+El logotipo «pyzed», con la pitón como su «p»; la versión oscura en temas oscuros.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `height` | Alto en píxeles. |
+| `theme` | Tema. |

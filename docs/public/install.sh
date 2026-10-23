@@ -123,7 +123,7 @@ Icon=$ID
 Terminal=false
 Categories=Development;IDE;GUIDesigner;
 MimeType=application/x-pyzed-form;application/x-pyzed-component;application/x-pyzed-shader;application/x-pyzed-animation;
-StartupWMClass=$APP
+StartupWMClass=$ID
 EOF
     cat > "$MIME_FILE" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>

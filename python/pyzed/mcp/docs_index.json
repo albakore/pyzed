@@ -775,6 +775,12 @@
    "path": "docs/src/content/docs/guides/designer.mdx"
   },
   {
+   "slug": "guides/devices",
+   "title": "Devices and screens",
+   "description": "Run one Pyzed app on desktops, touch panels, car displays, phones, kiosks and TVs: device profiles, design resolution, touch media queries and focus with the arrow keys.",
+   "path": "docs/src/content/docs/guides/devices.md"
+  },
+  {
    "slug": "guides/events",
    "title": "Events",
    "description": "The common events every Pyzed widget has (click, double click, drag, hover, focus, keys, resize) and how your Python handlers receive them.",
@@ -1941,7 +1947,7 @@
   {
    "slug": "theming/tokens",
    "title": "Theme tokens",
-   "description": "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in One Dark and One Light.",
+   "description": "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in Pyzed Dark and Pyzed Light.",
    "path": "docs/src/content/docs/theming/tokens.mdx"
   },
   {
@@ -2971,7 +2977,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.PYZED_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `arrow_focus` | `False` | The arrow keys no control used move the focus to the nearest control that way (remotes, rotary knobs). |\n| `device` | `None` | The device profile: a name (`\"touch\"`, `\"automotive\"`, `\"mobile\"`, `\"kiosk\"`, `\"tv\"`) or a `pz.Device`. See [Devices](/pyzed/guides/devices/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n| `rendering` | `None` | A [`Rendering`](#rendering): GPU or CPU, graphics API, GPU and vsync. `None` reads `[tool.pyzed.rendering]` of the project's `pyproject.toml`. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -3005,7 +3011,7 @@
     }
    },
    "pyzed.Window": {
-    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |\n| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |\n"
+    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. `fullscreen = \"exclusive\"` takes the screen over with its own video mode (Windows, X11, macOS). |\n| `monitor` | `None` | The screen it opens on: an index of `pz.monitors()`. |\n| `always_on_top`, `always_on_bottom` | `False` | `True` keeps it above (or below) the other windows. |\n| `closable`, `minimizable` | `True` | `False` removes those buttons. |\n| `skip_taskbar` | `False` | Leaves it out of the taskbar (Windows). |\n| `hide_cursor` | `False` | Hides the pointer over it (touch panels). |\n| `kiosk` | `False` | Fullscreen, no frame or buttons, above the rest, and the user cannot close it. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks). |\n| `design_size`, `stretch` | `None`, `\"expand\"` | Lays the view out for `design_size` and scales it to the window: `\"expand\"` grows into the space left, `\"fit\"` keeps the design centered. See [Design resolution](/pyzed/guides/devices/#design-resolution). |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |\n| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n| `isolated` | `False` | `True` promises that only its own messages change what it shows: messages from other windows and the app's timers skip its `view()`, layout and redraw. See [Many windows](/pyzed/guides/performance/#many-windows). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n| `refresh()` | Draws an `isolated` window again on the next update (safe from any thread). |\n| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Commands for fullscreen (on a screen, maybe exclusive) and for staying above or below the others. |\n| `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |\n"
    },
    "pyzed.Splash": {
     "desc": "A splash screen: a frameless window with an image, centered on the screen, shown while the app starts. Give it to `App.splash`; it stays up for `duration` seconds at least, then the main window opens and the splash closes. See [Splash screen](/pyzed/packaging/build/#splash-screen).",
@@ -3022,14 +3028,74 @@
     "example": "\n            class Shop(pz.App):\n                splash = pz.Splash(\"assets/splash.png\", duration=1.5, text=\"Loading…\")\n        "
    },
    "pyzed.Rendering": {
-    "desc": "How the app draws its windows: on the GPU or the CPU, which graphics API, which GPU and vsync. Each field is `\"auto\"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).",
+    "desc": "How the app draws its windows: on the GPU or the CPU, which graphics API and GPU, vsync, antialiasing and frame rate limits. Each field is `\"auto\"` by default (Pyzed decides). Give it to `App.rendering`, or set the same keys in `[tool.pyzed.rendering]` of the project's `pyproject.toml`, which `pz.run`, the designer and `pyzed build` read. See [Rendering](/pyzed/editor/settings/#rendering).",
     "params": {
      "renderer": "`\"auto\"`, `\"gpu\"` (needed by shaders) or `\"cpu\"` (tiny-skia: starts faster, less memory, works everywhere).",
      "gpu_api": "`\"auto\"`, `\"vulkan\"`, `\"metal\"`, `\"dx12\"` or `\"gl\"`.",
      "power": "`\"auto\"`, `\"high\"` (the dedicated GPU) or `\"low\"` (the integrated one, saves battery).",
-     "vsync": "`\"auto\"`, `\"on\"` (no tearing) or `\"off\"` (draws as fast as it can)."
+     "vsync": "`\"auto\"`, `\"on\"` (no tearing) or `\"off\"` (draws as fast as it can).",
+     "present": "How frames reach the screen, winning over `vsync`: `\"auto\"`, `\"fifo\"` (least power), `\"fifo_relaxed\"`, `\"mailbox\"` (low latency without tearing) or `\"immediate\"` (lowest latency, may tear).",
+     "antialiasing": "Edges of canvas drawings, charts and curves: `\"auto\"` (4x), `\"off\"`, `\"2x\"`, `\"4x\"`, `\"8x\"` or `\"16x\"`.",
+     "frame_latency": "Frames the GPU may prepare ahead: `\"auto\"` (1, answers input soonest), `\"1\"`, `\"2\"` or `\"3\"`.",
+     "memory": "`\"auto\"` (low), `\"low\"` or `\"performance\"`: how the GPU renderer allocates memory.",
+     "gpu": "Part of the name of the GPU to use (`\"nvidia\"`, `\"intel\"`); `\"\"` lets `power` decide.",
+     "max_fps": "The most frames per second animations draw (`0` follows the screen). Input and new content are drawn at once.",
+     "background_fps": "The same for windows without the focus: `0` pauses their animations, `None` uses `max_fps`."
     },
-    "example": "\n            class Game(pz.App):\n                rendering = pz.Rendering(renderer=\"gpu\", vsync=\"off\")\n        "
+    "example": "\n            class Game(pz.App):\n                rendering = pz.Rendering(renderer=\"gpu\", vsync=\"off\")\n\n            class Kiosk(pz.App):\n                rendering = pz.Rendering(max_fps=30, background_fps=0, antialiasing=\"off\")\n        "
+   },
+   "pyzed.safe_area": {
+    "desc": "The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`. On Android: the status and navigation bars, the camera cutout and the soft keyboard while it is open; zeros on a desktop. Windows keep clear of them unless `safe_area = False`."
+   },
+   "pyzed.monitors": {
+    "desc": "The connected screens as a list of `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (logical pixels on the desktop), `scale`, `refresh_rate` in hertz and `primary`. Read when a window opens (empty before the first one) and by `Command.list_monitors`.",
+    "example": "\n            class Rear(pz.Window):\n                monitor = 1\n                fullscreen = True\n\n            def on_start(self):\n                if len(pz.monitors()) > 1:\n                    return Rear().open()\n        "
+   },
+   "pyzed.Monitor": {
+    "desc": "A screen from `pz.monitors()`. `size` and `position` give `(width, height)` and `(x, y)`."
+   },
+   "pyzed.Device": {
+    "desc": "A device profile: how the device is used (touch, pointer, arrow keys) and drawn on (scale, design size, quality). Pyzed fills in the window and rendering options the app leaves at their defaults. See [Devices](/pyzed/guides/devices/).",
+    "params": {
+     "name": "Its name, for `pz.media(\"device: ...\")`.",
+     "touch": "Touched more than clicked: `pz.media(\"pointer: coarse\")` is true.",
+     "pointer": "`False` hides the pointer over the windows.",
+     "kiosk": "The main window opens as a kiosk.",
+     "fullscreen": "The main window opens fullscreen.",
+     "arrow_focus": "The arrow keys move the focus.",
+     "scale": "Interface scale of the windows that leave `scale` at 1.",
+     "min_target": "The smallest comfortable control in logical pixels.",
+     "design_size": "The window size the app was designed for.",
+     "stretch": "`\"expand\"`, `\"fit\"` or `\"none\"`.",
+     "quality": "`\"high\"`, `\"medium\"` or `\"low\"`: rendering defaults.",
+     "reduced_motion": "`True` turns animations off, `None` follows the system.",
+     "rendering": "`pz.Rendering` fields on top of the quality level."
+    },
+    "example": "\n            class Panel(pz.App):\n                device = pz.Device(\"panel\", touch=True, kiosk=True, quality=\"low\")\n        "
+   },
+   "pyzed.device": {
+    "desc": "The device profile the app runs with (`desktop` before `pz.run` picks one).",
+    "example": "\n            if pz.device().touch:\n                padding = 20\n        "
+   },
+   "pyzed.set_device": {
+    "desc": "Uses a profile from now on (a name or a `pz.Device`; `None` picks one again as `pz.run` does) and returns it.",
+    "params": {
+     "choice": "A profile name or a `pz.Device`."
+    }
+   },
+   "pyzed.background": {
+    "desc": "Makes a function return a command that runs it off the UI thread: on a worker thread (an `async def` on Pyzed's asyncio loop) or, with `process=True`, in another process. The result reaches `then` on the UI thread. See [Off the UI thread](/pyzed/guides/async/#off-the-ui-thread-pzbackground).",
+    "params": {
+     "function": "The function (used as `@pz.background` or `@pz.background(...)`).",
+     "then": "A callable, or the name of a method of the same object, that gets the result (each value of a generator); without it the result goes to `update`.",
+     "latest": "`True` delivers only the newest call's result (searches as you type).",
+     "process": "`True` runs it in a worker process, for CPU-heavy pure Python: a function at the top of a module, with picklable arguments and result."
+    },
+    "example": "\n            @pz.background(then=\"show\", latest=True)\n            def search(self, text):\n                return database.find(text)\n        "
+   },
+   "pyzed.renderer_info": {
+    "desc": "The GPU and the graphics API drawing the windows, like `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, or `(\"CPU\", \"tiny-skia\")` with the CPU renderer; `None` until the first window is open.",
+    "example": "\n            def on_start(self):\n                print(pz.renderer_info())\n        "
    },
    "pyzed.every": {
     "desc": "A subscription that sends `message` to `update` every `seconds` seconds (like Iced's `time::every`). If `message` is a callable, it is called. Return it from `subscriptions()`.",
@@ -3316,6 +3382,12 @@
    "pyzed.Command.focus_previous": {
     "desc": "Moves the keyboard focus to the previous field of the window (what Shift+Tab does)."
    },
+   "pyzed.Command.focus_direction": {
+    "desc": "Moves the keyboard focus to the nearest field that way on the screen (TV remotes, rotary knobs). `App.arrow_focus` does it with the arrow keys. See [Devices](/pyzed/guides/devices/#focus-with-the-arrow-keys).",
+    "params": {
+     "direction": "`\"up\"`, `\"down\"`, `\"left\"` or `\"right\"`."
+    }
+   },
    "pyzed.Command.select_all": {
     "desc": "Focuses the `text_input` with that `id` and selects all its text (typing replaces it).",
     "params": {
@@ -3497,10 +3569,32 @@
     }
    },
    "pyzed.Command.set_fullscreen": {
-    "desc": "Enters or leaves fullscreen.",
+    "desc": "Enters or leaves fullscreen, on a chosen screen and maybe exclusive. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks).",
     "params": {
-     "fullscreen": "`True` for fullscreen.",
+     "fullscreen": "`True` for fullscreen, `False` back to a window.",
+     "window": "The window (`pz.Window`). Without it, the one that produced the message.",
+     "monitor": "An index of `pz.monitors()`; `None` keeps the current screen.",
+     "exclusive": "`True` takes the screen over with its own video mode (lower latency on Windows and X11; Wayland keeps a borderless window)."
+    }
+   },
+   "pyzed.Command.set_window_level": {
+    "desc": "Keeps the window above or below the others.",
+    "params": {
+     "level": "`\"top\"`, `\"bottom\"` or `\"normal\"`.",
      "window": "The window (`pz.Window`). Without it, the one that produced the message."
+    }
+   },
+   "pyzed.Command.hide_cursor": {
+    "desc": "Hides the pointer over the window whatever the widgets ask (touch panels, kiosks).",
+    "params": {
+     "hidden": "`False` shows it again.",
+     "window": "The window (`pz.Window`). Without it, the one that produced the message."
+    }
+   },
+   "pyzed.Command.list_monitors": {
+    "desc": "Asks the system for its screens and calls `then(monitors)` with a list of `pz.Monitor` (also kept for `pz.monitors()`).",
+    "params": {
+     "then": "Called with the list."
     }
    },
    "pyzed.Command.resize_window": {
@@ -3854,7 +3948,8 @@
     "params": {
      "radius": "Corner radius.",
      "scale": "Scale.",
-     "size": "`(width, height)` when `source` is raw RGBA pixels."
+     "size": "`(width, height)` when `source` is raw RGBA pixels.",
+     "background": "Decode on a worker thread: `None` (the default) does it for files of 256 KB and up, `True` always, `False` never. Until it is ready the image shows nothing, so give it a `width` and `height` to keep its space."
     },
     "example": "pz.image(\"photo.jpg\", width=320, content_fit=\"cover\", radius=8)"
    },
@@ -5044,7 +5139,8 @@
     "desc": "An icon and/or text in the status bar (diagnostics, cursor position, language…).",
     "params": {
      "content": "Text.",
-     "tooltip": "Tooltip text."
+     "tooltip": "Tooltip text.",
+     "led": "Color token or hex of a small LED before it (`\"success\"` for a running server)."
     }
    },
    "pyzed.ui.panel": {
@@ -5590,6 +5686,49 @@
     },
     "example": "ui.diff_view({\"path\": \"main.py\", \"old\": \"x = 1\\n\", \"new\": \"x = 2\\n\"})"
    },
+   "pyzed.ui.led": {
+    "desc": "A round LED from Pyzed's brand: lit with a soft glow in the theme's `led` color (amber in the Pyzed themes) or dark in `led_off`.",
+    "params": {
+     "on": "Lit or not.",
+     "color": "Color token or hex instead of `led`.",
+     "size": "Diameter.",
+     "glow": "`False` draws it without the glow."
+    },
+    "example": "\n            pz.row([ui.led(self.recording), ui.label(\"REC\", mono=True)], spacing=6, align=\"center\")\n        "
+   },
+   "pyzed.ui.led_toggle": {
+    "desc": "A toggle that shows its state with an LED next to a small mono label in capitals, like the SNAP and GUIDES switches of Pyzed Design's canvas.",
+    "params": {
+     "label": "Text (shown in capitals).",
+     "on": "The state.",
+     "on_toggle": "Receives the new state.",
+     "color": "LED color token or hex.",
+     "tooltip": "Tooltip text.",
+     "keys": "Shortcut shown in the tooltip.",
+     "height": "Height."
+    },
+    "example": "\n            ui.led_toggle(\"Snap\", self.snap, lambda on: setattr(self, \"snap\", on))\n        "
+   },
+   "pyzed.ui.lcd": {
+    "desc": "An LCD readout: the parts in amber mono on the theme's `display` color, split by dim bars (`None` and `\"\"` are skipped).",
+    "params": {
+     "parts": "Texts or numbers.",
+     "size": "Text size.",
+     "height": "Height (`None` fits the text).",
+     "color": "Text color token or hex instead of `display_text`."
+    },
+    "example": "\n            ui.lcd(f\"{self.fps} FPS\", \"wgpu\")\n        "
+   },
+   "pyzed.ui.theme_rack": {
+    "desc": "Themes to pick from as a rack of modules: an LED lit on the current one, its name, eight swatches of its colors and a moon or a sun for dark and light. Pyzed Design's Settings use it.",
+    "params": {
+     "themes": "`Theme` objects (`pz.themes.all()`).",
+     "current": "Name of the current theme.",
+     "on_pick": "Called with the clicked theme's name.",
+     "columns": "Modules per row."
+    },
+    "example": "\n            ui.theme_rack(pz.themes.all(), self.theme.name, lambda name: setattr(self, \"theme\", name))\n        "
+   },
    "pyzed.ui.IconPicker": {
     "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",
     "params": {
@@ -5707,7 +5846,7 @@
     }
    },
    "pyzed.themes": {
-    "desc": "Namespace with the built-in themes (the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
+    "desc": "Namespace with the built-in themes (Pyzed's own and the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.PYZED_DARK` (the default), `themes.PYZED_LIGHT`, `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
    },
    "pyzed.themes.all": {
     "desc": "List of all built-in themes."
@@ -5808,6 +5947,22 @@
      "background": "Background color.",
      "light": "Light text.",
      "dark": "Dark text."
+    }
+   },
+   "pyzed.brand.mark": {
+    "desc": "Pyzed's mark (the python that draws the “p”) as an SVG widget tinted with a theme color.",
+    "params": {
+     "size": "Height in pixels.",
+     "color": "Color token or hex (`text_accent` by default).",
+     "theme": "Theme."
+    },
+    "example": "\n            ui.title_bar([pz.brand.mark(16), ui.label(\"My app\")], [])\n        "
+   },
+   "pyzed.brand.wordmark": {
+    "desc": "The “pyzed” wordmark, with the python as its “p”; the dark version on dark themes.",
+    "params": {
+     "height": "Height in pixels.",
+     "theme": "Theme."
     }
    },
    "pyzed.icons.icon": {

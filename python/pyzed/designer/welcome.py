@@ -8,10 +8,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from .. import __version__, _core, ui
+from .. import __version__, _core, brand, ui
 from .. import project as _project
 from ..icons import icon as _icon
-from ..theme import Theme
+from ..theme import Theme, alpha
 from . import samples as _samples
 from . import trust as _trust
 from . import workspace as _workspace
@@ -157,7 +157,7 @@ class Welcome:
 
 
 def _heading(text: str, t: Theme) -> Any:
-    return ui.label(tr(text).upper(), size="xs", weight="semibold", color="text_muted", theme=t)
+    return ui.label(tr(text).upper(), size="xs", weight="medium", mono=True, color="text_muted", theme=t)
 
 
 def _thumbnail(sample: Sample, root: Optional[Path], t: Theme, height: float = THUMB_HEIGHT) -> Any:
@@ -179,13 +179,22 @@ def _card(w: Welcome, sample: Sample, root: Optional[Path], t: Theme) -> Any:
         border_color=t.border_variant, border_width=1, radius=t.radius + 2)
 
 
+def _version_pill(t: Theme) -> Any:
+    """``v1.10.1`` in mono on a tint of the accent, like the brand's version tag."""
+    return _core.container(_core.text(f"v{__version__}", size=11, font="mono", weight="medium", color=t.text_accent,
+                                      wrap=False),
+                           padding=(1, 8), radius=999, bg=alpha(t.text_accent, 0.12),
+                           border_color=alpha(t.text_accent, 0.32), border_width=1.0)
+
+
 def _start(d: "Designer", t: Theme) -> Any:
     p = d.projects
     items: List[Any] = [
-        _core.row([_icon("layout-template", size=22, color=t.accent),
+        _core.row([_core.container(brand.mark(26, color="#ffffff", theme=t), width=40, height=40, center=True,
+                                   radius=10, bg=t.accent),
                    _core.column([ui.label("Pyzed Design", weight="semibold", theme=t),
-                                 ui.label(tr("Version {version}", version=__version__), size="xs",
-                                          color="text_muted", theme=t)])], spacing=10, align="center"),
+                                 ui.tooltip(_version_pill(t), tr("Version {version}", version=__version__), theme=t)],
+                                spacing=3)], spacing=10, align="center"),
         _core.space(height=8),
         _heading("Start", t),
         ui.list_item(tr("New project…"), p.show("new"), icon="folder-plus", height=28, theme=t),

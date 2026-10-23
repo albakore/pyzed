@@ -45,21 +45,26 @@ pz.run(MiApp)
 | Un nombre de tema | `"Gruvbox Light"` | Cualquier nombre de `pz.themes.names()`; no distingue mayúsculas. |
 | Un objeto `Theme` | `pz.themes.ONE_LIGHT`, o uno tuyo | Usa exactamente ese tema. |
 | `pz.themes.auto(claro, oscuro)` | `pz.themes.auto("One Light", "One Dark")` | Sigue el modo claro u oscuro del sistema operativo. |
-| `"auto"` | `"auto"` | Atajo de `auto("One Light", "One Dark")`. |
+| `"auto"` | `"auto"` | Atajo de `auto("Pyzed Light", "Pyzed Dark")`. |
+
+Una app que no fija tema usa **Pyzed Dark**, el tema de la marca Pyzed.
 
 ## Los temas incluidos
 
-Pyzed trae cuatro familias de temas, cada una con variantes claras y oscuras:
+Pyzed trae cinco familias de temas, cada una con variantes claras y oscuras:
 
 | Familia | Oscuros | Claros |
 | --- | --- | --- |
-| **One** (la predeterminada) | `One Dark` | `One Light` |
+| **Pyzed** (la predeterminada) | `Pyzed Dark` | `Pyzed Light` |
+| **One** | `One Dark` | `One Light` |
 | **Ayu** | `Ayu Dark`, `Ayu Mirage` | `Ayu Light` |
 | **Gruvbox** | `Gruvbox Dark`, `Gruvbox Dark Hard`, `Gruvbox Dark Soft` | `Gruvbox Light`, `Gruvbox Light Hard`, `Gruvbox Light Soft` |
-| **Pyzed** | `Pyzed Midnight`, `Pyzed Graphite`, `Pyzed Forest`, `Pyzed Rosé` | `Pyzed Dawn`, `Pyzed Glacier` |
+| **Paletas Pyzed** | `Pyzed Midnight`, `Pyzed Graphite`, `Pyzed Forest`, `Pyzed Rosé` | `Pyzed Dawn`, `Pyzed Glacier` |
 
-Las tres primeras son los temas del editor [Zed](https://zed.dev) (licencia MIT), cuya interfaz inspiró buena parte
-del aspecto de Pyzed. La familia Pyzed es propia: cada tema sale de una pequeña paleta con
+**Pyzed Dark** y **Pyzed Light** son los temas de la marca: superficies grafito en capas como un editor de código,
+índigo para el acento y ámbar reservado para LEDs y displays LCD (`ui.led`, `ui.lcd`). One, Ayu y Gruvbox son los
+temas del editor [Zed](https://zed.dev) (licencia MIT), cuya interfaz inspiró buena parte del aspecto de Pyzed. Las
+paletas Pyzed también son propias: cada tema sale de una pequeña paleta con
 `pyzed.theme_palettes.from_palette`, que puedes usar para hacer el tuyo (mira [Temas propios](/pyzed/es/theming/custom-themes/)). Lístalos desde Python:
 
 <Tabs syncKey="pkg">

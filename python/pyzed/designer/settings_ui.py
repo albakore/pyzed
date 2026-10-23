@@ -33,8 +33,9 @@ Options = Union[Sequence[Tuple[Any, str]], Callable[[], Sequence[Tuple[Any, str]
 class Setting:
     """One preference: ``section`` ("designer" or "editor") and ``key`` name its field, ``page`` where it shows.
 
-    ``kind`` is the control: "switch", "select", "segmented", "number" (``low``, ``high``, ``step``) or "font"
-    (``default`` names the default font). ``options`` lists ``(value, label)`` pairs, or returns them.
+    ``kind`` is the control: "switch", "select", "segmented", "number" (``low``, ``high``, ``step``), "font"
+    (``default`` names the default font) or "theme" (the rack of every theme, under the title). ``options`` lists
+    ``(value, label)`` pairs, or returns them.
     ``project`` says whether a project can set its own value.
     """
 
@@ -90,7 +91,7 @@ _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
 #: Every preference the dialog shows, page by page.
 SETTINGS: Tuple[Setting, ...] = (
     # general
-    Setting("designer", "theme", "general", "Theme", kind="select", options=_themes),
+    Setting("designer", "theme", "general", "Theme", kind="theme", options=_themes),
     Setting("designer", "language", "general", "Language", "Language of the designer's menus and panels",
             kind="select", options=_languages),
     Setting("designer", "show_toolbar", "general", "Toolbar"),
@@ -421,6 +422,12 @@ def row(c: SettingsController, s: Setting, t: Theme) -> Any:
     reset_tip = tr("Use the user's value") if scope == "project" else tr("Reset to default")
     reset = ui.icon_button("rotate-ccw", lambda: c.reset(s), size="sm", tooltip=reset_tip, theme=t) if modified \
         else _core.space(width=24)
+    if s.kind == "theme":  # the rack of themes, under its title
+        value = c.value(s) or t.name
+        return _core.column([
+            _core.row([_core.column([heading], width="fill"), reset], spacing=12, align="center"),
+            ui.theme_rack(themes.all(), value, lambda name: c.change(s, name), theme=t),
+        ], spacing=8)
     return _core.row([
         _core.column([heading, ui.label(tr(s.description), size="sm", color="text_muted", theme=t)
                       if s.description else None], spacing=2, width="fill"),
@@ -566,7 +573,7 @@ def _index(c: SettingsController, t: Theme) -> Any:
     for group, pages in PAGES:
         if group == "Project" and not has_project:
             continue
-        items.append(_core.container(ui.label(tr(group).upper(), size="xs", color="text_muted", theme=t),
+        items.append(_core.container(ui.label(tr(group).upper(), size="xs", mono=True, color="text_muted", theme=t),
                                      padding=(8, 8, 2, 8)))
         for key, title, icon in pages:
             count = sum(1 for s in SETTINGS if s.page == key and c.store.modified(
@@ -577,7 +584,8 @@ def _index(c: SettingsController, t: Theme) -> Any:
                                       theme=t))
     d = c.d
     items += [
-        _core.container(ui.label(tr("More").upper(), size="xs", color="text_muted", theme=t), padding=(8, 8, 2, 8)),
+        _core.container(ui.label(tr("More").upper(), size="xs", mono=True, color="text_muted", theme=t),
+                        padding=(8, 8, 2, 8)),
         ui.list_item(tr("Key bindings"), d.open_keymap, icon="keyboard", inset=True, height=28,
                      end=_icon("arrow-up-right", size=12, color=t.icon_muted), theme=t),
         ui.list_item(tr("AI agents"), d.agent.open_settings, icon="sparkles", inset=True, height=28,

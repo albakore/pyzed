@@ -47,6 +47,8 @@ CHROME_HEIGHT = 30.0
 MARGIN = 48.0
 HANDLE = 7.0
 GRIP_HEIGHT = 16.0
+#: The height of the name and size tag over the selected control.
+TAG_HEIGHT = 17.0
 #: Width of a chip in the component tray, and the gap between chips.
 TRAY_CHIP = 150.0
 TRAY_GAP = 6.0
@@ -103,6 +105,18 @@ def _handles(d: "Designer", rect: Tuple[float, float, float, float], t: Theme) -
                                               cursor=cursors.get(name, "crosshair")),
                              x=hx - HANDLE / 2, y=hy - HANDLE / 2))
     return out
+
+
+def size_tag(c: Any, rect: Tuple[float, float, float, float], t: Theme, *, right: bool = False) -> Any:
+    """The tag over the selected control with its name and size (``sign_in · 344 × 32``), above its top-left
+    corner (top-right with ``right``, where a container's grip tab sits on the left) or, at the top of the form,
+    below its bottom edge."""
+    x, y, w, h = rect
+    text = f"{c.name} · {w:g} × {h:g}"
+    tag = _core.container(_core.text(text, size=10, font="mono", weight="medium", color=t.on_accent, wrap=False),
+                          padding=(2, 6), radius=t.radius_sm, bg=t.accent)
+    left = x + w - (len(text) * 6.0 + 12) if right else x - 1  # pin places a point: the width is a guess
+    return _core.pin(tag, x=max(left, 0), y=y - TAG_HEIGHT - HANDLE if y >= TAG_HEIGHT + HANDLE else y + h + HANDLE)
 
 
 def grips(d: "Designer", rects: Optional[Dict[str, Tuple[float, float, float, float]]] = None) -> List[Tuple[str, float, float]]:
@@ -251,6 +265,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked \
             and not d.tab_order_mode:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
+    if len(selected) == 1 and not d.tab_order_mode:
+        gripped = any(name == selected[0].name for name, _x, _y in grips(d, rects))
+        layers.append(size_tag(selected[0], rects.get(selected[0].name, selected[0].rect), t, right=gripped))
     # 5. grip tabs on containers, above everything they hold
     shown_grips = d.shown_grips[id(doc)] = grips(d, rects)
     for name, gx, gy in shown_grips:
@@ -266,7 +283,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     for guide in d.guides:
         gx1, gy1, gx2, gy2 = guide
         layers.append(_core.pin(_core.container(width=max(gx2 - gx1, 1), height=max(gy2 - gy1, 1),
-                                                bg=t.color("error")), x=gx1, y=gy1))
+                                                bg=t.guide), x=gx1, y=gy1))
     if raised:  # centered at the top of the form (the width is a guess: pin needs a point)
         text = len(front) + len(tr("hidden until code shows it"))
         layers.append(_core.pin(hidden_chip(d, front, t), x=max((w - (text * 6.5 + 64)) / 2, 4), y=6))

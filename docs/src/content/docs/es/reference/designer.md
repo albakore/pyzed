@@ -120,7 +120,7 @@ Abre el diseñador visual, opcionalmente sobre un archivo `.pzform` (que se crea
 
 ```python
 @dataclass
-class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[])
+class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='Pyzed Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[])
 ```
 
 Una ventana diseñada visualmente: sus ajustes, sus controles (en orden z) y sus eventos.
@@ -1505,7 +1505,7 @@ Añade a la clase un método reutilizable (no un handler de evento); devuelve su
 
 ```python
 @dataclass
-class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[], label='', icon='component', category='Custom', description='', extends='', bindings={})
+class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='Pyzed Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', tab_order=[], label='', icon='component', category='Custom', description='', extends='', bindings={})
 ```
 
 El layout de un componente diseñado: un `Form` cuyo `name` es el nombre de la clase.
