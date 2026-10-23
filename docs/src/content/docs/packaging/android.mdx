@@ -1,0 +1,125 @@
+---
+title: Building for Android
+description: "Package a Pyzed app for Android phones: pyzed build --target android-arm64 makes an APK to install, or an AAB signed with your own key for Google Play. What it needs, the safe area, the soft keyboard and the back button."
+sidebar:
+  order: 5
+  badge:
+    text: Preview
+    variant: caution
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+`pyzed build --target android-arm64` makes `dist/shop.apk`, an app you install on a phone. Unlike the desktop
+builds, it works from **any** computer: Windows, macOS or Linux build the same APK.
+
+<Aside type="caution" title="A preview">
+Android support is new. File dialogs, the clipboard, audio devices and MIDI do not work on a phone yet, and packages
+with compiled code (NumPy, Pillow…) are left out, since the ones in your `.venv` are built for your computer.
+</Aside>
+
+## What you need
+
+- The **Android SDK** with build-tools and a platform. Android Studio installs it; with only the command line tools:
+
+  ```bash
+  sdkmanager "build-tools;36.0.0" "platforms;android-36"
+  ```
+
+  Then point `ANDROID_HOME` at it (Android Studio's default folders are found without it).
+- **Java** 17 or newer (`keytool`, and `jarsigner` for an AAB). Android Studio's own Java works.
+
+The first build downloads Python for Android (about 20 MB) and Pyzed's engine for Android from Pyzed's release, and
+keeps them in `~/.cache/pyzed/android`.
+
+## Build and try it
+
+<Steps>
+
+1. In the project folder:
+
+   ```bash
+   uv run pyzed build --target android-arm64
+   ```
+
+   `android-x64` builds for an emulator on a PC instead.
+
+2. Install it on a phone with USB debugging on:
+
+   ```bash
+   adb install -r dist/shop.apk
+   ```
+
+   Or copy the APK to the phone and open it (Android asks to allow apps from that source).
+
+</Steps>
+
+The APK is signed with the usual **debug key**: fine for trying it, not for Google Play.
+
+## Google Play: an AAB with your own key
+
+Google Play takes an Android App Bundle (`.aab`) signed with a key of yours. Make the key once and keep it safe
+(every update must be signed with it):
+
+```bash
+keytool -genkeypair -keystore release.jks -alias upload -keyalg RSA -validity 10000
+```
+
+Then set it in `pyproject.toml`:
+
+```toml
+[tool.pyzed.build.android]
+package = "com.acme.shop"    # the application id; it cannot change after the first upload
+format = "aab"
+keystore = "release.jks"
+key-alias = "upload"
+```
+
+The passwords stay out of the project: set them before building.
+
+```bash
+export PYZED_KEYSTORE_PASSWORD=...
+export PYZED_KEY_PASSWORD=...     # only if the key has its own
+uv run pyzed build --target android-arm64
+```
+
+In Pyzed Design, **File → Export app → Android** has the same settings and a **Build for Android** button.
+
+| Setting | What it does |
+| --- | --- |
+| `package` | The application id (default: the build's `identifier`). |
+| `abis` | `["arm64-v8a"]` for phones (the default); add `"x86_64"` for emulators. |
+| `format` | `"apk"` (the default) or `"aab"`. |
+| `version-code` | The number Google Play compares; default: made from the version (`1.2.3` → `1002003`). |
+| `keystore`, `key-alias` | The release key. Without it, the debug key. |
+| `min-sdk` | The oldest Android it installs on (default 26, Android 8). |
+
+## On the phone
+
+- **Safe area.** Windows keep their content clear of the status bar, the camera cutout, the navigation bar and the
+  soft keyboard. Set `safe_area = False` on a window to draw under them, and read `pz.safe_area()` (top, right,
+  bottom, left) to place things yourself.
+- **Soft keyboard.** It opens when an input gets the focus, and the window makes room for it.
+- **Back button.** It calls the window's `on_back()`. Return `False`, or leave it out, and the app goes to the
+  background, like any app on its first screen:
+
+  ```python
+  def on_back(self):
+      if self.page != "home":
+          self.page = "home"   # back goes to the first page
+          return None
+      return False             # on the first page, leave the app
+  ```
+
+- **Background.** Leaving the app and coming back keeps its state and draws it again.
+
+## When it does not start
+
+`print` and errors go to the system log:
+
+```bash
+adb logcat -s pyzed python.stdout python.stderr
+```
+
+Without `adb`, connect the phone over USB (file transfer) and open
+`Android/data/<package>/files/pyzed-log.txt`.

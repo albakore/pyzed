@@ -128,6 +128,8 @@ def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = Fal
     if workflow:
         print(f"Wrote {_build.workflow(project).relative_to(project.root).as_posix()}")
         return 0
+    if target is not None and target.startswith("android"):
+        return _build_android(project, target, name=name)
     here = _build.host_target(project)
     if target is not None and target != here.id:
         print(f"This computer builds {here.id}, not {target}: build {target} on its own system, or write a "
@@ -143,6 +145,26 @@ def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = Fal
     if code == 0:
         result = _build.output(project, opts)
         print(f"\nDone: {result} ({_build.human_size(_build.size_of(result))})")
+    return code
+
+
+def _build_android(project, target: str, *, name=None) -> int:
+    """``pyzed build --target android-arm64`` (or ``android-x64``, or ``android`` for the project's ABIs)."""
+    from . import android, build as _build
+
+    abis = None
+    if target != "android":
+        if target not in android.TARGET_ABIS:
+            print(f"Unknown target {target}: use android-arm64 (phones) or android-x64 (emulators)", file=sys.stderr)
+            return 2
+        abis = [android.TARGET_ABIS[target]]
+    opts = _build.BuildOptions.from_project(project, name=name)
+    print(f"Building {project.name} for Android…")
+    result = _build.build_android(project, opts, abis)
+    code = _report(result)
+    if code == 0:
+        out = _build.android_output(project, opts)
+        print(f"\nDone: {out} ({_build.human_size(_build.size_of(out))})")
     return code
 
 
@@ -292,7 +314,8 @@ def main(argv=None) -> int:
     p_check.add_argument("--fix", action="store_true", help="let ruff fix what it can")
     p_build = sub.add_parser("build", help="package the app for this platform (PyInstaller or Nuitka)")
     p_build.add_argument("--backend", choices=["pyinstaller", "nuitka"], help="the packager (default: pyproject.toml)")
-    p_build.add_argument("--target", help="the platform to build, which must be this computer's (e.g. linux-x64)")
+    p_build.add_argument("--target", help="the platform to build: this computer's (e.g. linux-x64), or android-arm64 "
+                                          "and android-x64 from any computer")
     p_build.add_argument("--archive", choices=["zip", "tar.gz"], help="also pack the app in an archive")
     p_build.add_argument("--onefile", action="store_true", default=None, help="a single executable file")
     p_build.add_argument("--console", action="store_true", help="keep the console window")
