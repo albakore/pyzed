@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from .. import _core, _platform, ui
-from ..app import App
+from ..app import App, renderer_info
 from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
@@ -3103,11 +3103,18 @@ class Designer(App):
         return start, end
 
     def title_display(self, t) -> Any:
-        """The title bar's LCD: the renderer and the interface size (a click goes back to 100%)."""
-        renderer = "tiny-skia" if "tiny" in os.environ.get("ICED_BACKEND", "").lower() else "wgpu"
+        """The title bar's LCD: the graphics API drawing the window (or CPU) and the interface size; a click goes
+        back to 100%."""
+        info = renderer_info()  # None until the window is open (and in screenshots)
+        if info is not None:
+            renderer = "cpu" if info[0] == "CPU" else info[1].lower()
+            tip = f"{info[0]} · {info[1]}"
+        else:
+            renderer = "tiny-skia" if "tiny" in os.environ.get("ICED_BACKEND", "").lower() else "wgpu"
+            tip = renderer
         return ui.tooltip(_core.button(ui.lcd(renderer, f"{self.scale * 100:.0f}%", size=11, height=22, theme=t),
                                        lambda: self.zoom_ui(0), padding=0, bg="transparent", radius=t.radius_sm),
-                          tr("Renderer and interface size (a click goes back to 100%)"),
+                          f"{tip}: " + tr("Renderer and interface size (a click goes back to 100%)"),
                           keys=_keymap.shown_keys("reset_ui_zoom"), theme=t)
 
     def set_designer_theme(self, name: str) -> None:
