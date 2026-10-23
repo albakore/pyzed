@@ -27,12 +27,13 @@ env:
 
 jobs:
   changes:
-    # Lint and the MSRV build only look at Rust, and nothing but the changelog runs for docs-only
-    # changes. git diff sees every changed file, however many there are.
+    # Lint and the MSRV build only look at Rust, Lint Python at the .py files, and nothing but the
+    # changelog runs for docs-only changes. git diff sees every changed file, however many there are.
     name: Changed files
     runs-on: ubuntu-latest
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
+      python: ${{ steps.filter.outputs.python }}
       code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@v7
@@ -42,6 +43,7 @@ jobs:
         run: >-
           python3 scripts/ci_changes.py "$BASE" HEAD
           'rust=src/**,Cargo.toml,Cargo.lock,.github/workflows/ci.yml'
+          'python=*.py,pyproject.toml,.github/workflows/ci.yml'
           'code=!docs/**,!**.md,!.github/ISSUE_TEMPLATE/**,!.github/workflows/docs.yml,!.github/workflows/pr-title.yml'
           | tee -a "$GITHUB_OUTPUT"
 
@@ -70,6 +72,20 @@ jobs:
         run: cargo clippy --target aarch64-linux-android -- -D warnings
         env:
           PYO3_CROSS_PYTHON_VERSION: "3.13"
+
+  ruff:
+    # Mistakes in the Python code (undefined or unused names, bugbear): the rules are in pyproject.toml.
+    name: Lint Python
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m pip install ruff==0.16.9
+      - run: ruff check --output-format=github .
 
   msrv:
     # Keep in sync with `rust-version` in Cargo.toml: catches syntax that

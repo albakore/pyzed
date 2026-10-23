@@ -22,7 +22,7 @@ rotation and scale turn around)::
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Sequence, Tuple
 
 Rect = Tuple[float, float, float, float]
 

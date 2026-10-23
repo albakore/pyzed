@@ -30,7 +30,7 @@ import calendar as _calendar
 import inspect
 import datetime as _dt
 import re
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
 
 from .. import _core
 from .. import i18n as _i18n
@@ -38,7 +38,7 @@ from ..component import Component
 from ..i18n import t as _t
 from ..icons import icon as _icon
 from ..theme import Theme, alpha as _alpha, current as _current_theme
-from .base import icon_button, label
+from .base import icon_button
 
 __all__ = [
     "FORMATS", "TIME_FORMATS", "WEEK_STARTS", "Calendar", "DatePicker", "DateRangePicker", "TimePicker",

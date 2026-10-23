@@ -13,7 +13,6 @@ code, so the designer and the code stay the same thing.
 
 from __future__ import annotations
 
-import ast
 import time
 import types
 from pathlib import Path

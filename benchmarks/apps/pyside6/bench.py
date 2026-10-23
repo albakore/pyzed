@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from benchkit import FOOTER, H, ROWS, TICK, W, A, Driver, color, hexc, label  # noqa: E402
+from benchkit import FOOTER, H, ROWS, TICK, W, A, Driver, color, label  # noqa: E402
 
 from PySide6.QtCore import QTimer  # noqa: E402
 from PySide6.QtGui import QColor, QPalette  # noqa: E402

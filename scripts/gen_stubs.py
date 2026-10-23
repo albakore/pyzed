@@ -73,7 +73,6 @@ def klass(name: str, cls) -> str:
         out.append(text)
     body = []
     if "__init__" in vars(cls) or "__new__" in vars(cls) or getattr(cls, "__text_signature__", None):
-        init = vars(cls).get("__new__") or vars(cls).get("__init__") or cls
         body.append(f"    def __init__(self, {params(cls)}) -> None: ...\n".replace("(self, )", "(self)"))
     for attr, value in sorted(vars(cls).items()):
         if attr.startswith("_"):

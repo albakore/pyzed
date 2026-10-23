@@ -48,7 +48,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 from . import _core
 from . import style as _style
