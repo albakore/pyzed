@@ -42,6 +42,7 @@ sys.path.insert(0, str(HERE))
 import gen_api
 import library_data
 import library_events
+import library_sidebar
 import pyzed
 from pyzed import events as pz_events
 from pyzed import ui
@@ -928,6 +929,8 @@ def main() -> int:
                 path = labels["out"] / file
                 if not path.exists() or path.read_text(encoding="utf-8") != content:
                     issues.append(f"[{lang}] {path.relative_to(DOCS)} is out of date (run gen_library.py)")
+        if library_sidebar.stale():
+            issues.append(f"{library_sidebar.OUT.relative_to(DOCS.parent.parent.parent)} is out of date (run gen_library.py)")
         for issue in issues:
             print(issue)
         variants = sum(variant_count(e) for e in library_data.COMPONENTS)
@@ -944,6 +947,7 @@ def main() -> int:
         for file, content in pages.items():
             (out / file).write_text(content, encoding="utf-8")
         print(f"[{lang}] wrote {len(pages)} pages to {out}")
+    library_sidebar.write()
     return 0
 
 
