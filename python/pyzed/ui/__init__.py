@@ -82,6 +82,7 @@ from .overlays import (
 )
 from .system import DropZone, file_input
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
+from .instruments import lcd, led, led_toggle, theme_rack
 from . import audio, camera, rack  # noqa: E402, F401  (namespaces: ui.audio.Knob, ui.camera.Webcam, ui.rack.Rack)
 
 __all__ = [
@@ -217,4 +218,8 @@ __all__ = [
     "virtual_list",
     "TreeNode",
     "workspace",
+    "lcd",
+    "led",
+    "led_toggle",
+    "theme_rack",
 ]

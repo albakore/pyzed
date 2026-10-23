@@ -105,6 +105,7 @@ from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
 from . import accessibility, animation, animation_player, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
+from . import brand
 
 # Loaded on first use, so ``import pyzed`` stays fast (an app that never opens the designer
 # or reads the reference doesn't pay for them). ``pz.Dock`` and ``from pyzed import Dock``
@@ -387,6 +388,7 @@ __all__ = [
     "tooltip",
     "validation_errors",
     "ui",
+    "brand",
     "vertical_slider",
     "viewport",
     "virtual_column",

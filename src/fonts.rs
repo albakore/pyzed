@@ -10,6 +10,7 @@ const BUNDLED: &[&[u8]] = &[
     include_bytes!("../assets/fonts/IBMPlexSans-Regular.ttf"),
     include_bytes!("../assets/fonts/IBMPlexSans-Medium.ttf"),
     include_bytes!("../assets/fonts/IBMPlexSans-SemiBold.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSans-Bold.ttf"),
     include_bytes!("../assets/fonts/IBMPlexMono-Regular.ttf"),
     include_bytes!("../assets/fonts/IBMPlexMono-Medium.ttf"),
     include_bytes!("../assets/fonts/lucide.ttf"),
