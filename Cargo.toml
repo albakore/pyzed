@@ -92,17 +92,17 @@ strip = true
 # `iced_winit::quiet`, the Android handoff) and the community pull requests listed in its PYZED.md.
 # To update it, push to the `pyzed-0.14` branch of albakore/iced and bump `rev` here.
 [patch.crates-io]
-iced = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_core = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_debug = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_futures = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_graphics = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_program = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_renderer = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_runtime = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_selector = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_test = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_wgpu = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_widget = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
-iced_winit = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_core = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_debug = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_futures = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_graphics = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_program = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_renderer = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_runtime = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_selector = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_test = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_wgpu = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_widget = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }
+iced_winit = { git = "https://github.com/albakore/iced", rev = "e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2" }

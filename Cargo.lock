@@ -1798,7 +1798,7 @@ checksum = "62adaabb884c94955b19907d60019f4e145d091c75345379e70d1ee696f7854f"
 [[package]]
 name = "iced"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_core",
  "iced_debug",
@@ -1814,7 +1814,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "bitflags 2.13.2",
  "bytes",
@@ -1831,7 +1831,7 @@ dependencies = [
 [[package]]
 name = "iced_debug"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_core",
  "iced_futures",
@@ -1841,7 +1841,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "futures",
  "iced_core",
@@ -1854,7 +1854,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",
@@ -1875,7 +1875,7 @@ dependencies = [
 [[package]]
 name = "iced_program"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_graphics",
  "iced_runtime",
@@ -1884,7 +1884,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -1896,7 +1896,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "bytes",
  "iced_core",
@@ -1908,7 +1908,7 @@ dependencies = [
 [[package]]
 name = "iced_selector"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_core",
 ]
@@ -1916,7 +1916,7 @@ dependencies = [
 [[package]]
 name = "iced_test"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_futures",
  "iced_program",
@@ -1934,7 +1934,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -1951,7 +1951,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",
@@ -1972,7 +1972,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.14.2"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_renderer",
  "log",
@@ -1987,7 +1987,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=837eb891428b5228cfe8fc3fc5c680eaa1a0a721#837eb891428b5228cfe8fc3fc5c680eaa1a0a721"
+source = "git+https://github.com/albakore/iced?rev=e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2#e3333dba8e7be6b25f4e436e6f308a9cc04f3bd2"
 dependencies = [
  "iced_core",
  "iced_debug",
