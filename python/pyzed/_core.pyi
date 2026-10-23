@@ -622,6 +622,9 @@ def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any
     - `on_end()`: The button is released after a drag.
     """
     ...
+def set_crash_file(path: Any = ...) -> Any:
+    """Writes the panics of the native core to the end of ``path`` (``None`` stops it)."""
+    ...
 def set_fonts(ui: Any = ..., code: Any = ...) -> Any:
     """Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`
     goes back to IBM Plex Sans and Mono. Takes effect on the next frame.

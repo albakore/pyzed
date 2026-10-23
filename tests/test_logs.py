@@ -325,3 +325,22 @@ def test_status_bar_counts_errors(app):
 
 def test_readonly_editor_in_the_core():
     assert _core.code_editor("ro", "text", readonly=True) is not None
+
+
+def test_a_crash_of_the_last_session_is_reported(app, monkeypatch):
+    folder = logs.logs_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / logs.CRASH_FILE).write_text("Pyzed 1.9.0 panicked in thread 'main' at src/render.rs:1:1:\nboom\n")
+    app.logs.install(file=True)
+    try:
+        assert "boom" in app.logs.last_crash
+        assert (folder / logs.PREVIOUS_CRASH_FILE).read_text().endswith("boom\n")
+        assert (folder / logs.CRASH_FILE).read_text() == ""  # this session writes its own crashes there
+        assert any("closed unexpectedly" in e.text for e in app.logs.log.entries)
+        monkeypatch.setattr(app.agent, "on_start", lambda: None)
+        monkeypatch.setattr(app.updates, "on_start", lambda: [])
+        app.on_start()
+        assert any(t.kind == "warning" and "unexpectedly" in t.title for t in app.toasts)
+    finally:
+        app.logs.uninstall()
+    assert app.logs._crash is None

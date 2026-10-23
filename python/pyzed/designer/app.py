@@ -295,6 +295,10 @@ class Designer(App):
         """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
         computer when the app starts; returns the commands."""
         self._log_startup()
+        if self.logs.last_crash:
+            self.notify(tr("Pyzed Design closed unexpectedly last time"),
+                        tr("The details are in {path} and in the Logs panel",
+                           path=_logs.logs_dir() / _logs.PREVIOUS_CRASH_FILE), kind="warning", seconds=10, log=False)
         self.agent.on_start()
         return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
                 if c is not None]

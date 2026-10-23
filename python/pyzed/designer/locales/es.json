@@ -2491,6 +2491,8 @@
   "Remove the binding": "Quitar el enlace",
   "What it is for": "Para qué sirve",
   "Hide the settings": "Ocultar los ajustes",
-  "Name, type and access": "Nombre, tipo y acceso"
+  "Name, type and access": "Nombre, tipo y acceso",
+  "Pyzed Design closed unexpectedly last time": "Pyzed Design se cerró inesperadamente la última vez",
+  "The details are in {path} and in the Logs panel": "Los detalles están en {path} y en el panel Logs"
  }
 }
