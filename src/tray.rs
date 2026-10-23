@@ -43,6 +43,10 @@ pub(crate) struct Rgba {
 }
 
 /// Everything a tray icon shows.
+#[cfg_attr(
+    not(any(target_os = "linux", target_os = "windows", target_os = "macos")),
+    allow(dead_code)
+)]
 pub(crate) struct Spec {
     tooltip: String,
     title: String,
@@ -125,6 +129,10 @@ fn dot() -> Rgba {
 }
 
 /// Hands an event of a tray icon to its Python callback.
+#[cfg_attr(
+    not(any(target_os = "linux", target_os = "windows", target_os = "macos")),
+    allow(dead_code)
+)]
 fn emit(on_event: &Py<PyAny>, event: &str, value: Option<&str>) {
     Python::attach(|py| {
         if let Err(err) = on_event.call1(py, (event, value)) {
