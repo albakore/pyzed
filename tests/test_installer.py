@@ -172,7 +172,9 @@ def test_windows_swap_script_stops_a_program_running_from_the_app_folder(tmp_pat
     (new / "pyzed-design.exe").write_text("new")
     helper = old / "helper.exe"
     shutil.copy2(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "PING.EXE", helper)
-    busy = subprocess.Popen([str(helper), "-n", "120", "127.0.0.1"], stdout=subprocess.DEVNULL)
+    # started in the folder: its working directory keeps the folder from moving until it is stopped (a
+    # running program alone does not always, so the move could win the race and skip the stop)
+    busy = subprocess.Popen([str(helper), "-n", "120", "127.0.0.1"], stdout=subprocess.DEVNULL, cwd=old)
     try:
         monkeypatch.setattr(updater, "SWAP_TRIES", 15)
         done = _windows_swap(tmp_path, monkeypatch)
