@@ -277,3 +277,23 @@ def test_designer_stops_its_processes_before_an_update(monkeypatch):
     monkeypatch.setattr(app.agent, "shutdown", lambda: stopped.append("agents"))
     app.stop_children()
     assert stopped == ["language servers", "run", "agents"]
+
+
+def test_designer_logs_how_long_it_took_to_open(monkeypatch):
+    """The Logs panel says how long the window took and how much passed before the designer's code ran (a slow
+    first start after installing is the antivirus scanning the new files, not something compiling)."""
+    from pyzed import _platform
+    from pyzed.designer import app as designer_app
+    from pyzed.designer.app import Designer
+
+    lines = []
+    monkeypatch.setattr(designer_app._logs, "event", lambda kind, message, *args: lines.append(message % args))
+    app = Designer(language_servers=False)
+    app.started = designer_app.time.perf_counter() - 2.0
+    monkeypatch.setattr(_platform, "process_age", lambda: 5.0)
+    app._log_startup()
+    monkeypatch.setattr(_platform, "process_age", lambda: None)
+    app._log_startup()
+    assert lines[0] == "Pyzed Design opened in 5.0 s (3.0 s before its code started)"
+    assert lines[1].startswith("Pyzed Design opened in 2.0 s")
+    assert _platform.process_age() is None or _platform.process_age() >= 0

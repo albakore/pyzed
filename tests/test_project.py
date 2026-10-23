@@ -253,6 +253,35 @@ def test_commands_open_no_console_window(tmp_path, monkeypatch):
     assert seen[1]["start_new_session"] == (sys.platform != "win32")
 
 
+def test_uv_moves_its_pythons_when_windows_cannot_open_them(tmp_path, monkeypatch):
+    """Windows 11 may refuse uv's Python junctions in %APPDATA% (os error 448): uv's Pythons move to a folder of
+    Pyzed's, the .venv made with the unreadable one is remade and the command runs again."""
+    monkeypatch.setattr(project.sys, "platform", "win32")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    demo = _write_project(tmp_path / "demo")
+    demo.venv.mkdir()
+    (demo.venv / "pyvenv.cfg").write_text(
+        "home = C:\\Users\\me\\AppData\\Roaming\\uv\\python\\cpython-3.12-windows-x86_64-none\n")
+    calls = []
+
+    def run(args, cwd=None, *, timeout=None):
+        calls.append(project._clean_env().get("UV_PYTHON_INSTALL_DIR"))
+        if len(calls) == 1:
+            return project.Result(list(args), 2, "error: La ruta no se puede recorrer (os error 448)")
+        return project.Result(list(args), 0, "")
+
+    monkeypatch.setattr(project, "execute", run)
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")
+    assert demo.uv("add", "pyzed-ui>=1.9.0").ok
+    assert calls == [None, str(project.python_install_dir())]
+    assert project.python_install_dir().is_dir() and not demo.venv.exists()
+    # from then on uv uses that folder, and an error 448 that moving can't fix is reported as it is
+    calls.clear()
+    monkeypatch.setattr(project, "execute",
+                        lambda *a, **k: calls.append(1) or project.Result(["uv"], 2, "os error 448"))
+    assert not demo.uv("sync").ok and calls == [1]
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups")
 def test_terminate_stops_the_processes_a_run_started(tmp_path):
     """Stopping ``uv run`` also stops the Python it started, so the next run starts clean."""

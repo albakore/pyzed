@@ -206,10 +206,14 @@ def main() -> int:
     apps = oauth_apps(work)
     if apps:
         command += ["--paths", str(apps.parent), "--hidden-import", apps.stem]
-    # the Agent panel's optional dependencies (Claude's SDK and the system keychain), when installed
+    # the Agent panel's optional dependencies (Claude's SDK and the system keychain), when installed: their
+    # modules compiled into the archive like the rest, without the sources ``--collect-all`` would add next to them
+    # (some 2,400 .py files the app never reads, that only make the download, the install and the antivirus's
+    # first scan slower)
     for package in ("anthropic", "keyring"):
         if importlib.util.find_spec(package):
-            command += ["--collect-all", package]
+            command += ["--collect-submodules", package, "--collect-data", package, "--collect-binaries", package,
+                        "--copy-metadata", package]
     if icon.exists():
         command += ["--icon", str(icon)]
     if sys.platform == "darwin":

@@ -163,12 +163,27 @@ def install_uv() -> Result:
     return execute(["sh", "-c", UV_INSTALL["posix"]], timeout=300)
 
 
+#: Windows' ``ERROR_UNTRUSTED_MOUNT_POINT``. Recent Windows 11 builds refuse to follow some junctions, such as the
+#: one uv makes for each Python minor version in ``%APPDATA%\uv\python`` (``cpython-3.12-windows-x86_64-none``):
+#: then every uv command that needs that Python fails with this error.
+UNTRUSTED_MOUNT = "os error 448"
+
+
+def python_install_dir() -> Path:
+    """Where uv keeps its Pythons for Pyzed once uv's own folder failed with ``UNTRUSTED_MOUNT`` (Windows only):
+    a folder this app makes itself, so its links are trusted. It is used from then on while it exists."""
+    base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+    return Path(base) / "pyzed" / "python"
+
+
 def _clean_env() -> Dict[str, str]:
     env = dict(os.environ)
     # uv warns when an unrelated environment is active; the project's own .venv is used anyway.
     env.pop("VIRTUAL_ENV", None)
     env.setdefault("UV_NO_PROGRESS", "1")
     env.setdefault("NO_COLOR", "1")
+    if sys.platform == "win32" and python_install_dir().is_dir():
+        env["UV_PYTHON_INSTALL_DIR"] = str(python_install_dir())
     return env
 
 
@@ -207,6 +222,41 @@ def execute(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Opt
     except OSError as err:
         return Result(args, 126, str(err))
     return Result(args, done.returncode, done.stdout.strip())
+
+
+def _stale_venv(venv: Path) -> bool:
+    """Whether ``venv`` was made with a uv Python outside ``python_install_dir()`` (the one Windows won't open)."""
+    try:
+        cfg = (venv / "pyvenv.cfg").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    found = re.search(r"^home\s*=\s*(.+?)\s*$", cfg, re.M)
+    if not found or "cpython-" not in found.group(1).lower():
+        return False
+    return not found.group(1).lower().startswith(str(python_install_dir()).lower())
+
+
+def execute_uv(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None,
+               venv: Optional[Path] = None) -> Result:
+    """Runs uv (``args[0]``) like ``execute``. On Windows, when uv can't open its Python (``UNTRUSTED_MOUNT``),
+    moves uv's Pythons to ``python_install_dir()``, remakes the project's ``venv`` if it was made with the
+    unreadable one, and runs the command again."""
+    result = execute(args, cwd, timeout=timeout)
+    if sys.platform != "win32" or UNTRUSTED_MOUNT not in result.output:
+        return result
+    changed = False
+    if not python_install_dir().is_dir():
+        try:
+            python_install_dir().mkdir(parents=True)
+            changed = True
+        except OSError:
+            return result
+    if venv is not None and _stale_venv(venv):
+        shutil.rmtree(venv, ignore_errors=True)  # uv sync makes it again with the Python of the new folder
+        changed = not venv.exists() or changed
+    if not changed:
+        return result
+    return execute(args, cwd, timeout=timeout)
 
 
 def _version(path: Optional[str]) -> Optional[str]:
@@ -853,7 +903,9 @@ class Project:
     def uv(self, *args: str, timeout: Optional[float] = None) -> Result:
         """Runs ``uv <args>`` in the project folder."""
         try:
-            return self._exec([self._uv_command(), *args], timeout=timeout)
+            if self.environment.remote:
+                return self._exec([self._uv_command(), *args], timeout=timeout)
+            return execute_uv([self._uv_command(), *args], self.root, timeout=timeout, venv=self.venv)
         except FileNotFoundError as err:
             return Result(["uv", *args], 127, str(err))
 
@@ -1021,7 +1073,7 @@ class Project:
         where = self.environment
         if where.remote and not self.served_from_wsl:  # the variables cross into WSL on the command line
             extra = {k: v for k, v in env.items() if k in ("PYTHONUNBUFFERED", "UV_NO_PROGRESS", "NO_COLOR")
-                     or k.startswith("PYZED") or os.environ.get(k) != v}
+                     or k.startswith("PYZED") or os.environ.get(k) != v and k != "UV_PYTHON_INSTALL_DIR"}
             return subprocess.Popen(where.command(args, self.root, extra), env=_clean_env(), creationflags=NO_WINDOW,
                                     **pipes)
         return subprocess.Popen(args, cwd=str(self.root), env=env, creationflags=NO_WINDOW,
@@ -1151,7 +1203,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
         if where.remote:  # a folder of WSL opened from Windows: the project is made by Linux's uv, like its .venv
             result = execute(where.command(["uv", *args, str(root)], root, {"UV_NO_PROGRESS": "1"}), timeout=300)
         else:
-            result = execute([_uv(), *args, str(root)], root)
+            result = execute_uv([_uv(), *args, str(root)], root)
         if not result.ok:
             raise RuntimeError(result.output or "uv init failed")
     project = Project.open(root)
