@@ -16,6 +16,43 @@ stable version.
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-10-23
+
+### Highlights
+
+- **Apps for Android**: `pyzed build --target android-arm64` (or `android-x64`) packs a project as an APK or an AAB signed with a release key, also from the Export dialog. Apps keep clear of the system bars, the camera cutout and the keyboard, and handle the back button.
+- **An Agent panel like Zed's**: one thread for every agent with reasoning, tool calls as lines or cards, editable messages with Restore Checkpoint and messages queued while the agent works.
+- **A sturdier Pyzed Design**: it asks about unsaved changes on close, explains failed exports, writes crashes to `crash.log`, runs untrusted projects in restricted mode and fixes uv's os error 448 on Windows.
+- **Iced with the community's work**: Pyzed now builds on its own fork of Iced 0.14 with 81 community pull requests.
+
+### Features
+
+- ✨ System tray icons with a tooltip and a menu, without GTK: `pz.TrayIcon` and a Tray icon component in the designer's System category. PR [#194](https://github.com/albakore/pyzed/pull/194) by [@albakore](https://github.com/albakore).
+- ✨ The Agent panel looks and works like Zed's: one thread model for every agent, reasoning as thinking blocks, tool calls as lines or cards, editable title, Restore Checkpoint, turn stats and queued messages. PR [#198](https://github.com/albakore/pyzed/pull/198) by [@albakore](https://github.com/albakore).
+- ✨ Pyzed Design writes its crashes to `crash.log` and tells you on the next start. PR [#199](https://github.com/albakore/pyzed/pull/199) by [@albakore](https://github.com/albakore).
+- ✨ Android: windows wait for the activity, keep clear of the system bars, cutout and keyboard (`safe_area`, `pz.safe_area()`), `on_back()` handles the back button, and `pyzed build --target android-arm64`/`android-x64` makes signed APKs and AABs, also from the Export dialog. PR [#201](https://github.com/albakore/pyzed/pull/201) by [@albakore](https://github.com/albakore).
+- ✨ Edit the tab order on the canvas, step the z-order (Ctrl+] / Ctrl+[), find and replace in the whole project (Ctrl+Shift+F / Ctrl+Shift+H), and restricted mode for projects you have not trusted yet. PR [#200](https://github.com/albakore/pyzed/pull/200) by [@albakore](https://github.com/albakore).
+- ⚡️ Pyzed Design opens faster and tells how long it took in the Logs panel, and downloaded updates are read once before the restart so the new version opens sooner. PR [#197](https://github.com/albakore/pyzed/pull/197) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 uv no longer fails with os error 448 on recent Windows 11 builds: Pyzed moves uv's Pythons to a readable folder and remakes the project's `.venv`; the app bundle is lighter too. PR [#195](https://github.com/albakore/pyzed/pull/195) by [@albakore](https://github.com/albakore).
+- 🐛 A form run from the designer no longer fails with a flush error when it closes in the installed app. PR [#196](https://github.com/albakore/pyzed/pull/196) by [@albakore](https://github.com/albakore).
+- 🐛 Pyzed Design asks about unsaved changes when it closes, shows why an export failed and translates the texts that still showed in English. PR [#199](https://github.com/albakore/pyzed/pull/199) by [@albakore](https://github.com/albakore).
+- 🐛 Tab moves the focus in forms run from the designer. PR [#200](https://github.com/albakore/pyzed/pull/200) by [@albakore](https://github.com/albakore).
+
+### Upgrades
+
+- ⬆️ Iced comes from Pyzed's fork (0.14 with Pyzed's changes and 81 community pull requests, pinned by commit); `vendor/` is gone. PR [#193](https://github.com/albakore/pyzed/pull/193) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Building for Android (en, es) and updated known limitations. PR [#199](https://github.com/albakore/pyzed/pull/199) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 CI lints the Python code with ruff. PR [#199](https://github.com/albakore/pyzed/pull/199) by [@albakore](https://github.com/albakore).
+
 ## [1.9.0] - 2026-10-22
 
 ### Highlights

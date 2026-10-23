@@ -1603,6 +1603,12 @@
    "path": "docs/src/content/docs/library/workspace.mdx"
   },
   {
+   "slug": "packaging/android",
+   "title": "Building for Android",
+   "description": "Package a Pyzed app for Android phones: pyzed build --target android-arm64 makes an APK to install, or an AAB signed with your own key for Google Play. What it needs, the safe area, the soft keyboard and the back button.",
+   "path": "docs/src/content/docs/packaging/android.mdx"
+  },
+  {
    "slug": "packaging/build",
    "title": "How building works",
    "description": "How pyzed build packages a Pyzed project as a standalone app with PyInstaller or Nuitka: what gets bundled, every option in pyproject.toml, icons, splash screen, data files and the output on each platform.",
@@ -3747,7 +3753,8 @@
      "keys": "The combos it takes (by default Space, Enter, the arrows, Home and End); `\"*\"` takes every key. Tab is left to move the focus.",
      "ring_color": "Color of the focus ring (none by default).",
      "ring_radius": "Corner radius of the ring.",
-     "ring_offset": "Pixels between the control and the ring."
+     "ring_offset": "Pixels between the control and the ring.",
+     "tab_index": "Its place (and that of every field inside it) in the order Tab moves the focus in: lower numbers first, then the fields without one, in the order they are drawn. Works without `on_key` too."
     },
     "example": "pz.focusable(stars, lambda combo: self.rate(+1 if combo == \"right\" else -1), keys=[\"left\", \"right\"], ring_color=\"#528bff\")"
    },
