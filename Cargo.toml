@@ -1,6 +1,6 @@
 [package]
 name = "pyzed"
-version = "1.10.0"
+version = "1.10.1"
 edition = "2024"
 rust-version = "1.88"
 description = "Fast, modern GUIs for Python powered by Iced"

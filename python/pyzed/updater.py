@@ -318,9 +318,14 @@ tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >N
 if exist {old} rmdir /S /Q {old}
 rem A file of the old app can stay in use for a while (an antivirus scan, a child process still ending): retry.
 set tries=0
+set "PYZED_APP={app}"
+set "PYZED_EXE={exe}"
 :swap
 move {target} {old} >NUL && goto moved
 set /a tries+=1
+rem A program started from the app folder keeps it in use (the bundled uv run by another app, a helper
+rem left running...): after a few tries, say which and stop it.
+if %tries% EQU {free_after} {free}
 if %tries% GEQ {tries} (echo The app folder is still in use: the update was not installed. & {fail})
 ping -n 2 127.0.0.1 >NUL
 goto swap
@@ -333,6 +338,19 @@ rem deletes this script without cmd then failing to read its next line ("The bat
 """
 #: How many seconds (about) the Windows swap waits for the app folder to be free.
 SWAP_TRIES = 30
+#: After how many failed tries the Windows swap stops the programs still running from the app folder.
+FREE_AFTER = 3
+#: Lists (in the log) every process whose program is inside the app folder (``PYZED_APP``) and stops those
+#: that are not another window of this app (``PYZED_EXE``), which may have unsaved work: those are only named.
+_FREE_FOLDER = (
+    "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \""
+    "$d = $env:PYZED_APP.TrimEnd('\\') + '\\'; "
+    "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and "
+    "$_.ExecutablePath.StartsWith($d, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { "
+    "if ($_.Name -ieq $env:PYZED_EXE) { 'Another ' + $_.Name + ' (' + $_.ProcessId + ') is open: close it' } "
+    "else { 'Stopping ' + $_.Name + ' (' + $_.ProcessId + '), still running from the app folder'; "
+    "Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }\""
+)
 
 
 def _fresh_environment() -> Dict[str, str]:
@@ -378,7 +396,8 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         # when the swap fails the old version starts again (the updater then tells what happened)
         fail = f"{launch} & exit /b 1" if launch else "exit /b 1"
         text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch,
-                                      keep=kept, tries=SWAP_TRIES, fail=fail)
+                                      keep=kept, tries=SWAP_TRIES, fail=fail, free_after=FREE_AFTER,
+                                      free=_FREE_FOLDER, app=target, exe=exe_name)
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
         # A hidden console, not DETACHED_PROCESS: without one, each tasklist/find/ping the script runs while
