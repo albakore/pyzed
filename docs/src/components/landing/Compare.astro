@@ -98,7 +98,7 @@ const marks = ['yes', 'partial', 'no'] as const;
 		color: var(--sl-color-white);
 	}
 	.ours {
-		background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+		background: var(--pz-brand-tint);
 	}
 	thead .ours {
 		color: var(--pz-accent-text);
@@ -113,17 +113,17 @@ const marks = ['yes', 'partial', 'no'] as const;
 	}
 	td.yes .mark,
 	.legend .yes {
-		color: #3fa66b;
+		color: var(--pz-green);
 	}
 	td.yes .mark {
-		background: color-mix(in srgb, #3fa66b 16%, transparent);
+		background: color-mix(in srgb, var(--pz-green) 16%, transparent);
 	}
 	td.partial .mark,
 	.legend .partial {
-		color: #c0841a;
+		color: var(--pz-led-text);
 	}
 	td.partial .mark {
-		background: color-mix(in srgb, #c0841a 16%, transparent);
+		background: color-mix(in srgb, var(--pz-led) 16%, transparent);
 	}
 	td.no .mark,
 	.legend .no {

@@ -1,0 +1,196 @@
+---
+// The home page hero, laid out like the brand landing: the latest release, the title, the tagline and the
+// actions on the left; the install command on an amber display (like the FPS readout of the designer) on
+// the right. Pages without `hero` in their frontmatter never render it.
+import { LinkButton } from '@astrojs/starlight/components';
+import release from '../generated/release.json';
+
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, actions = [] } = data.hero || {};
+const es = Astro.currentLocale === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const stable = release.latestStable?.version;
+const t = es
+	? { new: 'Nuevo', out: `Pyzed ${stable} ya está disponible`, install: 'Instalar', copy: 'Copiar comando', copied: 'Copiado', note: 'Libre y de código abierto · Python 3.10+ · uv o pip' }
+	: { new: 'New', out: `Pyzed ${stable} is out`, install: 'Install', copy: 'Copy command', copied: 'Copied', note: 'Free and open source · Python 3.10+ · uv or pip' };
+const command = 'pip install pyzed-ui';
+---
+
+<div class="pz-hero">
+	<div class="copy">
+		{
+			stable && (
+				<a class="release" href={`${base}${es ? '/es' : ''}/changelog/`}>
+					<span class="badge">{t.new}</span>
+					{t.out} <span aria-hidden="true">→</span>
+				</a>
+			)
+		}
+		<h1 id="_top" data-page-title set:html={title} />
+		{tagline && <div class="tagline" set:html={tagline} />}
+		{
+			actions.length > 0 && (
+				<div class="actions">
+					{actions.map(({ attrs: { class: className, ...attrs } = {}, icon, link: href, text, variant }) => (
+						<LinkButton {href} {variant} icon={icon?.name} iconPlacement={variant === 'primary' || !variant ? 'start' : 'end'} class:list={[className]} {...attrs}>
+							{text}
+						</LinkButton>
+					))}
+				</div>
+			)
+		}
+	</div>
+	<div class="install">
+		<span class="label">{t.install}</span>
+		<div class="lcd">
+			<code><span class="prompt">$ </span>{command}</code>
+			<button type="button" class="copy-button" aria-label={t.copy} data-command={command} data-copied={t.copied}>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+			</button>
+		</div>
+		<span class="note">{t.note}</span>
+	</div>
+</div>
+
+<script>
+	for (const button of document.querySelectorAll<HTMLButtonElement>('.pz-hero .copy-button')) {
+		button.addEventListener('click', async () => {
+			await navigator.clipboard?.writeText(button.dataset.command ?? '');
+			const label = button.getAttribute('aria-label') ?? '';
+			button.setAttribute('aria-label', button.dataset.copied ?? label);
+			button.classList.add('done');
+			setTimeout(() => {
+				button.setAttribute('aria-label', label);
+				button.classList.remove('done');
+			}, 1500);
+		});
+	}
+</script>
+
+<style>
+	.pz-hero {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 2rem 3rem;
+		padding-block: clamp(2rem, 1rem + 6vmin, 4.5rem) 2.5rem;
+	}
+	.copy {
+		flex: 1 1 32rem;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.4rem;
+	}
+	.release {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+		border-radius: 999px;
+		border: 1px solid var(--pz-border);
+		background: var(--pz-surface);
+		color: var(--pz-muted);
+		font-size: var(--sl-text-xs);
+		text-decoration: none;
+	}
+	.release:hover {
+		border-color: var(--pz-brand-line);
+		color: var(--sl-color-white);
+	}
+	.badge {
+		padding: 0.1rem 0.5rem;
+		border-radius: 999px;
+		background: var(--pz-brand-solid);
+		color: var(--pz-on-brand);
+		font: 500 0.6875rem var(--sl-font-mono);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+	h1 {
+		margin: 0;
+		font-size: clamp(2.5rem, 1rem + 4.6vw, 4.5rem);
+		line-height: 1.02;
+		letter-spacing: -0.035em;
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.tagline {
+		max-width: 39rem;
+		font-size: clamp(var(--sl-text-base), 0.9rem + 0.5vw, 1.1875rem);
+		line-height: 1.6;
+		color: var(--pz-muted);
+	}
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.625rem;
+	}
+	.actions :global(.sl-link-button) {
+		margin: 0;
+		font-size: 0.9375rem;
+		padding: 0.75rem 1.25rem;
+	}
+	.actions :global(.sl-link-button.minimal) {
+		color: var(--pz-muted);
+		padding-inline: 1rem;
+	}
+	.install {
+		flex: 0 1 22.5rem;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
+	}
+	.label {
+		font: 500 0.75rem var(--sl-font-mono);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--pz-muted);
+	}
+	.lcd {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		height: 3rem;
+		padding: 0 0.5rem 0 1rem;
+		border-radius: 0.625rem;
+		background: var(--pz-lcd);
+		border: 1px solid var(--pz-lcd-line);
+	}
+	.lcd code {
+		font: 500 0.875rem var(--sl-font-mono);
+		color: var(--pz-lcd-text);
+		background: none;
+		border: 0;
+		padding: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.prompt {
+		color: var(--pz-lcd-dim);
+	}
+	.copy-button {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 0.45rem;
+		border: 1px solid var(--pz-lcd-line);
+		background: transparent;
+		color: var(--pz-lcd-text);
+		cursor: pointer;
+	}
+	.copy-button:hover,
+	.copy-button.done {
+		border-color: var(--pz-lcd-text);
+	}
+	.note {
+		font-size: var(--sl-text-xs);
+		color: var(--pz-muted);
+	}
+</style>

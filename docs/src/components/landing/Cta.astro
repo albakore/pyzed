@@ -1,6 +1,8 @@
 ---
-// The closing call to action: a gradient panel with buttons (the slot can hold extra text).
+// The closing call to action, like the brand landing: the app icon, the title and the text on a rack-colored
+// panel, the buttons on the right (the slot can hold extra text).
 import { LinkButton } from '@astrojs/starlight/components';
+import Mark from '../brand/Mark.astro';
 
 interface Props {
 	title: string;
@@ -12,8 +14,13 @@ const { title, primary, secondary, command } = Astro.props;
 ---
 
 <section class="pz-cta not-content">
-	<h2>{title}</h2>
-	<div class="lead"><slot /></div>
+	<div class="intro">
+		<span class="app-icon"><Mark size="4.25rem" /></span>
+		<div>
+			<h2>{title}</h2>
+			<div class="lead"><slot /></div>
+		</div>
+	</div>
 	<div class="actions">
 		<LinkButton href={primary.href} icon="download" iconPlacement="start">{primary.text}</LinkButton>
 		{
@@ -23,36 +30,53 @@ const { title, primary, secondary, command } = Astro.props;
 				</LinkButton>
 			)
 		}
+		{command && <code class="command"><span class="prompt">$ </span>{command}</code>}
 	</div>
-	{command && <code class="command">{command}</code>}
 </section>
 
 <style>
 	.pz-cta {
-		position: relative;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 2rem;
 		margin-block: 6rem 2rem !important;
-		padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem);
-		border-radius: 1.25rem;
-		text-align: center;
-		overflow: hidden;
-		border: 1px solid var(--pz-frame-border);
-		background:
-			radial-gradient(60% 120% at 15% 0%, color-mix(in srgb, #61afef 28%, transparent), transparent 70%),
-			radial-gradient(60% 120% at 85% 100%, color-mix(in srgb, #c678dd 26%, transparent), transparent 70%),
-			var(--pz-tile-bg);
+		padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3.5vw, 2.5rem);
+		border-radius: 1.125rem;
+		border: 1px solid var(--pz-border);
+		background: var(--pz-rack);
+	}
+	.intro {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		flex: 1 1 28rem;
+		min-width: 0;
+	}
+	.app-icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 5.5rem;
+		height: 5.5rem;
+		border-radius: 1.375rem;
+		background: var(--pz-brand-solid);
+		color: var(--pz-on-brand);
+		box-shadow: 0 12px 30px rgb(91 80 240 / 0.35);
 	}
 	h2 {
 		margin: 0;
-		font-size: clamp(var(--sl-text-2xl), 1rem + 2.4vw, var(--sl-text-5xl));
-		line-height: 1.1;
+		font-size: clamp(var(--sl-text-2xl), 1rem + 1.6vw, 2.25rem);
+		line-height: 1.15;
+		letter-spacing: -0.025em;
 		font-weight: 700;
 		color: var(--sl-color-white);
 	}
 	.lead {
-		max-width: 36rem;
-		margin: 1rem auto 0;
-		font-size: var(--sl-text-lg);
-		color: var(--sl-color-gray-2);
+		margin-top: 0.5rem;
+		font-size: var(--sl-text-base);
+		color: var(--pz-muted);
 	}
 	.lead :global(p) {
 		margin: 0;
@@ -60,19 +84,28 @@ const { title, primary, secondary, command } = Astro.props;
 	.actions {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: center;
-		gap: 1rem;
-		margin-top: 1.75rem;
+		align-items: center;
+		gap: 0.625rem;
+	}
+	.actions :global(.sl-link-button) {
+		margin: 0;
 	}
 	.command {
-		display: inline-block;
-		margin-top: 1.5rem;
-		padding: 0.45rem 0.9rem;
+		flex-basis: 100%;
+		padding: 0.55rem 0.9rem;
 		border-radius: 0.5rem;
-		font-family: var(--sl-font-mono);
-		font-size: var(--sl-text-sm);
-		color: var(--sl-color-white);
-		background: color-mix(in srgb, var(--sl-color-black) 70%, transparent);
-		border: 1px solid var(--pz-frame-border);
+		font: 500 var(--sl-text-sm) var(--sl-font-mono);
+		color: var(--pz-lcd-text);
+		background: var(--pz-lcd);
+		border: 1px solid var(--pz-lcd-line);
+	}
+	.prompt {
+		color: var(--pz-lcd-dim);
+	}
+	@media (max-width: 40rem) {
+		.intro {
+			flex-direction: column;
+			align-items: flex-start;
+		}
 	}
 </style>

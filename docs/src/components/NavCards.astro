@@ -78,8 +78,7 @@ const soon = Astro.currentLocale === 'es' ? 'Próximamente' : 'Coming soon';
 	}
 	a.pz-nav-card:hover,
 	a.pz-nav-card:focus-visible {
-		border-color: color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
-		box-shadow: 0 10px 30px -14px color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+		border-color: var(--pz-brand-line);
 		transform: translateY(-2px);
 	}
 	.soon {
@@ -99,9 +98,8 @@ const soon = Astro.currentLocale === 'es' ? 'Próximamente' : 'Coming soon';
 		width: 2.25rem;
 		height: 2.25rem;
 		border-radius: 0.6rem;
-		color: var(--pz-accent-text);
-		background: color-mix(in srgb, var(--sl-color-accent) 15%, transparent);
-		border: 1px solid color-mix(in srgb, var(--sl-color-accent) 32%, transparent);
+		color: var(--pz-brand);
+		background: var(--pz-brand-tint);
 	}
 	.soon .icon {
 		color: var(--sl-color-gray-3);
@@ -121,7 +119,7 @@ const soon = Astro.currentLocale === 'es' ? 'Próximamente' : 'Coming soon';
 	.title {
 		margin-top: 0.3rem;
 		font-size: var(--sl-text-lg);
-		font-weight: 650;
+		font-weight: 600;
 		line-height: 1.3;
 		color: var(--sl-color-white);
 	}

@@ -1,5 +1,6 @@
 ---
-// The big screenshot under the landing hero, with a glow and floating highlights.
+// The big screenshot under the landing hero, with a deep shadow and floating LED chips (like the SNAP and
+// GUIDES toggles of the designer).
 import Shot from './Shot.astro';
 
 interface Props {
@@ -14,13 +15,15 @@ const { name, light, alt, tags = [] } = Astro.props;
 ---
 
 <div class="pz-hero-shot not-content">
-	<div class="pz-hero-glow" aria-hidden="true"></div>
 	<Shot name={name} light={light} alt={alt} eager sizes="(min-width: 72rem) 67rem, 100vw" />
 	{
 		tags.length > 0 && (
 			<ul class="pz-hero-tags" aria-hidden="true">
 				{tags.map((tag, i) => (
-					<li class={`tag-${i}`}>{tag}</li>
+					<li class={`tag-${i}`}>
+						<span class="pz-led" />
+						{tag}
+					</li>
 				))}
 			</ul>
 		)
@@ -30,21 +33,11 @@ const { name, light, alt, tags = [] } = Astro.props;
 <style>
 	.pz-hero-shot {
 		position: relative;
-		isolation: isolate;
-		margin-block: 1rem 0 !important;
-	}
-	.pz-hero-glow {
-		position: absolute;
-		inset: -4% 4% 10%;
-		z-index: -1;
-		background: var(--pz-glow-strong);
-		filter: blur(70px);
-		opacity: 0.7;
+		margin-block: 0.5rem 0 !important;
 	}
 	.pz-hero-shot :global(.pz-shot) {
-		border-radius: 1rem;
-		transform: perspective(2400px) rotateX(4deg);
-		transform-origin: 50% 0;
+		border-radius: 0.875rem;
+		box-shadow: var(--pz-shadow);
 	}
 	.pz-hero-tags {
 		display: none;
@@ -58,14 +51,17 @@ const { name, light, alt, tags = [] } = Astro.props;
 		}
 		.pz-hero-tags li {
 			position: absolute;
-			padding: 0.4rem 0.85rem;
-			border-radius: 999px;
-			font-size: var(--sl-text-sm);
-			font-weight: 600;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			padding: 0.35rem 0.75rem;
+			border-radius: 0.4rem;
+			font: 500 0.75rem var(--sl-font-mono);
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
 			color: var(--sl-color-white);
-			background: color-mix(in srgb, var(--sl-color-black) 78%, transparent);
-			border: 1px solid var(--pz-frame-border);
-			backdrop-filter: blur(8px);
+			background: var(--pz-panel);
+			border: 1px solid var(--pz-border);
 			box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
 			animation: pz-float 6s ease-in-out infinite;
 		}

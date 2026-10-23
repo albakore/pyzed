@@ -1,0 +1,29 @@
+---
+// The Pyzed wordmark: the python "p" followed by "yzed" in IBM Plex Sans Bold. The font size sets its
+// size; the "p" takes the accent color and the letters the text color.
+import Mark from './Mark.astro';
+
+interface Props {
+	class?: string;
+}
+---
+
+<span class:list={['pz-wordmark', Astro.props.class]} translate="no">
+	<Mark variant="p" /><span class="sr-only">p</span>yzed
+</span>
+
+<style>
+	.pz-wordmark {
+		font-weight: 700;
+		letter-spacing: -0.045em;
+		line-height: 1;
+		white-space: nowrap;
+	}
+	.pz-wordmark :global(.pz-mark) {
+		width: 0.547em;
+		height: 0.711em;
+		vertical-align: -0.164em;
+		margin-inline-end: 0.02em;
+		color: var(--pz-brand);
+	}
+</style>

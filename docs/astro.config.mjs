@@ -3,6 +3,8 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { ExpressiveCodeTheme } from '@astrojs/starlight/expressive-code';
 import mermaid from 'astro-mermaid';
 import starlightSidebarTopics from 'starlight-sidebar-topics';
 
@@ -231,6 +233,10 @@ function lastModified() {
 }
 const modified = lastModified();
 
+/** The code colors of the brand (src/styles/code), dark "Graphite" and light "Paper". */
+const codeTheme = (name) =>
+	ExpressiveCodeTheme.fromJSONString(readFileSync(new URL(`./src/styles/code/${name}.json`, import.meta.url), 'utf8'));
+
 // Pages that moved to their own section: old URLs keep working (see contributing/docs.md).
 const MOVED = {
 	'guides/shaders': 'shading/shaders',
@@ -303,8 +309,8 @@ export default defineConfig({
 				...verification,
 				{ tag: 'meta', attrs: { name: 'author', content: 'albakore and the Pyzed contributors' } },
 				{ tag: 'meta', attrs: { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' } },
-				{ tag: 'meta', attrs: { name: 'theme-color', content: '#181a1f', media: '(prefers-color-scheme: dark)' } },
-				{ tag: 'meta', attrs: { name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#0d0e11', media: '(prefers-color-scheme: dark)' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#f6f7f9', media: '(prefers-color-scheme: light)' } },
 				{ tag: 'meta', attrs: { name: 'application-name', content: 'Pyzed' } },
 				{ tag: 'link', attrs: { rel: 'manifest', href: '/pyzed/manifest.webmanifest' } },
 				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/pyzed/apple-touch-icon.png' } },
@@ -323,6 +329,7 @@ export default defineConfig({
 			],
 			components: {
 				Header: './src/components/Header.astro',
+				Hero: './src/components/Hero.astro',
 				PageTitle: './src/components/PageTitle.astro',
 				SiteTitle: './src/components/SiteTitle.astro',
 				Footer: './src/components/Footer.astro',
@@ -334,9 +341,9 @@ export default defineConfig({
 				}),
 			],
 			expressiveCode: {
-				themes: ['one-dark-pro', 'one-light'],
+				themes: [codeTheme('pyzed-graphite'), codeTheme('pyzed-paper')],
 				styleOverrides: {
-					borderRadius: '0.7rem',
+					borderRadius: '0.75rem',
 					borderColor: 'var(--pz-frame-border)',
 					codeFontFamily: 'var(--__sl-font-mono)',
 					codePaddingBlock: '1rem',

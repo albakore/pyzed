@@ -1,0 +1,27 @@
+---
+// The Pyzed mark, inline so it takes the color of the text around it (`color`).
+// variant: "mark" (head with eyes), "plain" (no eyes, for 16 px) or "p" (the "p" of the wordmark).
+import { BODY, HEAD, HEAD_PLAIN, WORDMARK_P } from './glyphs';
+
+interface Props {
+	variant?: 'mark' | 'plain' | 'p';
+	size?: string;
+	label?: string;
+	class?: string;
+}
+const { variant = 'mark', size = '1.5rem', label, class: className } = Astro.props;
+const paths = variant === 'p' ? WORDMARK_P : [BODY, variant === 'plain' ? HEAD_PLAIN : HEAD];
+const viewBox = variant === 'p' ? '20 4 80 104' : '0 0 120 120';
+---
+
+<svg
+	class:list={['pz-mark', className]}
+	viewBox={viewBox}
+	style={variant === 'p' ? undefined : `width: ${size}; height: ${size}`}
+	role={label ? 'img' : undefined}
+	aria-label={label}
+	aria-hidden={label ? undefined : 'true'}
+	fill="currentColor"
+>
+	{paths.map((d) => <path d={d} fill-rule="evenodd" />)}
+</svg>

@@ -3,8 +3,8 @@ title: Pyzed
 description: "Pyzed is an open-source Python frontend framework for native desktop apps: GPU rendering in Rust with Iced, 90+ components, a drag-and-drop visual designer, themes, node-based shaders, packaging for Windows, macOS and Linux and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt."
 template: splash
 hero:
-  title: The Python frontend framework for <span class="pz-gradient-text">desktop&nbsp;apps</span>
-  tagline: Design your interface visually or in code, style it with themes and GPU shaders, and ship it to Windows, macOS and Linux. Pure Python, drawn natively by Rust. Inspired by the UI of the Zed editor and by Godot, Unreal Engine, Visual Basic and Qt Designer; mobile and web are on the roadmap.
+  title: The Python framework for <span class="pz-gradient-text">desktop&nbsp;apps</span>.
+  tagline: Design the interface by dragging or in code, style it with themes and GPU shaders, and ship it to Windows, macOS and Linux. Pure Python, rendered natively by Rust with Iced. Inspired by the Zed editor, Godot, Unreal Engine, Visual Basic and Qt Designer.
   actions:
     - text: Download Pyzed Design
       link: /pyzed/download/
@@ -20,7 +20,6 @@ hero:
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
-import LatestRelease from '../../components/LatestRelease.astro';
 import HeroShot from '../../components/landing/HeroShot.astro';
 import Stats from '../../components/landing/Stats.astro';
 import SectionTitle from '../../components/landing/SectionTitle.astro';
@@ -32,8 +31,6 @@ import Gallery from '../../components/landing/Gallery.astro';
 import Compare from '../../components/landing/Compare.astro';
 import NavCards from '../../components/NavCards.astro';
 import Media from '../../components/Media.astro';
-
-<LatestRelease />
 
 <HeroShot
 	name="editor/form-view"
@@ -52,7 +49,7 @@ import Media from '../../components/Media.astro';
 	]}
 />
 
-<SectionTitle id="sections" eyebrow="Explore" title="Everything Pyzed covers">
+<SectionTitle n={1} id="sections" eyebrow="Explore" title="Everything Pyzed covers">
 	Pyzed is a library, a visual designer and a set of tools around them. Jump straight to the part you need.
 </SectionTitle>
 
@@ -71,7 +68,7 @@ import Media from '../../components/Media.astro';
 	]}
 />
 
-<SectionTitle id="features" eyebrow="Features" title="Everything you need to build a desktop app">
+<SectionTitle n={2} id="features" eyebrow="Features" title="Everything you need to build a desktop app">
 	From the first sketch to the executable you ship: a visual designer, a component system, a code editor that
 	knows your project, and a modern UI toolkit with themes and dark mode.
 </SectionTitle>
@@ -243,7 +240,7 @@ import Media from '../../components/Media.astro';
 	- Per-window themes and accent colors
 </Feature>
 
-<SectionTitle id="effects" eyebrow="Effects & game-style UIs" title="Interfaces that glow">
+<SectionTitle n={3} id="effects" eyebrow="Effects & game-style UIs" title="Interfaces that glow">
 	Pyzed draws on the GPU, so a Python app can look like a modern game: frosted **glass** with real backdrop
 	blur, **bloom** that spills light from bright parts, transparency, rotation and your own WGSL **shaders**.
 </SectionTitle>
@@ -301,7 +298,7 @@ import Media from '../../components/Media.astro';
 	- **Django**'s async ORM, **httpx** and **Pydantic**, **aiosqlite** and more
 </Feature>
 
-<SectionTitle id="why" eyebrow="Why Pyzed" title="A Python GUI for a new generation">
+<SectionTitle n={4} id="why" eyebrow="Why Pyzed" title="A Python GUI for a new generation">
 	tkinter, Kivy and PyQt made Python desktop apps possible. Pyzed makes them look and feel like the tools you
 	use every day, and is honest about where the others still win.
 </SectionTitle>
@@ -344,7 +341,7 @@ import Media from '../../components/Media.astro';
 	]}
 />
 
-<SectionTitle id="more" eyebrow="And much more" title="Batteries included">
+<SectionTitle n={5} id="more" eyebrow="And much more" title="Batteries included">
 	The details that turn a prototype into an app people enjoy using.
 </SectionTitle>
 
@@ -422,7 +419,7 @@ import Media from '../../components/Media.astro';
 	]}
 />
 
-<SectionTitle id="code" eyebrow="Code first, too" title="An app in 20 lines">
+<SectionTitle n={6} id="code" eyebrow="Code first, too" title="An app in 20 lines">
 	Prefer to write everything by hand? Pyzed is a regular Python library. This is a complete app:
 </SectionTitle>
 
@@ -459,7 +456,7 @@ pz.run(Counter)
 
 </CodeShowcase>
 
-<SectionTitle id="learn" eyebrow="Learn" title="Explore the docs">
+<SectionTitle n={7} id="learn" eyebrow="Learn" title="Explore the docs">
 	Pick a starting point.
 </SectionTitle>
 

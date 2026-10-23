@@ -71,23 +71,23 @@ const { id, eyebrow, title, icon, shot, light, alt, overlay, overlayAlt = '', re
 	.pz-eyebrow {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.45rem;
-		margin: 0 0 0.6rem;
-		font-size: var(--sl-text-sm);
-		font-weight: 600;
-		letter-spacing: 0.04em;
+		gap: 0.5rem;
+		margin: 0 0 0.75rem;
+		font: 500 0.75rem var(--sl-font-mono);
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		color: var(--pz-accent-text);
+		color: var(--pz-brand);
 	}
 	h2 {
 		margin: 0 0 1rem;
-		font-size: clamp(var(--sl-text-2xl), 1.2rem + 1.6vw, var(--sl-text-4xl));
+		font-size: clamp(var(--sl-text-2xl), 1.2rem + 1.4vw, 2.25rem);
 		line-height: 1.15;
-		font-weight: 650;
+		letter-spacing: -0.025em;
+		font-weight: 700;
 		color: var(--sl-color-white);
 	}
 	.pz-feature-body {
-		color: var(--sl-color-gray-2);
+		color: var(--pz-muted);
 		font-size: var(--sl-text-base);
 		line-height: 1.65;
 	}
@@ -98,41 +98,38 @@ const { id, eyebrow, title, icon, shot, light, alt, overlay, overlayAlt = '', re
 		font-size: 0.875em;
 		padding: 0.1em 0.35em;
 		border-radius: 0.3em;
-		background: var(--sl-color-gray-6);
+		background: var(--pz-raised);
 		color: var(--sl-color-white);
 	}
+	/* The list reads like the numbered rows of the brand landing: amber mono numbers in a bordered box. */
 	.pz-feature-body :global(ul) {
 		list-style: none;
 		padding: 0;
 		margin: 0 0 1.25rem;
-		display: grid;
-		gap: 0.55rem;
+		border: 1px solid var(--pz-border);
+		border-radius: 0.75rem;
+		overflow: hidden;
+		counter-reset: pz-feature;
 	}
 	.pz-feature-body :global(li) {
 		position: relative;
-		padding-inline-start: 1.6rem;
+		margin: 0;
+		padding: 0.7rem 1rem 0.7rem 3.1rem;
+		font-size: var(--sl-text-sm);
+		line-height: 1.55;
+		background: var(--pz-surface);
+		counter-increment: pz-feature;
+	}
+	.pz-feature-body :global(li + li) {
+		border-top: 1px solid var(--pz-border);
 	}
 	.pz-feature-body :global(li)::before {
-		content: '';
+		content: counter(pz-feature, decimal-leading-zero);
 		position: absolute;
-		inset-inline-start: 0;
-		top: 0.35em;
-		width: 1rem;
-		height: 1rem;
-		border-radius: 50%;
-		background: color-mix(in srgb, var(--sl-color-accent) 22%, transparent);
-		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sl-color-accent) 55%, transparent);
-	}
-	.pz-feature-body :global(li)::after {
-		content: '';
-		position: absolute;
-		inset-inline-start: 0.33rem;
-		top: calc(0.35em + 0.25rem);
-		width: 0.3rem;
-		height: 0.5rem;
-		border: solid var(--pz-accent-text);
-		border-width: 0 2px 2px 0;
-		transform: rotate(45deg);
+		inset-inline-start: 1rem;
+		top: 0.8rem;
+		font: 500 0.75rem var(--sl-font-mono);
+		color: var(--pz-led-text);
 	}
 	.pz-feature-body :global(strong) {
 		color: var(--sl-color-white);
@@ -154,15 +151,6 @@ const { id, eyebrow, title, icon, shot, light, alt, overlay, overlayAlt = '', re
 		position: relative;
 		isolation: isolate;
 	}
-	.pz-feature-media::before {
-		content: '';
-		position: absolute;
-		inset: 8% 6%;
-		background: var(--pz-glow);
-		filter: blur(48px);
-		opacity: 0.55;
-		z-index: -1;
-	}
 	.has-overlay .pz-feature-media {
 		padding-block-end: 2.5rem;
 	}
@@ -171,7 +159,7 @@ const { id, eyebrow, title, icon, shot, light, alt, overlay, overlayAlt = '', re
 		width: 42%;
 		inset-block-end: 0;
 		inset-inline-end: -0.75rem;
-		box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+		box-shadow: var(--pz-shadow);
 	}
 	.reverse .pz-feature-media :global(.pz-overlay) {
 		inset-inline-end: auto;

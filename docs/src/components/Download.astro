@@ -338,7 +338,8 @@ const initial: Platform = 'windows';
 		width: 0.6rem;
 		height: 0.6rem;
 		border-radius: 50%;
-		background: #a1c181;
+		background: var(--pz-led);
+		box-shadow: var(--pz-led-glow);
 	}
 	.muted {
 		color: var(--sl-color-gray-3);
@@ -369,10 +370,10 @@ const initial: Platform = 'windows';
 		border-color: var(--sl-color-gray-4);
 	}
 	.pz-platforms button[aria-selected='true'] {
-		border-color: var(--sl-color-accent);
-		background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+		border-color: var(--pz-brand);
+		background: var(--pz-brand-tint);
 		color: var(--sl-color-white);
-		box-shadow: 0 0 0 1px var(--sl-color-accent);
+		box-shadow: 0 0 0 1px var(--pz-brand);
 	}
 	.pz-platforms button:focus-visible {
 		outline: 2px solid var(--sl-color-accent-high);
@@ -405,8 +406,8 @@ const initial: Platform = 'windows';
 		border-radius: 999px;
 		font-size: var(--sl-text-2xs, 0.7rem);
 		font-weight: 600;
-		color: #1d2a12;
-		background: #a1c181;
+		color: var(--pz-on-brand);
+		background: var(--pz-brand-solid);
 	}
 	@media (max-width: 40rem) {
 		.pz-platforms {
@@ -434,9 +435,7 @@ const initial: Platform = 'windows';
 		padding: clamp(1rem, 3vw, 1.75rem);
 		border-radius: 0.9rem;
 		border: 1px solid var(--pz-frame-border);
-		background:
-			radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--sl-color-accent) 14%, transparent), transparent 60%),
-			var(--pz-tile-bg);
+		background: var(--pz-tile-bg);
 	}
 	.pz-panel[hidden] {
 		display: none;
@@ -463,15 +462,14 @@ const initial: Platform = 'windows';
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.75rem 1.25rem;
-		border-radius: 999px;
+		border-radius: 0.625rem;
 		font-weight: 600;
 		text-decoration: none;
-		color: var(--sl-color-black);
-		background: var(--sl-color-text-accent);
-		box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+		color: var(--pz-on-brand);
+		background: var(--pz-brand-solid);
 	}
 	.pz-button:hover {
-		background: var(--sl-color-white);
+		background: var(--pz-brand-solid-hover);
 	}
 	.pz-button[aria-disabled='true'] {
 		color: var(--sl-color-gray-3);
@@ -514,7 +512,7 @@ const initial: Platform = 'windows';
 		font-size: var(--sl-text-xs);
 		font-weight: 700;
 		color: var(--pz-accent-text);
-		background: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+		background: var(--pz-brand-tint);
 	}
 	.pz-download :global(code) {
 		font-family: var(--sl-font-mono);
