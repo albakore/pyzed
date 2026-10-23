@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from . import _core
@@ -60,6 +61,16 @@ class Window:
     changes still redraw it, and so does ``pz.post`` (async results, worker threads). Call
     ``refresh()`` when it shows something that changed outside it.
 
+    Screens and kiosks: ``monitor`` (an index of ``pz.monitors()``) opens the window on that
+    screen, centered or fullscreen. ``fullscreen = "exclusive"`` takes the screen over with its
+    own video mode (lower latency on Windows and X11; Wayland keeps a borderless window).
+    ``always_on_top`` keeps it above the others (``always_on_bottom`` below); ``closable`` and
+    ``minimizable`` remove those buttons; ``skip_taskbar`` leaves it out of the taskbar
+    (Windows); ``hide_cursor`` hides the pointer over it (touch panels). ``kiosk = True`` puts it
+    all together for a car display, a point of sale or an info panel: fullscreen, no frame,
+    above the others, without buttons or taskbar entry, and the user cannot close it (only
+    ``Command.close_window`` or ``Command.exit`` do).
+
     ``transition`` animates the window's content when it opens: a window transition
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
@@ -90,7 +101,15 @@ class Window:
     frame: Union[str, bool, None] = None
     transparent: bool = False
     maximized: bool = False
-    fullscreen: bool = False
+    fullscreen: Union[bool, str] = False
+    monitor: Optional[int] = None
+    always_on_top: bool = False
+    always_on_bottom: bool = False
+    closable: bool = True
+    minimizable: bool = True
+    skip_taskbar: bool = False
+    hide_cursor: bool = False
+    kiosk: bool = False
     scale: float = 1.0
     theme: ThemeLike = None
     style: Any = None
@@ -179,6 +198,17 @@ class Window:
     def toggle_maximize(self) -> _core.Command:
         """A command that maximizes the window, or restores it when it is maximized."""
         return _core.Command.toggle_maximize_window(self)
+
+    def set_fullscreen(self, fullscreen: bool = True, monitor: Optional[int] = None,
+                       exclusive: bool = False) -> _core.Command:
+        """A command that makes the window fullscreen (on ``monitor``, an index of
+        ``pz.monitors()``; ``exclusive`` takes the screen over), or windowed with ``False``."""
+        return _core.Command.set_fullscreen(fullscreen, self, monitor, exclusive)
+
+    def set_window_level(self, level: str) -> _core.Command:
+        """A command that keeps the window above (``"top"``) or below (``"bottom"``) the others,
+        or back to ``"normal"``."""
+        return _core.Command.set_window_level(level, self)
 
     def refresh(self) -> None:
         """Draws an ``isolated`` window again on the next update (safe from any thread); other
@@ -303,6 +333,45 @@ def renderer_info() -> Optional[Tuple[str, str]]:
     """The GPU and the graphics API drawing the windows, like ``("NVIDIA GeForce RTX 4060", "Vulkan")``,
     or ``("CPU", "tiny-skia")`` with the CPU renderer; ``None`` until the first window is open."""
     return _core.renderer_info()
+
+
+@dataclass(frozen=True)
+class Monitor:
+    """A screen: its ``index`` (for ``Window.monitor`` and ``Command.set_fullscreen``), ``name``,
+    top left corner ``x``, ``y`` and size ``width``, ``height`` on the desktop in logical pixels,
+    ``scale`` (2.0 on a HiDPI screen), ``refresh_rate`` in hertz (``None`` if unknown) and
+    whether it is the ``primary`` one."""
+
+    index: int
+    name: Optional[str]
+    x: float
+    y: float
+    width: float
+    height: float
+    scale: float
+    refresh_rate: Optional[float]
+    primary: bool
+
+    @property
+    def size(self) -> Tuple[float, float]:
+        """``(width, height)`` in logical pixels."""
+        return (self.width, self.height)
+
+    @property
+    def position(self) -> Tuple[float, float]:
+        """``(x, y)`` of its top left corner on the desktop."""
+        return (self.x, self.y)
+
+
+def _monitors(items: List[dict]) -> List[Monitor]:
+    return [Monitor(**item) for item in items]
+
+
+def monitors() -> List[Monitor]:
+    """The screens connected when the first window opened (refreshed each time a window opens
+    and by ``Command.list_monitors``); empty before that. ``pz.monitors()[1].index`` goes in
+    ``Window.monitor``."""
+    return _monitors(_core.monitors())
 
 
 def _isolation_epoch() -> tuple:

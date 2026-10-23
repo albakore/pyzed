@@ -86,7 +86,13 @@ Atributos de clase o de instancia:
 | `position` | `"center"` o `(x, y)`. |
 | `resizable`, `decorations` | `decorations=False` quita el marco del sistema por completo. |
 | `frame` | `"custom"` dibuja la barra de título, los botones de ventana y los menús en Pyzed (ver [Marcos de ventana](#marcos-de-ventana-tu-propia-barra-de-título)). |
-| `transparent`, `maximized`, `fullscreen` | Estado inicial. |
+| `transparent`, `maximized`, `fullscreen` | Estado inicial. `fullscreen = "exclusive"` toma la pantalla con su propio modo de vídeo (ver [Pantallas y quioscos](#pantallas-y-quioscos)). |
+| `monitor` | La pantalla donde se abre: un índice de `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `True` la mantiene sobre (o bajo) las demás ventanas. |
+| `closable`, `minimizable` | `False` quita esos botones del marco. |
+| `skip_taskbar` | No aparece en la barra de tareas (Windows). |
+| `hide_cursor` | Oculta el puntero sobre ella (paneles táctiles). |
+| `kiosk` | Pantalla completa, sin marco ni botones, sobre las demás, y el usuario no puede cerrarla. |
 | `scale` | Escala de la interfaz. |
 | `theme` | Un `Theme`, un nombre o `themes.auto(...)`. `None` usa el de la app. |
 | `transition`, `exit_transition` | Cómo se anima al abrirse y al cerrarse: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... un preset o una `pz.Animation`. Ver [Animación](/pyzed/es/animation/transitions/#transiciones-de-ventana). |
@@ -117,10 +123,55 @@ mensaje.
 | `Command.maximize_window(True, w)` | La maximiza (`False` la restaura). |
 | `Command.drag_resize_window("se", w)` | Empieza a cambiar su tamaño desde un borde o una esquina (para marcos propios). |
 | `Command.show_window_menu(w)` | Muestra el menú de ventana del sistema (solo Windows). |
-| `Command.set_fullscreen(True, w)` | Pantalla completa. |
+| `Command.set_fullscreen(True, w)` / `w.set_fullscreen()` | Pantalla completa (`False` vuelve a ventana). `monitor=` la lleva a otra pantalla y `exclusive=True` toma la pantalla. |
+| `Command.set_window_level("top", w)` / `w.set_window_level("top")` | Sobre las demás (`"bottom"` debajo, `"normal"` vuelve). |
+| `Command.hide_cursor(True, w)` | Oculta el puntero sobre ella (`False` lo muestra). |
+| `Command.list_monitors(then)` | Pide al sistema sus pantallas y llama a `then(monitores)`. |
 | `Command.resize_window(ancho, alto, w)` | Cambia el tamaño. |
 | `Command.move_window(x, y, w)` | La mueve. |
 | `Command.focus_window(w)` | La trae al frente. |
+
+### Pantallas y quioscos
+
+`pz.monitors()` lista las pantallas conectadas como `pz.Monitor`: `index`, `name`, `x`, `y`,
+`width`, `height` (píxeles lógicos en el escritorio), `scale`, `refresh_rate` en hercios y
+`primary`. La lista se lee cuando se abre la primera ventana y otra vez cada vez que se abre una;
+`Command.list_monitors(then)` la lee cuando la pidas (al conectar una pantalla, por ejemplo).
+
+```python
+class Tablero(pz.Window):
+    title = "Pantalla trasera"
+    monitor = 1              # la segunda pantalla
+    fullscreen = True
+
+class Main(pz.App):
+    def on_start(self):
+        if len(pz.monitors()) > 1:
+            return Tablero().open()
+```
+
+`fullscreen = True` cubre la pantalla con una ventana sin bordes, así siguen funcionando las
+notificaciones y Alt+Tab. `fullscreen = "exclusive"` cambia la pantalla a su propio modo de vídeo
+(la frecuencia más alta a su resolución): en Windows y X11 los fotogramas se saltan el compositor,
+lo que baja la latencia en juegos y pantallas. Wayland no lo permite y se queda con la ventana sin
+bordes.
+
+Para la pantalla de un auto, un punto de venta, un panel de museo o cualquier aparato con una sola
+app, `kiosk = True` lo junta todo: pantalla completa, sin marco, sobre las demás, sin botones ni
+entrada en la barra de tareas, y el usuario no puede cerrarla con Alt+F4 ni con el gestor de
+ventanas (solo `Command.close_window` y `Command.exit` la cierran). Añade `hide_cursor = True` en
+pantallas táctiles.
+
+```python
+class Panel(pz.App):
+    kiosk = True
+    hide_cursor = True
+    rendering = pz.Rendering(max_fps=30, background_fps=0)
+```
+
+En Linux, el quiosco más robusto ejecuta la app como único programa de un compositor de quiosco
+como [cage](https://github.com/cage-kiosk/cage) (`cage -- python app.py`), arrancado por el
+sistema al iniciar: sin escritorio, sin paneles, nada que cerrar.
 
 ### Marcos de ventana: tu propia barra de título
 

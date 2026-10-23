@@ -173,7 +173,13 @@ forwards them to `app.update()`.
 | `position` | `None` | `"center"` or `(x, y)`. |
 | `resizable` | `True` | Whether it can be resized. |
 | `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |
-| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |
+| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. `fullscreen = "exclusive"` takes the screen over with its own video mode (Windows, X11, macOS). |
+| `monitor` | `None` | The screen it opens on: an index of `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `False` | `True` keeps it above (or below) the other windows. |
+| `closable`, `minimizable` | `True` | `False` removes those buttons. |
+| `skip_taskbar` | `False` | Leaves it out of the taskbar (Windows). |
+| `hide_cursor` | `False` | Hides the pointer over it (touch panels). |
+| `kiosk` | `False` | Fullscreen, no frame or buttons, above the rest, and the user cannot close it. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks). |
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
 | `style` | `None` | Its own global style; `None` uses the app's. |
@@ -196,6 +202,7 @@ forwards them to `app.update()`.
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
 | `refresh()` | Draws an `isolated` window again on the next update (safe from any thread). |
+| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Commands for fullscreen (on a screen, maybe exclusive) and for staying above or below the others. |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 
 **Methods and properties**
@@ -295,6 +302,22 @@ Window.toggle_maximize()
 ```
 
 A command that maximizes the window, or restores it when it is maximized.
+
+#### `Window.set_fullscreen`
+
+```python
+Window.set_fullscreen(fullscreen=True, monitor=None, exclusive=False)
+```
+
+A command that makes the window fullscreen (on `monitor`, an index of `pz.monitors()`; `exclusive` takes the screen over), or windowed with `False`.
+
+#### `Window.set_window_level`
+
+```python
+Window.set_window_level(level)
+```
+
+A command that keeps the window above (`"top"`) or below (`"bottom"`) the others, or back to `"normal"`.
 
 #### `Window.refresh`
 
@@ -433,6 +456,46 @@ safe_area()
 ```
 
 The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`. On Android: the status and navigation bars, the camera cutout and the soft keyboard while it is open; zeros on a desktop. Windows keep clear of them unless `safe_area = False`.
+
+### `monitors`
+
+```python
+monitors()
+```
+
+The connected screens as a list of `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (logical pixels on the desktop), `scale`, `refresh_rate` in hertz and `primary`. Read when a window opens (empty before the first one) and by `Command.list_monitors`.
+
+```python
+class Rear(pz.Window):
+    monitor = 1
+    fullscreen = True
+
+def on_start(self):
+    if len(pz.monitors()) > 1:
+        return Rear().open()
+```
+
+### `Monitor`
+
+A screen from `pz.monitors()`. `size` and `position` give `(width, height)` and `(x, y)`.
+
+**Methods and properties**
+
+#### `Monitor.size`
+
+```python
+Monitor.size  # property
+```
+
+`(width, height)` in logical pixels.
+
+#### `Monitor.position`
+
+```python
+Monitor.position  # property
+```
+
+`(x, y)` of its top left corner on the desktop.
 
 ### `renderer_info`
 

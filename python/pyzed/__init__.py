@@ -87,7 +87,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
     window_edges,
 )
 from ._async import loop as asyncio_loop, spawn
-from .app import App, Window, renderer_info, run, safe_area, screenshot
+from .app import App, Monitor, Window, monitors, renderer_info, run, safe_area, screenshot
 from .splash import Splash
 from .rendering import Rendering
 from .component import Component, provide, state, use_context
@@ -359,6 +359,8 @@ __all__ = [
     "rule",
     "run",
     "renderer_info",
+    "monitors",
+    "Monitor",
     "safe_area",
     "screenshot",
     "services",

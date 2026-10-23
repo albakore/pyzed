@@ -366,6 +366,100 @@ pub fn renderer_info() -> Option<(String, String)> {
     iced_winit::quiet::graphics()
 }
 
+/// One monitor for `pz.monitors()`: its name, place and size on the desktop in logical pixels,
+/// scale, refresh rate in hertz and whether it is the primary one.
+#[derive(Clone, Debug)]
+struct MonitorInfo {
+    name: Option<String>,
+    position: (f32, f32),
+    size: (f32, f32),
+    scale: f64,
+    refresh_rate: Option<f64>,
+    primary: bool,
+}
+
+/// The monitors seen when the app started or last asked (`Command.list_monitors`).
+static MONITORS: Mutex<Vec<MonitorInfo>> = Mutex::new(Vec::new());
+
+/// The monitors as dictionaries (`index`, `name`, `x`, `y`, `width`, `height`, `scale`,
+/// `refresh_rate`, `primary`); empty before the first window opens.
+#[pyfunction]
+pub fn monitors(py: Python<'_>) -> PyResult<Bound<'_, PyList>> {
+    monitor_dicts(py, &MONITORS.lock().unwrap())
+}
+
+fn monitor_dicts<'py>(py: Python<'py>, list: &[MonitorInfo]) -> PyResult<Bound<'py, PyList>> {
+    let out = PyList::empty(py);
+    for (index, monitor) in list.iter().enumerate() {
+        let item = PyDict::new(py);
+        item.set_item("index", index)?;
+        item.set_item("name", monitor.name.as_deref())?;
+        item.set_item("x", monitor.position.0)?;
+        item.set_item("y", monitor.position.1)?;
+        item.set_item("width", monitor.size.0)?;
+        item.set_item("height", monitor.size.1)?;
+        item.set_item("scale", monitor.scale)?;
+        item.set_item("refresh_rate", monitor.refresh_rate)?;
+        item.set_item("primary", monitor.primary)?;
+        out.append(item)?;
+    }
+    Ok(out)
+}
+
+/// Reads the monitors into [`MONITORS`] and calls `then(monitors)` when given.
+fn list_monitors(then: Option<PyMsg>) -> Task<Message> {
+    window::list_monitors().map(move |list| {
+        let infos: Vec<MonitorInfo> = list
+            .iter()
+            .map(|monitor| {
+                let size = monitor.size();
+                let position = monitor.position();
+                MonitorInfo {
+                    name: monitor.name().map(str::to_owned),
+                    position: (position.x, position.y),
+                    size: (size.width, size.height),
+                    scale: monitor.scale_factor(),
+                    refresh_rate: monitor
+                        .refresh_rate_millihertz()
+                        .map(|mhz| f64::from(mhz) / 1000.0),
+                    primary: monitor.is_primary(),
+                }
+            })
+            .collect();
+        *MONITORS.lock().unwrap() = infos.clone();
+        match &then {
+            Some(then) => Python::attach(|py| match monitor_dicts(py, &infos) {
+                Ok(list) => {
+                    let monitors = py
+                        .import("pyzed.app")
+                        .and_then(|m| m.call_method1("_monitors", (list,)));
+                    match monitors {
+                        Ok(value) => Message::Call(then.clone(), PyMsg::new(&value)),
+                        Err(err) => {
+                            err.print(py);
+                            Message::Noop
+                        }
+                    }
+                }
+                Err(_) => Message::Noop,
+            }),
+            None => Message::Noop,
+        }
+    })
+}
+
+/// `Window.level` and `Command.set_window_level`: "normal", "top" or "bottom".
+fn window_level(level: &str) -> PyResult<window::Level> {
+    match level {
+        "normal" => Ok(window::Level::Normal),
+        "top" | "always_on_top" => Ok(window::Level::AlwaysOnTop),
+        "bottom" | "always_on_bottom" => Ok(window::Level::AlwaysOnBottom),
+        other => Err(PyValueError::new_err(format!(
+            "invalid window level {other:?}: use \"normal\", \"top\" or \"bottom\""
+        ))),
+    }
+}
+
 /// Runs a pointer callback (`on_move`, `on_enter`, `on_exit`...) as soon as its message arrives,
 /// before iced rebuilds the windows: if it returns `pz.UNCHANGED` the message is dropped and, when
 /// the whole batch was, nothing is rebuilt nor redrawn (a mouse moving over a big view costs
@@ -439,6 +533,7 @@ enum CommandKind {
     SelectEditorRanges(String, Vec<crate::editor::TextRange>),
     ReplaceEditorRanges(String, Vec<crate::editor::RangeEdit>),
     Batch(Vec<Py<Command>>),
+    ListMonitors(Option<PyMsg>),
     Message(PyMsg),
     Perform(PyMsg, Option<PyMsg>),
     ScrollToEnd(String),
@@ -473,7 +568,10 @@ enum WindowOp {
     SystemMenu,
     Minimize,
     ToggleMaximize,
-    Fullscreen(bool),
+    /// Windowed with `None`; fullscreen on a monitor (maybe exclusive) otherwise.
+    Fullscreen(Option<window::Fullscreen>),
+    Level(window::Level),
+    HideCursor(bool),
     Resize(f32, f32),
     Move(f32, f32),
     Focus,
@@ -728,14 +826,54 @@ impl Command {
         ))
     }
 
-    /// Switches the window between fullscreen and windowed mode.
+    /// Switches the window between fullscreen and windowed mode. `monitor` (an index of
+    /// `pz.monitors()`) moves it to that screen; `exclusive=True` takes the screen over with its
+    /// own video mode (lower latency on Windows and X11; Wayland keeps a borderless window).
     #[staticmethod]
-    #[pyo3(signature = (fullscreen=true, window=None))]
-    fn set_fullscreen(fullscreen: bool, window: Option<Bound<'_, PyAny>>) -> Self {
+    #[pyo3(signature = (fullscreen=true, window=None, monitor=None, exclusive=false))]
+    fn set_fullscreen(
+        fullscreen: bool,
+        window: Option<Bound<'_, PyAny>>,
+        monitor: Option<usize>,
+        exclusive: bool,
+    ) -> Self {
+        let mode = fullscreen.then_some(window::Fullscreen {
+            monitor: monitor.map(window::MonitorIndex),
+            exclusive,
+        });
         cmd(CommandKind::Window(
-            WindowOp::Fullscreen(fullscreen),
+            WindowOp::Fullscreen(mode),
             PyMsg::maybe(&window),
         ))
+    }
+
+    /// Keeps the window above (`"top"`) or below (`"bottom"`) the others, or back to
+    /// `"normal"`.
+    #[staticmethod]
+    #[pyo3(signature = (level, window=None))]
+    fn set_window_level(level: &str, window: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        Ok(cmd(CommandKind::Window(
+            WindowOp::Level(window_level(level)?),
+            PyMsg::maybe(&window),
+        )))
+    }
+
+    /// Hides the pointer over the window whatever the widgets ask (touch panels, kiosks), or
+    /// shows it again with `hidden=False`.
+    #[staticmethod]
+    #[pyo3(signature = (hidden=true, window=None))]
+    fn hide_cursor(hidden: bool, window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::Window(
+            WindowOp::HideCursor(hidden),
+            PyMsg::maybe(&window),
+        ))
+    }
+
+    /// Asks the system for its monitors and calls `then(monitors)` with a list of
+    /// `pz.Monitor` (also kept for `pz.monitors()`).
+    #[staticmethod]
+    fn list_monitors(then: &Bound<'_, PyAny>) -> Self {
+        cmd(CommandKind::ListMonitors(Some(PyMsg::new(then))))
     }
 
     /// Resizes the window to `width` x `height` logical pixels.
@@ -849,6 +987,7 @@ impl Command {
             CommandKind::SelectEditorRanges(..) => "Command.select_editor_ranges(...)",
             CommandKind::ReplaceEditorRanges(..) => "Command.replace_editor_ranges(...)",
             CommandKind::Batch(_) => "Command.batch(...)",
+            CommandKind::ListMonitors(_) => "Command.list_monitors(...)",
             CommandKind::Message(_) => "Command.message(...)",
             CommandKind::Perform(..) => "Command.perform(...)",
             CommandKind::ScrollToEnd(_) => "Command.scroll_to_end(...)",
@@ -1012,6 +1151,7 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 .collect::<Vec<_>>(),
         ),
         CommandKind::Message(msg) => Task::done(Message::Py(msg.clone())),
+        CommandKind::ListMonitors(then) => list_monitors(then.clone()),
         CommandKind::Perform(function, then) => {
             // A coroutine or generator object (not a function) is drained as is.
             let call = !is_deferred(function.0.bind(py));
@@ -1033,14 +1173,9 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 WindowOp::SystemMenu => window::show_system_menu(id),
                 WindowOp::Minimize => window::minimize(id, true),
                 WindowOp::ToggleMaximize => window::toggle_maximize(id),
-                WindowOp::Fullscreen(on) => window::set_mode(
-                    id,
-                    if on {
-                        window::Mode::Fullscreen
-                    } else {
-                        window::Mode::Windowed
-                    },
-                ),
+                WindowOp::Fullscreen(mode) => window::set_fullscreen(id, mode),
+                WindowOp::Level(level) => window::set_level(id, level),
+                WindowOp::HideCursor(hidden) => window::set_cursor_hidden(id, hidden),
                 WindowOp::Resize(w, h) => window::resize(id, Size::new(w, h)),
                 WindowOp::Move(x, y) => window::move_to(id, Point::new(x, y).into()),
                 WindowOp::Focus => window::gain_focus(id),
@@ -1267,26 +1402,91 @@ pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settin
         Err(err) => return Err(err),
     };
     let overlay = frame.as_deref() == Some("overlay");
-    let decorations = flag("decorations", true)? && (frame.is_none() || overlay);
+    // `Window.kiosk`: fullscreen, no frame, above the others and not closed by the user.
+    let kiosk = flag("kiosk", false)?;
+    let decorations = flag("decorations", true)? && (frame.is_none() || overlay) && !kiosk;
+    // `Window.fullscreen`: True (a borderless window over the screen) or "exclusive"
+    let fullscreen = attr("fullscreen");
+    let exclusive = match &fullscreen {
+        Some(v) => match v.extract::<String>() {
+            Ok(s) if s == "exclusive" => true,
+            Ok(s) if s == "borderless" => false,
+            Ok(s) => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid fullscreen {s:?}: use True, False, \"borderless\" or \"exclusive\""
+                )));
+            }
+            Err(_) => false,
+        },
+        None => false,
+    };
+    let fullscreen = kiosk
+        || fullscreen
+            .map(|v| v.is_truthy())
+            .transpose()?
+            .unwrap_or(false);
+    let level = if flag("always_on_bottom", false)? {
+        window::Level::AlwaysOnBottom
+    } else if flag("always_on_top", false)? || kiosk {
+        window::Level::AlwaysOnTop
+    } else {
+        window::Level::Normal
+    };
+    let monitor = attr("monitor")
+        .map(|v| v.extract::<usize>())
+        .transpose()?
+        .map(window::MonitorIndex);
     Ok(window::Settings {
         size: size_of("size")?.unwrap_or(Size::new(1280.0, 800.0)),
         min_size: size_of("min_size")?,
         max_size: size_of("max_size")?,
         position,
-        resizable: flag("resizable", true)?,
+        resizable: flag("resizable", true)? && !kiosk,
+        closeable: flag("closable", true)? && !kiosk,
+        minimizable: flag("minimizable", true)? && !kiosk,
         decorations,
         transparent: flag("transparent", false)?,
         maximized: flag("maximized", false)?,
-        fullscreen: flag("fullscreen", false)?,
+        fullscreen,
+        exclusive_fullscreen: exclusive,
+        monitor,
+        level,
         exit_on_close_request: false,
         icon: attr("icon").and_then(|v| window_icon(&v)),
         platform_specific: platform_specific(
             frame.is_some(),
             overlay,
             attr("app_id").and_then(|v| v.extract::<String>().ok()),
+            flag("skip_taskbar", false)? || kiosk,
         ),
         ..Default::default()
     })
+}
+
+/// What `window_settings` makes of a `pyzed.Window`, for the tests.
+#[pyfunction]
+pub fn window_options<'py>(
+    py: Python<'py>,
+    window: &Bound<'py, PyAny>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let settings = window_settings(window)?;
+    let out = PyDict::new(py);
+    out.set_item("fullscreen", settings.fullscreen)?;
+    out.set_item("exclusive", settings.exclusive_fullscreen)?;
+    out.set_item("monitor", settings.monitor.map(|index| index.0))?;
+    out.set_item(
+        "level",
+        match settings.level {
+            window::Level::Normal => "normal",
+            window::Level::AlwaysOnTop => "top",
+            window::Level::AlwaysOnBottom => "bottom",
+        },
+    )?;
+    out.set_item("decorations", settings.decorations)?;
+    out.set_item("resizable", settings.resizable)?;
+    out.set_item("closable", settings.closeable)?;
+    out.set_item("minimizable", settings.minimizable)?;
+    Ok(out)
 }
 
 /// The icon of a window (`Window.icon`: a path to an image or its bytes), at most 256 pixels wide; a
@@ -1314,6 +1514,7 @@ fn platform_specific(
     _custom: bool,
     overlay: bool,
     _app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         title_hidden: overlay,
@@ -1327,10 +1528,12 @@ fn platform_specific(
     custom: bool,
     _overlay: bool,
     _app_id: Option<String>,
+    skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         // the drop shadow and rounded corners of Windows 11 for windows without decorations
         undecorated_shadow: custom,
+        skip_taskbar,
         ..Default::default()
     }
 }
@@ -1342,6 +1545,7 @@ fn platform_specific(
     _custom: bool,
     _overlay: bool,
     app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         application_id: app_id.unwrap_or_default(),
@@ -1354,6 +1558,7 @@ fn platform_specific(
     _custom: bool,
     _overlay: bool,
     _app_id: Option<String>,
+    _skip_taskbar: bool,
 ) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific
 }
@@ -1804,7 +2009,16 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     }
                     _ => Task::none(),
                 };
-                return Task::batch([ask_maximized(id), hook, splash]);
+                let cursor = if obj
+                    .getattr("hide_cursor")
+                    .and_then(|v| v.is_truthy())
+                    .unwrap_or(false)
+                {
+                    window::set_cursor_hidden(id, true)
+                } else {
+                    Task::none()
+                };
+                return Task::batch([ask_maximized(id), hook, splash, cursor, list_monitors(None)]);
             }
             Message::SplashDone => {
                 if state.main.is_some() || state.splash.is_none() {
@@ -1818,6 +2032,14 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             }
             Message::CloseRequested(id) => {
                 let obj = state.window(id).bind(py).clone();
+                // a kiosk is closed by the app (`Command.close_window`), never by the user
+                if obj
+                    .getattr("kiosk")
+                    .and_then(|v| v.is_truthy())
+                    .unwrap_or(false)
+                {
+                    return Task::none();
+                }
                 let allowed = match obj.call_method0("on_close") {
                     Ok(value) => {
                         !(value.is_instance_of::<pyo3::types::PyBool>()

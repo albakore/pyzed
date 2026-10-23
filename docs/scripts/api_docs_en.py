@@ -1099,7 +1099,13 @@ forwards them to `app.update()`.
 | `position` | `None` | `"center"` or `(x, y)`. |
 | `resizable` | `True` | Whether it can be resized. |
 | `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |
-| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |
+| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. `fullscreen = "exclusive"` takes the screen over with its own video mode (Windows, X11, macOS). |
+| `monitor` | `None` | The screen it opens on: an index of `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `False` | `True` keeps it above (or below) the other windows. |
+| `closable`, `minimizable` | `True` | `False` removes those buttons. |
+| `skip_taskbar` | `False` | Leaves it out of the taskbar (Windows). |
+| `hide_cursor` | `False` | Hides the pointer over it (touch panels). |
+| `kiosk` | `False` | Fullscreen, no frame or buttons, above the rest, and the user cannot close it. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks). |
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
 | `style` | `None` | Its own global style; `None` uses the app's. |
@@ -1122,6 +1128,7 @@ forwards them to `app.update()`.
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
 | `refresh()` | Draws an `isolated` window again on the next update (safe from any thread). |
+| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Commands for fullscreen (on a screen, maybe exclusive) and for staying above or below the others. |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Files dragged from the system over the window, dropped on it (once per file) or taken away. By default they go to the `ui.DropZone` they land on. |
 """,
         "no_signature": True,
@@ -1168,6 +1175,22 @@ forwards them to `app.update()`.
     },
     "pyzed.safe_area": {
         "desc": "The parts of the screen the system draws over, in logical pixels: `(top, right, bottom, left)`. On Android: the status and navigation bars, the camera cutout and the soft keyboard while it is open; zeros on a desktop. Windows keep clear of them unless `safe_area = False`.",
+    },
+    "pyzed.monitors": {
+        "desc": "The connected screens as a list of `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (logical pixels on the desktop), `scale`, `refresh_rate` in hertz and `primary`. Read when a window opens (empty before the first one) and by `Command.list_monitors`.",
+        "example": """
+            class Rear(pz.Window):
+                monitor = 1
+                fullscreen = True
+
+            def on_start(self):
+                if len(pz.monitors()) > 1:
+                    return Rear().open()
+        """,
+    },
+    "pyzed.Monitor": {
+        "desc": "A screen from `pz.monitors()`. `size` and `position` give `(width, height)` and `(x, y)`.",
+        "no_signature": True,
     },
     "pyzed.renderer_info": {
         "desc": "The GPU and the graphics API drawing the windows, like `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, or `(\"CPU\", \"tiny-skia\")` with the CPU renderer; `None` until the first window is open.",
@@ -1257,7 +1280,10 @@ _section("command", "Windows and clipboard", {
     "pyzed.Command.maximize_window": {"desc": "Maximizes the window, or restores it with `maximized=False`.", "params": {"maximized": "`False` restores it.", "window": _win}},
     "pyzed.Command.drag_resize_window": {"desc": "Starts resizing the window with the mouse from an edge or corner (for windows without system decorations; `ui.window_frame` and `pz.window_edges` already do it).", "params": {"direction": '`"n"`, `"s"`, `"e"`, `"w"`, `"ne"`, `"nw"`, `"se"` or `"sw"`.', "window": _win}},
     "pyzed.Command.show_window_menu": {"desc": "Shows the system\'s window menu (move, size, close…) under the pointer. Only Windows has one.", "params": {"window": _win}},
-    "pyzed.Command.set_fullscreen": {"desc": "Enters or leaves fullscreen.", "params": {"fullscreen": "`True` for fullscreen.", "window": _win}},
+    "pyzed.Command.set_fullscreen": {"desc": "Enters or leaves fullscreen, on a chosen screen and maybe exclusive. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks).", "params": {"fullscreen": "`True` for fullscreen, `False` back to a window.", "window": _win, "monitor": "An index of `pz.monitors()`; `None` keeps the current screen.", "exclusive": "`True` takes the screen over with its own video mode (lower latency on Windows and X11; Wayland keeps a borderless window)."}},
+    "pyzed.Command.set_window_level": {"desc": "Keeps the window above or below the others.", "params": {"level": '`"top"`, `"bottom"` or `"normal"`.', "window": _win}},
+    "pyzed.Command.hide_cursor": {"desc": "Hides the pointer over the window whatever the widgets ask (touch panels, kiosks).", "params": {"hidden": "`False` shows it again.", "window": _win}},
+    "pyzed.Command.list_monitors": {"desc": "Asks the system for its screens and calls `then(monitors)` with a list of `pz.Monitor` (also kept for `pz.monitors()`).", "params": {"then": "Called with the list."}},
     "pyzed.Command.resize_window": {"desc": "Resizes the window (logical pixels).", "params": {"width": "Width.", "height": "Height.", "window": _win}},
     "pyzed.Command.move_window": {"desc": "Moves the window to a position on the screen.", "params": {"x": "Horizontal position.", "y": "Vertical position.", "window": _win}},
     "pyzed.Command.focus_window": {"desc": "Brings the window to the front and focuses it.", "params": {"window": _win}},

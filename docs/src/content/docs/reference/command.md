@@ -427,15 +427,55 @@ Shows the system's window menu (move, size, close…) under the pointer. Only Wi
 ### `set_fullscreen`
 
 ```python
-set_fullscreen(fullscreen=True, window=None)
+set_fullscreen(fullscreen=True, window=None, monitor=None, exclusive=False)
 ```
 
-Enters or leaves fullscreen.
+Enters or leaves fullscreen, on a chosen screen and maybe exclusive. See [Screens and kiosks](/pyzed/guides/windows/#screens-and-kiosks).
 
 | Parameter | Description |
 | --- | --- |
-| `fullscreen` | `True` for fullscreen. |
+| `fullscreen` | `True` for fullscreen, `False` back to a window. |
 | `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+| `monitor` | An index of `pz.monitors()`; `None` keeps the current screen. |
+| `exclusive` | `True` takes the screen over with its own video mode (lower latency on Windows and X11; Wayland keeps a borderless window). |
+
+### `set_window_level`
+
+```python
+set_window_level(level, window=None)
+```
+
+Keeps the window above or below the others.
+
+| Parameter | Description |
+| --- | --- |
+| `level` | `"top"`, `"bottom"` or `"normal"`. |
+| `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+
+### `hide_cursor`
+
+```python
+hide_cursor(hidden=True, window=None)
+```
+
+Hides the pointer over the window whatever the widgets ask (touch panels, kiosks).
+
+| Parameter | Description |
+| --- | --- |
+| `hidden` | `False` shows it again. |
+| `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+
+### `list_monitors`
+
+```python
+list_monitors(then)
+```
+
+Asks the system for its screens and calls `then(monitors)` with a list of `pz.Monitor` (also kept for `pz.monitors()`).
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Called with the list. |
 
 ### `resize_window`
 

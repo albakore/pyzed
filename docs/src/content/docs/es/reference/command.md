@@ -427,15 +427,55 @@ Muestra el menú de ventana del sistema (mover, tamaño, cerrar…) bajo el punt
 ### `set_fullscreen`
 
 ```python
-set_fullscreen(fullscreen=True, window=None)
+set_fullscreen(fullscreen=True, window=None, monitor=None, exclusive=False)
 ```
 
-Pone o quita la pantalla completa.
+Pone o quita la pantalla completa, en la pantalla que elijas y quizá exclusiva. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos).
 
 | Parámetro | Descripción |
 | --- | --- |
-| `fullscreen` | `True` para pantalla completa. |
+| `fullscreen` | `True` para pantalla completa, `False` vuelve a ventana. |
 | `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+| `monitor` | Un índice de `pz.monitors()`; `None` deja la pantalla actual. |
+| `exclusive` | `True` toma la pantalla con su propio modo de vídeo (menos latencia en Windows y X11; Wayland se queda con una ventana sin bordes). |
+
+### `set_window_level`
+
+```python
+set_window_level(level, window=None)
+```
+
+Mantiene la ventana sobre o bajo las demás.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `level` | `"top"`, `"bottom"` o `"normal"`. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `hide_cursor`
+
+```python
+hide_cursor(hidden=True, window=None)
+```
+
+Oculta el puntero sobre la ventana pida lo que pida cada widget (paneles táctiles, quioscos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `hidden` | `False` lo vuelve a mostrar. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `list_monitors`
+
+```python
+list_monitors(then)
+```
+
+Pide al sistema sus pantallas y llama a `then(monitores)` con una lista de `pz.Monitor` (también la guarda para `pz.monitors()`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Se llama con la lista. |
 
 ### `resize_window`
 

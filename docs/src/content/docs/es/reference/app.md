@@ -173,7 +173,13 @@ reenvía a `app.update()`.
 | `position` | `None` | `"center"` o `(x, y)`. |
 | `resizable` | `True` | Si se puede redimensionar. |
 | `decorations` | `True` | `False` quita el marco del sistema (barra de título propia con `drag()`). |
-| `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. |
+| `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. `fullscreen = "exclusive"` toma la pantalla con su propio modo de vídeo (Windows, X11, macOS). |
+| `monitor` | `None` | La pantalla donde se abre: un índice de `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `False` | `True` la mantiene sobre (o bajo) las demás ventanas. |
+| `closable`, `minimizable` | `True` | `False` quita esos botones. |
+| `skip_taskbar` | `False` | No aparece en la barra de tareas (Windows). |
+| `hide_cursor` | `False` | Oculta el puntero sobre ella (paneles táctiles). |
+| `kiosk` | `False` | Pantalla completa, sin marco ni botones, sobre las demás, y el usuario no puede cerrarla. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos). |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
@@ -196,6 +202,7 @@ reenvía a `app.update()`.
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
 | `refresh()` | Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo). |
+| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Comandos para la pantalla completa (en una pantalla, quizá exclusiva) y para quedarse sobre o bajo las demás. |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 
 **Métodos y propiedades**
@@ -295,6 +302,22 @@ Window.toggle_maximize()
 ```
 
 Un comando que maximiza la ventana, o la restaura si está maximizada.
+
+#### `Window.set_fullscreen`
+
+```python
+Window.set_fullscreen(fullscreen=True, monitor=None, exclusive=False)
+```
+
+Un comando que pone la ventana en pantalla completa (en `monitor`, un índice de `pz.monitors()`; `exclusive` toma la pantalla), o en ventana con `False`.
+
+#### `Window.set_window_level`
+
+```python
+Window.set_window_level(level)
+```
+
+Un comando que mantiene la ventana sobre (`"top"`) o bajo (`"bottom"`) las demás, o la devuelve a `"normal"`.
 
 #### `Window.refresh`
 
@@ -433,6 +456,46 @@ safe_area()
 ```
 
 Las partes de la pantalla que dibuja el sistema, en píxeles lógicos: `(arriba, derecha, abajo, izquierda)`. En Android: las barras de estado y de navegación, el recorte de la cámara y el teclado en pantalla mientras está abierto; ceros en escritorio. Las ventanas las dejan libres salvo con `safe_area = False`.
+
+### `monitors`
+
+```python
+monitors()
+```
+
+Las pantallas conectadas como lista de `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (píxeles lógicos en el escritorio), `scale`, `refresh_rate` en hercios y `primary`. Se lee al abrir una ventana (vacía antes de la primera) y con `Command.list_monitors`.
+
+```python
+class Trasera(pz.Window):
+    monitor = 1
+    fullscreen = True
+
+def on_start(self):
+    if len(pz.monitors()) > 1:
+        return Trasera().open()
+```
+
+### `Monitor`
+
+Una pantalla de `pz.monitors()`. `size` y `position` dan `(ancho, alto)` y `(x, y)`.
+
+**Métodos y propiedades**
+
+#### `Monitor.size`
+
+```python
+Monitor.size  # property
+```
+
+`(ancho, alto)` en píxeles lógicos.
+
+#### `Monitor.position`
+
+```python
+Monitor.position  # property
+```
+
+`(x, y)` de la esquina superior izquierda en el escritorio.
 
 ### `renderer_info`
 

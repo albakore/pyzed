@@ -1099,7 +1099,13 @@ reenvía a `app.update()`.
 | `position` | `None` | `"center"` o `(x, y)`. |
 | `resizable` | `True` | Si se puede redimensionar. |
 | `decorations` | `True` | `False` quita el marco del sistema (barra de título propia con `drag()`). |
-| `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. |
+| `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. `fullscreen = "exclusive"` toma la pantalla con su propio modo de vídeo (Windows, X11, macOS). |
+| `monitor` | `None` | La pantalla donde se abre: un índice de `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `False` | `True` la mantiene sobre (o bajo) las demás ventanas. |
+| `closable`, `minimizable` | `True` | `False` quita esos botones. |
+| `skip_taskbar` | `False` | No aparece en la barra de tareas (Windows). |
+| `hide_cursor` | `False` | Oculta el puntero sobre ella (paneles táctiles). |
+| `kiosk` | `False` | Pantalla completa, sin marco ni botones, sobre las demás, y el usuario no puede cerrarla. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos). |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
@@ -1122,6 +1128,7 @@ reenvía a `app.update()`.
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
 | `refresh()` | Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo). |
+| `set_fullscreen(fullscreen=True, monitor=None, exclusive=False)`, `set_window_level(level)` | Comandos para la pantalla completa (en una pantalla, quizá exclusiva) y para quedarse sobre o bajo las demás. |
 | `on_file_hover(path)`, `on_file_drop(path)`, `on_file_leave()` | Archivos arrastrados desde el sistema sobre la ventana, soltados en ella (una vez por archivo) o retirados. Por defecto van a la `ui.DropZone` donde caen. |
 """,
         "no_signature": True,
@@ -1168,6 +1175,22 @@ reenvía a `app.update()`.
     },
     "pyzed.safe_area": {
         "desc": "Las partes de la pantalla que dibuja el sistema, en píxeles lógicos: `(arriba, derecha, abajo, izquierda)`. En Android: las barras de estado y de navegación, el recorte de la cámara y el teclado en pantalla mientras está abierto; ceros en escritorio. Las ventanas las dejan libres salvo con `safe_area = False`.",
+    },
+    "pyzed.monitors": {
+        "desc": "Las pantallas conectadas como lista de `pz.Monitor`: `index`, `name`, `x`, `y`, `width`, `height` (píxeles lógicos en el escritorio), `scale`, `refresh_rate` en hercios y `primary`. Se lee al abrir una ventana (vacía antes de la primera) y con `Command.list_monitors`.",
+        "example": """
+            class Trasera(pz.Window):
+                monitor = 1
+                fullscreen = True
+
+            def on_start(self):
+                if len(pz.monitors()) > 1:
+                    return Trasera().open()
+        """,
+    },
+    "pyzed.Monitor": {
+        "desc": "Una pantalla de `pz.monitors()`. `size` y `position` dan `(ancho, alto)` y `(x, y)`.",
+        "no_signature": True,
     },
     "pyzed.renderer_info": {
         "desc": "La GPU y la API gráfica que dibujan las ventanas, como `(\"NVIDIA GeForce RTX 4060\", \"Vulkan\")`, o `(\"CPU\", \"tiny-skia\")` con el renderizador de CPU; `None` hasta que se abre la primera ventana.",
@@ -1257,7 +1280,10 @@ _section("command", "Ventanas y portapapeles", {
     "pyzed.Command.maximize_window": {"desc": "Maximiza la ventana, o la restaura con `maximized=False`.", "params": {"maximized": "`False` la restaura.", "window": _win}},
     "pyzed.Command.drag_resize_window": {"desc": "Empieza a cambiar el tamaño de la ventana con el ratón desde un borde o una esquina (para ventanas sin decoraciones del sistema; `ui.window_frame` y `pz.window_edges` ya lo hacen).", "params": {"direction": '`"n"`, `"s"`, `"e"`, `"w"`, `"ne"`, `"nw"`, `"se"` o `"sw"`.', "window": _win}},
     "pyzed.Command.show_window_menu": {"desc": "Muestra el menú de ventana del sistema (mover, tamaño, cerrar…) bajo el puntero. Solo Windows tiene uno.", "params": {"window": _win}},
-    "pyzed.Command.set_fullscreen": {"desc": "Pone o quita la pantalla completa.", "params": {"fullscreen": "`True` para pantalla completa.", "window": _win}},
+    "pyzed.Command.set_fullscreen": {"desc": "Pone o quita la pantalla completa, en la pantalla que elijas y quizá exclusiva. Ver [Pantallas y quioscos](/pyzed/es/guides/windows/#pantallas-y-quioscos).", "params": {"fullscreen": "`True` para pantalla completa, `False` vuelve a ventana.", "window": _win, "monitor": "Un índice de `pz.monitors()`; `None` deja la pantalla actual.", "exclusive": "`True` toma la pantalla con su propio modo de vídeo (menos latencia en Windows y X11; Wayland se queda con una ventana sin bordes)."}},
+    "pyzed.Command.set_window_level": {"desc": "Mantiene la ventana sobre o bajo las demás.", "params": {"level": '`"top"`, `"bottom"` o `"normal"`.', "window": _win}},
+    "pyzed.Command.hide_cursor": {"desc": "Oculta el puntero sobre la ventana pida lo que pida cada widget (paneles táctiles, quioscos).", "params": {"hidden": "`False` lo vuelve a mostrar.", "window": _win}},
+    "pyzed.Command.list_monitors": {"desc": "Pide al sistema sus pantallas y llama a `then(monitores)` con una lista de `pz.Monitor` (también la guarda para `pz.monitors()`).", "params": {"then": "Se llama con la lista."}},
     "pyzed.Command.resize_window": {"desc": "Cambia el tamaño de la ventana (píxeles lógicos).", "params": {"width": "Ancho.", "height": "Alto.", "window": _win}},
     "pyzed.Command.move_window": {"desc": "Mueve la ventana a una posición de la pantalla.", "params": {"x": "Posición horizontal.", "y": "Posición vertical.", "window": _win}},
     "pyzed.Command.focus_window": {"desc": "Trae la ventana al frente y le da el foco.", "params": {"window": _win}},
@@ -2765,6 +2791,10 @@ MEMBERS = {
     "pyzed.Window.toggle_maximize": "Un comando que maximiza la ventana, o la restaura si está maximizada.",
     "pyzed.Window.frame_menus": "Los menús a la izquierda de la barra de título de un marco propio (`frame = \"custom\"`): una lista de `ui.Menu`.",
     "pyzed.Window.resolved_theme": "El tema concreto que usa ahora esta ventana (con los colores y tamaños de su estilo global).",
+    "pyzed.Window.set_fullscreen": "Un comando que pone la ventana en pantalla completa (en `monitor`, un índice de `pz.monitors()`; `exclusive` toma la pantalla), o en ventana con `False`.",
+    "pyzed.Window.set_window_level": "Un comando que mantiene la ventana sobre (`\"top\"`) o bajo (`\"bottom\"`) las demás, o la devuelve a `\"normal\"`.",
+    "pyzed.Monitor.size": "`(ancho, alto)` en píxeles lógicos.",
+    "pyzed.Monitor.position": "`(x, y)` de la esquina superior izquierda en el escritorio.",
     "pyzed.Window.refresh": "Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo); las demás ventanas se dibujan tras cada actualización de todos modos.",
     "pyzed.Window.resolved_style": "El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.",
     "pyzed.Event.position": "`(x, y)`.",

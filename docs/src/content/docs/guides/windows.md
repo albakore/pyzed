@@ -86,7 +86,13 @@ Class or instance attributes:
 | `position` | `"center"` or `(x, y)`. |
 | `resizable`, `decorations` | `decorations=False` removes the system frame entirely. |
 | `frame` | `"custom"` draws the title bar, window buttons and menus in Pyzed (see [Window frames](#window-frames-your-own-title-bar)). |
-| `transparent`, `maximized`, `fullscreen` | Initial state. |
+| `transparent`, `maximized`, `fullscreen` | Initial state. `fullscreen = "exclusive"` takes the screen over with its own video mode (see [Screens and kiosks](#screens-and-kiosks)). |
+| `monitor` | The screen it opens on: an index of `pz.monitors()`. |
+| `always_on_top`, `always_on_bottom` | `True` keeps it above (or below) the other windows. |
+| `closable`, `minimizable` | `False` removes those buttons from the frame. |
+| `skip_taskbar` | Leaves it out of the taskbar (Windows). |
+| `hide_cursor` | Hides the pointer over it (touch panels). |
+| `kiosk` | Fullscreen, without frame or buttons, above the rest, and the user cannot close it. |
 | `scale` | Interface scale. |
 | `theme` | A `Theme`, a name or `themes.auto(...)`. `None` uses the app's theme. |
 | `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/animation/transitions/#window-transitions). |
@@ -117,10 +123,53 @@ the message.
 | `Command.maximize_window(True, w)` | Maximizes it (`False` restores it). |
 | `Command.drag_resize_window("se", w)` | Starts resizing it from an edge or corner (for custom frames). |
 | `Command.show_window_menu(w)` | Shows the system's window menu (Windows only). |
-| `Command.set_fullscreen(True, w)` | Fullscreen. |
+| `Command.set_fullscreen(True, w)` / `w.set_fullscreen()` | Fullscreen (`False` back to a window). `monitor=` moves it to another screen and `exclusive=True` takes the screen over. |
+| `Command.set_window_level("top", w)` / `w.set_window_level("top")` | Above the others (`"bottom"` below, `"normal"` back). |
+| `Command.hide_cursor(True, w)` | Hides the pointer over it (`False` shows it). |
+| `Command.list_monitors(then)` | Asks the system for its screens and calls `then(monitors)`. |
 | `Command.resize_window(width, height, w)` | Resizes it. |
 | `Command.move_window(x, y, w)` | Moves it. |
 | `Command.focus_window(w)` | Brings it to the front. |
+
+### Screens and kiosks
+
+`pz.monitors()` lists the connected screens as `pz.Monitor`: `index`, `name`, `x`, `y`, `width`,
+`height` (logical pixels on the desktop), `scale`, `refresh_rate` in hertz and `primary`. The list
+is read when the first window opens and again each time one opens; `Command.list_monitors(then)`
+reads it on demand (after plugging in a screen, for example).
+
+```python
+class Dashboard(pz.Window):
+    title = "Rear display"
+    monitor = 1              # the second screen
+    fullscreen = True
+
+class Main(pz.App):
+    def on_start(self):
+        if len(pz.monitors()) > 1:
+            return Dashboard().open()
+```
+
+`fullscreen = True` covers the screen with a borderless window, which keeps notifications and
+alt-tab working. `fullscreen = "exclusive"` switches the screen to its own video mode (the
+highest refresh rate at its resolution): on Windows and X11 the frames skip the compositor, which
+lowers latency for games and displays. Wayland cannot do that and keeps the borderless window.
+
+For a car display, a point of sale, a museum panel or any device with one app, `kiosk = True`
+puts it all together: fullscreen, no frame, above the others, without buttons or taskbar entry,
+and the user cannot close it with Alt+F4 or the window manager (only `Command.close_window` and
+`Command.exit` do). Add `hide_cursor = True` on touch screens.
+
+```python
+class Panel(pz.App):
+    kiosk = True
+    hide_cursor = True
+    rendering = pz.Rendering(max_fps=30, background_fps=0)
+```
+
+On Linux the most robust kiosk runs the app as the only program of a kiosk compositor such as
+[cage](https://github.com/cage-kiosk/cage) (`cage -- python app.py`), started by the system at
+boot: no desktop, no panels, nothing to close.
 
 ### Window frames: your own title bar
 
