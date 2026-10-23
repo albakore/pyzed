@@ -17,7 +17,7 @@ reject the whole run at once.
 1. Open the panel: the **Agent** tab in the right dock, **View → Agent panel**, or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd>.
 2. The first time, the panel asks you to **connect a model** and lists the main providers. Click one to
    [sign in with the browser](#signing-in), or **All providers…** for the rest.
-3. Type what you want and press <kbd>Enter</kbd>, or click one of the suggestions.
+3. Type what you want and press <kbd>Enter</kbd>.
 
 Claude needs the optional dependencies (`anthropic` and `keyring`); the compiled Pyzed Design already has them:
 
@@ -25,7 +25,7 @@ Claude needs the optional dependencies (`anthropic` and `keyring`); the compiled
 pip install "pyzed-ui[agents]"     # or: uv add "pyzed-ui[agents]"
 ```
 
-![An empty thread with suggestions](../../../../screenshots/designer-agent-empty.png)
+![An empty thread: the whole panel is the message editor](../../../../screenshots/designer-agent-empty.png)
 
 ### Signing in
 
@@ -63,26 +63,47 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 
 ## The panel
 
+The panel looks and works like Zed's Agent Panel. The same thread view is used for Pyzed Agent and for
+[external agents](#external-agents) such as Claude Code, Codex or Gemini CLI.
+
 | Part | What it does |
 | --- | --- |
-| **Header** | The thread's title, **Follow the agent** (the crosshair: see [Watching the agent work](#watching-the-agent-work)), **+** (a new thread with Pyzed Agent or with any [external agent](#external-agents), plus **Add more agents…**), **History** and **⋯**: **Agent settings**, **Rules…**, **Show thinking**, **Copy thread as Markdown** and **Expand the panel** (it fills the window; pick it again to put it back in its dock). |
-| **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per step, as it happens: what the agent does (**Adding controls**, **Read file**…) and what it works on (the control, the file, the command). A spinner while it runs, a check when it worked, a red cross when it failed. While the model is still writing a long call, the line shows **preparing…**; an edit shows its diff and a command its last lines while they run. Click a line to see the tool's input, its result and the whole diff. With nothing on screen yet, the panel says what the agent is doing (thinking, running a tool, waiting for your answer) and for how long. |
-| **Agent changes** | After a run that changed something: the files it touched, with the lines added and removed. **Keep** or **Reject** each one, or all of them at once; **Reject** puts the form or code file back as it was before the run. Click a file to open it. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
-| **Message box** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. While the agent works the send button becomes **Stop**. |
-| **+** | **Files, the form, its code, controls** (an @ mention), **Attach images…**, **Paste image** and **Screenshot of the form**. See [Images](#images). |
-| **Permission mode** | What the agent may do without asking (see below). With an [external agent](#external-agents) that has modes of its own (Claude Code's **Default**, **Accept edits**, **Plan mode**…), its modes show here instead. |
-| **Model** | Every provider with its models, and the [external agents](#external-agents). A provider that is not set up shows **Connect…**, which signs in right there. Next to it, a small ring shows how full the model's context window is (`48k / 1M`); it turns yellow past 80% and red past 95%. |
-| **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
-| **Thinking** | Lets Claude think before answering (as deep as the effort says). Off, it answers sooner. Claude models only. |
-| **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
-| **Agent options** | With an external agent, the options it offers, as in Zed: its models (Claude Code's **Fable 5.1**, **Opus 5.5**, **Sonnet 5.5** and **Haiku 5.5**), its effort (**Low** to **Max**) or reasoning level and anything else it lists. Claude Code and Codex run the latest version of their adapter, so new models show up on their own. Pyzed remembers what you pick for the next threads with that agent. |
+| **Toolbar** | The agent's icon and the thread's title (**New Pyzed Agent Thread** while it is empty). Click the title to rename it. On the right: **+** (a new thread with Pyzed Agent or any [external agent](#external-agents), and **Add more agents**), **full screen** (the panel fills the window; click again to put it back in its dock) and **⋯**. |
+| **⋯ menu** | **Current Thread** (**Rename Thread**, **Copy Thread as Markdown**, **Open Thread as Markdown**), **MCP Servers** (**Add Server…**), **Context** (**Skills** and **Open Project Rules** / **Create Project Rules**, the project's `AGENTS.md`), **Settings**, **Thread History** and **Show Thinking**. With an external agent, also **Reauthenticate** and **Reload Agent** (its program starts again). |
+| **Your messages** | Cards in the editor's color. Click one to edit it: <kbd>Enter</kbd> (or the ↵ button) sends it again from that point and replaces what followed; <kbd>Esc</kbd> or ✕ cancels. See [Editing a message and checkpoints](#editing-a-message-and-checkpoints). External agents keep their own history, so their messages can't be edited yet, as in Zed. |
+| **The agent's answer** | Markdown. Its reasoning is folded under **Thinking** (click it to read it). |
+| **Tool calls** | One line per step, as it happens: the icon of the kind of step, what the agent does (**Adding controls**, **Read file**…) and what it works on. Click a line to see its input and output. Edits and commands are cards: the diff, or the command's output while it runs. A call that waits for your OK asks on its card: **Always allow**, **Allow** or **Reject**. A failed call shows a red ✕. |
+| **End of a turn** | How long the agent took and how many tokens it wrote (`42s • 3.8k tokens`), **Copy This Agent Response** and, on the last turn, **Scroll to Top**. While it works, a spinner with the time and the tokens so far. |
+| **Activity bar** | Attached to the top of the message editor, what needs your attention: a call **Awaiting Confirmation**, the **Plan** (`Current: …  2 left`; click it to see every step), the **Edits** (`2 files • +12 -3`, with **Review Changes**, **Reject All** and **Keep All**; unfold it for **Keep** or **Reject** on each file) and the [queued messages](#queued-messages). |
+| **Message editor** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. The arrows at its top right make it taller. An empty thread is all message editor, like in Zed. |
+| **Left of the bottom row** | **+** (**Add context**: files, the form, its code, controls, **Attach images…**, **Paste image** and **Screenshot of the form**; see [Images](#images)), **Follow the Agent** (the crosshair: see [Watching the agent work](#watching-the-agent-work)), **Fast mode** (on Claude Opus 5.5 and Opus 5 through the Claude API: faster answers at a higher price), **Thinking** (the brain: lets Claude think before answering) and its **effort** (**Low**, **Medium**, **High**, **Extra high**, **Max**). The last three show for the models that have them. |
+| **Right of the bottom row** | A small ring with how full the model's context window is (`48k / 1M`; yellow past 80% and red past 95%), the **profile**, the **model** (every provider with its models; one that is not set up offers **Connect…**) and **Send**. While the agent works, **Send** becomes **Stop**, or **Queue and Send** when there is text. |
+| **Agent options** | With an external agent, the options it offers take the place of the profile and the model, as in Zed: its modes (Claude Code's **Default**, **Accept edits**, **Plan mode**…), its models (**Fable 5.1**, **Opus 5.5**, **Sonnet 5.5**, **Haiku 5.5**), its effort or reasoning level and anything else it lists. Claude Code and Codex run the latest version of their adapter, so new models show up on their own. Pyzed remembers what you pick for the next threads with that agent. |
 
-| Permission mode | What the agent may do |
+The profile says what Pyzed Agent may do, like Zed's profiles:
+
+| Profile | What the agent may do |
 | --- | --- |
-| **Ask before writing** | Edits the open form and its code freely (every change can be undone); asks before creating documents or writing files. The default. |
-| **Bypass permissions** | Never asks. |
-| **Read only** | Reads only: answers questions and suggests code without changing anything. |
-| **Chat only** | No tools: a plain conversation with the model. |
+| **Write** | Edits forms, code and files and runs the app. Edits to the open form never ask (every change can be undone); with **Ask before writing files** on (the default, in the same menu) it asks before creating documents or writing files. |
+| **Ask** | Reads only: answers questions and suggests code without changing anything. |
+| **Minimal** | No tools: a plain conversation with the model. |
+
+### Editing a message and checkpoints
+
+Click one of your messages to change it and send it again: the thread goes back to that point (what came after it
+is replaced by the new answer), and so do the forms and code the agent changed after it. Everything after the
+message you are editing is dimmed until you send it or cancel.
+
+When the agent changed documents after a message, **Restore Checkpoint** shows above it. It puts those forms and
+their code back as they were when you sent that message, without touching the thread. The checkpoints last while
+Pyzed Design is open.
+
+### Queued messages
+
+You can keep writing while the agent works: <kbd>Enter</kbd> puts the message in a queue, shown in the activity
+bar (**1 Queued Message**), and it is sent when the agent finishes. Unfold it to edit (it goes back to the message
+editor) or remove a message. **Send Now** stops the agent so the next message goes right away; **Clear All**
+empties the queue. A run that stops with an error or waits for a sign-in leaves the queue waiting.
 
 ![Every provider in the model picker](../../../../screenshots/designer-agent-models.png)
 
@@ -137,9 +158,9 @@ Type <kbd>/</kbd> at the start of the message:
 | `list_examples`, `read_example`, `new_form` | Pyzed's examples to learn from, and a starting form written for a description. |
 | `mcp_<server>_<tool>` | The tools of the [MCP servers](#mcp-servers) you added. |
 
-Tools that **create or write files** ask first in the **Ask before writing** mode: a card shows **Allow**,
-**Always allow** and **Deny**. **Always allow** is remembered: **Settings → Permissions** lists those tools, and
-**Ask again** undoes it. **Bypass permissions** skips the question. Changes to the open document never ask, since
+Tools that **create or write files** ask first while **Ask before writing files** is on: their card shows
+**Always allow**, **Allow** and **Reject**. **Always allow** is remembered: **Settings → Permissions** lists those
+tools, and **Ask again** undoes it. Turning **Ask before writing files** off skips the question. Changes to the open document never ask, since
 they can be undone.
 
 ## Images
@@ -157,7 +178,7 @@ most vision models of Ollama…).
 
 ## Building an application
 
-`/app`, the **Create a notes app…** suggestion or a plain request ("Create an app to track my expenses") start a
+`/app` or a plain request ("Create an app to track my expenses") start a
 whole application, not only a form. The agent knows the editor (projects, forms, components, styles, data
 binding, the [MCP server](/pyzed/guides/mcp/) and these docs) and, in each message, what is open: the project
 and its files, the form, the selection and the other tabs. It then:
@@ -172,8 +193,8 @@ and its files, the form, the selection and the other tabs. It then:
 5. Runs the app with `run_app`, reads its errors and the picture of its window, fixes what is wrong and runs it
    again until it starts cleanly. Then it tells you what it built and how to run it (<kbd>F5</kbd>).
 
-It works on its own from start to end, for up to 150 model answers per message. For no interruptions, pick
-**Bypass permissions** in the mode menu; with **Ask before writing** it asks before writing files and before
+It works on its own from start to end, for up to 150 model answers per message. For no interruptions, turn off
+**Ask before writing files** in the profile menu; while it is on, the agent asks before writing files and before
 running the app.
 
 ## Generating forms and components
@@ -259,8 +280,8 @@ agent's. **Add an MCP server** asks for:
   They go to the system keychain, never to `agents.json`.
 
 **Test** starts the server and lists its tools; the switch turns it off without removing it. Their tools show
-up as `mcp_<server>_<tool>`. Tools the server doesn't mark as read-only ask first in **Ask before writing**, like
-file writes; in **Read only** they are left out.
+up as `mcp_<server>_<tool>`. Tools the server doesn't mark as read-only ask first while **Ask before writing files** is
+on, like file writes; with the **Ask** profile they are left out.
 
 ### External agents
 
@@ -287,8 +308,8 @@ thread shows **Sign in to …** with one button per way the agent offers, as in 
   **Secrets**, where it is kept in the keychain.
 
 Under WSL the browser and the terminal are the ones of Windows. Pyzed answers its requests: it reads and writes files only inside the project and never
-the ones that may hold secrets, and asks before acting according to the permission mode (**Read only** allows
-only reads, **Chat only** refuses every tool).
+the ones that may hold secrets, and asks before acting according to the profile (**Ask** allows
+only reads, **Minimal** refuses every tool).
 
 With **Let external agents control the editor** on (the default), the agent gets the built-in agent's tools over
 MCP: it reads and changes the open form and its code, creates forms and components, runs the app with `run_app`,
@@ -313,7 +334,7 @@ them) are kept. Turn **Add it to new agents on start** off to stop it. The agent
 
 ### Watching the agent work
 
-With **Follow the agent** on (the crosshair in the header, on by default), the files the agent writes open as it
+With **Follow the agent** on (the crosshair at the bottom of the message editor, on by default), the files the agent writes open as it
 works: forms and components in their tab, code and other text files in the code editor, and for an external
 agent, the file it is editing. A file that is already open shows the new text right away, unless it has
 changes of yours that are not saved. The message box keeps the keyboard, so you can keep typing.
@@ -374,7 +395,7 @@ requests to the provider you picked.
 | **Effort** | How much the model thinks before answering (`low` … `max`). Claude only; `high` by default. |
 | **Thinking** | Lets Claude think before answering. Off, it answers sooner. Also in the message box. |
 | **Fast mode** | Faster answers at a higher price (Claude Opus 5.5 and Opus 5). Also in the message box. |
-| **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
+| **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; also in the profile menu. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |
 | **Follow the agent** | Opens the files the agent writes as it works. |
 | **Notify when the agent finishes** | A desktop notification while the window is in the background. |
@@ -397,7 +418,7 @@ More prompts that work well are in the [prompting guide](/pyzed/ai/prompting/).
 
 ## History
 
-**History** in the header lists your threads grouped by date (today, yesterday, this week…), with a search box
+**Thread History** in the **⋯** menu (or `/history`) lists your threads grouped by date (today, yesterday, this week…), with a search box
 and the agent of each thread. Click one to continue it (the agent remembers the whole conversation), or delete it.
 The last 200 threads are kept.
 

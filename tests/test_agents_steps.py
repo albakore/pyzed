@@ -216,7 +216,7 @@ def test_the_agent_steps_go_to_the_logs_panel(tmp_path, monkeypatch):
 
 
 def test_always_allow_is_remembered_and_agent_options_show_in_the_composer(tmp_path, monkeypatch):
-    from pyzed.designer import agent_panel
+    from pyzed.designer import agent_panel, agent_thread
 
     d, c = _designer(tmp_path, monkeypatch, lambda *a, **k: llm.Turn([], "end_turn"))
     tool_ = agents.Tool("write_file", "", {"type": "object", "properties": {}}, lambda: None, writes=True)
@@ -234,9 +234,9 @@ def test_always_allow_is_remembered_and_agent_options_show_in_the_composer(tmp_p
     try:
         agent.start()
         t = d.theme
-        assert agent_panel._composer(c, t) is not None
+        assert agent_thread.message_editor(c, t) is not None
         c.toggle_menu("option:mode")
-        assert agent_panel._thread_view(c, d, t, None) is not None
+        assert agent_thread.thread_view(c, t) is not None
         c.set_agent_option("mode", "plan")
         for _ in range(500):
             c.poll()
@@ -303,7 +303,7 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
 
 
 def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monkeypatch):
-    from pyzed.designer import agent_panel
+    from pyzed.designer import agent_panel, agent_thread
 
     d, c = _designer(tmp_path, monkeypatch, lambda *a, **k: llm.Turn([], "end_turn"))
     cursor = mcp_install.Client("cursor", "Cursor", "json", tmp_path / "mcp.json", tmp_path)
@@ -316,7 +316,7 @@ def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monk
             break
         time.sleep(0.01)
     assert c.mcp_added == ["Cursor"] and c.settings.pyzed_mcp_done == ["cursor"]
-    assert agent_panel._thread_view(c, d, d.theme, None) is not None
+    assert agent_thread.thread_view(c, d.theme) is not None
     c.restart_agents()
     assert c.mcp_added == []
     cursor.path.write_text("{}")  # taken out by hand: not added again on the next start

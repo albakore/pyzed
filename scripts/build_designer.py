@@ -24,7 +24,8 @@ Signing is optional and driven by environment variables, so builds without certi
   app with the hardened runtime; with ``APPLE_ID``, ``APPLE_TEAM_ID`` and ``APPLE_APP_PASSWORD`` it is
   also notarized and the ticket stapled.
 - Windows: ``PYZED_SIGN_PFX`` (a .pfx file) and ``PYZED_SIGN_PASSWORD`` sign the executables with
-  Authenticode and a timestamp.
+  Authenticode and a timestamp. A signed app is trusted by Windows' SmartScreen and antivirus, which otherwise
+  hold up the first start of each new version while they check it.
 
 The OAuth apps the Agent panel signs in with are optional too: ``PYZED_GITHUB_CLIENT_ID``,
 ``PYZED_GOOGLE_CLIENT_ID`` and ``PYZED_GOOGLE_CLIENT_SECRET`` are bundled as the ``pyzed_oauth_apps``
@@ -79,17 +80,20 @@ def signtool() -> str:
 
 
 def sign(bundle: Path) -> None:
-    """Signs the app when the environment carries the certificates (see the module docstring)."""
+    """Signs the app (or one file, like the setup program) when the environment carries the certificates (see
+    the module docstring)."""
     if sys.platform == "darwin" and os.environ.get("PYZED_CODESIGN_IDENTITY"):
         subprocess.run(["codesign", "--force", "--deep", "--options", "runtime", "--timestamp",
                         "--sign", os.environ["PYZED_CODESIGN_IDENTITY"], str(bundle)], check=True)
         print(f"Signed {bundle.name}")
     elif sys.platform == "win32" and os.environ.get("PYZED_SIGN_PFX"):
-        exes = sorted(str(p) for p in bundle.rglob("*.exe"))
+        # the executables and the Python extensions (Pyzed's core is the biggest file Windows checks at start)
+        files = [str(bundle)] if bundle.is_file() else sorted(
+            str(p) for pattern in ("*.exe", "*.pyd") for p in bundle.rglob(pattern))
         subprocess.run([signtool(), "sign", "/f", os.environ["PYZED_SIGN_PFX"],
                         "/p", os.environ.get("PYZED_SIGN_PASSWORD", ""), "/fd", "sha256",
-                        "/tr", "http://timestamp.digicert.com", "/td", "sha256", *exes], check=True)
-        print(f"Signed {len(exes)} executables")
+                        "/tr", "http://timestamp.digicert.com", "/td", "sha256", *files], check=True)
+        print(f"Signed {len(files)} files")
 
 
 def notarize(bundle: Path, archive: str) -> bool:
