@@ -18,23 +18,28 @@ DOCS = Path(__file__).resolve().parent.parent
 OUT = DOCS / "public" / "og"
 W, H = 1200, 630
 
-BG = (24, 26, 31)
-PANEL = (40, 44, 52)
-TEXT = (220, 224, 232)
-MUTED = (150, 158, 172)
-BLUE = (116, 173, 232)
-GREEN = (161, 193, 129)
+# The brand's dark palette ("Graphite", assets/brand/tokens.json).
+BG = (13, 14, 17)
+BORDER = (42, 47, 57)
+TEXT = (231, 233, 238)
+MUTED = (154, 161, 174)
+INDIGO = (139, 131, 255)
+INDIGO_SOLID = (79, 70, 229)
+AMBER = (245, 181, 71)
+LED = (245, 165, 36)
 
+BRAND = DOCS.parent / "assets" / "brand"
+FONT_DIR = DOCS.parent / "assets" / "fonts"
 FONTS = {
-    "bold": ["/usr/share/fonts/opentype/inter/InterDisplay-Bold.otf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"],
-    "medium": ["/usr/share/fonts/opentype/inter/Inter-Medium.otf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"],
-    "regular": ["/usr/share/fonts/opentype/inter/Inter-Regular.otf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"],
+    "bold": [FONT_DIR / "IBMPlexSans-Bold.ttf", Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")],
+    "regular": [FONT_DIR / "IBMPlexSans-Regular.ttf", Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")],
+    "mono": [FONT_DIR / "IBMPlexMono-Medium.ttf", Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf")],
 }
 
 
 def font(kind: str, size: int) -> ImageFont.FreeTypeFont:
     for path in FONTS[kind]:
-        if Path(path).exists():
+        if path.exists():
             return ImageFont.truetype(path, size)
     return ImageFont.load_default(size)
 
@@ -101,25 +106,17 @@ def wrap(draw: ImageDraw.ImageDraw, text: str, fnt, width: int) -> list[str]:
 
 
 def logo(size: int) -> Image.Image:
-    """The Pyzed logo (docs/src/assets/logo.svg) drawn with Pillow."""
-    s = size / 64
-    im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    d.rounded_rectangle([2 * s, 2 * s, 62 * s, 62 * s], radius=14 * s, fill=(47, 52, 62))
-    w = round(6 * s)
-    d.line([(18 * s, 20 * s), (46 * s, 20 * s), (22 * s, 44 * s), (46 * s, 44 * s)], fill=BLUE, width=w, joint="curve")
-    for x, y in [(18, 20), (46, 44)]:
-        d.ellipse([(x - 3) * s, (y - 3) * s, (x + 3) * s, (y + 3) * s], fill=BLUE)
-    d.ellipse([43 * s, 16 * s, 51 * s, 24 * s], fill=GREEN)
-    return im
+    """The Pyzed app icon (assets/brand/app-icon-1024.png, made by scripts/brand.py) at ``size`` pixels."""
+    return Image.open(BRAND / "app-icon-1024.png").convert("RGBA").resize((size, size), Image.LANCZOS)
 
 
 def card(shot: str, eyebrow: str, title: str, tagline: str) -> Image.Image:
     im = Image.new("RGB", (W, H), BG)
-    # Soft blue glow in the top-right corner.
-    glow = Image.new("RGB", (W, H), BG)
-    ImageDraw.Draw(glow).ellipse([700, -350, 1500, 450], fill=(38, 58, 84))
-    im = Image.blend(im, glow.filter(ImageFilter.GaussianBlur(120)), 1.0)
+    # The dotted grid of the designer's canvas, behind the screenshot.
+    grid = ImageDraw.Draw(im)
+    for gx in range(560, W, 24):
+        for gy in range(8, H, 24):
+            grid.ellipse([gx - 1, gy - 1, gx + 1, gy + 1], fill=(38, 42, 51))
 
     # Screenshot, tilted out of the right edge.
     src = Image.open(DOCS / shot).convert("RGB")
@@ -132,18 +129,18 @@ def card(shot: str, eyebrow: str, title: str, tagline: str) -> Image.Image:
     shadow = shadow.filter(ImageFilter.GaussianBlur(22))
     x, y = 600, 205
     im.paste((0, 0, 0), (x - 40, y - 40), shadow)
-    border = Image.new("RGB", (src.width + 2, src.height + 2), (70, 76, 88))
+    border = Image.new("RGB", (src.width + 2, src.height + 2), BORDER)
     bmask = Image.new("L", border.size, 0)
     ImageDraw.Draw(bmask).rounded_rectangle([0, 0, border.width - 1, border.height - 1], radius=15, fill=255)
     im.paste(border, (x - 1, y - 1), bmask)
     im.paste(src, (x, y), mask)
 
     d = ImageDraw.Draw(im)
-    lg = logo(64)
-    im.paste(lg, (64, 56), lg)
-    d.text((144, 64), "Pyzed", font=font("bold", 44), fill=TEXT)
+    lg = logo(60)
+    im.paste(lg, (64, 58), lg)
+    d.text((140, 62), "pyzed", font=font("bold", 44), fill=TEXT)
 
-    d.text((64, 170), eyebrow.upper(), font=font("medium", 20), fill=BLUE)
+    d.text((64, 170), eyebrow.upper(), font=font("mono", 19), fill=INDIGO)
     y = 206
     tf = font("bold", 50)
     for line in wrap(d, title, tf, 500)[:4]:
@@ -154,7 +151,8 @@ def card(shot: str, eyebrow: str, title: str, tagline: str) -> Image.Image:
     for line in wrap(d, tagline, gf, 500)[:4]:
         d.text((64, y), line, font=gf, fill=MUTED)
         y += 32
-    d.text((64, H - 64), "albakore.github.io/pyzed", font=font("medium", 20), fill=GREEN)
+    d.ellipse([64, H - 57, 74, H - 47], fill=LED)
+    d.text((86, H - 64), "albakore.github.io/pyzed", font=font("mono", 19), fill=AMBER)
     return im
 
 
@@ -169,9 +167,9 @@ def main() -> None:
             print(OUT / name)
     # App icons for manifest.webmanifest and iOS home screens.
     for size, name in [(192, "icon-192.png"), (512, "icon-512.png"), (180, "apple-touch-icon.png")]:
-        icon = logo(size * 4).resize((size, size), Image.LANCZOS)
+        icon = logo(size)
         if name == "apple-touch-icon.png":  # iOS draws its own rounded corners: no transparency.
-            flat = Image.new("RGB", (size, size), (47, 52, 62))
+            flat = Image.new("RGB", (size, size), INDIGO_SOLID)
             flat.paste(icon, (0, 0), icon)
             icon = flat
         icon.save(DOCS / "public" / name, optimize=True)

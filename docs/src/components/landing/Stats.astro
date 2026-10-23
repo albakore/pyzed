@@ -1,5 +1,6 @@
 ---
-// A row of big numbers. items: [{ value, label }]
+// A row of big numbers with a mono label and an amber LED, like the readouts of the audio rack.
+// items: [{ value, label }]
 interface Props {
 	items: { value: string; label: string }[];
 }
@@ -10,7 +11,10 @@ const { items } = Astro.props;
 	{
 		items.map(({ value, label }) => (
 			<div>
-				<dt>{label}</dt>
+				<dt>
+					<span class="pz-led" />
+					{label}
+				</dt>
 				<dd>{value}</dd>
 			</div>
 		))
@@ -20,47 +24,36 @@ const { items } = Astro.props;
 <style>
 	.pz-stats {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
 		gap: 1px;
-		margin-block: 3rem 0 !important;
-		border-radius: 0.9rem;
+		margin-block: 2.5rem 0 !important;
+		border-radius: 0.875rem;
 		overflow: hidden;
-		border: 1px solid var(--pz-frame-border);
-		background: var(--pz-frame-border);
-	}
-	@media (min-width: 50rem) {
-		.pz-stats {
-			grid-template-columns: repeat(5, 1fr);
-		}
+		border: 1px solid var(--pz-border);
+		background: var(--pz-border);
 	}
 	.pz-stats div {
 		display: flex;
-		flex-direction: column-reverse;
-		gap: 0.2rem;
-		padding: 1.1rem 1rem;
-		text-align: center;
-		background: var(--sl-color-bg);
+		flex-direction: column;
+		gap: 0.4rem;
+		padding: 1.1rem 1.25rem;
+		background: var(--pz-surface);
 	}
-	.pz-stats div:last-child:nth-child(odd) {
-		grid-column: 1 / -1;
-	}
-	@media (min-width: 50rem) {
-		.pz-stats div:last-child:nth-child(odd) {
-			grid-column: auto;
-		}
+	dt {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font: 500 0.6875rem var(--sl-font-mono);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--pz-muted);
 	}
 	dd {
 		margin: 0;
-		font-size: clamp(var(--sl-text-2xl), 1rem + 2vw, var(--sl-text-4xl));
+		font-size: clamp(var(--sl-text-2xl), 1rem + 1.2vw, 1.875rem);
 		font-weight: 700;
+		letter-spacing: -0.02em;
 		line-height: 1.1;
-		background: var(--pz-gradient);
-		-webkit-background-clip: text;
-		background-clip: text;
-		color: transparent;
-	}
-	dt {
-		font-size: var(--sl-text-sm);
-		color: var(--sl-color-gray-3);
+		color: var(--sl-color-white);
 	}
 </style>

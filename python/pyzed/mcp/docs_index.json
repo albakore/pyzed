@@ -391,6 +391,12 @@
    "path": "docs/src/content/docs/contributing/adding-components.md"
   },
   {
+   "slug": "contributing/brand",
+   "title": "Brand",
+   "description": "The Pyzed brand: the python logo and wordmark, app icons, the Graphite and Paper color palettes, IBM Plex type and how the docs site uses them.",
+   "path": "docs/src/content/docs/contributing/brand.md"
+  },
+  {
    "slug": "contributing/docs",
    "title": "Editing the documentation",
    "description": "How the Pyzed documentation site is organized, how to preview it, how translations work and how to regenerate the API reference and screenshots.",

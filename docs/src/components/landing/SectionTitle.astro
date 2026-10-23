@@ -1,46 +1,64 @@
 ---
-// A centered section heading with an eyebrow and a lead paragraph.
+// A landing-page section heading, like the brand landing: a numbered mono eyebrow ("02 / Pyzed Design")
+// and the title on the left, the lead paragraph on the right.
 interface Props {
 	id?: string;
 	eyebrow?: string;
+	/** The section number shown before the eyebrow. */
+	n?: number;
 	title: string;
 }
-const { id, eyebrow, title } = Astro.props;
+const { id, eyebrow, n, title } = Astro.props;
+const number = n === undefined ? '' : `${String(n).padStart(2, '0')} / `;
 ---
 
 <header id={id} class="pz-section-title not-content">
-	{eyebrow && <p class="eyebrow">{eyebrow}</p>}
-	<h2>{title}</h2>
+	<div class="heading">
+		{eyebrow && <p class="eyebrow">{number}{eyebrow}</p>}
+		<h2>{title}</h2>
+	</div>
 	<div class="lead"><slot /></div>
 </header>
 
 <style>
 	.pz-section-title {
-		max-width: 44rem;
-		margin: 6rem auto 0 !important;
-		text-align: center;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem 2.5rem;
+		margin: 6rem 0 0 !important;
+	}
+	.heading {
+		flex: 1 1 28rem;
+		min-width: 0;
 	}
 	.eyebrow {
-		margin: 0 0 0.5rem;
-		font-size: var(--sl-text-sm);
-		font-weight: 600;
+		margin: 0 0 0.6rem;
+		font: 500 0.75rem var(--sl-font-mono);
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		color: var(--pz-accent-text);
+		color: var(--pz-brand);
 	}
 	h2 {
 		margin: 0;
-		font-size: clamp(var(--sl-text-3xl), 1.2rem + 2.4vw, var(--sl-text-5xl));
-		line-height: 1.1;
+		font-size: clamp(var(--sl-text-3xl), 1.2rem + 1.8vw, 2.5rem);
+		line-height: 1.15;
+		letter-spacing: -0.025em;
 		font-weight: 700;
 		color: var(--sl-color-white);
 	}
 	.lead {
-		margin-top: 1rem;
-		font-size: var(--sl-text-lg);
-		color: var(--sl-color-gray-2);
+		flex: 0 1 28rem;
+		min-width: 0;
+		font-size: var(--sl-text-base);
+		line-height: 1.65;
+		color: var(--pz-muted);
 	}
 	.lead :global(p) {
 		margin: 0;
+	}
+	.lead :global(strong) {
+		color: var(--sl-color-white);
 	}
 </style>

@@ -62,7 +62,7 @@ const { items } = Astro.props;
 			transform 0.15s ease;
 	}
 	.pz-tile:hover {
-		border-color: var(--sl-color-accent);
+		border-color: var(--pz-brand-line);
 		transform: translateY(-2px);
 	}
 	.icon {
@@ -71,14 +71,13 @@ const { items } = Astro.props;
 		width: 2.4rem;
 		height: 2.4rem;
 		border-radius: 0.6rem;
-		color: var(--pz-accent-text);
-		background: color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
-		border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+		color: var(--pz-brand);
+		background: var(--pz-brand-tint);
 	}
 	.title {
 		margin-top: 0.35rem;
 		font-size: var(--sl-text-lg);
-		font-weight: 650;
+		font-weight: 600;
 		color: var(--sl-color-white);
 	}
 	.text {

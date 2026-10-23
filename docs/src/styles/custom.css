@@ -1,33 +1,133 @@
-/* Colores de One Dark / One Light (los temas por defecto de Pyzed y Zed). */
+/* Pyzed brand: layered graphite surfaces like a code editor, indigo for the brand and amber only for
+ * LEDs and displays, the panel language of an audio rack. Dark (Graphite) is the default; light (Paper)
+ * keeps the same hierarchy. Every color below comes from the brand sheet (see contributing/brand.md). */
 :root {
-	--sl-color-accent-low: #1d2a3a;
-	--sl-color-accent: #3a7bc8;
-	--sl-color-accent-high: #a8cdf4;
+	--sl-color-accent-low: #1f1d3a;
+	--sl-color-accent: #8b83ff;
+	--sl-color-accent-high: #b4aeff;
 	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #dce0e5;
-	--sl-color-gray-2: #c8ccd4;
-	--sl-color-gray-3: #a9afbc;
-	--sl-color-gray-4: #7f8796;
-	--sl-color-gray-5: #464b57;
-	--sl-color-gray-6: #2f343e;
-	--sl-color-black: #23272e;
+	--sl-color-gray-1: #e7e9ee;
+	--sl-color-gray-2: #c5cad3;
+	--sl-color-gray-3: #9aa1ae;
+	--sl-color-gray-4: #6a717e;
+	--sl-color-gray-5: #2a2f39;
+	--sl-color-gray-6: #191c22;
+	--sl-color-black: #0d0e11;
+	--sl-color-bg-nav: #0d0e11;
+	--sl-color-bg-sidebar: #111317;
+	--sl-color-bg-inline-code: #1b1e25;
+	--sl-color-hairline: #22262e;
+	--sl-color-hairline-light: #2a2f39;
+	--sl-color-hairline-shade: #07080a;
+	--sl-color-orange: #f5a524;
+	--sl-color-orange-high: #f5b547;
+	--sl-color-green: #3fcf8e;
+	--sl-color-green-high: #8fe3b9;
+	--sl-color-blue: #6fc3ff;
+	--sl-color-purple: #8b83ff;
+	--sl-color-purple-high: #b4aeff;
+	--sl-color-red: #ff6b9a;
 	--sl-font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--sl-font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+	/* Brand tokens used by the components in src/components. */
+	--pz-brand: #8b83ff;
+	--pz-brand-solid: #5b50f0;
+	--pz-brand-solid-hover: #6c62ff;
+	--pz-on-brand: #ffffff;
+	--pz-brand-tint: rgb(139 131 255 / 0.12);
+	--pz-brand-line: rgb(139 131 255 / 0.32);
+	--pz-bg: #0d0e11;
+	--pz-surface: #14161b;
+	--pz-panel: #191c22;
+	--pz-raised: #222630;
+	--pz-border: #2a2f39;
+	--pz-text: #e7e9ee;
+	--pz-muted: #9aa1ae;
+	--pz-faint: #5c6370;
+	--pz-led: #f5a524;
+	--pz-led-glow: 0 0 8px #f5a524;
+	--pz-led-text: #f5b547;
+	--pz-led-off: #3a3f4a;
+	--pz-lcd: #07080a;
+	--pz-lcd-line: #2a2f39;
+	--pz-lcd-text: #f5b547;
+	--pz-lcd-dim: #8a6420;
+	--pz-canvas: #101216;
+	--pz-grid: #262a33;
+	--pz-rack: #111317;
+	--pz-green: #3fcf8e;
+	--pz-pink: #ff6b9a;
+	--pz-shadow: 0 40px 100px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.02);
 }
 
 :root[data-theme='light'] {
-	--sl-color-accent-low: #d8e6fb;
-	--sl-color-accent: #3060c8;
-	--sl-color-accent-high: #1c3a7a;
-	--sl-color-white: #242529;
-	--sl-color-gray-1: #383a42;
-	--sl-color-gray-2: #4b4e57;
-	--sl-color-gray-3: #6a6d78;
-	--sl-color-gray-4: #8e9099;
-	--sl-color-gray-5: #c9c9cc;
-	--sl-color-gray-6: #ebebec;
-	--sl-color-gray-7: #f5f5f6;
-	--sl-color-black: #fafafa;
+	--sl-color-accent-low: #eef0ff;
+	--sl-color-accent: #4f46e5;
+	--sl-color-accent-high: #3730a3;
+	--sl-color-white: #14161b;
+	--sl-color-gray-1: #23262e;
+	--sl-color-gray-2: #3a404b;
+	--sl-color-gray-3: #576070;
+	--sl-color-gray-4: #8a92a0;
+	--sl-color-gray-5: #dce0e7;
+	--sl-color-gray-6: #e7eaf0;
+	--sl-color-gray-7: #f1f3f6;
+	--sl-color-black: #ffffff;
+	--sl-color-bg: #f6f7f9;
+	--sl-color-bg-nav: #f6f7f9;
+	--sl-color-bg-sidebar: #f1f3f6;
+	--sl-color-bg-inline-code: #eceef3;
+	--sl-color-hairline: #dce0e7;
+	--sl-color-hairline-light: #e7eaf0;
+	--sl-color-hairline-shade: #dce0e7;
+	--sl-color-orange: #f5a524;
+	--sl-color-orange-high: #8a5300;
+	--sl-color-green: #12805c;
+	--sl-color-green-high: #0b5c42;
+	--sl-color-blue: #0b6bcb;
+	--sl-color-purple: #4f46e5;
+	--sl-color-purple-high: #3730a3;
+	--sl-color-red: #e0457b;
+
+	--pz-brand: #4f46e5;
+	--pz-brand-solid: #4f46e5;
+	--pz-brand-solid-hover: #4338ca;
+	--pz-brand-tint: #eef0ff;
+	--pz-brand-line: #c9ccfb;
+	--pz-bg: #f6f7f9;
+	--pz-surface: #ffffff;
+	--pz-panel: #f1f3f6;
+	--pz-raised: #e7eaf0;
+	--pz-border: #dce0e7;
+	--pz-text: #14161b;
+	--pz-muted: #576070;
+	--pz-faint: #9aa1ae;
+	--pz-led-glow: 0 0 6px rgb(245 165 36 / 0.8);
+	--pz-led-text: #8a5300;
+	--pz-led-off: #c9ced8;
+	--pz-lcd: #14161b;
+	--pz-canvas: #eef0f4;
+	--pz-grid: #cdd3dc;
+	--pz-rack: #eceef2;
+	--pz-green: #12805c;
+	--pz-pink: #e0457b;
+	--pz-shadow: 0 40px 100px rgb(15 23 42 / 0.14), 0 0 0 1px rgb(15 23 42 / 0.02);
+}
+
+/* A status LED, like the toggles of the designer and the panels of the audio rack. */
+.pz-led {
+	display: inline-block;
+	flex: none;
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 999px;
+	background: var(--pz-led);
+	box-shadow: var(--pz-led-glow);
+}
+.pz-led.off {
+	background: var(--pz-led-off);
+	box-shadow: none;
 }
 
 /* Capturas de la interfaz: bordes y sombra como una ventana. */
@@ -59,18 +159,19 @@
 	border-radius: 999px;
 	vertical-align: middle;
 }
-.release-tag.stable {
-	background: color-mix(in srgb, #a1c181 22%, transparent);
-	color: #a1c181;
-	border: 1px solid color-mix(in srgb, #a1c181 50%, transparent);
+.release-tag {
+	font-family: var(--sl-font-mono);
+	font-weight: 500;
 }
-:root[data-theme='light'] .release-tag.stable {
-	color: #3f7a26;
+.release-tag.stable {
+	background: var(--pz-brand-tint);
+	color: var(--pz-brand);
+	border: 1px solid var(--pz-brand-line);
 }
 .release-tag.pre {
-	background: color-mix(in srgb, #dec184 22%, transparent);
-	color: #b8902f;
-	border: 1px solid color-mix(in srgb, #dec184 50%, transparent);
+	background: color-mix(in srgb, var(--pz-led) 14%, transparent);
+	color: var(--pz-led-text);
+	border: 1px solid color-mix(in srgb, var(--pz-led) 45%, transparent);
 }
 
 /* Firmas de la referencia de la API. */
@@ -79,53 +180,24 @@
 	font-size: var(--sl-text-sm);
 }
 
-/* Landing page and download page (src/components/landing, src/components/Download.astro). */
+/* Landing page and download page (src/components/landing, src/components/Download.astro). The brand has no
+ * gradients or glows: flat graphite panels, hairline borders and one deep shadow under the big screenshots. */
 :root {
-	--pz-accent-text: #74ade8;
-	--pz-gradient: linear-gradient(100deg, #61afef 0%, #c678dd 55%, #e5c07b 100%);
-	--pz-glow: radial-gradient(closest-side, rgb(97 175 239 / 0.55), rgb(198 120 221 / 0.25), transparent);
-	--pz-glow-strong: radial-gradient(closest-side, rgb(97 175 239 / 0.6), rgb(198 120 221 / 0.35) 60%, transparent);
-	--pz-frame-border: color-mix(in srgb, var(--sl-color-gray-5) 80%, transparent);
-	--pz-frame-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 60px -20px rgb(0 0 0 / 0.65);
-	--pz-tile-bg: linear-gradient(180deg, color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent), transparent);
+	--pz-accent-text: var(--pz-brand);
+	--pz-gradient: linear-gradient(var(--pz-brand), var(--pz-brand));
+	--pz-glow: none;
+	--pz-glow-strong: none;
+	--pz-frame-border: var(--pz-border);
+	--pz-frame-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.7);
+	--pz-tile-bg: var(--pz-surface);
 }
 :root[data-theme='light'] {
-	--pz-accent-text: #2f5fc4;
-	--pz-gradient: linear-gradient(100deg, #2f6fd6 0%, #9a3fbf 55%, #c0841a 100%);
-	--pz-glow: radial-gradient(closest-side, rgb(64 120 242 / 0.35), rgb(166 38 164 / 0.15), transparent);
-	--pz-glow-strong: radial-gradient(closest-side, rgb(64 120 242 / 0.4), rgb(166 38 164 / 0.2) 60%, transparent);
-	--pz-frame-border: var(--sl-color-gray-5);
-	--pz-frame-shadow: 0 24px 60px -24px rgb(30 40 70 / 0.35);
-	--pz-tile-bg: linear-gradient(180deg, var(--sl-color-gray-7), transparent);
+	--pz-frame-shadow: 0 24px 60px -28px rgb(15 23 42 / 0.28);
 }
 
-/* A hero without an image (the landing page) is centered; the screenshot follows it, full width. */
-.hero:not(:has(> img, > .hero-html)) {
-	grid-template-columns: 100%;
-	padding-block: clamp(2.5rem, 1rem + 8vmin, 6rem) 1rem;
-	position: relative;
-}
-.hero:not(:has(> img, > .hero-html)) .stack {
-	text-align: center;
-}
-.hero:not(:has(> img, > .hero-html)) .copy {
-	align-items: center;
-}
-.hero:not(:has(> img, > .hero-html)) .copy > * {
-	max-width: 46rem;
-}
-.hero:not(:has(> img, > .hero-html)) h1 {
-	font-weight: 750;
-	letter-spacing: -0.02em;
-}
-.hero:not(:has(> img, > .hero-html)) .actions {
-	justify-content: center;
-}
+/* Highlighted words of a title: the brand color (it used to be a gradient, hence the name). */
 .pz-gradient-text {
-	background: var(--pz-gradient);
-	-webkit-background-clip: text;
-	background-clip: text;
-	color: transparent;
+	color: var(--pz-brand);
 }
 
 /* A centered "see more" link under a landing-page section. */
@@ -144,17 +216,13 @@
 
 /* ------------------------------------------------------------------------------------------------
  * Site-wide look: header with the section navbar, typography, sidebar, cards, asides, code, tables
- * and media. Everything keeps the One Dark / One Light palette above.
+ * and media. Everything uses the brand palette above.
  * ---------------------------------------------------------------------------------------------- */
 
 /* Header: two rows on large screens (src/components/Header.astro), one row on phones. */
 :root {
 	--pz-top-height: 3.5rem;
 	--pz-tabs-height: 2.6rem;
-	--pz-hairline-glow: linear-gradient(90deg, transparent, rgb(97 175 239 / 0.45), rgb(198 120 221 / 0.4), transparent);
-}
-:root[data-theme='light'] {
-	--pz-hairline-glow: linear-gradient(90deg, transparent, rgb(64 120 242 / 0.35), rgb(166 38 164 / 0.3), transparent);
 }
 @media (min-width: 50em) {
 	:root {
@@ -176,14 +244,8 @@ header.header {
 	backdrop-filter: blur(14px) saturate(1.3);
 	-webkit-backdrop-filter: blur(14px) saturate(1.3);
 }
-header.header::after {
-	content: '';
-	position: absolute;
-	inset-inline: 0;
-	bottom: -1px;
-	height: 1px;
-	background: var(--pz-hairline-glow);
-	pointer-events: none;
+header.header {
+	border-bottom-color: var(--pz-border);
 }
 
 /* The sections in the phone menu (starlight-sidebar-topics); the header shows them on large screens. */
@@ -233,11 +295,11 @@ ul.starlight-sidebar-topics .starlight-sidebar-topics-icon {
 .sl-markdown-content h2:not(:where(.not-content *))::before {
 	content: '';
 	display: block;
-	width: 2.25rem;
+	width: 1.5rem;
 	height: 3px;
 	margin-bottom: 0.7rem;
 	border-radius: 3px;
-	background: var(--pz-gradient);
+	background: var(--pz-brand);
 }
 .sl-markdown-content a:not(:where(.not-content *)) {
 	text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
@@ -273,8 +335,8 @@ ul.starlight-sidebar-topics .starlight-sidebar-topics-icon {
 .sidebar-content a[aria-current='page']:hover,
 .sidebar-content a[aria-current='page']:focus {
 	color: var(--sl-color-white);
-	background: linear-gradient(90deg, color-mix(in srgb, var(--sl-color-accent) 30%, transparent), color-mix(in srgb, var(--sl-color-accent) 8%, transparent));
-	box-shadow: inset 2px 0 0 var(--sl-color-accent);
+	background: var(--pz-brand-tint);
+	box-shadow: inset 2px 0 0 var(--pz-brand);
 }
 
 /* Table of contents: the current heading. */
@@ -296,8 +358,7 @@ mobile-starlight-toc a[aria-current='true'] {
 }
 .sl-link-card:hover {
 	background: var(--pz-tile-bg);
-	border-color: color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
-	box-shadow: 0 10px 30px -14px color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+	border-color: var(--pz-brand-line);
 	transform: translateY(-2px);
 }
 .sl-link-card .icon {
@@ -403,12 +464,46 @@ starlight-tabs [role='tab'][aria-selected='true'] {
 	margin: 0;
 }
 
-/* A soft glow at the top of every page, like the home page. */
-.main-frame {
-	background:
-		radial-gradient(48rem 18rem at 85% -4rem, color-mix(in srgb, #61afef 9%, transparent), transparent 70%),
-		radial-gradient(36rem 16rem at 35% -6rem, color-mix(in srgb, #c678dd 7%, transparent), transparent 70%);
-	background-repeat: no-repeat;
+/* Buttons (hero actions, LinkButton): square-ish like the app, solid indigo for the main action. */
+.sl-link-button {
+	border-radius: 0.625rem;
+	font-weight: 500;
+}
+.sl-link-button.primary,
+.sl-link-button.primary:hover {
+	background: var(--pz-brand-solid);
+	border-color: var(--pz-brand-solid);
+	color: var(--pz-on-brand);
+	font-weight: 600;
+}
+.sl-link-button.primary:hover {
+	background: var(--pz-brand-solid-hover);
+	border-color: var(--pz-brand-solid-hover);
+}
+.sl-link-button.secondary {
+	border-color: var(--pz-border);
+	background: var(--pz-surface);
+	color: var(--sl-color-white);
+}
+.sl-link-button.secondary:hover {
+	border-color: var(--pz-brand-line);
+}
+
+/* Keyboard keys, search shortcut and version pills use the mono face, like the app. */
+kbd,
+.sl-markdown-content kbd {
+	font-family: var(--sl-font-mono);
+	font-size: 0.85em;
+	font-weight: 500;
+	padding: 0.05em 0.4em;
+	border-radius: 0.25rem;
+	border: 1px solid var(--pz-border);
+	background: var(--pz-raised);
+	color: var(--sl-color-white);
+}
+site-search button kbd {
+	background: var(--pz-raised);
+	border: 1px solid var(--pz-border);
 }
 
 /* Never scroll sideways on phones. */

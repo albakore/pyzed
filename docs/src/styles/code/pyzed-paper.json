@@ -1,0 +1,148 @@
+{
+	"name": "Pyzed Paper",
+	"type": "light",
+	"colors": {
+		"editor.background": "#FFFFFF",
+		"editor.foreground": "#14161B",
+		"editor.selectionBackground": "#DCDDFB",
+		"editorLineNumber.foreground": "#9AA1AE",
+		"editorGroupHeader.tabsBackground": "#F1F3F6",
+		"editorGroupHeader.tabsBorder": "#DCE0E7",
+		"tab.activeBackground": "#FFFFFF",
+		"tab.activeForeground": "#14161B",
+		"tab.inactiveForeground": "#576070",
+		"tab.activeBorderTop": "#4F46E5",
+		"tab.border": "#DCE0E7",
+		"titleBar.activeBackground": "#F1F3F6",
+		"titleBar.activeForeground": "#576070",
+		"titleBar.border": "#DCE0E7",
+		"terminal.background": "#F1F3F6",
+		"terminal.foreground": "#14161B",
+		"focusBorder": "#4F46E5",
+		"scrollbarSlider.background": "#DCDDFB"
+	},
+	"tokenColors": [
+		{
+			"scope": [
+				"comment",
+				"punctuation.definition.comment",
+				"string.quoted.docstring"
+			],
+			"settings": {
+				"foreground": "#6B7280",
+				"fontStyle": "italic"
+			}
+		},
+		{
+			"scope": [
+				"keyword",
+				"storage",
+				"storage.type",
+				"storage.modifier",
+				"keyword.operator.logical",
+				"keyword.operator.new",
+				"keyword.control"
+			],
+			"settings": {
+				"foreground": "#6D28D9"
+			}
+		},
+		{
+			"scope": [
+				"keyword.operator",
+				"punctuation"
+			],
+			"settings": {
+				"foreground": "#576070"
+			}
+		},
+		{
+			"scope": [
+				"variable.language",
+				"variable.parameter.function.language.special"
+			],
+			"settings": {
+				"foreground": "#C0336A"
+			}
+		},
+		{
+			"scope": [
+				"entity.name.function",
+				"support.function",
+				"meta.function-call.generic",
+				"entity.name.type",
+				"entity.name.class",
+				"support.class",
+				"support.type",
+				"entity.other.inherited-class"
+			],
+			"settings": {
+				"foreground": "#0B6BCB"
+			}
+		},
+		{
+			"scope": [
+				"string",
+				"string.quoted",
+				"string.template",
+				"punctuation.definition.string"
+			],
+			"settings": {
+				"foreground": "#2F7D32"
+			}
+		},
+		{
+			"scope": [
+				"constant.numeric",
+				"constant.language",
+				"constant.character",
+				"constant.other",
+				"support.constant",
+				"entity.name.function.decorator",
+				"meta.decorator",
+				"punctuation.definition.decorator"
+			],
+			"settings": {
+				"foreground": "#9A5B00"
+			}
+		},
+		{
+			"scope": [
+				"entity.name.tag",
+				"support.type.property-name",
+				"meta.object-literal.key",
+				"variable.other.property",
+				"entity.other.attribute-name"
+			],
+			"settings": {
+				"foreground": "#0B6BCB"
+			}
+		},
+		{
+			"scope": [
+				"markup.heading",
+				"entity.name.section"
+			],
+			"settings": {
+				"foreground": "#4F46E5",
+				"fontStyle": "bold"
+			}
+		},
+		{
+			"scope": [
+				"markup.inserted"
+			],
+			"settings": {
+				"foreground": "#2F7D32"
+			}
+		},
+		{
+			"scope": [
+				"markup.deleted"
+			],
+			"settings": {
+				"foreground": "#C0336A"
+			}
+		}
+	]
+}

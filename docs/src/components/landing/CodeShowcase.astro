@@ -43,15 +43,6 @@ const { shot, alt, caption } = Astro.props;
 		margin-inline: auto !important;
 		width: 100%;
 	}
-	.result::before {
-		content: '';
-		position: absolute;
-		inset: 10%;
-		z-index: -1;
-		background: var(--pz-glow);
-		filter: blur(40px);
-		opacity: 0.6;
-	}
 	.result p {
 		margin: 0.75rem 0 0;
 		text-align: center;
