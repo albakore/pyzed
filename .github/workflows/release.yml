@@ -344,7 +344,7 @@ jobs:
       - name: Installer script and checksums
         run: |
           cp docs/public/install.sh dist/install.sh
-          cp docs/public/icon-512.png dist/pyzed-design.png
+          cp assets/brand/app-icon-512.png dist/pyzed-design.png
           (cd dist && sha256sum -- * > SHA256SUMS)
       # Signed build provenance for every file of the release: `gh attestation verify <file> -R albakore/pyzed`.
       # (PyPI gets its own attestations from Trusted Publishing.)
