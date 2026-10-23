@@ -51,6 +51,7 @@ const topics = [
 			group('Why Pyzed', 'Por qué Pyzed', 'why', { collapsed: true }),
 			{ slug: 'examples' },
 			{ slug: 'faq' },
+			{ slug: 'privacy' },
 		],
 	},
 	{
