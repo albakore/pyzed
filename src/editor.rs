@@ -637,6 +637,7 @@ fn paragraph(
         } else {
             Wrapping::None
         },
+        letter_spacing: iced::Em::ZERO,
     })
 }
 

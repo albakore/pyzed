@@ -34,9 +34,9 @@ iced_test = "0.14"
 iced_renderer = { version = "0.14", default-features = false }
 iced_wgpu = { version = "0.14", default-features = false }
 iced_tiny_skia = { version = "0.14", default-features = false }
-# Sets the tab width of the text editors (see vendor/README.md).
+# Sets the tab width of the text editors (see the fork note at the end).
 iced_graphics = { version = "0.14", default-features = false }
-# Named directly to skip the rebuild after callbacks that return `pz.UNCHANGED` (see vendor/README.md).
+# Named directly to skip the rebuild after callbacks that return `pz.UNCHANGED` (see the fork note at the end).
 iced_winit = "0.14"
 # Checks `pz.shader` code, so mistakes raise in Python instead of crashing the GPU.
 naga = { version = "27", features = ["wgsl-in"] }
@@ -88,9 +88,21 @@ lto = "thin"
 codegen-units = 4
 strip = true
 
-# iced's renderers with effect layers added (see vendor/README.md).
+# Iced comes from Pyzed's fork: the 0.14 release with Pyzed's changes (effect layers, tab widths,
+# `iced_winit::quiet`, the Android handoff) and the community pull requests listed in its PYZED.md.
+# To update it, push to the `pyzed-0.14` branch of albakore/iced and bump `rev` here.
 [patch.crates-io]
-iced_wgpu = { path = "vendor/iced_wgpu" }
-iced_tiny_skia = { path = "vendor/iced_tiny_skia" }
-iced_graphics = { path = "vendor/iced_graphics" }
-iced_winit = { path = "vendor/iced_winit" }
+iced = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_core = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_debug = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_futures = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_graphics = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_program = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_renderer = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_runtime = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_selector = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_test = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_wgpu = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_widget = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }
+iced_winit = { git = "https://github.com/albakore/iced", rev = "837eb891428b5228cfe8fc3fc5c680eaa1a0a721" }

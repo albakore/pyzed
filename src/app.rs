@@ -880,7 +880,7 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                     },
                 ),
                 WindowOp::Resize(w, h) => window::resize(id, Size::new(w, h)),
-                WindowOp::Move(x, y) => window::move_to(id, Point::new(x, y)),
+                WindowOp::Move(x, y) => window::move_to(id, Point::new(x, y).into()),
                 WindowOp::Focus => window::gain_focus(id),
             }
         }
@@ -1091,7 +1091,7 @@ pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settin
             }
             Err(_) => {
                 let (x, y): (f32, f32) = v.extract()?;
-                window::Position::Specific(Point::new(x, y))
+                window::Position::Specific(Point::new(x, y).into())
             }
         },
     };

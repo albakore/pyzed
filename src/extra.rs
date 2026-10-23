@@ -925,7 +925,7 @@ fn draw_shapes(frame: &mut Frame, shapes: &[Shape]) {
                 paint,
             } => {
                 let path = if *radius > 0.0 {
-                    Path::rounded_rectangle(bounds.position(), bounds.size(), (*radius).into())
+                    Path::rounded_rectangle(bounds.position(), bounds.size(), *radius)
                 } else {
                     Path::rectangle(bounds.position(), bounds.size())
                 };
@@ -1040,7 +1040,7 @@ impl cv::Program<Message> for Drawing<'_> {
                 let (cb, p) = (props.on_move.as_ref()?, position?);
                 Some(cv::Action::publish(Message::Point(cb.clone(), p.x, p.y)))
             }
-            cv::Event::Mouse(mouse::Event::WheelScrolled { delta }) => {
+            cv::Event::Mouse(mouse::Event::WheelScrolled { delta, .. }) => {
                 let cb = props.on_scroll.as_ref()?;
                 position?;
                 let (x, y) = match delta {
@@ -1813,12 +1813,8 @@ pub fn render_radio<'a>(props: &RadioProps) -> Element<'a, Message> {
         Some(m) => Message::Py(m.clone()),
         None => Message::Noop,
     };
-    let mut r = widget::Radio::new(
-        props.label.clone(),
-        0u8,
-        props.selected.then_some(0u8),
-        |_| msg,
-    );
+    let mut r =
+        widget::Radio::new(0u8, props.selected.then_some(0u8), |_| msg).label(props.label.clone());
     if let Some(s) = props.size {
         r = r.size(s);
     }

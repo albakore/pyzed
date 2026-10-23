@@ -372,6 +372,7 @@ where
                 align_y: alignment::Vertical::Top,
                 shaping: Shaping::Advanced,
                 wrapping: self.wrapping,
+                letter_spacing: iced::Em::ZERO,
             };
             if &*state.spans != spans {
                 state.paragraph = Paragraph::with_spans(text());
@@ -396,6 +397,7 @@ where
                     align_y: alignment::Vertical::Top,
                     shaping: Shaping::Advanced,
                     wrapping: self.wrapping,
+                    letter_spacing: iced::Em::ZERO,
                 }) {
                     core_text::Difference::None => {}
                     core_text::Difference::Bounds => state.paragraph.resize(bounds),

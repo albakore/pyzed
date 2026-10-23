@@ -472,6 +472,7 @@ impl Widget<crate::app::Message, iced::Theme, Rend> for KeyFocus<'_> {
                         color,
                         width: 1.5,
                         radius: (self.radius + self.offset).into(),
+                        ..Default::default()
                     },
                     ..renderer::Quad::default()
                 },
