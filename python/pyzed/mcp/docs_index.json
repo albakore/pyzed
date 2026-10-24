@@ -19,6 +19,18 @@
    "path": "docs/src/content/docs/ai/api-keys.mdx"
   },
   {
+   "slug": "ai/app-architecture",
+   "title": "Architecture rules for agents",
+   "description": "How to structure large Pyzed apps: project layout, layers and ports, state and messages, components, effects and services, errors, settings, testing and anti-patterns.",
+   "path": "docs/src/content/docs/ai/app-architecture.md"
+  },
+  {
+   "slug": "ai/design",
+   "title": "Design rules for agents",
+   "description": "UI and UX rules for professional Pyzed desktop apps: patterns, hierarchy, spacing, typography, the color tokens of Pyzed Dark and Light, states, feedback, forms, accessibility, motion and writing.",
+   "path": "docs/src/content/docs/ai/design.md"
+  },
+  {
    "slug": "ai/index",
    "title": "Pyzed for AI agents",
    "description": "Pyzed is an AI-native Python GUI framework: an MCP server, llms.txt, editor rules, an agent inside Pyzed Design and pyzed.agents let AI agents build, check and see desktop apps.",

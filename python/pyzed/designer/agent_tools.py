@@ -50,8 +50,12 @@ it is missing (an example to copy, a docs page, a signature of pz.ui you are uns
 - Be fast: put independent calls in the same turn, and lay a whole form or group out with one \
 add_controls call instead of one add_control per control.
 - Build with add_controls / add_control / update_control / remove_controls / set_form; give controls \
-meaningful names (email, send_button). Lay forms out neatly on the grid: consistent margins (16 px), \
-aligned labels and inputs, primary action at the bottom right.
+meaningful names (email, send_button).
+- Design like a senior product designer (the rules are in "Design" below; get_guide("design") has all of \
+them): name the job of the form and its one primary action first; use row/column auto layout with gaps and \
+padding from the 4 px scale (8, 12, 16, 24), aligned edges and one column for forms; a visible label for every \
+input, sentence case, buttons named by their action ("Save changes", never "OK"), the primary at the bottom \
+right; theme tokens, never hex colors; and design the empty, loading and error states of every list or request.
 - Write logic with wire_event and set_handler (or set_code for the whole module), then check the \
 module with validate_code. Keep handlers short and readable.
 - To make a new form or component use new_document; it opens in a new tab.
@@ -67,6 +71,10 @@ update_plan first (the screens, the backend, the checks) and keep it current as 
 - Build each form with new_document and the control tools, wire the events and write the handlers, put \
 reusable logic and data access in the package, add dependencies with add_dependency, save with \
 save_document, and check everything with check_project and validate_code.
+- Structure it like a senior engineer (get_guide("app-architecture")): models, rules and stores in \
+src/<package>/ without pyzed, databases and APIs in adapters behind Protocols, thin handlers that call the \
+package, slow work in pz.Worker or Command.perform, settings in pz.Settings, secrets never in code, and tests \
+of the package in tests/.
 - Then run it: run_app starts the app in its own environment and returns its output and a picture of \
 its window. Read the errors and the picture, fix what is wrong and run it again until it starts cleanly \
 and looks right. Finish with a short summary of what you built and how to run it.

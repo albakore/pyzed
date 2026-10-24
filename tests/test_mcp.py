@@ -248,14 +248,15 @@ def test_server_registers_everything(tmp_path):
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
                 "read_reference", "editor_keymap", "new_component", "new_form", "form_animations", "validate_code",
-                "validate_form",
+                "validate_form", "review_design",
                 "screenshot", "read_docs", "list_examples", "plan_app", "animation_properties", "new_animation",
                 "check_animation", "list_shader_nodes", "check_shader",
                 "new_shader"} | project_tools <= tools
         resources = {str(r.uri) for r in await server.list_resources()}
-        assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components"} <= resources
+        assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components",
+                "pyzed://design", "pyzed://app-architecture"} <= resources
         assert {p.name for p in await server.list_prompts()} == {"create_component", "create_app", "create_form",
-                                                                  "build_project"}
+                                                                  "build_project", "polish_design"}
         assert "ui.button(" in _content(await server.call_tool("describe_component", {"name": "ui.button"}))[0].text
         written = _content(await server.call_tool("write_files", {"files": {"app.py": APP}}))
         assert json.loads(written[0].text)["ok"]
@@ -373,6 +374,10 @@ def test_animation_libraries_are_written_and_checked(tmp_path):
 
 
 COOKBOOK = re.findall(r"```python\n(.*?)```", knowledge.guide("cookbook"), re.S)
+#: The complete apps of the design and architecture guides (and their Spanish translations), in every theme.
+GUIDE_APPS = [(f"{topic}-{lang}-{i}", code) for topic in ("design", "app-architecture") for lang in ("en", "es")
+              for i, code in enumerate(re.findall(r"```python\n(.*?)```", knowledge.guide(topic, lang), re.S))
+              if "pz.run(" in code]
 
 
 @pytest.mark.parametrize("recipe", COOKBOOK, ids=[f"recipe{i}" for i in range(len(COOKBOOK))])
@@ -380,6 +385,64 @@ def test_cookbook_recipes_are_valid_and_render(recipe):
     result = validate.check_code(recipe, lint=False)
     assert result["ok"] and not result["issues"], result["issues"]
     assert preview.render(recipe, size=(320, 200)).startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize("name, app", GUIDE_APPS, ids=[name for name, _ in GUIDE_APPS])
+def test_guide_apps_are_valid_follow_the_design_rules_and_render(name, app):
+    result = validate.check_code(app, lint=False)
+    assert result["ok"] and not result["issues"], result["issues"]
+    assert validate.check_design(app)["issues"] == []
+    assert preview.render(app, size=(480, 320), theme="Pyzed Light").startswith(b"\x89PNG")
+
+
+def test_design_and_architecture_guides():
+    design = knowledge.guide("design")
+    for token in ("text_muted", "border_focused", "#5b50f0", "#4f46e5", "empty_state", "4 px"):
+        assert token in design
+    assert "Protocol" in knowledge.guide("app-architecture")
+    assert knowledge.guide("design", "es") != design  # translated
+    plan = knowledge.plan("an inventory app with a dashboard")
+    assert plan["topics"][:4] == ["best-practices", "design", "app-architecture", "cookbook"]
+    assert any("review_design" in step for step in plan["steps"])
+
+
+def test_ai_guide_pages_match_the_bundled_guides():
+    result = subprocess.run([sys.executable, str(ROOT / "docs" / "scripts" / "gen_ai_guides.py"), "--check"],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout
+
+
+def test_review_design_reports_each_rule():
+    code = (
+        "import pyzed as pz\nfrom pyzed import ui\n\n"
+        "class A(pz.App):\n"
+        "    def view(self):\n"
+        "        return pz.column([\n"
+        "            ui.label('Hi', size=17, color='#ff0000'),\n"
+        "            ui.icon_button('trash', self.view),\n"
+        "            ui.button('OK', self.view, variant='solid'),\n"
+        "            ui.button('SAVE ALL', self.view, variant='solid'),\n"
+        "            ui.input('', None),\n"
+        "            ui.table(['a'], []),\n"
+        "        ], spacing=10).style(background='#101010')\n"
+        "pz.stylesheet({'.x': {'padding': (7, 8), 'border': (1, '#333333')}})\n"
+    )
+    result = validate.check_design(code)
+    rules = {i["rule"] for i in result["issues"]}
+    assert rules == {"theme-tokens", "type-scale", "icon-tooltip", "button-label", "sentence-case", "one-primary",
+                     "input-label", "empty-state", "spacing-scale"}
+    assert not result["ok"] and len(result["checklist"]) >= 8
+    clean = ("import pyzed as pz\nfrom pyzed import ui\n\nclass A(pz.App):\n    def view(self):\n"
+             "        return ui.field('Email', ui.input('', None))\n")
+    assert validate.check_design(clean) == {**validate.check_design(clean), "ok": True, "issues": []}
+
+
+def test_screenshot_in_another_theme():
+    code = "import pyzed as pz\n\ndef preview():\n    return pz.text('Hi')\n"
+    dark, light = preview.render(code, size=(120, 60)), preview.render(code, size=(120, 60), theme="Pyzed Light")
+    assert dark != light
+    with pytest.raises(RuntimeError, match="Pyzed Nope"):
+        preview.render(code, size=(120, 60), theme="Pyzed Nope")
 
 
 def test_preview_reports_view_errors():

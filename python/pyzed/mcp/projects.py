@@ -347,15 +347,19 @@ def run_tests(root: Path, path: str = ".", args: Sequence[str] = ()) -> Dict[str
 DESIGNED = (".pzform", ".pzcomp", ".pzshad")
 
 
-def screenshot(root: Path, target: str = "", *, size: Optional[Tuple[int, int]] = None) -> Tuple[str, bytes]:
+def screenshot(root: Path, target: str = "", *, size: Optional[Tuple[int, int]] = None,
+               theme: Optional[str] = None) -> Tuple[str, bytes]:
     """Renders a script, form, component or shader graph of the folder off-screen, in the project's own
-    environment; by default the project's entry (its script, else its main form). Returns a caption and the PNG."""
+    environment; by default the project's entry (its script, else its main form). Returns a caption and the PNG.
+    ``theme`` shows it in that theme (``"Pyzed Light"``...) instead of its own."""
     from .preview import render_file
 
     path = _target(root, target)
     python, env = launcher(root, _rel(root, path.parent))
+    shown = f" in {theme}" if theme else ""
     if path.suffix == ".py":
-        return f"Screenshot of {_rel(root, path)}.", render_file(path, size=size, python=python, env=env)
+        return (f"Screenshot of {_rel(root, path)}{shown}.",
+                render_file(path, size=size, python=python, env=env, theme=theme))
     if path.suffix == ".pzform" and size is None:
         from ..designer.model import load
 
@@ -365,8 +369,8 @@ def screenshot(root: Path, target: str = "", *, size: Optional[Tuple[int, int]] 
         script = Path(tmp) / "run_designed.py"
         script.write_text(f"import sys\nsys.path.insert(0, {str(path.parent)!r})\n"
                           f"from pyzed.designer.runtime import run\nrun({str(path)!r})\n", encoding="utf-8")
-        png = render_file(script, size=size or (640, 400), python=python, env=env)
-    return f"Screenshot of {_rel(root, path)}.", png
+        png = render_file(script, size=size or (640, 400), python=python, env=env, theme=theme)
+    return f"Screenshot of {_rel(root, path)}{shown}.", png
 
 
 def _target(root: Path, target: str) -> Path:

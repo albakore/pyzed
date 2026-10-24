@@ -16,6 +16,46 @@ hold for people too.
 - Don't name `App` attributes after window options (`title`, `size`, `position`, `theme`, `style`,
   `scale`...) unless you mean them: the runtime reads them.
 
+## Design (the essentials of `get_guide("design")`)
+
+- **Job first**: name each screen's job in one sentence and its **one primary action** (`variant="solid"`); the
+  rest is `"filled"`, `"ghost"` or a menu. Start from the matching block (list + detail, table, dashboard,
+  settings, form, wizard, workspace).
+- **Hierarchy**: one `ui.heading` per screen (`level=1` page, `2` section, `3` group), body `ui.label` at `"md"`,
+  secondary text `color="text_muted"`. Sizes only from the scale `xs` 11 · `sm` 12 · `md` 13.5 · `lg` 16 ·
+  `xl` 20 · `2xl` 26; at most two weights.
+- **Spacing on a 4 px grid**: 4 · 8 · 12 · 16 · 24 · 32 · 48. Inner space ≤ outer space; group by proximity
+  before adding lines; forms and text 320–720 px wide.
+- **Color**: theme tokens only. Layers `background` → `panel` → `surface` → `elevated`; `accent` for the primary
+  action, selection and focus (≤ 10 % of the screen); `error`/`warning`/`success`/`info` only for status, always
+  with an icon or text; `text_placeholder` never for real content. Check Pyzed Dark and Pyzed Light.
+- **States**: every control has hover, pressed, focus, disabled, loading and invalid; every data region has
+  loading (`ui.spinner`, `ui.progress`), empty (`ui.empty_state` with an action), error (`ui.callout(tint="error")`
+  with Retry) and ideal states.
+- **Feedback**: < 100 ms just update; up to 1 s `loading=True`; up to 10 s a spinner; longer a progress with
+  Cancel. Prefer undo to confirmation; `ui.confirm(danger=True)` names the object and the action.
+- **Forms**: one column, a visible label per input (`ui.field`), errors under the field after submit that say
+  how to fix it, focus on the first field, primary button at the bottom right.
+- **Writing**: sentence case, verb + object on buttons ("Create project"), errors = what happened + how to fix.
+- **Accessibility**: Tab order = reading order, visible focus, shortcuts with `keys=`, tooltips on icon buttons,
+  targets ≥ 24 px, room for 30 % longer translations.
+- Run `review_design` and look at `screenshot(..., theme="Pyzed Light")` and `theme="Pyzed Dark"` before
+  delivering.
+
+## Architecture (the essentials of `get_guide("app-architecture")`)
+
+- `pyzed new my_app` for anything beyond one screen: models, rules and stores in `src/<package>/` (no `pyzed`
+  imports there), adapters (database, HTTP, files) behind `typing.Protocol` ports, views, components, forms and
+  the stylesheet in `ui/`, tests in `tests/`, one composition root (`main.py`) that wires them.
+- One owner per piece of state; derive instead of duplicating; change state through store methods; typed
+  messages (frozen dataclasses + `match` in `update`) once the app grows.
+- Background work returns results as messages; only the UI thread changes state. Track each request as
+  idle/loading/ready/error and drop stale results.
+- Services start in `on_start` and stop in `on_close`; settings in `pz.Settings`; secrets in the keychain or the
+  environment; every user-facing string through `pz.t`; `logging`, not `print`.
+- Feature folders when the app grows; `ui.error_boundary` around independent regions; test domain → stores →
+  app → screenshots.
+
 ## `view()`
 
 - `view()` is called after **every** message. Keep it cheap and **side-effect free**: no I/O, no

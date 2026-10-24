@@ -6,6 +6,8 @@ last ``pz.App`` subclass defined in the code is used, or a top-level ``preview()
 returns a widget (handy for showing a single component).
 
     python -m pyzed.mcp.preview app.py out.png [width height [scale]]
+
+``PYZED_PREVIEW_THEME`` (a theme name such as ``"Pyzed Light"``) shows the app in that theme instead of its own.
 """
 
 from __future__ import annotations
@@ -58,6 +60,10 @@ def main(argv=None) -> int:
     app = _find_app(namespace, captured[-1] if captured else None)
     if isinstance(app, type):
         app = app()
+    theme = os.environ.get("PYZED_PREVIEW_THEME")
+    if theme:
+        pz.themes.get(theme)  # an unknown name fails here, with the names that exist
+        app.theme = theme
     # The window shows a view() error instead of the UI; report it so the caller sees it as text.
     try:
         app.__pyzed_view__()
@@ -71,22 +77,25 @@ def main(argv=None) -> int:
 
 
 def render(source: str, *, size: Optional[Tuple[int, int]] = None, scale: float = 1.0,
-           timeout: float = 60.0) -> bytes:
-    """Runs ``source`` in a child process and returns the PNG of its app. Raises ``RuntimeError`` on errors."""
+           timeout: float = 60.0, theme: Optional[str] = None) -> bytes:
+    """Runs ``source`` in a child process and returns the PNG of its app. Raises ``RuntimeError`` on errors.
+
+    ``theme`` (``"Pyzed Light"``, ``"Pyzed Dark"``...) shows it in that theme instead of the app's own."""
     with tempfile.TemporaryDirectory(prefix="pyzed-mcp-") as tmp:
         script = Path(tmp) / "app.py"
         script.write_text(source, encoding="utf-8")
-        return _render(script, Path(tmp), size=size, scale=scale, timeout=timeout)
+        return _render(script, Path(tmp), size=size, scale=scale, timeout=timeout, theme=theme)
 
 
 def render_file(path, *, size: Optional[Tuple[int, int]] = None, scale: float = 1.0, timeout: float = 60.0,
-                python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None) -> bytes:
+                python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None,
+                theme: Optional[str] = None) -> bytes:
     """Like ``render`` for a script on disk, run from its own folder so its imports and files resolve.
 
     ``python`` is the command that starts the interpreter (by default this one, with this same pyzed), such as
     ``["uv", "run", "--project", root, "python"]`` to use a project's own environment, and ``env`` its variables."""
     path = Path(path).resolve()
-    return _render(path, path.parent, size=size, scale=scale, timeout=timeout, python=python, env=env)
+    return _render(path, path.parent, size=size, scale=scale, timeout=timeout, python=python, env=env, theme=theme)
 
 
 def this_python() -> Tuple[List[str], Dict[str, str]]:
@@ -100,10 +109,14 @@ def this_python() -> Tuple[List[str], Dict[str, str]]:
 
 
 def _render(script: Path, cwd: Path, *, size, scale: float, timeout: float,
-            python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None) -> bytes:
+            python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None,
+            theme: Optional[str] = None) -> bytes:
     if python is None:
         python, env = this_python()
     env = {**(env if env is not None else os.environ), "PYZED_RELOAD": "0"}
+    env.pop("PYZED_PREVIEW_THEME", None)
+    if theme:
+        env["PYZED_PREVIEW_THEME"] = theme
     with tempfile.TemporaryDirectory(prefix="pyzed-mcp-") as tmp:
         out = Path(tmp) / "shot.png"
         cmd = [*python, "-m", "pyzed.mcp.preview", str(script), str(out)]

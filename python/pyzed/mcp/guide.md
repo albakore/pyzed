@@ -235,4 +235,7 @@ Keep the state and logic in plain classes in the package (`src/<package>`), view
 The `read_docs` tool returns any page of the official documentation
 (https://albakore.github.io/pyzed/); `list_docs` lists them, and `read_example` returns the code
 of the example apps. Read `pyzed://best-practices` (or `get_guide("best-practices")`) before
-writing a non-trivial app.
+writing a non-trivial app, `get_guide("design")` for the UI and UX rules that make screens look professional
+(hierarchy, spacing, typography, theme tokens, states, feedback, accessibility) and
+`get_guide("app-architecture")` for structuring large apps (layers, state, effects, testing). `review_design`
+checks code against the design rules.
