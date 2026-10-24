@@ -55,24 +55,27 @@ instalado, `"command": "pyzed", "args": ["mcp"]` también sirve.
 
 | Grupo | Herramientas | Para |
 | --- | --- | --- |
-| Aprender | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Leer cómo funciona Pyzed, sus reglas, el recetario de ejemplos ejecutables, temas como juegos o shaders y cualquier página de esta documentación (en inglés o español). |
+| Aprender | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Leer cómo funciona Pyzed, sus reglas, las [reglas de diseño](/pyzed/es/ai/design/) y de [arquitectura](/pyzed/es/ai/app-architecture/) para apps profesionales, el recetario de ejemplos ejecutables, temas como juegos o shaders y cualquier página de esta documentación (en inglés o español). |
 | Consultar | `list_components`, `describe_component`, `search_reference`, `read_reference`, `search_icons`, `list_themes`, `editor_keymap` | Obtener firmas exactas, parámetros, nombres de iconos, tokens de color y atajos en vez de adivinarlos. |
 | Reutilizar | `list_examples`, `read_example` | Leer los ejemplos, los [Bloques](/pyzed/es/blocks/) (`read_example("blocks/settings")`), juegos, showcase e integraciones con backend. |
 | Generar | `new_app`, `new_component`, `new_form` | Partir de esqueletos correctos: una app, un `pz.Component`, un formulario del diseñador. |
 | Comprobar | `validate_code`, `validate_form` | Detectar nombres que no existen, argumentos mal escritos, efectos en `view()` y formularios rotos antes de ejecutar. |
-| Ver | `screenshot` | Renderizar la app o un componente sin pantalla y recibir un PNG. |
+| Revisar | `review_design` | Comprobar el código con las reglas de diseño: tokens del tema en lugar de colores hex, las escalas de espaciado y tipografía, tooltips, etiquetas, estados vacíos, una acción principal por vista. |
+| Ver | `screenshot` | Renderizar la app o un componente sin pantalla y recibir un PNG, en su tema o en otro (`theme="Pyzed Light"`). |
 | Planificar | `plan_app` | Encontrar los bloques, ejemplos, componentes y guías que necesita una app, y los pasos para construirla. |
 | Construir | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project`, `project_settings`, `set_project_settings` | Crear un proyecto, escribirlo, añadir librerías, revisarlo, probarlo, mirarlo, elegir su renderizador y sus ajustes compartidos, en la carpeta donde corre el servidor y en el entorno del propio proyecto. |
 | Ver en vivo | `start_live_preview`, `live_preview_status`, `stop_live_preview` | Abrir la app en una ventana con hot reload, para verla cambiar mientras el agente escribe cada archivo. |
 
-Los prompts `create_app`, `create_component`, `create_form` y `build_project` (una app completa, de principio a fin) empiezan una tarea con los pasos correctos, y los
-clientes que admiten recursos pueden adjuntar `pyzed://best-practices` o `pyzed://docs/{slug}`.
+Los prompts `create_app`, `create_component`, `create_form`, `build_project` (una app completa, de principio a fin) y `polish_design` (revisión y mejora del diseño) empiezan una tarea con los pasos correctos, y los
+clientes que admiten recursos pueden adjuntar `pyzed://best-practices`, `pyzed://design`, `pyzed://app-architecture` o `pyzed://docs/{slug}`.
 
 ## Peticiones que aprovechan el servidor
 
 - *"Usa las herramientas MCP de pyzed. Lee primero las buenas prácticas y luego construye..."*: los agentes siguen
   mejor las instrucciones sobre sus herramientas cuando las nombras.
 - *"Valida con validate_code y mira una captura antes de responder."*: el agente cierra el ciclo.
+- *"Sigue las reglas de diseño y pasa review_design; revísalo en Pyzed Light y Pyzed Dark."*: pantallas
+  profesionales, no solo pantallas que funcionan.
 - *"Parte del bloque de dashboard."*: una pantalla probada es mejor base que un archivo vacío.
 - *"Consulta describe_component de ui.table antes de usarlo."*: para componentes con muchos parámetros.
 
