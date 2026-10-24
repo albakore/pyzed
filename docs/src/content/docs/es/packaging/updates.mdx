@@ -156,8 +156,9 @@ app.
 - **Solo compilaciones en carpeta.** Una compilación `--onefile` no puede actualizarse así.
 - **Las apps firmadas siguen firmadas** en macOS si el zip se creó con `ditto` a partir de una `.app` firmada (y
   notarizada).
-- **La API de GitHub tiene límite** de 60 peticiones por hora por IP sin token: busca una vez al día, no en cada
-  arranque.
+- **La API de GitHub tiene límite** de 60 peticiones por hora por IP sin token. `latest` pregunta con el ETag de su
+  última respuesta, así que una release sin cambios vuelve como «304 Not Modified», que no cuenta para ese límite (y si
+  GitHub rechaza la petición, se usa la última respuesta): buscar en cada arranque y cada media hora no es problema.
 
 <Aside type="caution" title="Recordar las búsquedas">
 `updater.load_state()`, `save_state()` y `due()` guardan sus datos en un archivo compartido por todas las apps Pyzed

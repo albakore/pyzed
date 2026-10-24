@@ -56,7 +56,7 @@ from . import keymap_editor
 from .keymap_editor import KeymapEditor
 from .model import SUFFIX, Control
 from .project_panel import ProjectController
-from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from .updates import TAB_ID as _NOTES_TAB, TICK as _UPDATE_TICK, UpdateController
 from . import project_picker as _project_picker
 from . import welcome as _welcome
 from . import workspace as _workspace
@@ -406,8 +406,8 @@ class Designer(App):
             subs.append(_core.every(1.0, self.projects.poll, key="designer-dependencies"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
-        else:  # looks for a new version again every few hours while the designer stays open
-            subs.append(_core.every(600, self.updates.tick, key="designer-update-check"))
+        else:  # looks for a new version again now and then while the designer stays open
+            subs.append(_core.every(_UPDATE_TICK, self.updates.tick, key="designer-update-check"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread
             subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
         if self.exporter.running:  # the elapsed time of the build in the Export dialog

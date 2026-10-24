@@ -153,8 +153,9 @@ with a readable message ("could not reach GitHub", "rate limit"...): network pro
   (`%LOCALAPPDATA%\Programs` on Windows, `~/.local/share` on Linux, `/Applications` for admin users on macOS) work.
 - **Folder builds only.** A `--onefile` build cannot update itself this way.
 - **Signed apps stay signed** on macOS as long as the zip was made with `ditto` from a signed (and notarized) `.app`.
-- **GitHub's API is rate limited** to 60 requests per hour per IP address without a token: check once a day, not on
-  every start.
+- **GitHub's API is rate limited** to 60 requests per hour per IP address without a token. `latest` asks with the
+  ETag of its last answer, so an unchanged release comes back as "304 Not Modified", which does not count against
+  that limit (and when GitHub refuses, the last answer is used): checking at every start and every half hour is fine.
 
 <Aside type="caution" title="Remembering checks">
 `updater.load_state()`, `save_state()` and `due()` keep their data in one file shared by every Pyzed app on the

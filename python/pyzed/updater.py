@@ -122,18 +122,58 @@ class Release:
 
 
 def _get(url: str, timeout: float) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"})
+    """GitHub's answer for ``url``, asked with the ETag of the last answer: an unchanged release comes back as a
+    short "304 Not Modified", which is quicker and does not count against GitHub's limit of 60 requests an hour,
+    so the app can look often. When GitHub refuses (that limit), the last answer is used."""
+    cached = _cached().get(url) or {}
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"}
+    if cached.get("etag") and "body" in cached:
+        headers["If-None-Match"] = str(cached["etag"])
+    request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https URL
-            return json.loads(response.read().decode("utf-8"))
+            body = json.loads(response.read().decode("utf-8"))
+            etag = response.headers.get("ETag")
     except urllib.error.HTTPError as err:
+        if err.code == 304 and "body" in cached:
+            return cached["body"]
         if err.code == 404:
             raise UpdateError("no release found") from err
-        if err.code == 403:
+        if err.code in (403, 429):
+            if "body" in cached:
+                return cached["body"]
             raise UpdateError("GitHub refused the request (rate limit); try again later") from err
         raise UpdateError(f"GitHub answered {err.code}") from err
     except (urllib.error.URLError, OSError, ValueError) as err:
         raise UpdateError(f"could not reach GitHub: {getattr(err, 'reason', err)}") from err
+    if etag:
+        _remember(url, {"etag": etag, "body": body})
+    return body
+
+
+def _cache_file() -> Path:
+    from .project import config_dir
+
+    return config_dir() / "updates-cache.json"
+
+
+def _cached() -> Dict[str, Any]:
+    try:
+        data = json.loads(_cache_file().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _remember(url: str, entry: Dict[str, Any]) -> None:
+    """Keeps GitHub's last answer for ``url`` with its ETag (errors are ignored: the next check asks in full)."""
+    data = _cached()
+    data[url] = entry
+    try:
+        _cache_file().parent.mkdir(parents=True, exist_ok=True)
+        _cache_file().write_text(json.dumps(data), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def latest(repo: str, *, prerelease: bool = False, timeout: float = 10) -> Release:

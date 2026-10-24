@@ -1,4 +1,4 @@
-"""Updates of Pyzed Design, like Zed's: a quiet check at launch and every few hours, a download
+"""Updates of Pyzed Design, like Zed's: a quiet check at launch and every half hour, a download
 in the background, a "Restart to update" button at the top right of the title bar, and a What's
 new tab with the release notes after an update.
 The stable channel follows the latest release; the preview channel also takes pre-releases
@@ -40,8 +40,15 @@ WINDOWS_UNINSTALL_KEY = ("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstal
                          "{8F4C2E6B-3A1D-4F7E-9B2C-5D6E7F8A9B0C}_is1")
 #: The installer's files in the app folder, carried over when an update replaces it.
 INSTALLER_FILES = ("unins*",)
-#: How often an open designer looks again (the check at launch is daily).
-RECHECK_EVERY = 4 * 3600
+#: How often the designer looks for a new version: at launch (unless it just did) and then while it is open.
+#: GitHub answers an unchanged release with a short "Not Modified" (see ``updater``), so looking often is cheap.
+RECHECK_EVERY = 30 * 60
+#: How often the open designer asks ``tick`` whether a check is due.
+TICK = 60
+#: How soon it looks again at launch: opening several windows in a row asks once.
+LAUNCH_GAP = 5 * 60
+#: How often it looks while a new release is published but its builds are not attached yet (a few minutes).
+BUILDING_RECHECK = 5 * 60
 #: The update button's subtle blink: a slow fade and back, never a flash.
 BLINK = Animation({0: {"opacity": 1.0}, 0.5: {"opacity": 0.55}, 1: {"opacity": 1.0}}, duration=2000,
                   easing="ease_in_out_sine", repeat="infinite")
@@ -111,6 +118,8 @@ class UpdateController:
         self.notes_active = False
         #: Set by ``restart``: the process must end right after the window closes so the swap can run.
         self.restart_pending = False
+        #: Set while the newest release is out but its builds are not attached yet: looked at again soon.
+        self.building = False
         #: Set when the last "Restart to update" could not replace the app: on Windows the setup program updates it
         #: next time (see ``install``).
         self.swap_failed = False
@@ -168,7 +177,7 @@ class UpdateController:
             if updater.is_newer(str(pending), self.current):  # restarted to update, but this is still the old app
                 self._swap_failed(str(pending), log)
         # after a failed update, look again now: the button comes back, ready to try another way
-        if self.d.prefs.check_updates and (updater.due() or self.swap_failed):
+        if self.d.prefs.check_updates and (updater.due(LAUNCH_GAP) or self.swap_failed):
             commands.append(self.check(quiet=True))
         return [c for c in commands if c is not None]
 
@@ -216,8 +225,10 @@ class UpdateController:
                 shutil.rmtree(entry, ignore_errors=True)
 
     def tick(self) -> Any:
-        """Called now and then while the designer is open: checks again every ``RECHECK_EVERY`` seconds."""
-        if self.d.prefs.check_updates and self.status in ("idle", "up_to_date") and updater.due(RECHECK_EVERY):
+        """Called now and then while the designer is open: checks again every ``RECHECK_EVERY`` seconds, or every
+        ``BUILDING_RECHECK`` while a new release waits for its builds."""
+        every = BUILDING_RECHECK if self.building else RECHECK_EVERY
+        if self.d.prefs.check_updates and self.status in ("idle", "up_to_date") and updater.due(every):
             return self.check(quiet=True)
         return None
 
@@ -239,6 +250,7 @@ class UpdateController:
             self.latest = release
             # A release counts once its builds are attached: the tag publishes it before the pipeline ends.
             built = release.asset_for(updater.asset_name(APP)) is not None if self.can_install else release.has_wheels
+            self.building = not built and updater.is_newer(release.version, self.current)
             if built and updater.is_newer(release.version, self.current) and \
                     updater.load_state().get("skipped") != release.version:
                 self.status = "available"

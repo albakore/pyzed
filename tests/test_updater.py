@@ -182,6 +182,63 @@ def test_windows_setup_runs_after_the_app_exits(tmp_path, monkeypatch):
     assert updater.installer_name("pyzed-design").endswith("-setup.exe")
 
 
+def test_checks_ask_github_with_the_last_etag(monkeypatch):
+    """An unchanged release comes back as "304 Not Modified" (quick, and free of GitHub's hourly limit): the last
+    answer is used. A refusal (the limit) also falls back on it."""
+    import io
+    import urllib.error
+
+    asked = []
+    answers = []
+
+    class Response(io.BytesIO):
+        headers = {"ETag": '"v1"'}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def urlopen(request, timeout):
+        asked.append(request.get_header("If-none-match"))
+        answer = answers.pop(0)
+        if isinstance(answer, int):
+            raise urllib.error.HTTPError(request.full_url, answer, "", {}, None)
+        return Response(updater.json.dumps(answer).encode())
+
+    monkeypatch.setattr(updater.urllib.request, "urlopen", urlopen)
+    answers[:] = [API_RELEASE, 304, 403]
+    assert updater.latest("albakore/pyzed").version == "0.5.0"
+    assert updater.latest("albakore/pyzed").version == "0.5.0"  # not modified: the cached answer
+    assert updater.latest("albakore/pyzed").version == "0.5.0"  # rate limited: the cached answer
+    assert asked == [None, '"v1"', '"v1"']
+    answers[:] = [404]
+    with pytest.raises(updater.UpdateError):
+        updater.release("albakore/pyzed", "9.9.9")
+
+
+def test_designer_looks_again_soon_while_a_release_is_building(monkeypatch):
+    """A release published before its builds are attached is looked at again in minutes, not in half an hour."""
+    from pyzed.designer import updates as updates_module
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    app.updates._run = lambda work, done, failed=None: done(work())
+    building = dict(API_RELEASE, tag_name="v99.0.0", assets=[])
+    monkeypatch.setattr(updater, "latest", lambda repo, prerelease=False, **kw: updater.Release.from_api(building))
+    app.updates.check(quiet=True)
+    assert app.updates.status == "up_to_date" and app.updates.building
+    updater.save_state(last_check=updater.time.time() - updates_module.BUILDING_RECHECK - 1)
+    checks = []
+    monkeypatch.setattr(app.updates, "check", lambda quiet=False: checks.append(quiet))
+    app.updates.tick()
+    assert checks == [True]
+    app.updates.building = False
+    app.updates.tick()  # otherwise every half hour
+    assert checks == [True]
+
+
 def test_state_and_due():
     assert updater.due() and updater.load_state() == {}
     updater.save_state(last_check=updater.time.time(), skipped="0.5.0")
