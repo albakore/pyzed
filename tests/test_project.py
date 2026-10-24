@@ -200,6 +200,8 @@ def test_init_creates_a_uv_project(tmp_path):
     assert created.is_pyzed and created.name == "my-app"
     assert created.main_form.is_file() and created.main_form.with_suffix(".py").is_file()
     assert "from my_app import greeting" in created.main_form.with_suffix(".py").read_text()
+    agents = (created.root / "AGENTS.md").read_text()
+    assert "src/my_app/" in agents and "review_design" in agents
     names = {d.name: d.group for d in created.dependencies()}
     assert names["pyzed-ui"] == "main" and names["ruff"] == "dev" and names["ty"] == "dev"
     assert created.data["tool"]["uv"]["no-build-package"] == ["pyzed-ui"]  # wheels only, never compiled
