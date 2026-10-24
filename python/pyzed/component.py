@@ -774,7 +774,9 @@ class Component:
                 if control.events.get(event) or (keeps and ctx.live):
                     callback = ctx.on(control, event, "value" if keeps else None)
                     handlers[f"on_{event}"] = lambda e, callback=callback: callback(e.value)
-            return cls(key=ctx.key(control), **values, **handlers)
+            # the component draws in the theme of the form it is placed on (scene components read it)
+            with provide(pyzed_host_theme=ctx.theme):
+                return cls(key=ctx.key(control), **values, **handlers)
 
         return designer.Component(
             type=cls.type_name,

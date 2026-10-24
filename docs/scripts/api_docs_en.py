@@ -470,6 +470,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "cursor_color": "Cursor color.",
                         "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
                         "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…).",
+                        "on_paste": "Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`.",
                         "highlights": "Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
                         "highlight_color": "Color of `highlights`.",
                         "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
@@ -480,6 +481,8 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
                         "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+                        "indent_guides": "Colors of the indent guides, one per depth (they repeat); none: no guides.",
+                        "indent_guides_active": "Colors of the guide of the block around the cursor, by depth like `indent_guides`.",
                     },
                 },
             }),
@@ -882,6 +885,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "cursor_color": "Cursor color (the theme's player color by default).",
                         "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
                         "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…), e.g. to count them.",
+                        "on_paste": "Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`.",
                         "highlights": "Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
                         "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
                         "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
@@ -891,6 +895,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
                         "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+                        "indent_guides": '`True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color.',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -928,7 +933,11 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                     "example": 'ocean = pz.themes.ONE_DARK.derive(name="Ocean", accent="#4fb3ff", syntax={"keyword": "#ff79c6"})',
                 },
                 "pyzed.Theme.color": {
-                    "desc": 'Resolves a token (`"accent"`, `"text_muted"`…) to its color. Hex colors and `"transparent"` pass through unchanged.',
+                    "desc": 'Resolves a token (`"accent"`, `"text_muted"`…) to its color. Hex colors and `"transparent"` pass through unchanged. Short names (`"muted"`, `"primary"`, `"danger"`…), Zed\'s names (`"text.muted"`) and the terminal colors (`"red"`…) work too; anything else raises `ValueError`.',
+                    "params": {"name": "Token or color."},
+                },
+                "pyzed.Theme.find_color": {
+                    "desc": "Like `color`, but returns `None` for a name the theme does not know instead of raising.",
                     "params": {"name": "Token or color."},
                 },
                 "pyzed.Theme.tokens": {"desc": "All tokens as a dict."},
@@ -1317,6 +1326,7 @@ _page("command")["sections"][0][1].update({
     "pyzed.Command.copy": {"desc": "Copies `text` to the system clipboard.", "params": {"text": "The text."}},
     "pyzed.Command.paste": {"desc": "Reads the clipboard and calls `then(text)` (empty string if it is empty).", "params": {"then": "Callable that receives the text."}},
     "pyzed.Command.paste_image": {"desc": "Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.", "params": {"then": "Callable that receives the PNG bytes or `None`."}},
+    "pyzed.Command.capture_window": {"desc": "Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when it could not be captured). The app draws the window again into an image, so it works the same on every system, even when other windows cover it.", "params": {"then": "Callable that receives the PNG bytes or `None`.", "window": "The window (default: the current one)."}},
     "pyzed.Command.pick_files": {"desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).", "params": {"then": "Callable that receives the list of paths.", "title": "The dialog's title.", "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.", "directory": "The folder it opens in.", "multiple": "`False` picks a single file.", "folder": "`True` picks folders instead of files."}},
 })
 _page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (

@@ -55,24 +55,27 @@ run `pip install "pyzed-ui[mcp]"` (Python 3.10 or newer) and use `pyzed mcp` as 
 
 | Group | Tools | Use them to |
 | --- | --- | --- |
-| Learn | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Read how Pyzed works, its rules, the cookbook of runnable recipes, topics such as games or shaders, and any page of these docs (English or Spanish). |
+| Learn | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Read how Pyzed works, its rules, the [design rules](/pyzed/ai/design/) and [architecture rules](/pyzed/ai/app-architecture/) for professional apps, the cookbook of runnable recipes, topics such as games or shaders, and any page of these docs (English or Spanish). |
 | Look up | `list_components`, `describe_component`, `search_reference`, `read_reference`, `search_icons`, `list_themes`, `editor_keymap` | Get exact signatures, parameters, icon names, color tokens and key bindings instead of guessing. |
 | Reuse | `list_examples`, `read_example` | Read the examples, the [Blocks](/pyzed/blocks/) (`read_example("blocks/settings")`), games, showcase and backend integrations. |
 | Generate | `new_app`, `new_component`, `new_form` | Start from correct skeletons: an app, a `pz.Component`, a visual-designer form. |
 | Check | `validate_code`, `validate_form` | Catch unknown names, wrong keyword arguments, side effects in `view()` and broken forms before running. |
-| See | `screenshot` | Render the app or a component off-screen and get a PNG back. |
+| Review | `review_design` | Check code against the design rules: theme tokens instead of hex colors, the spacing and type scales, tooltips, labels, empty states, one primary action per view. |
+| See | `screenshot` | Render the app or a component off-screen and get a PNG back, in its own theme or another (`theme="Pyzed Light"`). |
 | Plan | `plan_app` | Find the blocks, examples, components and guides an app needs, and the steps to build it. |
 | Build | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project`, `project_settings`, `set_project_settings` | Create a project, write it, add libraries, check, test and look at it, set its renderer and shared settings, in the folder the server runs in and the project's own environment. |
 | Watch | `start_live_preview`, `live_preview_status`, `stop_live_preview` | Open the app in a window with hot reload, so you see it change as the agent writes each file. |
 
-The prompts `create_app`, `create_component`, `create_form` and `build_project` (a whole app, end to end) start a task with the right steps, and resources
-such as `pyzed://best-practices` and `pyzed://docs/{slug}` can be attached by clients that support them.
+The prompts `create_app`, `create_component`, `create_form`, `build_project` (a whole app, end to end) and `polish_design` (a design review and fixes) start a task with the right steps, and resources
+such as `pyzed://best-practices`, `pyzed://design`, `pyzed://app-architecture` and `pyzed://docs/{slug}` can be attached by clients that support them.
 
 ## Prompts that use the server well
 
 - *"Use the pyzed MCP tools. Read the best practices first, then build..."*: agents follow instructions about
   their tools more reliably when you name them.
 - *"Validate with validate_code and look at a screenshot before you answer."*: makes the agent close the loop.
+- *"Follow the design rules and run review_design; check it in Pyzed Light and Pyzed Dark."*: professional
+  screens instead of merely working ones.
 - *"Start from the dashboard block."*: a tested screen is a better base than a blank file.
 - *"Check describe_component for ui.table before using it."*: for components with many parameters.
 

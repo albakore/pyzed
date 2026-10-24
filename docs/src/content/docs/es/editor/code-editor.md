@@ -59,6 +59,8 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 - **Métodos de entrada**: los métodos de entrada (IME) de chino, japonés y coreano funcionan: el texto que se
   está componiendo se dibuja en el cursor y el texto confirmado se inserta en cada cursor.
 - **Espacios en blanco**: opcionalmente dibuja los espacios como `·` y los tabuladores como `→`.
+- **Guías de sangría**: una línea fina en cada nivel de sangría muestra dónde empieza y termina cada bloque; la del
+  bloque donde está el cursor resalta. *Colores de las guías de sangría* → *Arcoíris* da a cada profundidad su propio color.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> o <kbd>Ctrl</kbd>+rueda cambian el tamaño de
   letra; <kbd>Ctrl</kbd>+<kbd>0</kbd> lo restablece. El tamaño se guarda.
 - **Desplazamiento**: la rueda del ratón desplaza el código (<kbd>Mayús</kbd>+rueda, de lado) y las barras de
@@ -216,7 +218,8 @@ controles del formulario).
   su firma y su docstring (como Markdown), junto con los problemas de ese punto. `form.email` y `form.email.text`
   describen el control y su propiedad. La tarjeta se queda mientras el ratón está encima, así puedes desplazarla y
   seleccionar su texto. Se desactiva con *Información al pasar el ratón* en los ajustes.
-- **Ir a la definición**: <kbd>F12</kbd> o <kbd>Ctrl</kbd>+clic en un nombre abre donde está definido: más abajo en
+- **Ir a la definición**: <kbd>F12</kbd> o <kbd>Ctrl</kbd>+clic en un nombre abre donde está definido (al mantener
+  <kbd>Ctrl</kbd>, el nombre bajo el ratón se subraya como un enlace): más abajo en
   el mismo código, otro manejador del formulario (el editor cambia a él), un archivo de tu proyecto o una librería
   del `.venv` (se abre de solo lectura en una pestaña). <kbd>Ctrl</kbd>+<kbd>F12</kbd> va a la definición de su
   **tipo**. En `form.email` selecciona el control en el lienzo. Sin ty sigue encontrando los `def` y `class` del
@@ -326,6 +329,8 @@ los suyos (su tabulación, por ejemplo).
 | | **Interlineado** | Compacto, Normal o Amplio. |
 | | **Números de línea**, **Resaltar la línea actual** | El margen y la franja de la línea actual. |
 | | **Mostrar espacios** | Espacios como `·`, tabulaciones como `→`. |
+| | **Guías de sangría** | Una línea en cada nivel de sangría; la del bloque donde está el cursor resalta. |
+| | **Colores de las guías de sangría** | Un color, o Arcoíris: un color por profundidad. |
 | Cursor | **Forma** | Barra, bloque, subrayado o hueco. |
 | | **Parpadeo** | Si el cursor parpadea. |
 | | **Ancho** | De 1 a 4 píxeles, para el cursor de barra. |

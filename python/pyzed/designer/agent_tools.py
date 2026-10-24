@@ -10,13 +10,12 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
+from .. import theme as _theme
 from ..agents import Image, Tool, file_tools, pyzed_tools, tool
 from . import components as _components
 from . import layout as _layout
@@ -50,8 +49,12 @@ it is missing (an example to copy, a docs page, a signature of pz.ui you are uns
 - Be fast: put independent calls in the same turn, and lay a whole form or group out with one \
 add_controls call instead of one add_control per control.
 - Build with add_controls / add_control / update_control / remove_controls / set_form; give controls \
-meaningful names (email, send_button). Lay forms out neatly on the grid: consistent margins (16 px), \
-aligned labels and inputs, primary action at the bottom right.
+meaningful names (email, send_button).
+- Design like a senior product designer (the rules are in "Design" below; get_guide("design") has all of \
+them): name the job of the form and its one primary action first; use row/column auto layout with gaps and \
+padding from the 4 px scale (8, 12, 16, 24), aligned edges and one column for forms; a visible label for every \
+input, sentence case, buttons named by their action ("Save changes", never "OK"), the primary at the bottom \
+right; theme tokens, never hex colors; and design the empty, loading and error states of every list or request.
 - Write logic with wire_event and set_handler (or set_code for the whole module), then check the \
 module with validate_code. Keep handlers short and readable.
 - To make a new form or component use new_document; it opens in a new tab.
@@ -67,6 +70,10 @@ update_plan first (the screens, the backend, the checks) and keep it current as 
 - Build each form with new_document and the control tools, wire the events and write the handlers, put \
 reusable logic and data access in the package, add dependencies with add_dependency, save with \
 save_document, and check everything with check_project and validate_code.
+- Structure it like a senior engineer (get_guide("app-architecture")): models, rules and stores in \
+src/<package>/ without pyzed, databases and APIs in adapters behind Protocols, thin handlers that call the \
+package, slow work in pz.Worker or Command.perform, settings in pz.Settings, secrets never in code, and tests \
+of the package in tests/.
 - Then run it: run_app starts the app in its own environment and returns its output and a picture of \
 its window. Read the errors and the picture, fix what is wrong and run it again until it starts cleanly \
 and looks right. Finish with a short summary of what you built and how to run it.
@@ -190,6 +197,11 @@ def _check_props(type_: str, props: Dict[str, Any]) -> None:
     if unknown:
         names = ", ".join(p.name for p in spec.props) or "none"
         raise ValueError(f"{type_} has no prop {', '.join(unknown)}; its props are: {names}")
+    theme = _theme.current()
+    for key, value in props.items():
+        if spec.prop(key).kind == "color" and isinstance(value, str) and value and theme.find_color(value) is None:
+            raise ValueError(f"{key}={value!r} is not a color: use '#rrggbb' or a theme token such as text, "
+                             "text_muted, accent, success, warning, error, surface or border")
 
 
 def designer_tools(d: "Designer") -> List[Tool]:
@@ -633,9 +645,7 @@ def _run_target(d: "Designer", form: str) -> Tuple[Path, Any, str]:
 def run_form_check(path: Path, project: Any = None, *, timeout: float = 240.0) -> Any:
     """Runs the form at ``path`` off-screen in its own process, like ``uv run pyzed run`` would (in the
     project's environment when the designer lacks its dependencies), and returns its output and picture."""
-    import pyzed
-
-    from .. import project as _project
+    from ..mcp import preview as _preview
     from .model import Form
 
     form = Form.from_json(path.read_text(encoding="utf-8"))
@@ -644,34 +654,43 @@ def run_form_check(path: Path, project: Any = None, *, timeout: float = 240.0) -
         script, out = Path(tmp) / "run_app.py", Path(tmp) / "window.png"
         script.write_text("import pyzed as pz\nfrom pyzed.designer.runtime import open_form\n"
                           f"pz.run(open_form({str(path)!r}))\n", encoding="utf-8")
-        args = ["-m", "pyzed.mcp.preview", str(script), str(out), str(size[0]), str(size[1])]
-        uv = _project.find_uv() if project is not None and not project.can_run_in_process else None
-        if uv is not None:
-            cmd, cwd, env = [uv, "run", "--project", str(project.root), "python", *args], project.root, \
-                _project._clean_env()
-        else:  # the designer has what the form needs: run it with this same pyzed
-            here = str(Path(pyzed.__file__).resolve().parents[1])
-            env = {**os.environ, "PYTHONPATH": os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", ""))
-                                                              if p)}
-            cmd, cwd = [sys.executable, *args], path.parent
+        python, env = _preview_python(project)
+        cwd = project.root if python is not None else path.parent
+        if python is None or env is None:  # the designer has what the form needs: run it with this same pyzed
+            python, env = _preview.this_python()
         env.update(PYZED_RELOAD="0", PYTHONUNBUFFERED="1")
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(cwd), env=env)
-        except subprocess.TimeoutExpired:
-            return {"ok": False, "output": f"{path.name} did not start within {timeout:g} seconds"}
-        except OSError as err:
-            return {"ok": False, "output": f"could not start {path.name}: {err}"}
-        output = "\n".join(x for x in (result.stdout.strip(), result.stderr.strip()) if x)[-6000:]
-        if result.returncode != 0 or not out.is_file():
-            return {"ok": False, "output": output or f"{path.name} did not start"}
+        env.pop("PYZED_DESIGNER_RUN", None)
+        rest = [str(script), str(out), str(size[0]), str(size[1])]
+        # off-screen first; when the renderer fails (not the form), in a window for a moment
+        for window in (False, True):
+            cmd = [*python, "-m", "pyzed.mcp.preview", *(["--window"] if window else []), *rest]
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=timeout,
+                                        cwd=str(cwd), env=env, stdin=subprocess.DEVNULL,
+                                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except subprocess.TimeoutExpired:
+                return {"ok": False, "output": f"{path.name} did not start within {timeout:g} seconds"}
+            except OSError as err:
+                return {"ok": False, "output": f"could not start {path.name}: {err}"}
+            output = "\n".join(x for x in (result.stdout.strip(), result.stderr.strip()) if x)[-6000:]
+            if result.returncode == 0 and out.is_file():
+                break
+            log = Path(f"{out}.log")
+            output = output or (log.read_text(encoding="utf-8", errors="replace")[-6000:] if log.is_file() else "")
+            if window or _form_error(output):
+                return {"ok": False, "output": output or f"{path.name} did not start"}
         text = f"{path.name} started ({size[0]}x{size[1]})." + (f" Its output:\n{output}" if output else
                                                                " It printed nothing.")
         return [text, Image(out.read_bytes(), "image/png")]
 
 
 def screenshot_job(d: "Designer") -> Callable[[], bytes]:
-    """A function that renders the open form off-screen and returns the PNG. Call this on the UI thread
-    (it copies the form and its code) and the function it returns in a worker (it takes a few seconds)."""
+    """A function that renders the open form and returns the PNG. Call this on the UI thread (it copies the
+    form and its code) and the function it returns in a worker (it takes a few seconds).
+
+    The form runs in its own process: the project's environment when the designer lacks its packages (as
+    ``run_app`` does), else this same Pyzed. It is drawn off-screen; when that fails (a driver that cannot
+    draw without a window) the form opens in a window for a moment and the window is captured instead."""
     from .model import identifier
 
     doc = d.doc
@@ -683,10 +702,9 @@ def screenshot_job(d: "Designer") -> Callable[[], bytes]:
     stem = doc.path.stem if doc.path is not None else identifier(form.name) or "form"
     folder = str(doc.path.resolve().parent if doc.path is not None else d.agent.project_root())
     size = (int(form.width) or 480, int(form.height) or 320)
+    python, env = _preview_python(getattr(d.projects, "project", None))
 
     def render() -> bytes:
-        import tempfile
-
         from ..mcp.preview import render as run
 
         with tempfile.TemporaryDirectory(prefix="pyzed-shot-") as tmp:
@@ -695,9 +713,41 @@ def screenshot_job(d: "Designer") -> Callable[[], bytes]:
             path.with_suffix(".py").write_text(code, encoding="utf-8")
             script = (f"import sys\nsys.path.insert(0, {folder!r})\nimport pyzed as pz\n"
                       f"from pyzed.designer.runtime import open_form\npz.run(open_form({str(path)!r}))\n")
-            return run(script, size=size)
+            try:
+                return run(script, size=size, timeout=SHOT_TIMEOUT, python=python, env=env)
+            except RuntimeError as err:
+                if _form_error(str(err)):
+                    raise  # the form's own error: a window would show the same one
+                try:
+                    return run(script, size=size, timeout=WINDOW_TIMEOUT, window=True, python=python, env=env)
+                except RuntimeError as again:
+                    raise RuntimeError(f"{err}\n\nIn a window it failed too: {again}") from None
 
     return render
+
+
+#: How long a screenshot may take (the first ``uv run`` of a project installs its packages), and its retry
+#: in a window.
+SHOT_TIMEOUT = 120.0
+WINDOW_TIMEOUT = 60.0
+
+
+def _preview_python(project: Any) -> Tuple[Optional[List[str]], Optional[Dict[str, str]]]:
+    """The interpreter that renders forms: the project's environment through ``uv run`` when the designer
+    cannot import its packages (a compiled Pyzed Design...), else this one (``None, None``)."""
+    from .. import project as _project
+
+    uv = _project.find_uv() if project is not None and not project.can_run_in_process else None
+    if uv is None:
+        return None, None
+    return [uv, "run", "--project", str(project.root), "python"], _project._clean_env()
+
+
+def _form_error(message: str) -> bool:
+    """Whether a failed screenshot is the form's own fault (a Python error in its code), which a window would
+    show the same, rather than the renderer's (a crash, a panic, no answer)."""
+    return "Traceback (most recent call last)" in message and "panicked" not in message \
+        and "PanicException" not in message
 
 
 def _sync_editor(d: "Designer") -> None:

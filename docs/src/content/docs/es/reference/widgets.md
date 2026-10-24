@@ -1647,6 +1647,7 @@ code_editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     highlight_color=None,
     match_brackets=True,
@@ -1661,6 +1662,8 @@ code_editor(
     on_hover=None,
     hover_delay=500.0,
     sticky_scroll=0,
+    indent_guides=None,
+    indent_guides_active=None,
 )
 ```
 
@@ -1711,6 +1714,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `cursor_color` | Color del cursor. |
 | `on_zoom` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
 | `on_action` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…). |
+| `on_paste` | Se llama después de que Ctrl+V (Cmd+V, Mayús+Insert) pegue el texto del portapapeles, si lo tiene: un chat lee una imagen del portapapeles con `Command.paste_image`. |
 | `highlights` | Rangos pintados detrás del texto (resultados de búsqueda): `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
 | `highlight_color` | Color de `highlights`. |
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor. |
@@ -1725,6 +1729,8 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `on_hover` | Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información). |
 | `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
 | `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
+| `indent_guides` | Colores de las guías de sangría, uno por profundidad (se repiten); sin colores no hay guías. |
+| `indent_guides_active` | Colores de la guía del bloque donde está el cursor, por profundidad como `indent_guides`. |
 
 ## Estilos
 

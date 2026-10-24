@@ -85,7 +85,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | Tool | What it does |
 | --- | --- |
 | `plan_app` | Where to start for an app or screen: the closest blocks and examples, the components and guide topics it needs, the docs to read and the steps. Agents call it first. |
-| `get_guide` | How Pyzed works (`"overview"`), its rules (`"best-practices"`), runnable recipes (`"cookbook"`: app structure, background work, forms, virtual lists, animation, shaders, games, custom window frames, anchored layouts) or any topic of `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), in English or Spanish. |
+| `get_guide` | How Pyzed works (`"overview"`), its rules (`"best-practices"`), the [design rules](/pyzed/ai/design/) (`"design"`) and [architecture rules](/pyzed/ai/app-architecture/) (`"app-architecture"`) for professional apps, runnable recipes (`"cookbook"`: app structure, background work, forms, virtual lists, animation, shaders, games, custom window frames, anchored layouts) or any topic of `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), in English or Spanish. |
 | `list_guides` | Every topic `get_guide` takes. |
 | `list_components` | Every widget (`pz.*`), ready-made component (`pz.ui.*`), designer toolbox type and `pz.Component` class, with a one-line summary. Filter by `kind`, `query`, `category` or `role` (the color role of designer types: `layout`, `input`, `action`, `navigation`, `display`, `media`, `system`, `custom`). |
 | `describe_component` | The signature, documentation and parameters of one widget or component (`"pz.column"`, `"ui.button"`), or the props and events of a designer type (`"designer:button"`). |
@@ -100,7 +100,8 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | `new_form` | A visual-designer form: the `.pzform` layout and its handlers module. |
 | `validate_code` | Checks code without running it: names that don't exist in `pz` or `pz.ui`, keyword arguments a function doesn't take, apps without `view()`, components without `render()`, side effects in `view()`, lambdas in loops that don't capture the loop variable, and ruff's pyflakes checks when ruff is installed. |
 | `validate_form` | Checks a `.pzform` (types, props, events, names, containers) and that its handlers module defines every handler. |
-| `screenshot` | Renders the code off-screen (no window, no GPU) and returns a PNG, so the agent can see what it built. |
+| `review_design` | Reviews the design of code without running it: fixed hex colors instead of theme tokens, spacing off the 4 px scale, text sizes off the type scale, icon buttons without a tooltip, vague or capitalised button labels, inputs without a label, tables without an empty state and more than one primary button per view. It also returns the checklist to go through on a screenshot. |
+| `screenshot` | Renders the code off-screen (no window, no GPU) and returns a PNG, so the agent can see what it built. `theme="Pyzed Light"` (or any theme) shows it in another theme, to check light and dark. |
 | `animation_properties`, `new_animation`, `check_animation` | [Timeline animations](/pyzed/animation/timeline/): what a track can animate, a new `.pzanim` library from clips and tracks, and checking one. |
 | `list_shader_nodes`, `new_shader`, `check_shader` | The nodes of [shader graphs](/pyzed/shading/shader-graphs/), a new `.pzshad` from a template, and compiling one to WGSL with its errors by node. |
 
@@ -124,13 +125,14 @@ With these the agent builds a whole app in a folder, from the project to a clean
 ### Resources and prompts
 
 Clients that support resources can attach `pyzed://guide`, `pyzed://best-practices`,
-`pyzed://cookbook`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` and
+`pyzed://cookbook`, `pyzed://design`, `pyzed://app-architecture`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` and
 `pyzed://docs/{slug}` (with `--` instead of `/`, such as `guides--layout`).
 
 The prompts `create_app`, `create_component` and `create_form` start a task with the right steps:
 read the guides, look up existing components, generate, validate and preview. `build_project` builds a
 complete app in the folder: read the guides and examples, create the project, write it in small steps,
-then check, test and look at it until everything is clean.
+then check, test and look at it until everything is clean. `polish_design` reviews a screen like a product
+designer: screenshots in both themes, `review_design`, the checklist, and fixes in order of impact.
 
 ## Example session
 

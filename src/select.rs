@@ -478,7 +478,7 @@ impl Widget<Message, Theme, Renderer> for Select<'_> {
                 if state.focused && enabled =>
             {
                 if self.key(state, key, *modifiers, shell) {
-                    crate::app::claim_key();
+                    crate::app::claim_key(key);
                     shell.capture_event();
                     shell.request_redraw();
                 }

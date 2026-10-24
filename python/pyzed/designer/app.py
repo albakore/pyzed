@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -28,6 +29,8 @@ from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from .. import brand
+from .. import package_managers as _package_managers
+from .. import rendering as _rendering
 from . import binding as _binding
 from . import spacing
 from . import code as _code
@@ -214,10 +217,14 @@ class Designer(App):
         self.prefs = preferences.load()
         #: The user's and the open project's preferences, and the user's profiles (see ``profiles``).
         self.profile_store = _profiles.use(_profiles.Store())
+        _package_managers.load(self.prefs.package_managers, self.prefs.package_manager)
         # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
         self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
         self.frame = "custom" if self.prefs.window_frame else None
+        #: The variables of the renderer Pyzed Design started with (``None`` when it was not started by ``design``),
+        #: to tell when a change of Settings → Rendering waits for a restart.
+        self.rendering_started: Optional[Dict[str, str]] = None
         self.preview_frame: Optional[str] = self.prefs.preview_frame or None
         self.show_grid = self.prefs.show_grid
         self.snap = self.prefs.snap
@@ -1634,8 +1641,12 @@ class Designer(App):
                 self.scale = changed["ui_scale"]
             if "preview_frame" in changed:
                 self.preview_frame = changed["preview_frame"] or None
+            if "package_managers" in changed or "package_manager" in changed:
+                _package_managers.load(self.prefs.package_managers, self.prefs.package_manager)
             if "window_frame" in changed and notify:
                 self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
+            if settings_ui.RESTART_KEYS & set(changed) and notify:
+                self.notify(tr("Rendering"), tr("Restart Pyzed Design to apply the change"), kind="info")
 
     def open_dialog_named(self, name: str) -> Any:
         """Opens the dialog ``name`` with an empty search and the first row highlighted; returns ``None``."""
@@ -3348,12 +3359,37 @@ class Designer(App):
         return None
 
 
+#: Set while Pyzed Design starts again after its renderer could not open the windows (see ``design``).
+RENDERING_FALLBACK = "PYZED_RENDERING_FALLBACK"
+
+
+def _restart_with_auto_renderer(designer: "Designer", err: RuntimeError, folder: Path) -> bool:
+    """When the renderer of Settings → Rendering cannot open the designer's windows (GPU forced on a machine
+    without one, a graphics API it lacks), puts it back to Auto and starts Pyzed Design again, once; ``False``
+    when that is not what failed."""
+    if "graphics" not in str(err) or not designer.prefs.rendering().custom or os.environ.get(RENDERING_FALLBACK):
+        return False
+    for key in settings_ui.RESTART_KEYS:
+        designer.profile_store.reset("designer", key)
+    env = dict(os.environ)
+    _rendering.forget_inherited(env)
+    env[RENDERING_FALLBACK] = "1"
+    _logs.event("designer", "The renderer %s could not open the windows: back to Auto", designer.rendering)
+    try:
+        frozen = getattr(sys, "frozen", False)  # the compiled app: its program, without Python's own options
+        subprocess.Popen([sys.executable, *sys.argv[1:]] if frozen else list(sys.orig_argv), cwd=folder, env=env)
+    except OSError:
+        return False
+    return True
+
+
 def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> None:
     """Opens the designer (on ``path`` if given; it is created on first save if missing)."""
     started = time.perf_counter()
     before = _platform.process_age()  # the time the process took to get here (None where it can't be told)
     # opened from the desktop's menu, the app lacks the PATH of the user's shell (Node from nvm, ~/.local/bin...)
     threading.Thread(target=_platform.use_user_path, daemon=True, name="pyzed-user-path").start()
+    first_folder = Path.cwd()
     if not _workspace.usable(Path.cwd()):
         # The installed app starts in its own folder (C:\\Program Files\\Pyzed Design), where new files must not
         # go: what falls back on the current folder (a form saved without a project...) uses the home folder.
@@ -3361,6 +3397,14 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
         os.chdir(Path.home())
     designer = Designer(path, theme=theme)
     designer.startup.update(started=started, system=before)
+    # Settings → Rendering: the designer's own windows (a variable set by hand still wins). The apps it starts
+    # drop these variables and follow their own project (see ``rendering.forget_inherited``).
+    designer.rendering = designer.prefs.rendering()
+    _rendering.keep_to_self(designer.rendering.apply())
+    designer.rendering_started = designer.rendering.env()
+    if os.environ.pop(RENDERING_FALLBACK, None):
+        designer.notify(tr("Rendering"), tr("The renderer chosen in Settings could not open the windows: it is back "
+                                            "to Auto"), kind="warning", seconds=10)
     if path is None and designer.prefs.show_welcome:
         designer.welcome.open()
     telemetry = _telemetry.get()
@@ -3370,6 +3414,9 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     designer.logs.install(file=designer.prefs.log_file)  # catches the errors of callbacks and threads
     try:
         designer.run()
+    except RuntimeError as err:
+        if not _restart_with_auto_renderer(designer, err, first_folder):
+            raise
     finally:
         _logs.event("designer", "Pyzed Design closed")
         designer.logs.uninstall()

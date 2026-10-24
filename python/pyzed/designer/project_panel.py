@@ -661,10 +661,15 @@ def _dep_row(p: ProjectController, dep: Dependency, t: Theme) -> Any:
     return ui.list_item(name, icon="package", inset=True, end=end, theme=t)
 
 
+#: How the Tools section names where the uv in use comes from (see ``package_managers``).
+_UV_SOURCES = {"bundled": "included", "system": "this computer", "custom": "custom"}
+
+
 def _tool_row(tool: Tool, t: Theme) -> Any:
     state = ui.label(tool.version or "found", size="xs", mono=True, color="text_muted", theme=t) \
         if tool.available else ui.badge("missing", tint="error", theme=t)
-    return ui.list_item(tool.name, icon="circle-check" if tool.available else "circle-alert",
+    name = f"{tool.name} · {tr(_UV_SOURCES[tool.source])}" if tool.source in _UV_SOURCES else tool.name
+    return ui.list_item(name, icon="circle-check" if tool.available else "circle-alert",
                         icon_color="success" if tool.available else "error", inset=True, end=state, theme=t)
 
 

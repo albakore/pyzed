@@ -1596,6 +1596,9 @@ A control whose fields, theme, language and animations are the same as last time
 last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
 Controls made from a `pz.Component` keep their own cache (see `pyzed.component`).
 
+In the designer a control that fails to draw (a wrong prop value) shows its error in its place,
+so the rest of the canvas still draws; a running form raises it.
+
 ## Layout helpers
 
 ### `align`
@@ -1671,10 +1674,10 @@ The visual form editor.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, ty=True, ruff=True, keymap={})
+class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, indent_guides=True, indent_guides_coloring='fixed', wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, ty=True, ruff=True, keymap={})
 ```
 
-EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, hover: 'bool' = True, sticky_scroll: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
+EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, indent_guides: 'bool' = True, indent_guides_coloring: 'str' = 'fixed', wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, hover: 'bool' = True, sticky_scroll: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
 
 **Methods and properties**
 
@@ -1780,11 +1783,11 @@ Steps forward one snapshot; returns the restored form (a new object) or `None` i
 ### `theme_for`
 
 ```python
-theme_for(form, theme_name=None)
+theme_for(form, theme_name=None, *, base=None)
 ```
 
-The theme a form runs with: its base theme (or `theme_name`, to preview it with another one) plus
-accent, radius, font and background tweaks.
+The theme a form runs with: its base theme (or `theme_name`, to preview it with another one, or `base`,
+the theme of the app or form a component is placed in) plus accent, radius, font and background tweaks.
 
 ### `COMMON_EVENTS`
 

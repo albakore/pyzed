@@ -2,6 +2,7 @@
 
     my-app/
     ├── pyproject.toml        # uv project, plus a [tool.pyzed] table
+    ├── AGENTS.md             # how AI agents should build, design and check it
     ├── uv.lock
     ├── .venv/
     ├── src/my_app/           # backend: plain Python, importable from anywhere
@@ -38,11 +39,14 @@ import re
 import shutil
 import signal
 import site
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Union
+
+from . import package_managers as _package_managers
 
 PathLike = Union[str, Path]
 
@@ -107,6 +111,8 @@ class Tool:
     name: str
     path: Optional[str] = None
     version: Optional[str] = None
+    #: Where the uv in use comes from: "bundled", "system" or "custom" (see ``package_managers``).
+    source: Optional[str] = None
 
     @property
     def available(self) -> bool:
@@ -135,17 +141,9 @@ def _installed_uv() -> Optional[str]:
 
 
 def find_uv() -> Optional[str]:
-    """The ``uv`` executable: on ``PATH``, from the ``uv`` Python package, bundled or installed by its installer."""
-    found = shutil.which("uv")
-    if found:
-        return found
-    try:
-        from uv import find_uv_bin  # type: ignore[import-not-found]
-
-        return find_uv_bin()
-    except Exception:  # noqa: BLE001 - not installed, or installed without its binary
-        pass
-    return _bundled("uv") or _installed_uv()
+    """The ``uv`` executable chosen in ``package_managers`` (by default this computer's, on ``PATH`` or where its
+    installer puts it, else the one included with Pyzed Design or its Python)."""
+    return _package_managers.find("uv")
 
 
 #: uv's official installers (they put ``uv`` in ``~/.local/bin``).
@@ -164,14 +162,20 @@ def install_uv() -> Result:
 
 
 #: Windows' ``ERROR_UNTRUSTED_MOUNT_POINT``. Recent Windows 11 builds refuse to follow some junctions, such as the
-#: one uv makes for each Python minor version in ``%APPDATA%\uv\python`` (``cpython-3.12-windows-x86_64-none``):
-#: then every uv command that needs that Python fails with this error.
+#: one uv makes for each Python minor version in ``%APPDATA%\uv\python`` (``cpython-3.12-windows-x86_64-none``) and
+#: the ``python3.13.exe`` uv puts in ``~/.local/bin``, which runs the Python behind that junction: then every uv
+#: command that needs one of them fails with this error.
 UNTRUSTED_MOUNT = "os error 448"
+
+#: The junction uv makes for a Python minor version (``cpython-3.13-windows-x86_64-none``), next to the real folder
+#: of its latest patch version (``cpython-3.13.5-windows-x86_64-none``).
+_MINOR_LINK = re.compile(r"cpython-\d+\.\d+-", re.IGNORECASE)
 
 
 def python_install_dir() -> Path:
     """Where uv keeps its Pythons for Pyzed once uv's own folder failed with ``UNTRUSTED_MOUNT`` (Windows only):
-    a folder this app makes itself, so its links are trusted. It is used from then on while it exists."""
+    a folder of this app, without uv's minor version junctions (see ``execute_uv``). It is used from then on while
+    it exists, and then uv uses only the Pythons in it."""
     base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
     return Path(base) / "pyzed" / "python"
 
@@ -184,6 +188,10 @@ def _clean_env() -> Dict[str, str]:
     env.setdefault("NO_COLOR", "1")
     if sys.platform == "win32" and python_install_dir().is_dir():
         env["UV_PYTHON_INSTALL_DIR"] = str(python_install_dir())
+        # only those Pythons: the ones on PATH may be uv's ``python3.13.exe`` of ``~/.local/bin``, which still
+        # goes through the junction of the old folder (and a broken first one on PATH stops uv's search)
+        env.setdefault("UV_PYTHON_PREFERENCE", "only-managed")
+    env.update(_package_managers.environment())  # the package index, pre-releases... of the settings
     return env
 
 
@@ -224,39 +232,94 @@ def execute(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Opt
     return Result(args, done.returncode, done.stdout.strip())
 
 
+def _is_link(path: Path) -> bool:
+    """Whether ``path`` is a symbolic link or a junction (``os.path.isjunction`` is Python 3.12+)."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)  # REPARSE_POINT
+
+
+def _remove_minor_links() -> bool:
+    """Removes the minor version junctions uv made in ``python_install_dir()`` (the Pythons stay): without them
+    uv runs each Python from its real folder. uv only makes them again when it downloads a Python."""
+    removed = False
+    for link in python_install_dir().glob("cpython-*"):
+        if _MINOR_LINK.match(link.name) and _is_link(link):
+            try:
+                os.unlink(link)
+            except OSError:
+                try:
+                    os.rmdir(link)  # a junction is removed like an empty folder; the Python it points to stays
+                except OSError:
+                    continue
+            removed = True
+    return removed
+
+
 def _stale_venv(venv: Path) -> bool:
-    """Whether ``venv`` was made with a uv Python outside ``python_install_dir()`` (the one Windows won't open)."""
+    """Whether ``venv`` was made with a uv Python Windows won't open: one outside ``python_install_dir()`` (the
+    folder of uv or the ``python3.13.exe`` of ``~/.local/bin``) or one reached through a minor version junction."""
     try:
         cfg = (venv / "pyvenv.cfg").read_text(encoding="utf-8", errors="replace")
     except OSError:
         return False
     found = re.search(r"^home\s*=\s*(.+?)\s*$", cfg, re.M)
-    if not found or "cpython-" not in found.group(1).lower():
+    if not found:
         return False
-    return not found.group(1).lower().startswith(str(python_install_dir()).lower())
+    def parts(path: str) -> List[str]:
+        return [part.lower() for part in re.split(r"[\\/]+", path) if part]
+
+    home = parts(found.group(1))
+    if home[-2:] == [".local", "bin"]:
+        return True
+    if not any(part.startswith("cpython-") for part in home):
+        return False
+    pythons = parts(str(python_install_dir()))
+    return home[:len(pythons)] != pythons or any(_MINOR_LINK.match(part) for part in home)
 
 
-def execute_uv(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None,
-               venv: Optional[Path] = None) -> Result:
-    """Runs uv (``args[0]``) like ``execute``. On Windows, when uv can't open its Python (``UNTRUSTED_MOUNT``),
-    moves uv's Pythons to ``python_install_dir()``, remakes the project's ``venv`` if it was made with the
-    unreadable one, and runs the command again."""
-    result = execute(args, cwd, timeout=timeout)
-    if sys.platform != "win32" or UNTRUSTED_MOUNT not in result.output:
-        return result
+def _repair_pythons(venv: Optional[Path]) -> bool:
+    """What ``execute_uv`` changes when uv can't open a Python (``UNTRUSTED_MOUNT``); whether anything changed."""
     changed = False
     if not python_install_dir().is_dir():
         try:
             python_install_dir().mkdir(parents=True)
             changed = True
         except OSError:
-            return result
+            return False
+    changed = _remove_minor_links() or changed
     if venv is not None and _stale_venv(venv):
-        shutil.rmtree(venv, ignore_errors=True)  # uv sync makes it again with the Python of the new folder
+        shutil.rmtree(venv, ignore_errors=True)  # uv sync makes it again with a Python Windows opens
         changed = not venv.exists() or changed
-    if not changed:
+    return changed
+
+
+#: Added to uv's output when Pyzed could not get around ``UNTRUSTED_MOUNT``.
+UNTRUSTED_MOUNT_HINT = ("Windows won't let uv open a Python through a folder link (os error 448). Pyzed keeps its "
+                        "Pythons in {folder}: delete that folder and try again, or run "
+                        "`uv python uninstall --all` in a terminal and remove the python*.exe of ~/.local/bin.")
+
+
+def execute_uv(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None,
+               venv: Optional[Path] = None) -> Result:
+    """Runs uv (``args[0]``) like ``execute``. On Windows, when uv can't open a Python (``UNTRUSTED_MOUNT``):
+    uv's Pythons move to ``python_install_dir()`` and only those are used (not the ``python3.13.exe`` of
+    ``~/.local/bin``), the minor version junctions uv makes there are removed, the project's ``venv`` made with an
+    unreadable Python is made again, and the command runs again."""
+    result = execute(args, cwd, timeout=timeout)
+    if sys.platform != "win32":
         return result
-    return execute(args, cwd, timeout=timeout)
+    # a download makes the junction again: up to three tries (move, then remove the new junction)
+    for _ in range(3):
+        if UNTRUSTED_MOUNT not in result.output or not _repair_pythons(venv):
+            break
+        result = execute(args, cwd, timeout=timeout)
+    if UNTRUSTED_MOUNT in result.output:
+        hint = UNTRUSTED_MOUNT_HINT.format(folder=python_install_dir())
+        return Result(result.args, result.code, f"{result.output}\n{hint}")
+    return result
 
 
 def _version(path: Optional[str]) -> Optional[str]:
@@ -280,7 +343,9 @@ def tools(project: Optional["Project"] = None) -> Dict[str, Tool]:
     found = {"uv": find_uv(), "git": shutil.which("git")}
     for name in DEV_TOOLS:
         found[name] = project.tool_path(name) if project else shutil.which(name)
-    return {name: Tool(name, path, _version(path)) for name, path in found.items()}
+    out = {name: Tool(name, path, _version(path)) for name, path in found.items()}
+    out["uv"].source = _package_managers.source_of(found["uv"])
+    return out
 
 
 def _uv() -> str:
@@ -850,7 +915,8 @@ class Project:
         """Runs ``args`` in the project folder, inside WSL for a WSL project opened from Windows."""
         env = self.environment
         if env.remote:
-            return execute(env.command(args, self.root, {"UV_NO_PROGRESS": "1", "NO_COLOR": "1"}), timeout=timeout)
+            extra = {"UV_NO_PROGRESS": "1", "NO_COLOR": "1", **_package_managers.environment()}
+            return execute(env.command(args, self.root, extra), timeout=timeout)
         return execute(args, self.root, timeout=timeout)
 
     def _uv_command(self) -> str:
@@ -1188,12 +1254,14 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
       dependency and ``ruff``/``ty`` as dev dependencies (``sync=False`` only edits
       ``pyproject.toml``, without resolving or installing anything).
     - ``git=True`` creates a git repository unless the folder is already inside one.
+    - A new project gets an ``AGENTS.md``: how AI agents should build, design and check it.
 
     Raises ``RuntimeError`` with uv's message when ``uv init`` fails.
     """
     root = Path(path).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     fresh = not (root / PYPROJECT).exists()
+    python = python or _package_managers.values("uv")["python"].strip() or None
     if fresh:
         args = ["init", "--name", name or root.name, "--vcs", "git" if git else "none"]
         args.append("--package" if package else "--app")
@@ -1201,7 +1269,8 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
             args += ["--python", python]
         where = environment(root)
         if where.remote:  # a folder of WSL opened from Windows: the project is made by Linux's uv, like its .venv
-            result = execute(where.command(["uv", *args, str(root)], root, {"UV_NO_PROGRESS": "1"}), timeout=300)
+            extra = {"UV_NO_PROGRESS": "1", **_package_managers.environment()}
+            result = execute(where.command(["uv", *args, str(root)], root, extra), timeout=300)
         else:
             result = execute_uv([_uv(), *args, str(root)], root)
         if not result.ok:
@@ -1217,6 +1286,11 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
         (root / "main.py").write_text(
             '"""Opens the main window: `uv run main.py`."""\n\nfrom pyzed import project\n\n'
             'if __name__ == "__main__":\n    project.run()\n', encoding="utf-8")
+    agents = root / "AGENTS.md"
+    if fresh and not agents.exists():  # how AI coding agents should work on the project
+        template = (Path(__file__).parent / "templates" / "AGENTS.md").read_text(encoding="utf-8")
+        backend = f"`src/{module}/`" if package else "The modules next to `pyproject.toml`"
+        agents.write_text(template.replace("{backend}", backend), encoding="utf-8")
     project.ui_dir.mkdir(parents=True, exist_ok=True)
     if not project.main_form.exists():
         title = re.sub(r"[-_]+", " ", project.name).strip().title() or "My App"

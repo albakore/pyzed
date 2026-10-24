@@ -302,10 +302,30 @@ class Theme:
         raise ValueError(f"theme {name!r} not found; available: {[e.get('name') for e in entries]}")
 
     def color(self, name: str) -> str:
-        """Resolves a token name ("accent", "text_muted", "error"...) or passes a hex color through."""
+        """Resolves a token name ("accent", "text_muted", "error"...) or passes a hex color through.
+
+        Also takes the usual short names ("muted", "primary", "danger"...), Zed's names ("text.muted") and
+        the terminal colors ("red", "bright_blue"...). Raises ``ValueError`` for anything else.
+        """
         if name.startswith("#") or name == "transparent":
             return name
-        return getattr(self, name)
+        value = self.find_color(name)
+        if value is None:
+            raise ValueError(f"unknown color {name!r}: use '#rrggbb' or a theme token such as "
+                             f"{', '.join(_COLOR_EXAMPLES)}")
+        return value
+
+    def find_color(self, name: str) -> Optional[str]:
+        """Like ``color`` but ``None`` when ``name`` is neither a hex color nor a name the theme knows."""
+        if not isinstance(name, str):
+            return None
+        if name.startswith("#") or name == "transparent":
+            return name
+        key = name.strip().lower().replace("-", "_").replace(" ", "_")
+        key = _COLOR_ALIASES.get(key) or _ZED_NAMES.get(key) or key.replace(".", "_")
+        if key in COLOR_TOKENS:
+            return getattr(self, key)
+        return self.ansi.get(key)
 
     def palette(self):
         """The base palette handed to iced for its built-in widget styles."""
@@ -453,6 +473,8 @@ SCOPES = [
     ("entity.name.label, storage.modifier.lifetime", "label"),
     ("punctuation, meta.brace", "punctuation"),
     ("punctuation.section, punctuation.separator, meta.brace.round, meta.brace.square", "punctuation.bracket"),
+    # The braces of an f-string's `{name}` (Zed's punctuation.special).
+    ("punctuation.section.interpolation, punctuation.definition.interpolation", "punctuation.special"),
     ("markup.heading, entity.name.section, markup.heading punctuation.definition", "title"),
     ("markup.bold", "emphasis.strong"),
     ("markup.italic", "emphasis"),
@@ -801,6 +823,18 @@ _ZED_KEYS = {
     "scrollbar_hover": "scrollbar.thumb.hover_background",
     "search_match": "search.match_background",
 }
+
+_ZED_NAMES = {zed: token for token, zed in _ZED_KEYS.items()}
+#: The theme's color tokens, the names ``Theme.color`` takes.
+COLOR_TOKENS = frozenset(f.name for f in fields(Theme) if f.type in (str, "str") and f.name not in ("name", "appearance"))
+#: Short names people (and agents) often use for the theme's tokens.
+_COLOR_ALIASES = {
+    "muted": "text_muted", "secondary": "text_muted", "subtle": "text_muted", "placeholder": "text_placeholder",
+    "disabled": "text_disabled", "foreground": "text", "fg": "text", "bg": "background", "primary": "accent",
+    "danger": "error", "destructive": "error", "ok": "success", "caution": "warning",
+    "card": "surface", "popover": "elevated", "input": "element", "outline": "border", "focus": "border_focused",
+}
+_COLOR_EXAMPLES = ("text", "text_muted", "accent", "success", "warning", "error", "surface", "border")
 
 _ANSI = ("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bright_black")
 

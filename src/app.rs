@@ -554,6 +554,8 @@ enum CommandKind {
     CopyToClipboard(String),
     ReadClipboard(PyMsg),
     ReadClipboardImage(PyMsg),
+    /// Draws the window again into an image and calls `then(png)`.
+    CaptureWindow(PyMsg, Option<PyMsg>),
     PickFiles(PickFiles),
 }
 
@@ -945,6 +947,18 @@ impl Command {
         cmd(CommandKind::ReadClipboardImage(PyMsg::new(then)))
     }
 
+    /// Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when
+    /// it could not be captured). The window is drawn again into an image by the app itself, so it
+    /// works the same on every system, even when other windows cover it.
+    #[staticmethod]
+    #[pyo3(signature = (then, window=None))]
+    fn capture_window(then: &Bound<'_, PyAny>, window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::CaptureWindow(
+            PyMsg::new(then),
+            PyMsg::maybe(&window),
+        ))
+    }
+
     /// Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
     /// list when it is cancelled).
     ///
@@ -1022,6 +1036,7 @@ impl Command {
             CommandKind::CopyToClipboard(_) => "Command.copy(...)",
             CommandKind::ReadClipboard(_) => "Command.paste(...)",
             CommandKind::ReadClipboardImage(_) => "Command.paste_image(...)",
+            CommandKind::CaptureWindow(..) => "Command.capture_window(...)",
             CommandKind::PickFiles(ref p) if p.save.is_some() => "Command.save_file(...)",
             CommandKind::PickFiles(_) => "Command.pick_files(...)",
         }
@@ -1237,6 +1252,21 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 })
             })
         }
+        CommandKind::CaptureWindow(then, obj) => {
+            let then = then.clone();
+            let Some(id) = resolve_window(py, state, obj) else {
+                return Task::done(Message::Call(then, PyMsg::new(py.None().bind(py))));
+            };
+            window::screenshot(id).map(move |shot| {
+                Python::attach(|py| {
+                    let value = match encode_png(&shot.rgba, shot.size.width, shot.size.height) {
+                        Some(data) => PyBytes::new(py, &data).into_any(),
+                        None => py.None().into_bound(py),
+                    };
+                    Message::Call(then.clone(), PyMsg::new(&value))
+                })
+            })
+        }
         // Android has no native file dialog here yet: the callback gets an empty list.
         #[cfg(target_os = "android")]
         CommandKind::PickFiles(pick) => {
@@ -1295,6 +1325,22 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
     }
 }
 
+/// RGBA pixels encoded as PNG.
+fn encode_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
+    if width == 0 || height == 0 {
+        return None;
+    }
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, width, height);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().ok()?;
+        writer.write_image_data(rgba).ok()?;
+    }
+    Some(out)
+}
+
 /// The image on the system clipboard, encoded as PNG (none on Android yet).
 #[cfg(target_os = "android")]
 fn clipboard_png() -> Option<Vec<u8>> {
@@ -1305,15 +1351,7 @@ fn clipboard_png() -> Option<Vec<u8>> {
 #[cfg(not(target_os = "android"))]
 fn clipboard_png() -> Option<Vec<u8>> {
     let image = arboard::Clipboard::new().ok()?.get_image().ok()?;
-    let mut out = Vec::new();
-    {
-        let mut encoder = png::Encoder::new(&mut out, image.width as u32, image.height as u32);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder.write_header().ok()?;
-        writer.write_image_data(&image.bytes).ok()?;
-    }
-    Some(out)
+    encode_png(&image.bytes, image.width as u32, image.height as u32)
 }
 
 // ---------------------------------------------------------------------------
@@ -2656,13 +2694,30 @@ fn window_moved(
     }
 }
 
-/// Set by a focused control (a select, `focusable`) that used the key being pressed, so the
-/// key does not also reach `on_key`.
-static KEY_CLAIMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// The keys a focused control (a select, `focusable`, a code editor) used, so they do not also
+/// reach `on_key`. Each press is claimed by its key: the presses of a batch (Alt, Shift, then
+/// the arrow of Alt+Shift+Down) all reach `on_key` after the widgets saw them.
+static KEYS_CLAIMED: Mutex<Vec<Key>> = Mutex::new(Vec::new());
 
-/// Marks the key being pressed as used by the focused control (see `KEY_CLAIMED`).
-pub fn claim_key() {
-    KEY_CLAIMED.store(true, std::sync::atomic::Ordering::Relaxed);
+/// Marks the press of `key` as used by the focused control (see `KEYS_CLAIMED`).
+pub fn claim_key(key: &Key) {
+    let mut claimed = KEYS_CLAIMED.lock().unwrap_or_else(|e| e.into_inner());
+    if claimed.len() >= 16 {
+        claimed.remove(0);
+    }
+    claimed.push(key.clone());
+}
+
+/// Whether the press of `key` was claimed (and forgets the claim).
+fn claimed(key: &Key) -> bool {
+    let mut claimed = KEYS_CLAIMED.lock().unwrap_or_else(|e| e.into_inner());
+    match claimed.iter().position(|k| k == key) {
+        Some(i) => {
+            claimed.remove(i);
+            true
+        }
+        None => false,
+    }
 }
 
 fn key_event(
@@ -2671,10 +2726,8 @@ fn key_event(
     window: window::Id,
 ) -> Option<Message> {
     track_keys(&event);
-    if matches!(
-        event,
-        iced::Event::Keyboard(keyboard::Event::KeyPressed { .. })
-    ) && KEY_CLAIMED.swap(false, std::sync::atomic::Ordering::Relaxed)
+    if let iced::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) = &event
+        && claimed(key)
     {
         return None;
     }
@@ -3144,9 +3197,10 @@ pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
     result.map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
-/// Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG.
+/// Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG. `renderer` is
+/// `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`.
 #[pyfunction]
-#[pyo3(signature = (app, path, *, size=None, scale=2.0, wait=0.1))]
+#[pyo3(signature = (app, path, *, size=None, scale=2.0, wait=0.1, renderer=None))]
 pub fn screenshot(
     py: Python<'_>,
     app: Py<PyAny>,
@@ -3154,47 +3208,34 @@ pub fn screenshot(
     size: Option<(f32, f32)>,
     scale: f32,
     wait: f64,
+    renderer: Option<String>,
 ) -> PyResult<()> {
-    py.detach(fonts::ensure_loaded);
-    let settings = window_settings(app.bind(py))?;
-    let viewport = size.map(|(w, h)| Size::new(w, h)).unwrap_or(settings.size);
-    let font_size = font_size(app.bind(py))?;
-    let theme = palette_key(app.bind(py))
-        .and_then(|k| build_theme(&k))
-        .unwrap_or(Theme::Dark);
-    open_post_channel();
-    // Media queries see the screenshot's size.
-    let style = py.import("pyzed.style")?;
-    style.setattr("_screen", (viewport.width, viewport.height))?;
-    // Animations show their resting state, so a screenshot doesn't depend on timing.
-    crate::animation::set_screenshot(true);
-    let shot = py.detach(move || {
-        let program = daemon(app, font_size, true);
-        iced_test::screenshot(
-            &program,
-            &theme,
-            viewport,
-            scale,
-            Duration::from_secs_f64(wait),
-        )
-    });
-    *POST.lock().unwrap() = None;
-    crate::animation::set_screenshot(false);
-    style.setattr("_screen", py.None())?;
-
+    let (width, height, rgba, _) =
+        crate::recorder::shoot(py, app, size, scale, wait, renderer.as_deref())?;
     let file = std::fs::File::create(&path)?;
-    let mut encoder = png::Encoder::new(
-        std::io::BufWriter::new(file),
-        shot.size.width,
-        shot.size.height,
-    );
+    let mut encoder = png::Encoder::new(std::io::BufWriter::new(file), width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder
         .write_header()
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
     writer
-        .write_image_data(&shot.rgba)
+        .write_image_data(&rgba)
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_press_of_a_batch_is_claimed_by_its_key() {
+        let down = Key::Named(Named::ArrowDown);
+        let shift = Key::Named(Named::Shift);
+        claim_key(&down);
+        assert!(!claimed(&shift), "Shift was not used by the control");
+        assert!(claimed(&down));
+        assert!(!claimed(&down), "a claim is used once");
+    }
 }

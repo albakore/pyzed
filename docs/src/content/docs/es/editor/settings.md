@@ -12,9 +12,9 @@ guardan enseguida; **Listo** cierra el diálogo.
 ![El diálogo de ajustes](../../../../assets/editor/settings.png)
 
 - **El índice** de la izquierda agrupa las páginas: *Diseñador* (General, Fuentes y tamaño, Lienzo del formulario,
-  Ejecución, Logs y errores, Telemetría), *Editor de código* (Apariencia, Cursor, Edición, Borrado, Desplazamiento
-  y ajuste de línea, Code lens y diagnósticos, Servidores de lenguaje) y, con un proyecto abierto, *Proyecto*
-  (Renderizado). Un número junto a una página cuenta sus ajustes cambiados.
+  Ejecución, Logs y errores, Renderizado, Telemetría), *Editor de código* (Apariencia, Cursor, Edición, Borrado,
+  Desplazamiento y ajuste de línea, Code lens y diagnósticos, Servidores de lenguaje) y *Proyecto* (Renderizado de
+  la app, que primero pide abrir un proyecto). Un número junto a una página cuenta sus ajustes cambiados.
 - **Buscar ajustes…** (tiene el foco al abrir el diálogo) encuentra un ajuste por su nombre o su ayuda, en inglés o
   en tu idioma, en todas las páginas.
 - **Un punto** tras el nombre de un ajuste indica que no tiene su valor por defecto; el botón **↺** a su derecha lo
@@ -68,7 +68,17 @@ marco de ventana, las actualizaciones, el archivo de logs).
 
 ## Renderizado
 
-**Proyecto → Renderizado** elige cómo dibuja sus ventanas la app del proyecto. Se guarda en el `pyproject.toml`
+Hay dos renderizadores que elegir: el del propio Pyzed Design y el de la app de cada proyecto.
+
+**Diseñador → Renderizado** elige cómo dibuja Pyzed Design sus propias ventanas: *Renderizador* (Auto, GPU o
+CPU), la *API gráfica* y, en portátiles con dos, la *GPU*. Es un ajuste de usuario y se aplica la próxima vez que
+abres Pyzed Design (la página lo avisa mientras un cambio espera y muestra con qué se dibujan ahora las ventanas).
+El renderizador por CPU funciona sin GPU, pero las vistas previas de shaders la necesitan. Las apps que inicia el
+diseñador (Ejecutar, una app exportada) no lo heredan: siguen a su propio proyecto.
+
+![El renderizador del propio Pyzed Design](../../../../assets/editor/settings-designer-rendering.png)
+
+**Proyecto → Renderizado de la app** elige cómo dibuja sus ventanas la app del proyecto. Se guarda en el `pyproject.toml`
 del proyecto, así que vale cuando el diseñador ejecuta el proyecto, cuando lo ejecutas con `pz.run` o
 `pyzed run`, y en la [app exportada](/pyzed/es/editor/exporting/).
 
@@ -165,6 +175,34 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 | **Abrir la consola al ejecutar** | Trae la consola al frente cuando arranca un formulario. |
 | **Registrar los eventos en la consola** | Escribe cada evento que atiende el formulario en ejecución, con su valor y su manejador. |
 | **Modo restringido** | Pregunta antes de instalar los paquetes de un proyecto que no creaste, importar sus componentes o ejecutarlo ([modo restringido](/pyzed/es/editor/projects/#modo-restringido)). Activado por defecto; solo tus propios ajustes pueden apagarlo. |
+
+## Gestores de paquetes
+
+**Gestor de paquetes de los proyectos** es el que los crea e instala sus paquetes. Los proyectos de Pyzed son proyectos de uv (`pyproject.toml` y `uv.lock`), así que por ahora es uv; la página se arma a partir de un registro de gestores de paquetes, así que los nuevos aparecen aquí con sus propios ajustes.
+
+Cada gestor de paquetes tiene su grupo. Arriba, el grupo lista cada ejecutable que Pyzed encuentra, con su versión y su ruta, y marca el que está **En uso**:
+
+- **Incluido con Pyzed**: el que trae Pyzed Design. Solo cambia cuando se actualiza el editor.
+- **El de este equipo**: uno instalado por su cuenta (para uv, en el `PATH` o en `~/.local/bin`). **Instalar** lo instala (el instalador oficial de uv) y **Actualizar** lo actualiza (`uv self update`), aparte del editor.
+- **Ruta personalizada**: cualquier otro ejecutable.
+
+| Ajuste | Qué hace |
+| --- | --- |
+| **Ejecutable que se usa** | *Automático* usa el de este equipo si está instalado; si no, el incluido. Las demás opciones eligen uno; si falta, Pyzed vuelve a *Automático* para que los proyectos sigan funcionando. |
+| **Ruta del ejecutable personalizado** | Aparece con *Ruta personalizada*. <kbd>Intro</kbd> la guarda. |
+
+Los valores por defecto de uv:
+
+| Ajuste | Qué hace |
+| --- | --- |
+| **Python de los proyectos nuevos** | La versión de Python que piden los proyectos nuevos, como `3.13` (`uv init --python`). Vacío: la más reciente que uv encuentre o instale. |
+| **Índice de paquetes** | Otro índice en lugar de PyPI, como el espejo de una empresa (`UV_DEFAULT_INDEX`). |
+| **Más índices de paquetes** | Índices donde buscar también, separados por espacios (`UV_INDEX`). |
+| **Permitir versiones preliminares** | Versiones preliminares de todos los paquetes (`UV_PRERELEASE=allow`). |
+| **Sin conexión** | Solo los paquetes ya descargados, sin red (`UV_OFFLINE`). |
+| **Cómo se instalan los paquetes** | Copiar, enlaces duros, enlaces simbólicos o clonar (`UV_LINK_MODE`). Copiar es lo más seguro entre unidades. |
+
+Se aplican a cada comando que ejecuta el editor: crear un proyecto, la pestaña Dependencias, Ejecutar y la exportación. Son tus propios ajustes, nunca los de un proyecto: lo que necesite un proyecto va en su `pyproject.toml` (`[tool.uv]`). La pestaña Dependencias dice qué uv se usa junto a su versión.
 
 ## Logs y errores
 

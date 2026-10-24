@@ -2799,6 +2799,7 @@ editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
@@ -2809,6 +2810,7 @@ editor(
     on_hover=None,
     hover_delay=500,
     sticky_scroll=0,
+    indent_guides=False,
     theme=None,
 )
 ```
@@ -2849,6 +2851,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `cursor_color` | Cursor color (the theme's player color by default). |
 | `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
 | `on_action` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…), e.g. to count them. |
+| `on_paste` | Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`. |
 | `highlights` | Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
 | `match_brackets` | Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it). |
 | `selection_highlight` | Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor). |
@@ -2859,6 +2862,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
 | `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

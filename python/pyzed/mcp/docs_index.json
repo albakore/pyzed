@@ -19,6 +19,18 @@
    "path": "docs/src/content/docs/ai/api-keys.mdx"
   },
   {
+   "slug": "ai/app-architecture",
+   "title": "Architecture rules for agents",
+   "description": "How to structure large Pyzed apps: project layout, layers and ports, state and messages, components, effects and services, errors, settings, testing and anti-patterns.",
+   "path": "docs/src/content/docs/ai/app-architecture.md"
+  },
+  {
+   "slug": "ai/design",
+   "title": "Design rules for agents",
+   "description": "UI and UX rules for professional Pyzed desktop apps: patterns, hierarchy, spacing, typography, the color tokens of Pyzed Dark and Light, states, feedback, forms, accessibility, motion and writing.",
+   "path": "docs/src/content/docs/ai/design.md"
+  },
+  {
    "slug": "ai/index",
    "title": "Pyzed for AI agents",
    "description": "Pyzed is an AI-native Python GUI framework: an MCP server, llms.txt, editor rules, an agent inside Pyzed Design and pyzed.agents let AI agents build, check and see desktop apps.",
@@ -833,6 +845,12 @@
    "title": "Projects with uv",
    "description": "Create and manage Pyzed desktop apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready from the first command.",
    "path": "docs/src/content/docs/guides/projects.mdx"
+  },
+  {
+   "slug": "guides/recording",
+   "title": "Recording screenshots and clips",
+   "description": "pyzed record: screenshots, animated WebP, GIF and MP4 clips of a Python GUI, recorded off-screen, one at a time or many in parallel from a job file or a window.",
+   "path": "docs/src/content/docs/guides/recording.mdx"
   },
   {
    "slug": "guides/services",
@@ -3503,6 +3521,13 @@
      "then": "Callable that receives the PNG bytes or `None`."
     }
    },
+   "pyzed.Command.capture_window": {
+    "desc": "Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when it could not be captured). The app draws the window again into an image, so it works the same on every system, even when other windows cover it.",
+    "params": {
+     "then": "Callable that receives the PNG bytes or `None`.",
+     "window": "The window (default: the current one)."
+    }
+   },
    "pyzed.Command.pick_files": {
     "desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).",
     "params": {
@@ -4200,6 +4225,7 @@
      "cursor_color": "Cursor color.",
      "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
      "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…).",
+     "on_paste": "Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`.",
      "highlights": "Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
      "highlight_color": "Color of `highlights`.",
      "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
@@ -4209,7 +4235,9 @@
      "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
      "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
      "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
-     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+     "indent_guides": "Colors of the indent guides, one per depth (they repeat); none: no guides.",
+     "indent_guides_active": "Colors of the guide of the block around the cursor, by depth like `indent_guides`."
     }
    },
    "pyzed.Style": {
@@ -5352,6 +5380,7 @@
      "cursor_color": "Cursor color (the theme's player color by default).",
      "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
      "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…), e.g. to count them.",
+     "on_paste": "Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`.",
      "highlights": "Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
      "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
      "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
@@ -5360,7 +5389,8 @@
      "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
      "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
      "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
-     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+     "indent_guides": "`True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `\"rainbow\"` gives each depth its own color."
     }
    },
    "pyzed.ui.language_token": {
@@ -5786,7 +5816,13 @@
     "example": "ocean = pz.themes.ONE_DARK.derive(name=\"Ocean\", accent=\"#4fb3ff\", syntax={\"keyword\": \"#ff79c6\"})"
    },
    "pyzed.Theme.color": {
-    "desc": "Resolves a token (`\"accent\"`, `\"text_muted\"`…) to its color. Hex colors and `\"transparent\"` pass through unchanged.",
+    "desc": "Resolves a token (`\"accent\"`, `\"text_muted\"`…) to its color. Hex colors and `\"transparent\"` pass through unchanged. Short names (`\"muted\"`, `\"primary\"`, `\"danger\"`…), Zed's names (`\"text.muted\"`) and the terminal colors (`\"red\"`…) work too; anything else raises `ValueError`.",
+    "params": {
+     "name": "Token or color."
+    }
+   },
+   "pyzed.Theme.find_color": {
+    "desc": "Like `color`, but returns `None` for a name the theme does not know instead of raising.",
     "params": {
      "name": "Token or color."
     }

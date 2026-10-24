@@ -173,8 +173,13 @@ El agente puede mirar imágenes: una maqueta que reconstruir, una captura de un 
 ahora. Añádelas con **+**:
 
 - **Adjuntar imágenes…** abre el diálogo de archivos del sistema (PNG, JPEG, GIF o WebP, hasta 5 MB cada una).
-- **Pegar imagen** toma la imagen que copiaste (una captura, una imagen del navegador).
+- **Pegar imagen** toma la imagen que copiaste (una captura, una imagen del navegador). **Ctrl+V** (**Cmd+V** en
+  macOS) en el cuadro de mensaje hace lo mismo cuando el portapapeles tiene una imagen y no texto.
 - **Captura del formulario** dibuja el formulario abierto y la adjunta.
+
+El formulario se dibuja fuera de pantalla en un proceso propio, con los paquetes del proyecto. Si el controlador
+gráfico no puede dibujar sin ventana, el formulario se abre un momento en una ventana y se captura esa ventana, igual
+en Windows, macOS y Linux. Si el código del formulario falla, el agente recibe el error y puede corregirlo.
 
 Aparecen como miniaturas sobre el mensaje y en la conversación. Las herramientas también pueden responder con
 imágenes: `screenshot_form` y las de los servidores MCP que devuelven imágenes. El modelo tiene que admitir

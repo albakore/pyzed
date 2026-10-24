@@ -88,6 +88,13 @@ class Command:
         """Runs several commands."""
         ...
     @staticmethod
+    def capture_window(then: Any, window: Any = ...) -> Any:
+        """Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when
+        it could not be captured). The window is drawn again into an image by the app itself, so it
+        works the same on every system, even when other windows cover it.
+        """
+        ...
+    @staticmethod
     def close_window(window: Any = ...) -> Any:
         """Closes `window` (a `pyzed.Window`), or the window that produced the message."""
         ...
@@ -406,7 +413,7 @@ def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any 
     - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
     """
     ...
-def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ...) -> Any:
+def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., on_paste: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ..., indent_guides: Any = ..., indent_guides_active: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
     Editors are *uncontrolled*: `text` is only the initial value for a given `id`.
@@ -422,12 +429,20 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
       Ctrl+wheel.
     - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
       `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+    - `on_paste()`: Called when Ctrl/Cmd+V (or Shift+Insert) is pressed, after the clipboard's text
+      (if it holds any) is pasted: a chat box reads an image from the clipboard with it.
     - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
       its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
       `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.
 
     `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
     the top of the editor (0 turns it off); a click on one moves the cursor there.
+
+    `indent_guides` draws a guide at each level of indentation in these colors, taking turns by
+    depth (one color, or several for rainbow guides); the guide of the block around the cursor
+    takes the colors of `indent_guides_active`.
+
+    Holding Ctrl (Cmd) over a name underlines it; Ctrl+click reports `"go_to_definition"`.
     """
     ...
 def column(children: Any = ..., *, spacing: Any = ..., padding: Any = ..., width: Any = ..., height: Any = ..., align: Any = ..., max_width: Any = ..., clip: Any = ...) -> Any: ...
@@ -543,6 +558,12 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
     - `on_middle_release()`: Middle button released (pan gestures, for example).
     """
     ...
+def offscreen_gpu() -> Any:
+    """The GPU an off-screen renderer would draw with: `(name, kind)`, where `kind` is
+    `"discrete"`, `"integrated"`, `"virtual"`, `"cpu"` (a software driver such as lavapipe or
+    llvmpipe, slower than the CPU renderer) or `"other"`; `None` without one.
+    """
+    ...
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
@@ -602,8 +623,12 @@ def radio(label: Any, selected: Any, on_select: Any = ..., *, size: Any = ..., t
     - `on_select()`: Message or callable on click.
     """
     ...
-def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
-    """Drives `app` off-screen with `script`, a generator of commands (see the module's docs)."""
+def record(app: Any, script: Any, *, size: Any, scale: Any = ..., renderer: Any = ...) -> Any:
+    """Drives `app` off-screen with `script`, a generator of commands (see the module's docs).
+    `renderer` is `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`. Returns the
+    name of the renderer that drew it, and whether a `pz.shader` was drawn (the CPU renderer
+    shows its fallback).
+    """
     ...
 def reduced_motion() -> Any:
     """Whether reduced motion is on."""
@@ -612,6 +637,9 @@ def refresh_window(window: Any) -> Any:
     """`Window.refresh()`: draws an isolated window again after something outside it changed what
     it shows. Safe from any thread.
     """
+    ...
+def release_renderers() -> Any:
+    """Drops the renderers this thread kept (they hold a GPU device and its memory)."""
     ...
 def renderer_info() -> Any:
     """The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open."""
@@ -650,8 +678,16 @@ def safe_area() -> Any:
     (the status and navigation bars, the camera cutout and the soft keyboard; zeros on a desktop).
     """
     ...
-def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ...) -> Any:
-    """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
+def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ..., renderer: Any = ...) -> Any:
+    """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG. `renderer` is
+    `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`.
+    """
+    ...
+def screenshot_rgba(app: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ..., renderer: Any = ...) -> Any:
+    """Renders `app` off-screen as `pz.screenshot` does and returns `(width, height, rgba,
+    renderer, shader)` instead of writing a PNG: `renderer` is as for `record`, and so are the
+    last two.
+    """
     ...
 def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any:
     """Makes its content scrollable.

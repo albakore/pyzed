@@ -539,7 +539,7 @@ def message_editor(c: "AgentController", t: Theme, *, fill: bool = False) -> Any
                     active_line=False, folding=False, auto_close=False, match_brackets=False,
                     selection_highlight=False, font="sans", font_size=TEXT_SIZE, line_height=20,
                     height="fill" if fill else box_height(c.input, lines_max=lines), capture_keys=c.captured_keys(),
-                    placeholder=c.placeholder(), theme=t)
+                    on_paste=c.on_paste_key, placeholder=c.placeholder(), theme=t)
     has_messages = bool(c.thread.messages)
     expand = ui.icon_button("minimize-2" if c.editor_expanded else "maximize-2", c.toggle_editor_expanded,
                             size="xs", tooltip=tr("Minimize Message Editor") if c.editor_expanded else

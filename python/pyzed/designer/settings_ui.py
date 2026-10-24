@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from .. import _core, ui
+from .. import package_managers as _package_managers
 from .. import rendering as _rendering
 from ..icons import icon as _icon
 from ..theme import Theme, themes
@@ -34,9 +35,11 @@ class Setting:
     """One preference: ``section`` ("designer" or "editor") and ``key`` name its field, ``page`` where it shows.
 
     ``kind`` is the control: "switch", "select", "segmented", "number" (``low``, ``high``, ``step``), "font"
-    (``default`` names the default font) or "theme" (the rack of every theme, under the title). ``options`` lists
+    (``default`` names the default font), "text" (saved with Enter; ``default`` is its placeholder) or "theme"
+    (the rack of every theme, under the title). ``options`` lists
     ``(value, label)`` pairs, or returns them.
-    ``project`` says whether a project can set its own value.
+    ``project`` says whether a project can set its own value. ``item`` = "name.key" is a value inside a dict
+    preference (a package manager's setting in ``package_managers``).
     """
 
     section: str
@@ -51,6 +54,7 @@ class Setting:
     step: float = 1
     default: str = ""
     project: bool = True
+    item: str = ""
 
     def choices(self) -> List[Tuple[Any, str]]:
         """The ``(value, label)`` pairs, labels translated."""
@@ -85,8 +89,14 @@ def _frames() -> List[Tuple[str, str]]:
 
 _LINE_HEIGHTS = tuple((name, name.capitalize()) for name in _settings.LINE_HEIGHTS)
 _CURSORS = tuple((shape, shape.capitalize()) for shape in _settings.CURSOR_SHAPES)
+_GUIDES = (("fixed", "One color"), ("rainbow", "Rainbow"))
 _EYES = (("visible", "Hidden when running"), ("editor", "Hidden in the editor only"))
 _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
+_RENDERERS = (("auto", "Auto"), ("gpu", "GPU"), ("cpu", "CPU"))
+_GPU_APIS = (("auto", "Auto"), ("vulkan", "Vulkan"), ("metal", "Metal"), ("dx12", "DirectX 12"), ("gl", "OpenGL"))
+_POWER = (("auto", "Auto"), ("high", "Fast"), ("low", "Saves battery"))
+#: The designer's own renderer: read when it starts, so a change asks for a restart.
+RESTART_KEYS = frozenset({"renderer", "gpu_api", "gpu_power"})
 
 #: Every preference the dialog shows, page by page.
 SETTINGS: Tuple[Setting, ...] = (
@@ -140,6 +150,17 @@ SETTINGS: Tuple[Setting, ...] = (
             "With buttons to copy the error and go to its line; errors are always in View → Logs"),
     Setting("designer", "log_file", "logs", "Write a log file",
             "pyzed-design.log in the Pyzed config folder, for bug reports (applies on restart)", project=False),
+    # the designer's own rendering
+    Setting("designer", "renderer", "rendering", "Renderer",
+            "How Pyzed Design draws its windows. Auto: the GPU when there is a real one, else the CPU. CPU works "
+            "without a GPU but shader previews need the GPU (applies on restart)", kind="segmented",
+            options=_RENDERERS, project=False),
+    Setting("designer", "gpu_api", "rendering", "Graphics API",
+            "Auto tries Vulkan, Metal or DirectX 12, then OpenGL (applies on restart)", kind="select",
+            options=_GPU_APIS, project=False),
+    Setting("designer", "gpu_power", "rendering", "GPU",
+            "On laptops with two: the dedicated GPU or the integrated one (applies on restart)", kind="segmented",
+            options=_POWER, project=False),
     # code editor
     Setting("editor", "theme", "editor.appearance", "Editor theme", kind="select", options=_editor_themes),
     Setting("editor", "font_family", "editor.appearance", "Font", kind="font", default="IBM Plex Mono"),
@@ -149,6 +170,10 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("editor", "line_numbers", "editor.appearance", "Line numbers"),
     Setting("editor", "highlight_line", "editor.appearance", "Highlight current line"),
     Setting("editor", "show_whitespace", "editor.appearance", "Show whitespace", "Spaces as · and tabs as →"),
+    Setting("editor", "indent_guides", "editor.appearance", "Indent guides",
+            "A line at each level of indentation; the one of the block around the cursor stands out"),
+    Setting("editor", "indent_guides_coloring", "editor.appearance", "Indent guide colors",
+            "Rainbow gives each depth its own color", kind="segmented", options=_GUIDES),
     Setting("editor", "cursor_shape", "editor.cursor", "Shape", kind="segmented", options=_CURSORS),
     Setting("editor", "cursor_blink", "editor.cursor", "Blink"),
     Setting("editor", "cursor_width", "editor.cursor", "Width", "Of the bar cursor, in pixels", kind="number",
@@ -192,6 +217,29 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("editor", "ruff", "editor.servers", "ruff", "Linting"),
 )
 
+def _package_manager_choices() -> List[Tuple[str, str]]:
+    return [(m.name, m.title) for m in _package_managers.project_managers()]
+
+
+def manager_settings(manager: _package_managers.PackageManager) -> List[Setting]:
+    """The rows of a package manager's settings (user only: a project never picks the executable to run, and
+    its own package settings belong in its pyproject.toml)."""
+    return [Setting("designer", "package_managers", "packages", f.title, f.description, kind=f.kind,
+                    options=f.options, default=f.placeholder, project=False, item=f"{manager.name}.{f.key}")
+            for f in manager.fields]
+
+
+#: The package manager of the projects (the managers' own settings come from ``package_managers``).
+DEFAULT_MANAGER = Setting("designer", "package_manager", "packages", "Package manager of the projects",
+                          "Creates them and installs their packages", kind="select",
+                          options=_package_manager_choices, project=False)
+
+
+def every_setting() -> List[Setting]:
+    """``SETTINGS``, the package manager of the projects and every package manager's settings."""
+    return [*SETTINGS, DEFAULT_MANAGER, *(s for m in _package_managers.managers() for s in manager_settings(m))]
+
+
 #: The pages of the dialog: ``(key, title, icon)`` by group, in the order of the index.
 PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
     ("Designer", (
@@ -199,7 +247,9 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("fonts", "Fonts and size", "type"),
         ("canvas", "Form canvas", "layout-grid"),
         ("running", "Running", "play"),
+        ("packages", "Package managers", "package"),
         ("logs", "Logs and errors", "scroll-text"),
+        ("rendering", "Rendering", "monitor-cog"),
         ("telemetry", "Telemetry", "chart-no-axes-column"),
     )),
     ("Code editor", (
@@ -212,7 +262,7 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("editor.servers", "Language servers", "server"),
     )),
     ("Project", (
-        ("project.rendering", "Rendering", "monitor-cog"),
+        ("project.rendering", "App rendering", "app-window"),
     )),
 )
 
@@ -226,16 +276,17 @@ def matches(setting: Setting, query: str) -> bool:
     """Whether ``query`` is in the setting's title, help or name (in English or translated)."""
     words = query.casefold().split()
     text = " ".join((setting.title, tr(setting.title), setting.description, tr(setting.description) if
-                     setting.description else "", setting.key.replace("_", " "))).casefold()
+                     setting.description else "", setting.key.replace("_", " "),
+                     setting.item.replace(".", " ").replace("_", " "))).casefold()
     return all(word in text for word in words)
 
 
 def search(query: str) -> List[Setting]:
     """The settings ``query`` finds, each preference once."""
     seen, out = set(), []
-    for s in SETTINGS:
-        if (s.section, s.key) not in seen and matches(s, query):
-            seen.add((s.section, s.key))
+    for s in every_setting():
+        if (s.section, s.key, s.item) not in seen and matches(s, query):
+            seen.add((s.section, s.key, s.item))
             out.append(s)
     return out
 
@@ -259,6 +310,10 @@ class SettingsController:
         self._rendering: Optional[Tuple[Path, float, _rendering.Rendering]] = None
         #: The GPU name being typed in the rendering page (saved with Enter).
         self.gpu_draft: Optional[str] = None
+        #: The text being typed in a "text" setting ("section.key" -> text), saved with Enter.
+        self.drafts: Dict[str, str] = {}
+        #: What the Package managers page is doing, by manager ("uv" -> "Installing uv"...).
+        self.busy: Dict[str, str] = {}
 
     @property
     def store(self) -> _profiles.Store:
@@ -290,14 +345,84 @@ class SettingsController:
 
     # -- values ---------------------------------------------------------------------------------
     def value(self, s: Setting) -> Any:
-        return self.store.value(s.section, s.key, "user" if self.scope == "user" else "effective")
+        value = self.store.value(s.section, s.key, "user" if self.scope == "user" else "effective")
+        if s.item:  # a package manager's setting
+            name, key = s.item.split(".", 1)
+            return _package_managers.get(name).defaults()[key] if not isinstance(value, dict) else \
+                value.get(name, {}).get(key, _package_managers.get(name).defaults()[key])
+        return value
+
+    def modified(self, s: Setting) -> bool:
+        """Whether ``s`` differs from its default in the scope it is changed in."""
+        if not s.item:
+            return self.store.modified(s.section, s.key, self.scope if s.project else "user")
+        name, key = s.item.split(".", 1)
+        table = self.store.value(s.section, s.key, "user")
+        return isinstance(table, dict) and key in table.get(name, {})
 
     def change(self, s: Setting, value: Any) -> None:
         scope = self.scope if s.project else "user"
+        if s.item:
+            value = self._item_table(s, value)
         self.d.change_setting(s.section, s.key, value, scope)
 
     def reset(self, s: Setting) -> None:
+        self.drafts.pop(f"{s.section}.{s.key}.{s.item}", None)
+        if s.item:
+            self.d.change_setting(s.section, s.key, self._item_table(s, None), "user")
+            return
         self.d.reset_setting(s.section, s.key, self.scope if s.project else "user")
+
+    def _item_table(self, s: Setting, value: Any) -> Dict[str, Dict[str, Any]]:
+        """The dict preference of ``s`` with its item set to ``value`` (``None``: back to its default)."""
+        name, key = s.item.split(".", 1)
+        table = self.store.value(s.section, s.key, "user")
+        table = {n: dict(v) for n, v in table.items()} if isinstance(table, dict) else {}
+        settings = table.setdefault(name, {})
+        if value is None or value == _package_managers.get(name).defaults()[key]:
+            settings.pop(key, None)
+        else:
+            settings[key] = value
+        return {n: v for n, v in table.items() if v}
+
+    def draft(self, s: Setting) -> str:
+        """The text shown in a "text" setting: what is being typed, else its value."""
+        return self.drafts.get(f"{s.section}.{s.key}.{s.item}", str(self.value(s)))
+
+    def edit(self, s: Setting, text: str) -> None:
+        self.drafts[f"{s.section}.{s.key}.{s.item}"] = text
+
+    def save_text(self, s: Setting) -> None:
+        text = self.drafts.pop(f"{s.section}.{s.key}.{s.item}", None)
+        if text is not None and text.strip() != self.value(s):
+            self.change(s, text.strip())
+
+    # -- package managers -----------------------------------------------------------------------
+    def install(self, name: str) -> Any:
+        """Installs package manager ``name`` on this computer in the background."""
+        manager = _package_managers.get(name)
+        return self._manager_task(manager, tr("Installing {name}", name=manager.title), manager.install)
+
+    def update(self, name: str) -> Any:
+        """Updates this computer's package manager ``name`` in the background."""
+        manager = _package_managers.get(name)
+        return self._manager_task(manager, tr("Updating {name}", name=manager.title), manager.update)
+
+    def _manager_task(self, manager: _package_managers.PackageManager, label: str,
+                      work: Callable[[], Any]) -> Any:
+        if manager.name in self.busy:
+            return None
+        self.busy[manager.name] = label
+
+        def done(result: Any) -> Any:
+            self.busy.pop(manager.name, None)
+            if result.ok:
+                found = _package_managers.version(manager.system()) or ""
+                self.d.notify(label, tr("{name} {version} is ready", name=manager.title, version=found),
+                              kind="success", seconds=4)
+            return self.d.projects.load_tools()
+
+        return self.d.projects._task(label, work, done, quiet=True)
 
     def reset_all(self) -> None:
         """Arms Reset all; the second press within five seconds puts every setting of the scope back."""
@@ -385,6 +510,14 @@ def _control(c: SettingsController, s: Setting, t: Theme) -> Any:
         integer = isinstance(_profiles.defaults(s.section)[s.key], int)
         return ui.number_field(float(value), (lambda v: change(int(v))) if integer else change, min=s.low,
                                max=s.high, step=s.step, width=110, theme=t)
+    if s.kind == "text":
+        typing = f"{s.section}.{s.key}.{s.item}" in c.drafts and c.draft(s).strip() != value
+        return _core.row([
+            ui.input(c.draft(s), lambda text: c.edit(s, text), placeholder=s.default,
+                     on_submit=lambda *_: c.save_text(s), mono=True, width=220, theme=t),
+            ui.icon_button("check", lambda: c.save_text(s), size="sm", tooltip=tr("Save"), theme=t)
+            if typing else None,
+        ], spacing=4, align="center")
     if s.kind == "font":
         from .dialogs import font_select
 
@@ -408,7 +541,7 @@ def _control(c: SettingsController, s: Setting, t: Theme) -> Any:
 def row(c: SettingsController, s: Setting, t: Theme) -> Any:
     """A setting's row: its title and help, a dot when it is changed, its control and a Reset button."""
     store, scope = c.store, (c.scope if s.project else "user")
-    modified = store.modified(s.section, s.key, scope)
+    modified = c.modified(s)
     note = None
     if c.scope == "user" and store.overridden(s.section, s.key):
         note = ui.badge(tr("This project sets its own"), tint="warning", size="sm", theme=t)
@@ -463,9 +596,13 @@ def _servers(c: SettingsController, t: Theme) -> List[Any]:
 def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
     """The project's renderer: GPU or CPU, the graphics API, the GPU to use and vsync."""
     r = c.rendering()
+    designer = ui.button(tr("Pyzed Design's renderer"), lambda: c.show("rendering"), icon="monitor-cog",
+                         variant="ghost", size="sm", theme=t)
     if r is None:
-        return [ui.callout(tr("Open a project"), tr("The rendering settings are saved in the project's "
-                                                   "pyproject.toml."), tint="info", theme=t)]
+        return [ui.callout(tr("Open a project"), tr("How the project's app draws is saved in its pyproject.toml: "
+                                                   "open a project to change it. Pyzed Design's own renderer is "
+                                                   "in Designer → Rendering."), tint="info", theme=t),
+                _core.row([designer])]
 
     def seg(key: str, options: Sequence[Tuple[str, str]], disabled: bool = False) -> Any:
         labels = {tr(label): value for value, label in options}
@@ -532,12 +669,95 @@ def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
     ]
     env = "  ".join(f"{k}={v}" for k, v in r.env().items()) or tr("Nothing: Pyzed decides")
     return [
-        ui.settings_group(tr("Rendering"), rows, theme=t,
+        ui.settings_group(tr("App rendering"), rows, theme=t, end=designer,
                           description=tr("Saved in pyproject.toml ([tool.pyzed.rendering]): used by Run, pz.run and "
-                                         "the exported app")),
+                                         "the exported app, not by Pyzed Design itself")),
         ui.settings_group(tr("Quality and frame rate"), quality, theme=t,
                           description=tr("Lower them on touch panels, phones and laptops on battery")),
         ui.label(f"{tr('Environment')}: {env}", size="xs", mono=True, color="text_muted", theme=t),
+    ]
+
+
+#: How the Package managers page names where an executable comes from.
+_SOURCES = {"bundled": "Included with Pyzed", "system": "This computer's", "custom": "Custom path"}
+
+
+def _installations(c: SettingsController, manager: _package_managers.PackageManager, t: Theme) -> List[Any]:
+    """A manager's executables: where each comes from, its version and path, the one in use, and Install or
+    Update for this computer's."""
+    values = _package_managers.values(manager.name)
+    in_use = manager.find(values)
+    busy = c.busy.get(manager.name)
+    rows = []
+    for found in manager.installations(values):
+        if found.source == "bundled" and not found.available:
+            continue  # Pyzed includes none of it here
+        action = None
+        if found.source == "system" and (manager.can_update if found.available else manager.can_install):
+            action = ui.button(tr("Update") if found.available else tr("Install"),
+                               (lambda n=manager.name: c.update(n)) if found.available
+                               else (lambda n=manager.name: c.install(n)),
+                               icon="refresh-cw" if found.available else "download", size="sm",
+                               variant="ghost" if found.available else "solid", disabled=busy is not None, theme=t)
+        if found.available:
+            detail = ui.label(found.path or "", size="xs", mono=True, color="text_muted", theme=t)
+        elif found.source == "system":
+            detail = ui.label(tr("Not installed: install it to update it apart from Pyzed"), size="xs",
+                              color="text_muted", theme=t)
+        else:
+            detail = ui.label(tr("Not found"), size="xs", color="text_muted", theme=t)
+        rows.append(_core.row([
+            _icon("package", size=16, color=t.icon if found.available else t.icon_muted),
+            _core.column([
+                _core.row([
+                    ui.label(tr(_SOURCES[found.source]), theme=t),
+                    ui.label(found.version, size="sm", mono=True, color="text_muted", theme=t)
+                    if found.version else None,
+                    ui.badge(tr("In use"), tint="success", size="sm", theme=t)
+                    if found.available and found.path == in_use else None,
+                ], spacing=8, align="center"),
+                detail,
+            ], spacing=2, width="fill"),
+            action,
+        ], spacing=10, align="center"))
+    if busy:
+        rows.append(ui.label(f"{busy}…", size="sm", color="accent", theme=t))
+    return rows
+
+
+def packages_page(c: SettingsController, t: Theme) -> List[Any]:
+    """The package manager of the projects, then each registered manager: its executables (the one in use,
+    install or update this computer's) and its settings."""
+    out = [_group(c, tr("Package managers"), [DEFAULT_MANAGER], t)]
+    for manager in _package_managers.managers():
+        values = _package_managers.values(manager.name)
+        rows = [s for s, f in zip(manager_settings(manager), manager.fields)
+                if f.shown_when is None or values.get(f.shown_when[0]) == f.shown_when[1]]
+        out.append(ui.settings_group(manager.title, [*_installations(c, manager, t), *[row(c, s, t) for s in rows]],
+                                     description=tr(manager.description) if manager.description else None,
+                                     theme=t))
+    return out
+
+
+def designer_rendering_page(c: SettingsController, t: Theme) -> List[Any]:
+    """Pyzed Design's own renderer (its settings, read when it starts) and what draws its windows now."""
+    from ..app import renderer_info
+
+    settings = [s for s in SETTINGS if s.page == "rendering"]
+    if c.value(settings[0]) == "cpu":
+        settings = settings[:1]  # the GPU's settings mean nothing to the CPU renderer
+    info = renderer_info()
+    now = (f"{info[0]} · {info[1]}" if info else tr("Unknown"))
+    wanted = c.d.prefs.rendering().env()
+    pending = c.d.rendering_started is not None and wanted != c.d.rendering_started
+    return [
+        _group(c, tr("Rendering"), settings, t),
+        ui.callout(tr("Restart Pyzed Design to apply the change"), tr("The renderer is chosen when Pyzed Design "
+                                                                     "starts."), tint="warning", theme=t)
+        if pending else None,
+        ui.label(f"{tr('Drawing now with')}: {now}", size="sm", color="text_muted", theme=t),
+        ui.label(tr("Each project's app has its own renderer: Project → App rendering"), size="sm",
+                 color="text_muted", theme=t),
     ]
 
 
@@ -547,10 +767,14 @@ def page_content(c: SettingsController, page: str, t: Theme) -> List[Any]:
 
     if page == "project.rendering":
         return rendering_page(c, t)
+    if page == "packages":
+        return packages_page(c, t)
     if page == "telemetry":
         return [telemetry_group(c.d, t)]
+    if page == "rendering":
+        return designer_rendering_page(c, t)
     title = tr(page_titles().get(page, (page, ""))[0])
-    out: List[Any] = [_group(c, title, [s for s in SETTINGS if s.page == page], t)]
+    out: List[Any] = [_group(c, title, [s for s in every_setting() if s.page == page], t)]
     if page == "editor.servers":
         out += _servers(c, t)
     return out
@@ -568,16 +792,12 @@ def search_content(c: SettingsController, t: Theme) -> List[Any]:
 
 
 def _index(c: SettingsController, t: Theme) -> Any:
-    has_project = c.project_root is not None
     items: List[Any] = []
     for group, pages in PAGES:
-        if group == "Project" and not has_project:
-            continue
         items.append(_core.container(ui.label(tr(group).upper(), size="xs", mono=True, color="text_muted", theme=t),
                                      padding=(8, 8, 2, 8)))
         for key, title, icon in pages:
-            count = sum(1 for s in SETTINGS if s.page == key and c.store.modified(
-                s.section, s.key, c.scope if s.project else "user"))
+            count = sum(1 for s in every_setting() if s.page == key and c.modified(s))
             items.append(ui.list_item(tr(title), lambda k=key: c.show(k), icon=icon,
                                       selected=key == c.page and not c.query, inset=True, height=28,
                                       end=ui.label(str(count), size="xs", color="accent", theme=t) if count else None,
@@ -639,8 +859,6 @@ def dialog(d: "Designer", t: Theme) -> Any:
     """The Settings dialog: search, scope and profile on top, the index of pages on the left and the chosen page
     (or the search results) on the right; Reset all and the settings file in the footer."""
     c = d.settings_ui
-    if c.page.startswith("project.") and c.project_root is None:
-        c.page = "general"
     content = search_content(c, t) if c.query.strip() else page_content(c, c.page, t)
     if c.scope == "project":
         content.insert(0, ui.callout(tr("Project settings"),

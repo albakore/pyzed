@@ -470,6 +470,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "cursor_color": "Color del cursor.",
                         "on_zoom": "Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda.",
                         "on_action": "Callable que recibe el nombre de cada acción del editor que se ejecuta (`\"undo\"`, `\"select_next\"`…).",
+                        "on_paste": "Se llama después de que Ctrl+V (Cmd+V, Mayús+Insert) pegue el texto del portapapeles, si lo tiene: un chat lee una imagen del portapapeles con `Command.paste_image`.",
                         "highlights": "Rangos pintados detrás del texto (resultados de búsqueda): `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido.",
                         "highlight_color": "Color de `highlights`.",
                         "match_brackets": "Remarca el corchete pareja del que está junto al cursor.",
@@ -480,6 +481,8 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
                         "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
                         "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
+                        "indent_guides": "Colores de las guías de sangría, uno por profundidad (se repiten); sin colores no hay guías.",
+                        "indent_guides_active": "Colores de la guía del bloque donde está el cursor, por profundidad como `indent_guides`.",
                     },
                 },
             }),
@@ -882,6 +885,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "cursor_color": "Color del cursor (por defecto, el color de jugador del tema).",
                         "on_zoom": "Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda.",
                         "on_action": "Callable que recibe el nombre de cada acción del editor que se ejecuta (`\"undo\"`, `\"select_next\"`…), por ejemplo para contarlas.",
+                        "on_paste": "Se llama después de que Ctrl+V (Cmd+V, Mayús+Insert) pegue el texto del portapapeles, si lo tiene: un chat lee una imagen del portapapeles con `Command.paste_image`.",
                         "highlights": "Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido.",
                         "match_brackets": "Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él).",
                         "selection_highlight": "Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor).",
@@ -891,6 +895,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
                         "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
                         "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
+                        "indent_guides": '`True` dibuja una línea fina en cada nivel de sangría (la del bloque donde está el cursor resalta); `"rainbow"` da a cada profundidad su propio color.',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -928,7 +933,11 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                     "example": 'oceano = pz.themes.ONE_DARK.derive(name="Océano", accent="#4fb3ff", syntax={"keyword": "#ff79c6"})',
                 },
                 "pyzed.Theme.color": {
-                    "desc": 'Resuelve un token (`"accent"`, `"text_muted"`…) a su color. Los colores hex y `"transparent"` pasan tal cual.',
+                    "desc": 'Resuelve un token (`"accent"`, `"text_muted"`…) a su color. Los colores hex y `"transparent"` pasan tal cual. También acepta nombres cortos (`"muted"`, `"primary"`, `"danger"`…), los nombres de Zed (`"text.muted"`) y los colores de terminal (`"red"`…); cualquier otro lanza `ValueError`.',
+                    "params": {"name": "Token o color."},
+                },
+                "pyzed.Theme.find_color": {
+                    "desc": "Como `color`, pero devuelve `None` con un nombre que el tema no conoce en vez de lanzar un error.",
                     "params": {"name": "Token o color."},
                 },
                 "pyzed.Theme.tokens": {"desc": "Todos los tokens como diccionario."},
@@ -1317,6 +1326,7 @@ _page("command")["sections"][0][1].update({
     "pyzed.Command.copy": {"desc": "Copia `text` al portapapeles del sistema.", "params": {"text": "El texto."}},
     "pyzed.Command.paste": {"desc": "Lee el portapapeles y llama a `then(texto)` (cadena vacía si está vacío).", "params": {"then": "Callable que recibe el texto."}},
     "pyzed.Command.paste_image": {"desc": "Lee una imagen del portapapeles (una captura, una imagen copiada) y llama a `then(png)` con sus bytes PNG, o a `then(None)` si el portapapeles no tiene una imagen.", "params": {"then": "Callable que recibe los bytes PNG o `None`."}},
+    "pyzed.Command.capture_window": {"desc": "Captura lo que muestra la ventana y llama a `then(png)` con sus bytes PNG (`then(None)` si no se pudo capturar). La app vuelve a dibujar la ventana en una imagen, así que funciona igual en todos los sistemas, aunque otras ventanas la tapen.", "params": {"then": "Callable que recibe los bytes PNG o `None`.", "window": "La ventana (por defecto, la actual)."}},
     "pyzed.Command.pick_files": {"desc": "Abre el diálogo de archivos del sistema y llama a `then(rutas)` con las rutas elegidas (una lista vacía si se cancela).", "params": {"then": "Callable que recibe la lista de rutas.", "title": "El título del diálogo.", "filters": "Una lista de pares `(nombre, extensiones)`, como `[(\"Imágenes\", [\"png\", \"jpg\"])]`.", "directory": "La carpeta en la que se abre.", "multiple": "`False` elige un solo archivo.", "folder": "`True` elige carpetas en vez de archivos."}},
 })
 _page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (

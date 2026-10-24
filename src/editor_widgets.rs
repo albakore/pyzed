@@ -17,7 +17,7 @@ use iced::{
 };
 
 use crate::app::Message;
-use crate::editor::{EditorState, PAD_Y, scroll_id};
+use crate::editor::{EditorState, PAD_LEFT, PAD_Y, scroll_id};
 use crate::widget::PyMsg;
 
 type Renderer = iced::Renderer;
@@ -243,6 +243,199 @@ pub struct BoxRect {
     pub border: Option<Color>,
 }
 
+/// Indent guides: a thin line at each level of indentation of the visible lines, through the
+/// blank lines of a block, the one of the block around the cursor brighter (like Zed's). With
+/// several colors they take turns by depth (rainbow guides).
+pub struct IndentGuides<'a> {
+    pub state: &'a EditorState,
+    /// The guide colors by depth (taking turns), and the color of the active guide at each depth.
+    pub colors: Vec<Color>,
+    pub active: Vec<Color>,
+    /// Columns per level of indentation, and the width of a column.
+    pub tab: usize,
+    pub column: f32,
+    pub line_height: f32,
+}
+
+/// How many levels a line is indented (tabs reach the next multiple of `tab` columns), or
+/// `None` for a blank line.
+pub(crate) fn indent_level(line: &str, tab: usize) -> Option<usize> {
+    let tab = tab.max(1);
+    let mut columns = 0;
+    for c in line.chars() {
+        match c {
+            ' ' => columns += 1,
+            '\t' => columns = (columns / tab + 1) * tab,
+            c if c.is_whitespace() => {}
+            _ => return Some(columns / tab),
+        }
+    }
+    None
+}
+
+/// The level of each line in `lines` (from `level(i)`), a blank line taking the smaller level of
+/// the lines around it (looking at most `reach` lines away).
+pub(crate) fn guide_levels(
+    level: &dyn Fn(usize) -> Option<Option<usize>>,
+    lines: std::ops::Range<usize>,
+    reach: usize,
+) -> Vec<usize> {
+    let mut above = 0;
+    for i in (lines.start.saturating_sub(reach)..lines.start).rev() {
+        if let Some(Some(l)) = level(i) {
+            above = l;
+            break;
+        }
+    }
+    let mut out = Vec::with_capacity(lines.len());
+    let mut below: Option<(usize, usize)> = None; // (line, level) of the next non-blank line
+    for i in lines.clone() {
+        match level(i) {
+            Some(Some(l)) => {
+                above = l;
+                out.push(l);
+            }
+            Some(None) => {
+                if below.is_none_or(|(at, _)| at <= i) {
+                    below = (i + 1..i + 1 + reach)
+                        .find_map(|j| match level(j) {
+                            Some(Some(l)) => Some(Some((j, l))),
+                            Some(None) => None,
+                            None => Some(None),
+                        })
+                        .flatten()
+                        .or(Some((usize::MAX, 0)));
+                }
+                out.push(above.min(below.map_or(0, |(_, l)| l)));
+            }
+            None => break,
+        }
+    }
+    out
+}
+
+impl Widget<Message, Theme, Renderer> for IndentGuides<'_> {
+    fn size(&self) -> Size<Length> {
+        Size::new(Length::Shrink, Length::Shrink)
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(Size::ZERO)
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        _theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        _cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        use iced::advanced::Renderer as _;
+        const REACH: usize = 400;
+        if self.colors.is_empty() {
+            return;
+        }
+        let m = self.state.metrics.borrow();
+        let starts = &m.starts;
+        let count = starts.len().saturating_sub(1);
+        if count == 0 {
+            return;
+        }
+        let lh = self.line_height.max(1.0);
+        let origin = layout.bounds().position();
+        let top = viewport.y - origin.y - PAD_Y;
+        let bottom = top + viewport.height;
+        let first = starts
+            .partition_point(|s| *s as f32 * lh <= top)
+            .saturating_sub(1)
+            .min(count);
+        let last = starts
+            .partition_point(|s| (*s as f32) * lh < bottom)
+            .min(count);
+        if first >= last {
+            return;
+        }
+        let content = &self.state.content;
+        let level = |i: usize| {
+            content
+                .line(i)
+                .map(|line| indent_level(&line.text, self.tab))
+        };
+        let levels = guide_levels(&level, first..last, REACH);
+        // The block around the cursor: under a header (a line followed by deeper ones), its body.
+        let cursor = content.cursor().position.line.min(count - 1);
+        let around = guide_levels(&level, cursor..cursor + 2, REACH);
+        let here = around.first().copied().unwrap_or(0);
+        let next = around.get(1).copied().unwrap_or(0);
+        let (depth, anchor) = if next > here {
+            (Some(here), cursor + 1)
+        } else {
+            (here.checked_sub(1), cursor)
+        };
+        let block = depth.map(|d| {
+            // Blank lines don't end the block: the next line that is not blank decides.
+            let outside =
+                |i: usize| matches!(level(i), Some(Some(l)) if l <= d) || level(i).is_none();
+            let mut start = anchor;
+            while start > 0 && anchor - start < 4 * REACH && !outside(start - 1) {
+                start -= 1;
+            }
+            let mut end = anchor + 1;
+            while end < count && end - anchor < 4 * REACH && !outside(end) {
+                end += 1;
+            }
+            (d, start..end)
+        });
+        let x_of =
+            |d: usize| (origin.x + PAD_LEFT + (d * self.tab) as f32 * self.column).round() + 0.5;
+        let mut open: Vec<Option<usize>> = Vec::new();
+        let draw = |renderer: &mut Renderer, d: usize, from: usize, to: usize| {
+            let active = block
+                .as_ref()
+                .is_some_and(|(bd, range)| *bd == d && range.start < to && from < range.end);
+            let palette = if active && !self.active.is_empty() {
+                &self.active
+            } else {
+                &self.colors
+            };
+            let y = origin.y + PAD_Y + starts[from] as f32 * lh;
+            let height = (starts[to] - starts[from]) as f32 * lh;
+            renderer.fill_quad(
+                Quad {
+                    bounds: Rectangle::new(Point::new(x_of(d) - 0.5, y), Size::new(1.0, height)),
+                    ..Quad::default()
+                },
+                Background::Color(palette[d % palette.len()]),
+            );
+        };
+        for (offset, l) in levels.iter().copied().chain(std::iter::once(0)).enumerate() {
+            let i = first + offset;
+            for (d, slot) in open.iter_mut().enumerate() {
+                if d >= l
+                    && let Some(from) = slot.take()
+                {
+                    draw(renderer, d, from, i);
+                }
+            }
+            if open.len() < l {
+                open.resize(l, None);
+            }
+            for slot in open.iter_mut().take(l) {
+                slot.get_or_insert(i);
+            }
+        }
+    }
+}
+
+impl<'a> From<IndentGuides<'a>> for Element<'a, Message> {
+    fn from(guides: IndentGuides<'a>) -> Self {
+        Element::new(guides)
+    }
+}
+
 /// Rectangles behind or around the text: the selections of the other cursors, search results,
 /// the other occurrences of the selection and the matching brackets.
 pub struct Boxes {
@@ -325,6 +518,57 @@ pub struct Minimap<'a> {
     pub thumb: Option<Color>,
     /// Covers the text scrolled under the minimap.
     pub background: Option<Color>,
+    /// The color of text without a syntax color.
+    pub text_color: Color,
+}
+
+/// The `(column, length, color)` runs of non-blank text of a highlighted line, with tabs
+/// every 4 columns.
+fn minimap_runs(
+    line: &str,
+    spans: &[crate::highlighter::Span],
+    fallback: Color,
+) -> Vec<(u16, u16, Color)> {
+    let mut columns = Vec::with_capacity(line.len() + 1);
+    let mut col = 0u16;
+    for (i, ch) in line.char_indices() {
+        while columns.len() <= i {
+            columns.push(col);
+        }
+        col = if ch == '\t' {
+            (col / 4 + 1) * 4
+        } else {
+            col.saturating_add(1)
+        };
+    }
+    while columns.len() <= line.len() {
+        columns.push(col);
+    }
+    let mut runs = Vec::new();
+    for span in spans {
+        let color = span.color.unwrap_or(fallback);
+        let Some(text) = line.get(span.range.clone()) else {
+            continue;
+        };
+        // Split the span at whitespace so blank stretches stay empty.
+        let mut start = None;
+        for (i, ch) in text
+            .char_indices()
+            .chain(std::iter::once((text.len(), ' ')))
+        {
+            let at = span.range.start + i;
+            match (ch.is_whitespace(), start) {
+                (false, None) => start = Some(at),
+                (true, Some(s)) => {
+                    let (a, b) = (columns[s], columns[at]);
+                    runs.push((a, b.saturating_sub(a).max(1), color));
+                    start = None;
+                }
+                _ => {}
+            }
+        }
+    }
+    runs
 }
 
 #[derive(Default)]
@@ -511,26 +755,32 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                 );
             }
             let metrics = self.state.metrics.borrow();
-            let cache = self.state.minimap.borrow();
+            let document = self.state.syntax.lock();
             let first = metrics
                 .starts
                 .partition_point(|row| (*row as f32 + 1.0) * MINI_LINE < g.offset)
                 .saturating_sub(1);
             let left = bounds.x + 4.0;
-            for (line, runs) in cache.lines.iter().enumerate().skip(first) {
-                let Some(row) = metrics.starts.get(line) else {
-                    break;
-                };
-                let y = bounds.y + *row as f32 * MINI_LINE - g.offset;
+            let count = metrics.starts.len().saturating_sub(1);
+            for line in first..count {
+                let row = metrics.starts[line];
+                let y = bounds.y + row as f32 * MINI_LINE - g.offset;
                 if y > bounds.y + bounds.height {
                     break;
                 }
-                for (column, len, color) in runs {
-                    let x = left + *column as f32 * MINI_COLUMN;
+                // Lines not highlighted yet stay empty for the moment.
+                let Some(spans) = document.spans(line) else {
+                    continue;
+                };
+                let Some(text) = self.state.content.line(line) else {
+                    break;
+                };
+                for (column, len, color) in minimap_runs(&text.text, spans, self.text_color) {
+                    let x = left + column as f32 * MINI_COLUMN;
                     if x >= bounds.x + bounds.width {
                         break;
                     }
-                    let w = (*len as f32 * MINI_COLUMN).min(bounds.x + bounds.width - x);
+                    let w = (len as f32 * MINI_COLUMN).min(bounds.x + bounds.width - x);
                     renderer.fill_quad(
                         Quad {
                             bounds: Rectangle::new(Point::new(x, y), Size::new(w, MINI_TEXT)),
@@ -538,7 +788,7 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                         },
                         Background::Color(Color {
                             a: color.a * 0.7,
-                            ..*color
+                            ..color
                         }),
                     );
                 }
@@ -584,9 +834,16 @@ pub struct EditorInput<'a> {
     on_zoom: Option<PyMsg>,
     on_hover: Option<PyMsg>,
     hover_delay: Duration,
+    /// Highlight the lines below the view a little each frame (the minimap shows them).
+    highlight_all: bool,
 }
 
 impl<'a> EditorInput<'a> {
+    pub fn highlight_all(mut self, all: bool) -> Self {
+        self.highlight_all = all;
+        self
+    }
+
     pub fn new(
         content: impl Into<Element<'a, Message>>,
         id: std::sync::Arc<str>,
@@ -602,6 +859,7 @@ impl<'a> EditorInput<'a> {
             on_zoom,
             on_hover,
             hover_delay,
+            highlight_all: false,
         }
     }
 }
@@ -618,9 +876,37 @@ struct ZoomState {
     shown: Option<(usize, usize, usize)>,
     /// When the shown hover goes away, after the mouse left its word.
     hide_at: Option<Instant>,
+    /// The name under the mouse while Ctrl is held, underlined like a link (and its color).
+    link: Option<(crate::editor::Hit, Option<Color>)>,
 }
 
 impl EditorInput<'_> {
+    /// Ctrl over a name that may lead to a definition underlines it (Ctrl+click goes there).
+    fn track_link(
+        &self,
+        state: &mut ZoomState,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        let m = state.modifiers;
+        let bounds = layout.bounds();
+        let link = match cursor.position() {
+            Some(at) if m.command() && !m.alt() && !m.shift() && bounds.contains(at) => self
+                .state
+                .link(Point::new(at.x - bounds.x, at.y - bounds.y)),
+            _ => None,
+        };
+        let key = |l: &Option<(crate::editor::Hit, Option<Color>)>| {
+            l.as_ref()
+                .map(|(hit, _)| (hit.key(), hit.x.to_bits(), hit.y.to_bits()))
+        };
+        if key(&link) != key(&state.link) {
+            state.link = link;
+            shell.request_redraw();
+        }
+    }
+
     /// Follows the mouse for `on_hover`: a rest on a word reports it, leaving the word hides it
     /// (after a moment, so the mouse can reach the popup), and typing, clicking or scrolling hide it.
     fn track_hover(
@@ -769,6 +1055,13 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
     ) {
         let state = tree.state.downcast_mut::<ZoomState>();
         self.track_hover(state, event, layout, cursor, shell);
+        // A few milliseconds a frame until every line is highlighted.
+        if let Event::Window(window::Event::RedrawRequested(_)) = event
+            && self.highlight_all
+            && !self.state.syntax.lock().advance(Duration::from_millis(4))
+        {
+            shell.request_redraw();
+        }
         if let Event::Window(window::Event::RedrawRequested(_)) = event
             && self.state.reveal.get()
         {
@@ -840,6 +1133,9 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
             _ => {}
         }
         self.state.modifiers.set(state.modifiers);
+        if state.modifiers.command() || state.link.is_some() {
+            self.track_link(state, layout, cursor, shell);
+        }
         self.content.as_widget_mut().update(
             &mut tree.children[0],
             event,
@@ -860,6 +1156,9 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
+        if tree.state.downcast_ref::<ZoomState>().link.is_some() {
+            return mouse::Interaction::Pointer;
+        }
         self.content.as_widget().mouse_interaction(
             &tree.children[0],
             layout,
@@ -888,6 +1187,21 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
             cursor,
             viewport,
         );
+        if let Some((hit, color)) = &tree.state.downcast_ref::<ZoomState>().link {
+            use iced::advanced::Renderer as _;
+            let bounds = layout.bounds();
+            let thickness = (hit.height / 16.0).clamp(1.0, 2.0);
+            renderer.fill_quad(
+                Quad {
+                    bounds: Rectangle::new(
+                        Point::new(bounds.x + hit.x, bounds.y + hit.y + hit.height * 0.86),
+                        Size::new(hit.width, thickness),
+                    ),
+                    ..Quad::default()
+                },
+                Background::Color(color.unwrap_or(theme.palette().text)),
+            );
+        }
     }
 
     fn overlay<'b>(
@@ -911,5 +1225,58 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
 impl<'a> From<EditorInput<'a>> for Element<'a, Message> {
     fn from(wheel: EditorInput<'a>) -> Self {
         Element::new(wheel)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn indentation_levels_count_tabs_to_the_next_stop() {
+        assert_eq!(indent_level("x", 4), Some(0));
+        assert_eq!(indent_level("        x", 4), Some(2));
+        assert_eq!(indent_level("  \tx", 4), Some(1));
+        assert_eq!(indent_level("      x", 4), Some(1));
+        assert_eq!(indent_level("   ", 4), None);
+    }
+
+    #[test]
+    fn blank_lines_take_the_smaller_level_around_them() {
+        let text = [
+            "def f():",
+            "    if x:",
+            "        a()",
+            "",
+            "        b()",
+            "",
+            "    c()",
+            "",
+            "d()",
+        ];
+        let level = |i: usize| text.get(i).map(|line| indent_level(line, 4));
+        assert_eq!(
+            guide_levels(&level, 0..text.len(), 400),
+            [0, 1, 2, 2, 2, 1, 1, 0, 0]
+        );
+        // A window that starts on a blank line looks above it.
+        assert_eq!(guide_levels(&level, 3..6, 400), [2, 2, 1]);
+    }
+
+    #[test]
+    fn minimap_runs_follow_the_spans() {
+        let red = Color::from_rgb(1.0, 0.0, 0.0);
+        let span = |range: std::ops::Range<usize>, color| crate::highlighter::Span {
+            range,
+            color,
+            font: None,
+            link: false,
+        };
+        let runs = minimap_runs(
+            "ab cd",
+            &[span(0..2, Some(red)), span(2..5, None)],
+            Color::WHITE,
+        );
+        assert_eq!(runs, [(0, 2, red), (3, 2, Color::WHITE)]); // the space between stays empty
     }
 }

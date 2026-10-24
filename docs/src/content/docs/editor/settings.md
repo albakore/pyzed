@@ -12,8 +12,8 @@ preference of the designer and of its code editor in one dialog. Changes apply a
 ![The settings dialog](../../../assets/editor/settings.png)
 
 - **The index** on the left groups the pages: *Designer* (General, Fonts and size, Form canvas, Running, Logs and
-  errors, Telemetry), *Code editor* (Appearance, Cursor, Editing, Deleting, Scrolling and wrapping, Code lens and
-  diagnostics, Language servers) and, with a project open, *Project* (Rendering). A number next to a page counts
+  errors, Rendering, Telemetry), *Code editor* (Appearance, Cursor, Editing, Deleting, Scrolling and wrapping, Code
+  lens and diagnostics, Language servers) and *Project* (App rendering, which asks you to open a project first). A number next to a page counts
   its changed settings.
 - **Search settings…** (focused when the dialog opens) finds a setting by its name or its help, in English or in
   your language, across every page.
@@ -66,7 +66,17 @@ updates, the log file).
 
 ## Rendering
 
-**Project → Rendering** chooses how the project's app draws its windows. It is saved in the project's
+There are two renderers to choose: Pyzed Design's own, and the one of each project's app.
+
+**Designer → Rendering** chooses how Pyzed Design draws its own windows: *Renderer* (Auto, GPU or CPU), the
+*Graphics API* and, on laptops with two, the *GPU*. It is a user setting and applies the next time Pyzed Design
+starts (the page says so while a change waits, and shows what draws the windows now). The CPU renderer works
+without a GPU, but shader previews need one. The apps the designer starts (Run, an exported app) do not inherit
+it: they follow their own project.
+
+![Pyzed Design's own renderer](../../../assets/editor/settings-designer-rendering.png)
+
+**Project → App rendering** chooses how the project's app draws its windows. It is saved in the project's
 `pyproject.toml`, so it applies when the designer runs the project, when you run it with `pz.run` or
 `pyzed run`, and in the [exported app](/pyzed/editor/exporting/).
 
@@ -162,6 +172,34 @@ A monospaced font keeps code columns aligned: pick one for **Code font** (its na
 | **Open the console on Run** | Brings the console to the front when a form starts. |
 | **Log events in the console** | Writes every event the running form handles, with its value and handler. |
 | **Restricted mode** | Asks before installing the packages of a project you did not create, importing its components or running it ([restricted mode](/pyzed/editor/projects/#restricted-mode)). On by default; only your own settings can turn it off. |
+
+## Package managers
+
+**Package manager of the projects** is the one that creates them and installs their packages. Pyzed's projects are uv projects (`pyproject.toml` and `uv.lock`), so it is uv for now; the page is built from a registry of package managers, so new ones show up here with their own settings.
+
+Each package manager has its own group. The top of the group lists every executable Pyzed finds, with its version and path, and marks the one **In use**:
+
+- **Included with Pyzed**: the one that comes with Pyzed Design. It changes only when the editor updates.
+- **This computer's**: one installed on its own (for uv, on the `PATH` or in `~/.local/bin`). **Install** sets it up (uv's official installer) and **Update** updates it (`uv self update`), apart from the editor.
+- **Custom path**: any other executable.
+
+| Setting | What it does |
+| --- | --- |
+| **Executable to use** | *Automatic* uses this computer's when it is installed, else the included one. The others pick one; if it is missing, Pyzed falls back to *Automatic* so projects keep working. |
+| **Path of the custom executable** | Shown with *Custom path*. <kbd>Enter</kbd> saves it. |
+
+uv's own defaults:
+
+| Setting | What it does |
+| --- | --- |
+| **Python of new projects** | The Python version new projects ask for, such as `3.13` (`uv init --python`). Empty: the newest uv finds or installs. |
+| **Package index** | Another index instead of PyPI, such as a company mirror (`UV_DEFAULT_INDEX`). |
+| **More package indexes** | Indexes to look in too, separated by spaces (`UV_INDEX`). |
+| **Allow pre-releases** | Pre-release versions of every package (`UV_PRERELEASE=allow`). |
+| **Offline** | Only the packages already downloaded, without the network (`UV_OFFLINE`). |
+| **How packages are installed** | Copy, hard links, symbolic links or clones (`UV_LINK_MODE`). Copy is the safest across drives. |
+
+They go to every command the editor runs: creating a project, the Dependencies tab, Run and the export. They are your own settings, never a project's: what a project needs goes in its `pyproject.toml` (`[tool.uv]`). The Dependencies tab tells which uv is in use next to its version.
 
 ## Logs and errors
 

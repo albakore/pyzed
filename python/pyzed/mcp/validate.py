@@ -4,7 +4,9 @@
 ``pyzed`` or ``pyzed.ui``, keyword arguments a function does not take, apps without ``view`` and
 components without ``render``, side effects in ``view()``/``render()`` and lambdas in loops that do
 not capture the loop variable, and tooltips that spell out their shortcut instead of ``keys=``. ``check_form`` validates a ``.pzform`` against the designer's
-components. Both return ``{"ok": bool, "issues": [...]}``; ``ok`` is ``False`` only for errors.
+components. Both return ``{"ok": bool, "issues": [...]}``; ``ok`` is ``False`` only for errors. ``check_design``
+reviews the design rules that code shows (theme tokens, the spacing and type scales, labels, tooltips, empty
+states and one primary action per view).
 """
 
 from __future__ import annotations
@@ -382,3 +384,140 @@ def check_form(content: str, handlers: str = "") -> Dict[str, Any]:
                     add("error", f"{where} calls {handler}(form, event), which the handlers module does not define")
     return {"ok": not any(i["severity"] == "error" for i in issues), "issues": issues,
             "controls": len(form.controls)}
+
+
+# -- design review ------------------------------------------------------------------------------------
+
+#: Keywords and style keys that take a color: a theme token there follows light and dark themes.
+_COLOR_KEYS = {"color", "background", "bg", "border_color", "icon_color", "fill", "stroke", "tint", "glow",
+               "placeholder_color", "selection_color", "ring_color", "hover_border_color", "focus_border_color"}
+_HEX = re.compile(r"^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+#: The spacing scale (a 4 px grid, with 2 and 6 for tight spots).
+SPACING = (0, 1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96)
+_SPACING_KEYS = {"spacing", "gap", "padding", "margin"}
+#: The type scale of ``ui.label(size=...)`` in pixels, plus 14 (the theme's UI font size).
+TYPE_SCALE = (11, 12, 13.5, 14, 16, 20, 26)
+_VAGUE_LABELS = {"ok", "submit", "click here", "yes", "no", "go", "send", "here", "button"}
+_BUTTONS = {"ui.button", "ui.split_button"}
+
+#: What a screenshot shows and code can't: the checks to do by eye before delivering.
+DESIGN_CHECKLIST = [
+    "One primary action (variant='solid') per view, where the flow ends (bottom right of forms and dialogs).",
+    "Hierarchy at a glance: one title, body text, muted secondary text; at most two font weights.",
+    "Spacing on the 4 px scale, inner space smaller than outer space, aligned edges.",
+    "Only theme tokens: the screen works in screenshot(theme='Pyzed Light') and theme='Pyzed Dark'.",
+    "Loading, empty, error and ideal states are designed for every list, table and request.",
+    "Every icon-only button has a tooltip (and keys= for its shortcut); every input a visible label.",
+    "The whole task works with the keyboard (Tab order = reading order, Enter submits, Esc closes).",
+    "Sentence case, specific verb labels, errors that say how to fix them.",
+    "It still works at App.min_size and with 30 % longer text (translations).",
+    "Nothing slow runs in view(); every action gives feedback within 100 ms.",
+]
+
+
+class _DesignChecker(ast.NodeVisitor):
+    """Design rules that can be read from the code (see ``get_guide("design")``)."""
+
+    def __init__(self, base: _Checker) -> None:
+        self.base = base
+        self.issues: List[Dict[str, Any]] = []
+        self.parents: List[str] = []
+
+    def add(self, node: ast.AST, rule: str, message: str) -> None:
+        issue = _issue(node, "warning", message)
+        issue["rule"] = rule
+        self.issues.append(issue)
+
+    def _value(self, key: str, node: ast.AST) -> None:
+        if not isinstance(node, ast.Constant):
+            if isinstance(node, ast.Tuple) and key in _SPACING_KEYS:
+                for item in node.elts:
+                    self._value(key, item)
+            elif isinstance(node, ast.Tuple) and key in ("border", "shadow"):
+                for item in node.elts:
+                    self._value("color", item)
+            return
+        value = node.value
+        if key in _COLOR_KEYS | {"border", "shadow"} and isinstance(value, str) and _HEX.match(value):
+            self.add(node, "theme-tokens", f"{key}={value!r} is a fixed color; use a theme token (\"panel\", "
+                                           "\"text_muted\", \"accent\", \"error\"...) so light and dark themes work")
+        elif key in _SPACING_KEYS and isinstance(value, (int, float)) and not isinstance(value, bool) \
+                and value not in SPACING:
+            self.add(node, "spacing-scale", f"{key}={value!r} is off the spacing scale; use one of "
+                                            f"{', '.join(map(str, SPACING[2:12]))} (a 4 px grid)")
+
+    def _style_dict(self, node: ast.Dict) -> None:
+        for key, value in zip(node.keys, node.values):
+            if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                if isinstance(value, ast.Dict):
+                    self._style_dict(value)
+                else:
+                    self._value(key.value, value)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        target = self.base._target(node.func)
+        name = target[0] if target else (getattr(node.func, "attr", "") or getattr(node.func, "id", ""))
+        for kw in node.keywords:
+            if kw.arg:
+                self._value(kw.arg, kw.value)
+        if name in ("pz.stylesheet", "pz.define_style") or getattr(node.func, "attr", "") == "style":
+            for arg in node.args:
+                if isinstance(arg, ast.Dict):
+                    self._style_dict(arg)
+        keywords = {kw.arg: kw.value for kw in node.keywords if kw.arg}
+        if name == "ui.icon_button" and "tooltip" not in keywords:
+            self.add(node, "icon-tooltip", "ui.icon_button without tooltip=: an icon alone is not a label; say "
+                                           "what it does (and add keys= for its shortcut)")
+        if name in _BUTTONS and node.args and isinstance(node.args[0], ast.Constant) \
+                and isinstance(node.args[0].value, str):
+            text = node.args[0].value.strip()
+            if text.lower() in _VAGUE_LABELS:
+                self.add(node, "button-label", f"button label {text!r} is vague; name the action (\"Save changes\", "
+                                               "\"Delete report\")")
+            elif len(text) > 3 and text.isupper():
+                self.add(node, "sentence-case", f"button label {text!r} is in capitals; use sentence case")
+        if name in ("ui.label", "ui.heading", "pz.text") and isinstance(keywords.get("size"), ast.Constant):
+            size = keywords["size"].value
+            if isinstance(size, (int, float)) and not isinstance(size, bool) and size not in TYPE_SCALE:
+                self.add(node, "type-scale", f"text size {size!r} is off the type scale; use \"xs\", \"sm\", \"md\", "
+                                             "\"lg\", \"xl\" or \"2xl\" (11, 12, 13.5, 16, 20, 26 px)")
+        if name == "ui.input" and "ui.field" not in self.parents and "placeholder" not in keywords:
+            self.add(node, "input-label", "ui.input without a label: wrap it in ui.field(\"Title\", ...) or give it "
+                                          "a placeholder when the context labels it (a search box)")
+        if name == "ui.table" and "empty" not in keywords:
+            self.add(node, "empty-state", "ui.table without empty=: show what an empty table means and how to fill it "
+                                          "(ui.empty_state(..., size=\"sm\"))")
+        self.parents.append(name)
+        self.generic_visit(node)
+        self.parents.pop()
+
+    def visit_FunctionDef(self, node: Any) -> None:
+        primaries = [kw for call in ast.walk(node) if isinstance(call, ast.Call)
+                     for kw in call.keywords if kw.arg == "variant" and isinstance(kw.value, ast.Constant)
+                     and kw.value.value in ("solid", "accent")]
+        if len(primaries) > (1 if node.name in ("view", "render") else 2):
+            self.add(node, "one-primary", f"{node.name}() has {len(primaries)} primary (solid) buttons; keep one "
+                                          "primary action per view and make the rest \"filled\" or \"ghost\"")
+        self.generic_visit(node)
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+
+def check_design(source: str) -> Dict[str, Any]:
+    """Reviews the design of Pyzed code without running it: fixed colors instead of theme tokens, spacing off the
+    4 px grid, text sizes off the type scale, icon buttons without tooltips, vague or capitalised button labels,
+    inputs without a label, tables without an empty state and views with several primary buttons. Returns the
+    ``issues`` (each with a ``rule``) and the ``checklist`` of what to check by eye on a screenshot."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as err:
+        return {"ok": False, "issues": [{"line": err.lineno or 1, "column": err.offset or 1, "severity": "error",
+                                         "rule": "syntax", "message": f"syntax error: {err.msg}"}],
+                "checklist": DESIGN_CHECKLIST}
+    base = _Checker()
+    base.visit(tree)
+    checker = _DesignChecker(base)
+    checker.visit(tree)
+    issues = sorted(checker.issues, key=lambda i: (i["line"], i["column"]))
+    return {"ok": not issues, "issues": issues, "checklist": DESIGN_CHECKLIST,
+            "guide": "get_guide('design') has the rules behind each check"}

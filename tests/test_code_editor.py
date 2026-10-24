@@ -326,6 +326,123 @@ def wait(predicate, timeout=15.0):
     return False
 
 
+# -- speed: what typing sends and builds ------------------------------------------------
+
+
+def _apply(text, change):
+    """``text`` with LSP content change ``change`` applied (UTF-16 positions)."""
+    lines = text.split("\n")
+
+    def index(pos):
+        line = lines[pos["line"]]
+        head = line.encode("utf-16-le")[:pos["character"] * 2].decode("utf-16-le")
+        return sum(len(x) + 1 for x in lines[:pos["line"]]) + len(head)
+
+    rng = change["range"]
+    return text[:index(rng["start"])] + change["text"] + text[index(rng["end"]):]
+
+
+@pytest.mark.parametrize("old, new", [
+    ("abc\ndef\n", "abc\ndXef\n"),
+    ("a😀b\nx", "a😀Zb\nx"),
+    ("aaaa", "aa"),
+    ("", "hi"),
+    ("same", "same"),
+    ("x = 1\n" * 5000, "x = 1\n" * 2500 + "y = 2\n" + "x = 1\n" * 2499),
+    # Short ids: pytest puts the test's id in an environment variable, and the long text overflows Windows' limit.
+], ids=["line", "emoji", "shorter", "from-empty", "same", "long"])
+def test_a_change_is_sent_as_the_range_that_differs(old, new):
+    change = lsp.content_change(old, new)
+    assert _apply(old, change) == new
+    assert len(change["text"]) <= 6
+
+
+def test_servers_that_take_ranges_get_only_the_edit(tmp_path):
+    server = lsp.LanguageServer("ty", ["ty"], tmp_path)
+    sent = []
+    server._send = sent.append
+    server.status = "ready"
+    server.capabilities = {"textDocumentSync": {"change": 2}}
+    server.open("file:///a.py", "x = 1\n" * 1000)
+    server.change("file:///a.py", "x = 1\n" * 999 + "x = 2\n")
+    server.change("file:///a.py", "x = 1\n" * 999 + "x = 2\n")  # nothing changed: nothing sent
+    assert len(sent) == 2
+    edit = sent[1]["params"]["contentChanges"][0]
+    assert edit == {"range": {"start": {"line": 999, "character": 4}, "end": {"line": 999, "character": 5}}, "text": "2"}
+    server.capabilities = {"textDocumentSync": 1}  # whole texts only
+    server.change("file:///a.py", "y")
+    assert sent[2]["params"]["contentChanges"] == [{"text": "y"}]
+
+
+def test_a_batch_is_written_at_once(tmp_path):
+    class Pipe:
+        def __init__(self):
+            self.writes = []
+
+        def write(self, data):
+            self.writes.append(data)
+
+        def flush(self):
+            pass
+
+    class Process:
+        stdin = Pipe()
+
+    server = lsp.LanguageServer("ty", ["ty"], tmp_path)
+    server.process = Process()
+    server.status = "ready"
+    with server.batch():
+        for line in range(50):
+            server.request("textDocument/references", {"line": line}, lambda result: None)
+    assert len(Process.stdin.writes) == 1 and Process.stdin.writes[0].count(b"Content-Length") == 50
+
+
+def test_diagnostics_are_kept_until_the_servers_report_again():
+    ci = CodeIntel()
+    ci.update("x\n", None, "x\n")
+    report = [{"range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}}, "severity": 1,
+               "message": "Name `x` used when not defined", "source": "ty"}]
+    ci._raw["ty"] = report
+    first = ci.diagnostics()
+    first.clear()  # callers get their own list
+    assert len(ci.diagnostics()) == 1
+    ci._raw["ty"] = []
+    assert ci.diagnostics() == []
+
+
+def test_the_problems_list_builds_only_the_rows_in_view(monkeypatch):
+    built = []
+    real = code_panel._core.button
+    monkeypatch.setattr(code_panel._core, "button", lambda *a, **k: built.append(1) or real(*a, **k))
+    diags = [intel.Diagnostic(line=i, column=1, end_line=i, end_column=2, severity=2, message="unused", source="ruff")
+             for i in range(1, 2001)]
+    from pyzed.theme import PYZED_DARK
+
+    _, height = code_panel.problems_list(None, diags, PYZED_DARK)
+    assert height == 4 * code_panel.PROBLEM_ROW + 6
+    assert built == []  # rows are built when they scroll into view
+
+
+def test_indent_guide_settings():
+    s = settings.EditorSettings()
+    assert s.indent_guides and s.indent_guides_coloring == "fixed"
+    assert settings.EditorSettings.from_dict({"indent_guides_coloring": "neon"}).indent_guides_coloring == "fixed"
+    assert settings.EditorSettings.from_dict({"indent_guides_coloring": "rainbow"}).indent_guides_coloring == "rainbow"
+
+
+def test_indent_guide_colors():
+    from pyzed import ui
+    from pyzed.theme import PYZED_DARK
+    from pyzed.ui.editor import _guide_colors
+
+    assert _guide_colors(PYZED_DARK, False) == (None, None)
+    fixed, active = _guide_colors(PYZED_DARK, True)
+    assert len(fixed) == len(active) == 1 and fixed != active
+    rainbow, active = _guide_colors(PYZED_DARK, "rainbow")
+    assert len(rainbow) == len(PYZED_DARK.players) > 1 and len(set(rainbow)) == len(rainbow)
+    ui.editor("guides", "if x:\n    y\n", language="py", indent_guides="rainbow")
+
+
 @pytest.mark.skipif(lsp.Environment(Path.cwd()).tool("ty") is None, reason="ty is not installed")
 def test_ty_completes_and_reports_in_a_subfolder(tmp_path):
     root = uv_project(tmp_path)

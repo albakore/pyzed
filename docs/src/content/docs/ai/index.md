@@ -31,7 +31,7 @@ flowchart LR
         M["MCP server<br/><code>pyzed mcp</code>"]
         K["Knowledge<br/>components · icons · themes · docs"]
         G["Generators<br/>new_app · new_component · new_form"]
-        V["Checks<br/>validate_code · validate_form"]
+        V["Checks<br/>validate_code · validate_form · review_design"]
         S["Off-screen renderer<br/>screenshot"]
     end
     D["Docs as text<br/>llms.txt · page.md"]
@@ -65,6 +65,9 @@ flowchart LR
   (`.pyi`) that editors and agents read.
 - **Blocks to start from.** The [Blocks](/pyzed/blocks/) are complete, tested screens an agent can read with
   `read_example("blocks/dashboard")` and adapt, instead of starting from a blank file.
+- **Rules of a professional designer and engineer.** The [design rules](/pyzed/ai/design/) (hierarchy, spacing,
+  typography, theme tokens, states, feedback, accessibility) and the [architecture rules](/pyzed/ai/app-architecture/)
+  (layers, state, effects, testing) come with the MCP server, and `review_design` checks code against them.
 
 ## What an agent can do with Pyzed
 

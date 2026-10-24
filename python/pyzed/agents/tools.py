@@ -28,7 +28,7 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
     def get_guide(topic: str = "overview", lang: str = "en") -> str:
         """How Pyzed works.
 
-        topic: "overview" (architecture, API layers, components, designer), "best-practices", "cookbook" (runnable recipes) or a topic of list_guides ("games", "shaders", "animation"...).
+        topic: "overview" (architecture, API layers, components, designer), "best-practices", "design" (UI/UX rules), "app-architecture" (structuring large apps), "cookbook" (runnable recipes) or a topic of list_guides ("games", "shaders", "animation"...).
         lang: "en" or "es".
         """
         return knowledge.guide(topic, lang)
@@ -162,23 +162,31 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
         render(), side effects in view(), lambdas in loops, plus ruff when installed."""
         return validate.check_code(code)
 
+    @tool(title="Reviewing the design")
+    def review_design(code: str) -> Any:
+        """Reviews the design of Pyzed code against get_guide("design"): fixed colors instead of theme tokens, spacing and text sizes off the scales, icon buttons without a tooltip, vague button labels, inputs without a label, tables without an empty state, several primary buttons. Returns the issues and the checklist to go through on a screenshot."""
+        return validate.check_design(code)
+
     @tool(title="Checking a form")
     def validate_form(form: str, handlers: str = "") -> Any:
         """Validates the JSON of a .pzform and, when given, that its handlers module defines every handler."""
         return validate.check_form(form, handlers)
 
     @tool(writes=True, title="Taking a screenshot")
-    def screenshot(code: str, width: int = 800, height: int = 600) -> Any:
+    def screenshot(code: str, width: int = 800, height: int = 600, theme: str = "") -> Any:
         """Runs Pyzed code off-screen (no window) and returns a picture of its UI, to check how it looks.
 
         code: a script defining a pz.App (pz.run is intercepted) or a top-level preview() function that returns a widget.
+        theme: "Pyzed Light", "Pyzed Dark"... to see it in that theme instead of its own (check both).
         """
         from ..mcp.preview import render
 
-        return [f"Screenshot of the app at {width}x{height}.", Image(render(code, size=(width, height)), "image/png")]
+        shown = f" in {theme}" if theme else ""
+        return [f"Screenshot of the app at {width}x{height}{shown}.",
+                Image(render(code, size=(width, height), theme=theme or None), "image/png")]
 
     out = [plan_app, get_guide, list_guides, search_reference, read_reference, editor_keymap, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
-           list_examples, read_example, new_app, new_component_code, new_form, validate_code, validate_form]
+           list_examples, read_example, new_app, new_component_code, new_form, validate_code, review_design, validate_form]
     return out + [screenshot] if screenshots else out
 
 

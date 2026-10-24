@@ -85,7 +85,7 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | Herramienta | Qué hace |
 | --- | --- |
 | `plan_app` | Por dónde empezar una app o pantalla: los bloques y ejemplos más parecidos, los componentes y temas de guía que necesita, la documentación que leer y los pasos. Los agentes la llaman primero. |
-| `get_guide` | Cómo funciona Pyzed (`"overview"`), sus reglas (`"best-practices"`), recetas ejecutables (`"cookbook"`: estructura de una app, trabajo en segundo plano, formularios, listas virtuales, animación, shaders, juegos, marcos de ventana propios, layouts con anclas) o cualquier tema de `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), en inglés o en español. |
+| `get_guide` | Cómo funciona Pyzed (`"overview"`), sus reglas (`"best-practices"`), las [reglas de diseño](/pyzed/es/ai/design/) (`"design"`) y de [arquitectura](/pyzed/es/ai/app-architecture/) (`"app-architecture"`) para apps profesionales, recetas ejecutables (`"cookbook"`: estructura de una app, trabajo en segundo plano, formularios, listas virtuales, animación, shaders, juegos, marcos de ventana propios, layouts con anclas) o cualquier tema de `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), en inglés o en español. |
 | `list_guides` | Todos los temas que acepta `get_guide`. |
 | `list_components` | Cada widget (`pz.*`), componente listo (`pz.ui.*`), tipo de la caja de herramientas del diseñador y clase `pz.Component`, con un resumen de una línea. Filtra por `kind`, `query`, `category` o `role` (el rol de color de los tipos del diseñador: `layout`, `input`, `action`, `navigation`, `display`, `media`, `system`, `custom`). |
 | `describe_component` | La firma, la documentación y los parámetros de un widget o componente (`"pz.column"`, `"ui.button"`), o las propiedades y eventos de un tipo del diseñador (`"designer:button"`). |
@@ -100,7 +100,8 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | `new_form` | Un formulario del diseñador visual: el `.pzform` y su módulo de handlers. |
 | `validate_code` | Revisa el código sin ejecutarlo: nombres que no existen en `pz` o `pz.ui`, argumentos que una función no acepta, apps sin `view()`, componentes sin `render()`, efectos secundarios en `view()`, lambdas en bucles que no capturan la variable y las comprobaciones de pyflakes de ruff si está instalado. |
 | `validate_form` | Revisa un `.pzform` (tipos, propiedades, eventos, nombres, contenedores) y que su módulo de handlers defina cada handler. |
-| `screenshot` | Dibuja el código fuera de pantalla (sin ventana ni GPU) y devuelve un PNG, para que el agente vea lo que construyó. |
+| `review_design` | Revisa el diseño del código sin ejecutarlo: colores hex fijos en lugar de tokens del tema, espaciado fuera de la escala de 4 px, tamaños de texto fuera de la escala tipográfica, botones de icono sin tooltip, etiquetas de botón vagas o en mayúsculas, campos sin etiqueta, tablas sin estado vacío y más de un botón principal por vista. Devuelve también la lista de comprobación para revisar sobre una captura. |
+| `screenshot` | Dibuja el código fuera de pantalla (sin ventana ni GPU) y devuelve un PNG, para que el agente vea lo que construyó. `theme="Pyzed Light"` (o cualquier tema) lo muestra en otro tema, para revisar claro y oscuro. |
 | `animation_properties`, `new_animation`, `check_animation` | [Animaciones en línea de tiempo](/pyzed/es/animation/timeline/): qué puede animar una pista, una biblioteca `.pzanim` nueva a partir de clips y pistas, y su revisión. |
 | `list_shader_nodes`, `new_shader`, `check_shader` | Los nodos de los [grafos de shaders](/pyzed/es/shading/shader-graphs/), un `.pzshad` nuevo desde una plantilla y su compilación a WGSL con los errores por nodo. |
 
@@ -124,13 +125,14 @@ Con ellas el agente construye una app completa en una carpeta, desde el proyecto
 ### Recursos y prompts
 
 Los clientes que admiten recursos pueden adjuntar `pyzed://guide`, `pyzed://best-practices`,
-`pyzed://cookbook`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` y
+`pyzed://cookbook`, `pyzed://design`, `pyzed://app-architecture`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` y
 `pyzed://docs/{slug}` (con `--` en lugar de `/`, como `guides--layout`).
 
 Los prompts `create_app`, `create_component` y `create_form` empiezan una tarea con los pasos correctos:
 leer las guías, buscar componentes existentes, generar, validar y previsualizar. `build_project` construye
 una app completa en la carpeta: lee las guías y ejemplos, crea el proyecto, lo escribe en pasos pequeños
-y luego lo revisa, lo prueba y lo mira hasta que todo esté limpio.
+y luego lo revisa, lo prueba y lo mira hasta que todo esté limpio. `polish_design` revisa una pantalla como un
+diseñador de producto: capturas en los dos temas, `review_design`, la lista de comprobación y arreglos por orden de impacto.
 
 ## Ejemplo de sesión
 
