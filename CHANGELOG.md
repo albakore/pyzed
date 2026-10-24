@@ -41,6 +41,7 @@ stable version.
 - 🐛 The agent's form screenshots work in the installed Pyzed Design (they opened another editor), run in the project's environment and fall back to capturing a real window when the off-screen renderer fails. `Theme.color` takes short names such as `"muted"`. PR [#216](https://github.com/albakore/pyzed/pull/216) by [@albakore](https://github.com/albakore).
 - 🐛 Settings → Rendering is always shown: the project's page (Project → App rendering) no longer vanishes without a project, and apps started from the designer don't inherit its renderer. PR [#215](https://github.com/albakore/pyzed/pull/215) by [@albakore](https://github.com/albakore).
 - 🐛 Duplicate line (Shift+Alt+Down) and delete line (Ctrl+Shift+K) ran twice. PR [#218](https://github.com/albakore/pyzed/pull/218) by [@albakore](https://github.com/albakore).
+- 🐛 `import pyzed` works again on Linux ARM ("cannot allocate memory in static TLS block"): the allocator's thread-local storage no longer needs the static TLS block. PR [#221](https://github.com/albakore/pyzed/pull/221) by [@albakore](https://github.com/albakore).
 - 🐛 Designed components (`.pzcomp`) take the theme of the form or app they are placed in, so their panels follow Pyzed Light. PR [#214](https://github.com/albakore/pyzed/pull/214) by [@albakore](https://github.com/albakore).
 
 ### Docs
