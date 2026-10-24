@@ -282,6 +282,66 @@ def test_uv_moves_its_pythons_when_windows_cannot_open_them(tmp_path, monkeypatc
     assert not demo.uv("sync").ok and calls == [1]
 
 
+def test_uv_skips_the_pythons_of_path_and_the_junctions_windows_cannot_open(tmp_path, monkeypatch):
+    """Kev's 1.11.0 on Windows 11: after the move uv found no Python in Pyzed's folder and tried the ``python3.13.exe``
+    of ``~/.local/bin``, which runs the Python behind uv's old junction (os error 448 again). Now only Pyzed's Pythons
+    are used, the junction a download makes there is removed and the .venv made through it is made again."""
+    monkeypatch.setattr(project.sys, "platform", "win32")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    monkeypatch.delenv("UV_PYTHON_PREFERENCE", raising=False)
+    pythons = project.python_install_dir()
+    demo = _write_project(tmp_path / "demo")
+    path_error = ("error: Failed to inspect Python interpreter from first executable in the search path at "
+                  "`C:\\Users\\me\\.local\\bin\\python3.13.exe`\n  cause: (os error 448)")
+    calls = []
+
+    def run(args, cwd=None, *, timeout=None):
+        env = project._clean_env()
+        calls.append((env.get("UV_PYTHON_INSTALL_DIR"), env.get("UV_PYTHON_PREFERENCE")))
+        if len(calls) == 1:
+            return project.Result(list(args), 2, path_error)
+        if len(calls) == 2:  # uv downloads a Python, makes its minor version junction and the .venv through it
+            (pythons / "cpython-3.13.5-windows-x86_64-none").mkdir()
+            (pythons / "cpython-3.13-windows-x86_64-none").symlink_to(pythons / "cpython-3.13.5-windows-x86_64-none")
+            demo.venv.mkdir()
+            (demo.venv / "pyvenv.cfg").write_text(f"home = {pythons}\\cpython-3.13-windows-x86_64-none\n")
+            return project.Result(list(args), 2, "error: (os error 448)")
+        return project.Result(list(args), 0, "")
+
+    monkeypatch.setattr(project, "execute", run)
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")
+    assert demo.uv("sync").ok
+    assert calls == [(None, None), (str(pythons), "only-managed"), (str(pythons), "only-managed")]
+    assert sorted(p.name for p in pythons.iterdir()) == ["cpython-3.13.5-windows-x86_64-none"]
+    assert not demo.venv.exists()
+
+
+def test_stale_venvs_are_those_windows_cannot_open(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    pythons = project.python_install_dir()
+    venv = tmp_path / ".venv"
+    venv.mkdir()
+    for home, stale in [("C:\\Users\\me\\AppData\\Roaming\\uv\\python\\cpython-3.13-windows-x86_64-none", True),
+                        ("C:\\Users\\me\\.local\\bin", True),
+                        (f"{pythons}\\cpython-3.13-windows-x86_64-none", True),
+                        (f"{pythons}\\cpython-3.13.5-windows-x86_64-none", False),
+                        ("C:\\Program Files\\Python313", False)]:
+        (venv / "pyvenv.cfg").write_text(f"home = {home}\n")
+        assert project._stale_venv(venv) == stale, home
+
+
+def test_uv_explains_an_os_error_448_it_cannot_get_around(tmp_path, monkeypatch):
+    monkeypatch.setattr(project.sys, "platform", "win32")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    project.python_install_dir().mkdir(parents=True)
+    calls = []
+    monkeypatch.setattr(project, "execute",
+                        lambda *a, **k: calls.append(1) or project.Result(["uv"], 2, "os error 448"))
+    result = project.execute_uv(["uv", "sync"], tmp_path)
+    assert calls == [1] and not result.ok
+    assert str(project.python_install_dir()) in result.output and "folder link" in result.output
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups")
 def test_terminate_stops_the_processes_a_run_started(tmp_path):
     """Stopping ``uv run`` also stops the Python it started, so the next run starts clean."""

@@ -38,6 +38,7 @@ import re
 import shutil
 import signal
 import site
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -164,14 +165,20 @@ def install_uv() -> Result:
 
 
 #: Windows' ``ERROR_UNTRUSTED_MOUNT_POINT``. Recent Windows 11 builds refuse to follow some junctions, such as the
-#: one uv makes for each Python minor version in ``%APPDATA%\uv\python`` (``cpython-3.12-windows-x86_64-none``):
-#: then every uv command that needs that Python fails with this error.
+#: one uv makes for each Python minor version in ``%APPDATA%\uv\python`` (``cpython-3.12-windows-x86_64-none``) and
+#: the ``python3.13.exe`` uv puts in ``~/.local/bin``, which runs the Python behind that junction: then every uv
+#: command that needs one of them fails with this error.
 UNTRUSTED_MOUNT = "os error 448"
+
+#: The junction uv makes for a Python minor version (``cpython-3.13-windows-x86_64-none``), next to the real folder
+#: of its latest patch version (``cpython-3.13.5-windows-x86_64-none``).
+_MINOR_LINK = re.compile(r"cpython-\d+\.\d+-", re.IGNORECASE)
 
 
 def python_install_dir() -> Path:
     """Where uv keeps its Pythons for Pyzed once uv's own folder failed with ``UNTRUSTED_MOUNT`` (Windows only):
-    a folder this app makes itself, so its links are trusted. It is used from then on while it exists."""
+    a folder of this app, without uv's minor version junctions (see ``execute_uv``). It is used from then on while
+    it exists, and then uv uses only the Pythons in it."""
     base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
     return Path(base) / "pyzed" / "python"
 
@@ -184,6 +191,9 @@ def _clean_env() -> Dict[str, str]:
     env.setdefault("NO_COLOR", "1")
     if sys.platform == "win32" and python_install_dir().is_dir():
         env["UV_PYTHON_INSTALL_DIR"] = str(python_install_dir())
+        # only those Pythons: the ones on PATH may be uv's ``python3.13.exe`` of ``~/.local/bin``, which still
+        # goes through the junction of the old folder (and a broken first one on PATH stops uv's search)
+        env.setdefault("UV_PYTHON_PREFERENCE", "only-managed")
     return env
 
 
@@ -224,39 +234,94 @@ def execute(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Opt
     return Result(args, done.returncode, done.stdout.strip())
 
 
+def _is_link(path: Path) -> bool:
+    """Whether ``path`` is a symbolic link or a junction (``os.path.isjunction`` is Python 3.12+)."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)  # REPARSE_POINT
+
+
+def _remove_minor_links() -> bool:
+    """Removes the minor version junctions uv made in ``python_install_dir()`` (the Pythons stay): without them
+    uv runs each Python from its real folder. uv only makes them again when it downloads a Python."""
+    removed = False
+    for link in python_install_dir().glob("cpython-*"):
+        if _MINOR_LINK.match(link.name) and _is_link(link):
+            try:
+                os.unlink(link)
+            except OSError:
+                try:
+                    os.rmdir(link)  # a junction is removed like an empty folder; the Python it points to stays
+                except OSError:
+                    continue
+            removed = True
+    return removed
+
+
 def _stale_venv(venv: Path) -> bool:
-    """Whether ``venv`` was made with a uv Python outside ``python_install_dir()`` (the one Windows won't open)."""
+    """Whether ``venv`` was made with a uv Python Windows won't open: one outside ``python_install_dir()`` (the
+    folder of uv or the ``python3.13.exe`` of ``~/.local/bin``) or one reached through a minor version junction."""
     try:
         cfg = (venv / "pyvenv.cfg").read_text(encoding="utf-8", errors="replace")
     except OSError:
         return False
     found = re.search(r"^home\s*=\s*(.+?)\s*$", cfg, re.M)
-    if not found or "cpython-" not in found.group(1).lower():
+    if not found:
         return False
-    return not found.group(1).lower().startswith(str(python_install_dir()).lower())
+    def parts(path: str) -> List[str]:
+        return [part.lower() for part in re.split(r"[\\/]+", path) if part]
+
+    home = parts(found.group(1))
+    if home[-2:] == [".local", "bin"]:
+        return True
+    if not any(part.startswith("cpython-") for part in home):
+        return False
+    pythons = parts(str(python_install_dir()))
+    return home[:len(pythons)] != pythons or any(_MINOR_LINK.match(part) for part in home)
 
 
-def execute_uv(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None,
-               venv: Optional[Path] = None) -> Result:
-    """Runs uv (``args[0]``) like ``execute``. On Windows, when uv can't open its Python (``UNTRUSTED_MOUNT``),
-    moves uv's Pythons to ``python_install_dir()``, remakes the project's ``venv`` if it was made with the
-    unreadable one, and runs the command again."""
-    result = execute(args, cwd, timeout=timeout)
-    if sys.platform != "win32" or UNTRUSTED_MOUNT not in result.output:
-        return result
+def _repair_pythons(venv: Optional[Path]) -> bool:
+    """What ``execute_uv`` changes when uv can't open a Python (``UNTRUSTED_MOUNT``); whether anything changed."""
     changed = False
     if not python_install_dir().is_dir():
         try:
             python_install_dir().mkdir(parents=True)
             changed = True
         except OSError:
-            return result
+            return False
+    changed = _remove_minor_links() or changed
     if venv is not None and _stale_venv(venv):
-        shutil.rmtree(venv, ignore_errors=True)  # uv sync makes it again with the Python of the new folder
+        shutil.rmtree(venv, ignore_errors=True)  # uv sync makes it again with a Python Windows opens
         changed = not venv.exists() or changed
-    if not changed:
+    return changed
+
+
+#: Added to uv's output when Pyzed could not get around ``UNTRUSTED_MOUNT``.
+UNTRUSTED_MOUNT_HINT = ("Windows won't let uv open a Python through a folder link (os error 448). Pyzed keeps its "
+                        "Pythons in {folder}: delete that folder and try again, or run "
+                        "`uv python uninstall --all` in a terminal and remove the python*.exe of ~/.local/bin.")
+
+
+def execute_uv(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None,
+               venv: Optional[Path] = None) -> Result:
+    """Runs uv (``args[0]``) like ``execute``. On Windows, when uv can't open a Python (``UNTRUSTED_MOUNT``):
+    uv's Pythons move to ``python_install_dir()`` and only those are used (not the ``python3.13.exe`` of
+    ``~/.local/bin``), the minor version junctions uv makes there are removed, the project's ``venv`` made with an
+    unreadable Python is made again, and the command runs again."""
+    result = execute(args, cwd, timeout=timeout)
+    if sys.platform != "win32":
         return result
-    return execute(args, cwd, timeout=timeout)
+    # a download makes the junction again: up to three tries (move, then remove the new junction)
+    for _ in range(3):
+        if UNTRUSTED_MOUNT not in result.output or not _repair_pythons(venv):
+            break
+        result = execute(args, cwd, timeout=timeout)
+    if UNTRUSTED_MOUNT in result.output:
+        hint = UNTRUSTED_MOUNT_HINT.format(folder=python_install_dir())
+        return Result(result.args, result.code, f"{result.output}\n{hint}")
+    return result
 
 
 def _version(path: Optional[str]) -> Optional[str]:
