@@ -3144,9 +3144,10 @@ pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
     result.map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
-/// Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG.
+/// Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG. `renderer` is
+/// `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`.
 #[pyfunction]
-#[pyo3(signature = (app, path, *, size=None, scale=2.0, wait=0.1))]
+#[pyo3(signature = (app, path, *, size=None, scale=2.0, wait=0.1, renderer=None))]
 pub fn screenshot(
     py: Python<'_>,
     app: Py<PyAny>,
@@ -3154,47 +3155,19 @@ pub fn screenshot(
     size: Option<(f32, f32)>,
     scale: f32,
     wait: f64,
+    renderer: Option<String>,
 ) -> PyResult<()> {
-    py.detach(fonts::ensure_loaded);
-    let settings = window_settings(app.bind(py))?;
-    let viewport = size.map(|(w, h)| Size::new(w, h)).unwrap_or(settings.size);
-    let font_size = font_size(app.bind(py))?;
-    let theme = palette_key(app.bind(py))
-        .and_then(|k| build_theme(&k))
-        .unwrap_or(Theme::Dark);
-    open_post_channel();
-    // Media queries see the screenshot's size.
-    let style = py.import("pyzed.style")?;
-    style.setattr("_screen", (viewport.width, viewport.height))?;
-    // Animations show their resting state, so a screenshot doesn't depend on timing.
-    crate::animation::set_screenshot(true);
-    let shot = py.detach(move || {
-        let program = daemon(app, font_size, true);
-        iced_test::screenshot(
-            &program,
-            &theme,
-            viewport,
-            scale,
-            Duration::from_secs_f64(wait),
-        )
-    });
-    *POST.lock().unwrap() = None;
-    crate::animation::set_screenshot(false);
-    style.setattr("_screen", py.None())?;
-
+    let (width, height, rgba, _) =
+        crate::recorder::shoot(py, app, size, scale, wait, renderer.as_deref())?;
     let file = std::fs::File::create(&path)?;
-    let mut encoder = png::Encoder::new(
-        std::io::BufWriter::new(file),
-        shot.size.width,
-        shot.size.height,
-    );
+    let mut encoder = png::Encoder::new(std::io::BufWriter::new(file), width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder
         .write_header()
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
     writer
-        .write_image_data(&shot.rgba)
+        .write_image_data(&rgba)
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
     Ok(())
 }
