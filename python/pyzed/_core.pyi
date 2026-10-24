@@ -552,6 +552,12 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
     - `on_middle_release()`: Middle button released (pan gestures, for example).
     """
     ...
+def offscreen_gpu() -> Any:
+    """The GPU an off-screen renderer would draw with: `(name, kind)`, where `kind` is
+    `"discrete"`, `"integrated"`, `"virtual"`, `"cpu"` (a software driver such as lavapipe or
+    llvmpipe, slower than the CPU renderer) or `"other"`; `None` without one.
+    """
+    ...
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
@@ -611,8 +617,12 @@ def radio(label: Any, selected: Any, on_select: Any = ..., *, size: Any = ..., t
     - `on_select()`: Message or callable on click.
     """
     ...
-def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
-    """Drives `app` off-screen with `script`, a generator of commands (see the module's docs)."""
+def record(app: Any, script: Any, *, size: Any, scale: Any = ..., renderer: Any = ...) -> Any:
+    """Drives `app` off-screen with `script`, a generator of commands (see the module's docs).
+    `renderer` is `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`. Returns the
+    name of the renderer that drew it, and whether a `pz.shader` was drawn (the CPU renderer
+    shows its fallback).
+    """
     ...
 def reduced_motion() -> Any:
     """Whether reduced motion is on."""
@@ -621,6 +631,9 @@ def refresh_window(window: Any) -> Any:
     """`Window.refresh()`: draws an isolated window again after something outside it changed what
     it shows. Safe from any thread.
     """
+    ...
+def release_renderers() -> Any:
+    """Drops the renderers this thread kept (they hold a GPU device and its memory)."""
     ...
 def renderer_info() -> Any:
     """The GPU (or `"CPU"`) and the graphics API that draw the windows, once the first one is open."""
@@ -659,8 +672,16 @@ def safe_area() -> Any:
     (the status and navigation bars, the camera cutout and the soft keyboard; zeros on a desktop).
     """
     ...
-def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ...) -> Any:
-    """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
+def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ..., renderer: Any = ...) -> Any:
+    """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG. `renderer` is
+    `"auto"` (the GPU, or the CPU without one), `"gpu"` or `"cpu"`.
+    """
+    ...
+def screenshot_rgba(app: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ..., renderer: Any = ...) -> Any:
+    """Renders `app` off-screen as `pz.screenshot` does and returns `(width, height, rgba,
+    renderer, shader)` instead of writing a PNG: `renderer` is as for `record`, and so are the
+    last two.
+    """
     ...
 def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any:
     """Makes its content scrollable.

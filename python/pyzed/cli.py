@@ -341,6 +341,9 @@ def main(argv=None) -> int:
     p_windows.add_argument("action", nargs="?", choices=("status", "setup", "reset"), default="status",
                            help="setup installs uv on Windows if needed and prepares the Windows environment")
     p_windows.add_argument("path", nargs="?", default=".", help="the project (default: the current folder)")
+    from .recording.cli import add_parser as add_record_parser
+
+    add_record_parser(sub)
     p_icons = sub.add_parser("icons", help="list the bundled Lucide icon names")
     p_icons.add_argument("filter", nargs="?", default="")
     p_mcp = sub.add_parser("mcp", help="run the MCP server for AI agents (stdio)")
@@ -384,6 +387,10 @@ def main(argv=None) -> int:
         return run_form(args.form, args.reload)
     if args.command == "windows":
         return windows(args.action, args.path)
+    if args.command == "record":
+        from .recording.cli import main as record_main
+
+        return record_main(args)
     if args.command == "mcp":
         from .mcp import main as mcp_main
 

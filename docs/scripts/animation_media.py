@@ -39,7 +39,7 @@ sys.path.insert(0, str(EXAMPLES))
 
 import pyzed as pz  # noqa: E402
 from pyzed import animation as A  # noqa: E402
-from pyzed import draw, ui  # noqa: E402
+from pyzed import draw, recording, ui  # noqa: E402
 
 # The look shared by the clips (the dark navy of examples/timeline.py).
 BG = "#0b0e1a"
@@ -1042,26 +1042,22 @@ def _cursor(img: Any, at: tuple[float, float], pressed: bool, s: float) -> None:
 
 
 def frames(c: Clip, folder: Path) -> Iterator[Any]:
-    from PIL import Image
-
     count = max(1, round(c.seconds * c.fps))
     app = c.app() if c.app else None
-    path = folder / "frame.png"
     for i in range(count):
         t = i / c.fps
         shot = c.make(app, t) if app is not None else c.make(t)
         if not isinstance(shot, Shot):
             shot = Shot(shot)
         target = app if app is not None and shot.view is None else _View(shot.view)
-        pz.screenshot(target, path, size=c.size, scale=c.scale, wait=0.0)
-        with Image.open(path) as im:
-            im = im.convert("RGB")
-            if shot.pointer is not None:
-                _cursor(im, (shot.pointer[0] * c.scale, shot.pointer[1] * c.scale), shot.pressed, c.scale)
-            if c.crop:
-                x, y, w, h = (round(v * c.scale) for v in c.crop)
-                im = im.crop((x, y, x + w, y + h))
-            yield im
+        # Drawn straight to pixels with the renderer the process keeps (no PNG in between).
+        im = recording.screenshot(target, size=c.size, scale=c.scale, wait=0.0)
+        if shot.pointer is not None:
+            _cursor(im, (shot.pointer[0] * c.scale, shot.pointer[1] * c.scale), shot.pressed, c.scale)
+        if c.crop:
+            x, y, w, h = (round(v * c.scale) for v in c.crop)
+            im = im.crop((x, y, x + w, y + h))
+        yield im
 
 
 def encode(c: Clip, images: list[Any]) -> Path:
@@ -1082,18 +1078,21 @@ def encode(c: Clip, images: list[Any]) -> Path:
     out = OUT / f"{c.name}.webp"
     # Opaque RGB frames and no sub-frame packing: lossy frames that blend over the previous one
     # leave blocky trails. Past quality 56 the frames shrink instead of getting blurrier.
+    # WebP effort 4: effort 6 takes ten times as long for files about 2 % smaller.
     still = [im.convert("RGB") for im in still]
+
+    def webp(quality: int) -> bytes:
+        buffer = io.BytesIO()
+        still[0].save(buffer, "WEBP", save_all=True, append_images=still[1:], duration=durations, loop=0,
+                      quality=quality, method=4, allow_mixed=False)
+        return buffer.getvalue()
+
     while True:
-        for quality in (80, 72, 64, 56):
-            buffer = io.BytesIO()
-            still[0].save(buffer, "WEBP", save_all=True, append_images=still[1:], duration=durations, loop=0,
-                          quality=quality, method=6, allow_mixed=False)
-            if buffer.tell() <= BUDGET:
-                break
-        if buffer.tell() <= BUDGET or still[0].width < 900:
+        data, _ = recording.fit_quality(webp, BUDGET, low=56, high=80)
+        if len(data) <= BUDGET or still[0].width < 900:
             break
         still = [im.resize((round(im.width * 0.85), round(im.height * 0.85)), Image.LANCZOS) for im in still]
-    out.write_bytes(buffer.getvalue())
+    out.write_bytes(data)
     return out
 
 

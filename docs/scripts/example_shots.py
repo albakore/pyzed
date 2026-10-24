@@ -320,6 +320,21 @@ def rating_shots():
     print("wrote docs/src/assets/contributing/rating-run.png, rating-designer.png")
 
 
+def recorder_app():
+    """``pyzed record gui`` with examples/recording/jobs.toml open, its counter job selected and the queue done."""
+    from pyzed.recording import batch
+    from pyzed.recording.gui import RecorderApp
+
+    instance = RecorderApp(str(ROOT / "examples" / "recording" / "jobs.toml"))
+    instance.selected = 0
+    tasks = [t for job in instance.jobs for t in batch.expand(job)]
+    for i, task in enumerate(tasks):
+        instance.results[task.label] = {"label": task.label, "files": [{"bytes": 6000 + 900 * i}],
+                                        "seconds": 0.4 + 0.1 * (i % 5)}
+    instance.total = instance.done = len(tasks)
+    return instance
+
+
 SHOTS = {
     # Guide illustrations
     "tutorials/multi-window": (Windows, (820, 560)),
@@ -387,6 +402,8 @@ SHOTS = {
     "examples/qr_code": (app("qr_code", "QR"), None),
     "examples/stopwatch": (app("stopwatch", "Stopwatch"), None),
     "examples/todos": (app("todos", "Todos"), None),
+    # Guides
+    "guides/recorder": (recorder_app, (1240, 780)),
 }
 
 

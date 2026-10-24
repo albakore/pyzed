@@ -406,6 +406,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 
 pub fn render(props: &ShaderProps) -> Element<'static, Message> {
+    crate::recorder::shader_drawn();
     let program = Program {
         source: props.source.clone(),
         key: props.key,
