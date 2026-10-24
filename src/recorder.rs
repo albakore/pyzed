@@ -72,9 +72,24 @@ fn set_clock(at: Option<Instant>) {
 // Renderers
 // ---------------------------------------------------------------------------
 
+type Kept = HashMap<(String, u32), Box<dyn Any>>;
+
+/// The renderers a thread kept. On Windows they are not dropped when the thread ends: the
+/// process exit runs the main thread's destructors after it has stopped the GPU driver's
+/// threads, and dropping a device then panics. `release_renderers` drops them earlier.
+struct Renderers(Kept);
+
+impl Drop for Renderers {
+    fn drop(&mut self) {
+        if cfg!(windows) {
+            std::mem::forget(std::mem::take(&mut self.0));
+        }
+    }
+}
+
 thread_local! {
     /// The renderers this thread made, by backend and default text size.
-    static RENDERERS: RefCell<HashMap<(String, u32), Box<dyn Any>>> = RefCell::new(HashMap::new());
+    static RENDERERS: RefCell<Renderers> = RefCell::new(Renderers(HashMap::new()));
 }
 
 /// Set when a `pz.shader` is drawn: the CPU renderer shows its fallback instead, so a recording
@@ -103,7 +118,7 @@ fn take_renderer<R: Headless + 'static>(
     font_size: f32,
 ) -> PyResult<R> {
     let key = (backend.unwrap_or("auto").to_owned(), font_size.to_bits());
-    if let Some(kept) = RENDERERS.with(|r| r.borrow_mut().remove(&key))
+    if let Some(kept) = RENDERERS.with(|r| r.borrow_mut().0.remove(&key))
         && let Ok(renderer) = kept.downcast::<R>()
     {
         return Ok(*renderer);
@@ -137,7 +152,7 @@ where
 fn keep_renderer<R: 'static>(backend: Option<&'static str>, font_size: f32, renderer: R) {
     let key = (backend.unwrap_or("auto").to_owned(), font_size.to_bits());
     RENDERERS.with(|r| {
-        r.borrow_mut().insert(key, Box::new(renderer));
+        r.borrow_mut().0.insert(key, Box::new(renderer));
     });
 }
 
@@ -841,5 +856,5 @@ pub(crate) fn shoot(
 /// Drops the renderers this thread kept (they hold a GPU device and its memory).
 #[pyfunction]
 pub fn release_renderers() {
-    RENDERERS.with(|r| r.borrow_mut().clear());
+    RENDERERS.with(|r| r.borrow_mut().0.clear());
 }
