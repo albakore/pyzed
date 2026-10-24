@@ -316,21 +316,36 @@ rem Waits for the old app to exit, swaps in the new one and starts it.
 rem (ping, not timeout: timeout fails when its input is not a keyboard)
 tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >NUL & goto wait)
 if exist {old} rmdir /S /Q {old}
-rem A file of the old app can stay in use for a while (an antivirus scan, a child process still ending): retry.
 set tries=0
 set "PYZED_APP={app}"
 set "PYZED_EXE={exe}"
 :swap
-move {target} {old} >NUL && goto moved
+move {target} {old} >NUL 2>NUL && goto moved
+rem The folder itself cannot move while a process works in it (its current folder) or keeps one of its files
+rem open. Move what is inside it instead: only a file kept open stops that, and then it all goes back.
+mkdir {old} 2>NUL
+set held=
+for /d %%e in ({target_all}) do move "%%~e" "{old_raw}\\%%~nxe" >NUL || set held=1
+for %%e in ({target_all}) do move "%%~e" "{old_raw}\\%%~nxe" >NUL || set held=1
+if not defined held goto emptied
+for /d %%e in ({old_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL
+for %%e in ({old_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL
+rmdir {old} 2>NUL
+rem A file of the old app can stay open for a while (an antivirus scan, a child process still ending): retry.
 set /a tries+=1
-rem A program started from the app folder keeps it in use (the bundled uv run by another app, a helper
-rem left running...): after a few tries, say which and stop it.
-if %tries% EQU {free_after} {free}
+if %tries% EQU {list_after} {list}
 if %tries% GEQ {tries} (echo The app folder is still in use: the update was not installed. & {fail})
 ping -n 2 127.0.0.1 >NUL
 goto swap
+:emptied
+for /d %%e in ({new_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL || set held=1
+for %%e in ({new_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL || set held=1
+if defined held (echo Could not move the new version in. & {fail})
+rmdir {new} 2>NUL
+goto installed
 :moved
 move {new} {target} >NUL || (move {old} {target} >NUL & echo Could not move the new version in. & {fail})
+:installed
 {keep}rmdir /S /Q {old}
 {launch}
 rem deletes this script without cmd then failing to read its next line ("The batch file cannot be found")
@@ -338,18 +353,17 @@ rem deletes this script without cmd then failing to read its next line ("The bat
 """
 #: How many seconds (about) the Windows swap waits for the app folder to be free.
 SWAP_TRIES = 30
-#: After how many failed tries the Windows swap stops the programs still running from the app folder.
-FREE_AFTER = 3
-#: Lists (in the log) every process whose program is inside the app folder (``PYZED_APP``) and stops those
-#: that are not another window of this app (``PYZED_EXE``), which may have unsaved work: those are only named.
-_FREE_FOLDER = (
+#: After how many failed tries the Windows swap writes in its log the programs running from the app folder.
+LIST_AFTER = 3
+#: Lists (in the log) the processes whose program is inside the app folder (``PYZED_APP``), naming another
+#: window of this app (``PYZED_EXE``) first: the usual reason a file of the folder stays open.
+_LIST_PROGRAMS = (
     "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \""
     "$d = $env:PYZED_APP.TrimEnd('\\') + '\\'; "
     "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and "
     "$_.ExecutablePath.StartsWith($d, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { "
     "if ($_.Name -ieq $env:PYZED_EXE) { 'Another ' + $_.Name + ' (' + $_.ProcessId + ') is open: close it' } "
-    "else { 'Stopping ' + $_.Name + ' (' + $_.ProcessId + '), still running from the app folder'; "
-    "Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }\""
+    "else { 'Running from the app folder: ' + $_.Name + ' (' + $_.ProcessId + ')' } }\""
 )
 
 
@@ -373,8 +387,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
 
     A small shell (or ``.cmd`` on Windows) script waits for the current process to end,
     moves the old app aside, moves the new one in and starts it; if the move fails the
-    old app is put back (on Windows, where a folder in use cannot move, it first retries for
-    about ``SWAP_TRIES`` seconds, and starts the old app again if it gives up). What the
+    old app is put back (on Windows, where a folder in use cannot move, it moves what is inside
+    it instead, retries for about ``SWAP_TRIES`` seconds while a file stays open, and starts the
+    old app again if it gives up). What the
     script prints goes to a ``.log`` next to it. Returns the
     script's path. Quit the app right after calling it, and make sure the process really
     ends (``os._exit``): the swap waits for it, so a busy background thread delays the restart.
@@ -396,8 +411,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         # when the swap fails the old version starts again (the updater then tells what happened)
         fail = f"{launch} & exit /b 1" if launch else "exit /b 1"
         text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch,
-                                      keep=kept, tries=SWAP_TRIES, fail=fail, free_after=FREE_AFTER,
-                                      free=_FREE_FOLDER, app=target, exe=exe_name)
+                                      keep=kept, tries=SWAP_TRIES, fail=fail, list_after=LIST_AFTER,
+                                      list=_LIST_PROGRAMS, app=target, exe=exe_name, old_raw=old, target_raw=target,
+                                      target_all=q(target / "*"), old_all=q(old / "*"), new_all=q(bundle / "*"))
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
         # A hidden console, not DETACHED_PROCESS: without one, each tasklist/find/ping the script runs while

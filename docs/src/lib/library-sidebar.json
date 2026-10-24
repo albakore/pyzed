@@ -1,0 +1,260 @@
+[
+	{
+		"key": "actions",
+		"label": {
+			"en": "Actions",
+			"es": "Acciones"
+		},
+		"items": [
+			"library/button",
+			"library/chip",
+			"library/icon-button",
+			"library/mouse-area",
+			"library/split-button",
+			"library/toggle-group"
+		]
+	},
+	{
+		"key": "display",
+		"label": {
+			"en": "Display",
+			"es": "Visualización"
+		},
+		"items": [
+			"library/avatar",
+			"library/badge",
+			"library/card",
+			"library/divider",
+			"library/heading",
+			"library/indicator",
+			"library/kbd",
+			"library/label",
+			"library/tooltip"
+		]
+	},
+	{
+		"key": "forms",
+		"label": {
+			"en": "Forms",
+			"es": "Formularios"
+		},
+		"items": [
+			"library/checkbox",
+			"library/color-picker",
+			"library/field",
+			"library/icon-picker",
+			"library/input",
+			"library/number-field",
+			"library/radio-group",
+			"library/search-input",
+			"library/segmented",
+			"library/select",
+			"library/slider",
+			"library/switch"
+		]
+	},
+	{
+		"key": "dates",
+		"label": {
+			"en": "Dates and times",
+			"es": "Fechas y horas"
+		},
+		"items": [
+			"library/calendar",
+			"library/date-picker",
+			"library/date-range-picker",
+			"library/time-picker"
+		]
+	},
+	{
+		"key": "feedback",
+		"label": {
+			"en": "Feedback",
+			"es": "Estado y avisos"
+		},
+		"items": [
+			"library/callout",
+			"library/count-badge",
+			"library/empty-state",
+			"library/error-boundary",
+			"library/keybinding-hint",
+			"library/progress",
+			"library/spinner"
+		]
+	},
+	{
+		"key": "data",
+		"label": {
+			"en": "Data",
+			"es": "Datos"
+		},
+		"items": [
+			"library/bar-chart",
+			"library/diff-stat",
+			"library/donut",
+			"library/facepile",
+			"library/settings-group",
+			"library/sparkline",
+			"library/stat",
+			"library/table"
+		]
+	},
+	{
+		"key": "lists",
+		"label": {
+			"en": "Lists and menus",
+			"es": "Listas y menús"
+		},
+		"items": [
+			"library/accordion",
+			"library/disclosure",
+			"library/list-header",
+			"library/list-item",
+			"library/menu",
+			"library/tree",
+			"library/virtual-list"
+		]
+	},
+	{
+		"key": "navigation",
+		"label": {
+			"en": "Navigation",
+			"es": "Navegación"
+		},
+		"items": [
+			"library/breadcrumbs",
+			"library/tab-bar",
+			"library/toolbar"
+		]
+	},
+	{
+		"key": "overlays",
+		"label": {
+			"en": "Overlays",
+			"es": "Capas flotantes"
+		},
+		"items": [
+			"library/command-palette",
+			"library/layer",
+			"library/modal",
+			"library/picker",
+			"library/popover",
+			"library/toast"
+		]
+	},
+	{
+		"key": "dialogs",
+		"label": {
+			"en": "Dialogs",
+			"es": "Diálogos"
+		},
+		"items": [
+			"library/alert",
+			"library/choice",
+			"library/confirm",
+			"library/dialog-layer",
+			"library/error-dialog",
+			"library/prompt",
+			"library/unsaved-changes"
+		]
+	},
+	{
+		"key": "system",
+		"label": {
+			"en": "System",
+			"es": "Sistema"
+		},
+		"items": [
+			"library/drop-zone",
+			"library/file-input"
+		]
+	},
+	{
+		"key": "workspace",
+		"label": {
+			"en": "Workspace",
+			"es": "Espacio de trabajo"
+		},
+		"items": [
+			"library/panel",
+			"library/panel-header",
+			"library/split",
+			"library/status-bar",
+			"library/title-bar",
+			"library/window-frame",
+			"library/workspace"
+		]
+	},
+	{
+		"key": "code",
+		"label": {
+			"en": "Code and tools",
+			"es": "Código y herramientas"
+		},
+		"items": [
+			"library/about",
+			"library/console",
+			"library/editor",
+			"library/markdown",
+			"library/reference-browser",
+			"library/shortcuts",
+			"library/terminal"
+		]
+	},
+	{
+		"key": "agents",
+		"label": {
+			"en": "AI agents",
+			"es": "Agentes de IA"
+		},
+		"items": [
+			"library/catalog",
+			"library/context-meter",
+			"library/diff-view",
+			"library/edits-bar",
+			"library/plan",
+			"library/service-row",
+			"library/auth-prompt",
+			"library/thread-history",
+			"library/tool-call"
+		]
+	},
+	{
+		"key": "layout",
+		"label": {
+			"en": "Layout",
+			"es": "Disposición"
+		},
+		"items": [
+			"library/anchor-layout",
+			"library/column",
+			"library/container",
+			"library/flex",
+			"library/grid",
+			"library/resizable",
+			"library/responsive",
+			"library/row",
+			"library/scrollable",
+			"library/spacing",
+			"library/stack"
+		]
+	},
+	{
+		"key": "content",
+		"label": {
+			"en": "Content",
+			"es": "Contenido"
+		},
+		"items": [
+			"library/animation",
+			"library/canvas",
+			"library/effects",
+			"library/icon",
+			"library/image",
+			"library/qr-code",
+			"library/rich-text",
+			"library/shader",
+			"library/text"
+		]
+	}
+]

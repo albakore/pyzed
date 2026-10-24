@@ -16,6 +16,36 @@ stable version.
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-10-23
+
+### Highlights
+
+- **A brand of its own**: Pyzed Dark and Pyzed Light are the new default themes, with the Pyzed logo, app icons and an instrument-panel look (LEDs, LCD displays, a theme rack) in Pyzed Design and as components, and a redesigned docs site.
+- **Faster and lighter**: idle windows skip their work (8 open windows go from 15.3 ms to 2.6 ms of CPU per tick), frame rate limits and GPU tuning, a native library 30% smaller, big images decoded off the UI thread and `@pz.background` for your own work.
+- **Any screen, any device**: screens and fullscreen on a chosen monitor, always-on-top and kiosk windows, device profiles, a design resolution, touch media queries and arrow-key focus.
+
+### Features
+
+- ✨ Rendering settings gain isolated windows (`Window.isolated`, `Window.refresh()`), antialiasing, present mode, frame latency, memory, GPU choice, `max_fps` and `background_fps`, also in the designer and the MCP server; `pz.renderer_info()` tells the GPU and API in use. PR [#203](https://github.com/albakore/pyzed/pull/203) by [@albakore](https://github.com/albakore).
+- ✨ Screens, fullscreen on a monitor (exclusive or borderless), always-on-top and kiosk windows, device profiles, a design resolution, touch media queries and focus with the arrow keys. PR [#203](https://github.com/albakore/pyzed/pull/203) by [@albakore](https://github.com/albakore).
+- ⚡️ The native library is 30% smaller (39.1 MB to 27.5 MB), big images decode on worker threads (`pz.image(background=...)`) and `@pz.background` runs a function off the UI thread. PR [#203](https://github.com/albakore/pyzed/pull/203) by [@albakore](https://github.com/albakore).
+- 🎨 Pyzed Dark and Pyzed Light brand themes, Pyzed Dark by default, with instrument tokens (`led`, `led_off`, `display`, `display_text`, `canvas`, `canvas_grid`, `guide`) that follow the other colors when a theme leaves them empty. PR [#207](https://github.com/albakore/pyzed/pull/207) by [@albakore](https://github.com/albakore).
+- ✨ `ui.led`, `ui.led_toggle`, `ui.lcd`, `ui.theme_rack` and `pz.brand` logo widgets, with IBM Plex Sans Bold bundled. PR [#207](https://github.com/albakore/pyzed/pull/207) by [@albakore](https://github.com/albakore).
+- 💄 Pyzed Design wears the brand: logo, indigo Run button, an LCD in the title bar that shows the graphics API, LED switches, a size tag, a new Properties header, a theme rack and the brand app icon. PR [#207](https://github.com/albakore/pyzed/pull/207) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Pyzed Design updates on Windows even while a process works in its folder ("Access is denied"): the updater swaps what is inside the folder when the folder itself cannot move, and writes in its log which programs run from it. PR [#205](https://github.com/albakore/pyzed/pull/205) by [@albakore](https://github.com/albakore).
+
+> Updating from an older version still uses its own updater: if it fails, install this version with the setup program from the Download page.
+
+### Docs
+
+- 💄 The docs site has the Pyzed brand: Graphite and Paper palettes, IBM Plex, a new home with the install command on an amber display, LED stats, brand code themes, new favicon, icons and social cards, and a Brand page in Contributing (en/es). PR [#206](https://github.com/albakore/pyzed/pull/206) by [@albakore](https://github.com/albakore).
+- 📝 The Library sidebar groups the components by category (Layout, Forms, Dates and times, System...). PR [#209](https://github.com/albakore/pyzed/pull/209) by [@albakore](https://github.com/albakore).
+- 🐛 Code blocks keep their colors on every page of the docs: the site build no longer reuses pages rendered with the previous code theme. PR [#209](https://github.com/albakore/pyzed/pull/209) by [@albakore](https://github.com/albakore).
+- 📝 Privacy policy page (what Pyzed Design sends over the network, what it keeps on your computer and how to turn each part off). PR [#210](https://github.com/albakore/pyzed/pull/210) by [@albakore](https://github.com/albakore).
+
 ## [1.10.1] - 2026-10-23
 
 ### Fixes

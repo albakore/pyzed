@@ -1675,6 +1675,12 @@
    "path": "docs/src/content/docs/packaging/windows.mdx"
   },
   {
+   "slug": "privacy",
+   "title": "Privacy policy",
+   "description": "What Pyzed and Pyzed Design send over the network, what they keep on your computer and how to turn each part off. No accounts, no ads, no tracking.",
+   "path": "docs/src/content/docs/privacy.md"
+  },
+  {
    "slug": "reference/app",
    "title": "App and running",
    "description": "API reference for pyzed.App: the application class, run, screenshot, post, load_font and the window options of a Python desktop app.",
