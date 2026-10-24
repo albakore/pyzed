@@ -37,6 +37,9 @@ maps to Pyzed's components, styles and theme tokens. Follow these rules for ever
 | Work in columns | Board of cards | `blocks/kanban` |
 
 4. **Design every state of the screen** (section 7) before polishing the ideal one.
+5. **From a mockup or a screenshot** (the user can paste one into the Agent panel with Ctrl+V): copy its
+   structure, hierarchy and spacing with these blocks and tokens, not its pixel colors or its font sizes, so the
+   result still follows the theme and the type scale.
 
 ## 2. Visual hierarchy
 
@@ -114,7 +117,8 @@ Pyzed ships IBM Plex Sans (UI) and IBM Plex Mono (code). The type scale of `ui.l
 
 Colors come from the theme, so the app follows Pyzed Dark, Pyzed Light and any theme the user picks.
 **Never hard-code a hex color** in a view or a stylesheet: pass a token name (`background="panel"`,
-`color="text_muted"`) or read `pz.theme.current().<token>` for drawing code.
+`color="text_muted"`) or, in drawing code, `pz.theme.current().color("text_muted")` (it also takes short names
+such as `"muted"`, `"primary"` and `"danger"`).
 
 | Role | Token | Pyzed Dark | Pyzed Light | Use |
 | --- | --- | --- | --- | --- |
@@ -402,7 +406,8 @@ pz.run(NewProject)
 ## 16. Before you deliver: the design review
 
 Run `review_design(code)` and fix what it reports, then check by eye with `screenshot` (or
-`screenshot_project`) in both themes and at a narrow and a wide size:
+`screenshot_project`) in both themes and at a narrow and a wide size (outside the MCP server,
+`pyzed record shot main.py --theme "Pyzed Dark,Pyzed Light" --size 800x600,1280x800` records all four):
 
 1. Is there exactly one primary action per view, and is it where the flow ends?
 2. Can you tell the title, the content and the secondary text apart at a glance (squint test)?

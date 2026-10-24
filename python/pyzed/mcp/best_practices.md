@@ -141,8 +141,12 @@ hold for people too.
 
 - Start with `pyzed new my_app` (uv, ruff, ty and git ready) and run with `pyzed dev main.py` for
   hot reload. Check with `pyzed check` before committing.
+- Add libraries with `pyzed add <name>` (uv), never `pip install` into the project. Pyzed Design runs the uv
+  chosen in Settings → Package managers (included, this computer's or a custom path); if uv fails there, point
+  the user to that page instead of working around it.
 - Test logic without a window: create the app, call `update(...)` or the callbacks, and assert on
   the state. Smoke-test views with `app.screenshot(path)` (off-screen, no GPU), or with the
-  `screenshot` tool of this server.
+  `screenshot` tool of this server. `pyzed record shot` / `pyzed record clip` record any app, form or
+  component from the command line, in several themes and sizes at once.
 - Package with `pyzed build` (PyInstaller); `pyzed build --workflow` writes a CI workflow that
   builds for Linux, Windows and macOS.

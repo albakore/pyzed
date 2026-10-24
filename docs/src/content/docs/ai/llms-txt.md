@@ -55,6 +55,7 @@ If the `pyzed` MCP server is available, use its tools instead of guessing APIs.
 - Run with hot reload: `uv run pyzed dev main.py`
 - Check (ruff + types): `uv run pyzed check`
 - Tests: `uv run pytest -q`
+- Look at it in both themes: `uv run pyzed record shot main.py --theme "Pyzed Dark,Pyzed Light"`
 - Package: `uv run pyzed build`
 
 ## How Pyzed apps work

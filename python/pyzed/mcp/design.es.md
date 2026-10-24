@@ -26,6 +26,9 @@ los componentes, estilos y tokens de tema de Pyzed. Sigue estas reglas en cada p
 | Trabajo en columnas | Tablero de tarjetas | `blocks/kanban` |
 
 4. **Diseña todos los estados de la pantalla** (sección 7) antes de pulir el ideal.
+5. **Desde una maqueta o una captura** (el usuario puede pegar una en el panel Agent con Ctrl+V): copia su
+   estructura, jerarquía y espaciado con estos bloques y tokens, no sus colores de píxel ni sus tamaños de letra,
+   así el resultado sigue al tema y a la escala tipográfica.
 
 ## 2. Jerarquía visual
 
@@ -104,7 +107,8 @@ Pyzed trae IBM Plex Sans (interfaz) e IBM Plex Mono (código). La escala de `ui.
 
 Los colores salen del tema, así la app sigue a Pyzed Dark, Pyzed Light y cualquier tema que elija el usuario.
 **Nunca escribas un color hex fijo** en una vista o una hoja de estilos: pasa el nombre de un token
-(`background="panel"`, `color="text_muted"`) o lee `pz.theme.current().<token>` en código de dibujo.
+(`background="panel"`, `color="text_muted"`) o, en código de dibujo, `pz.theme.current().color("text_muted")`
+(también acepta nombres cortos como `"muted"`, `"primary"` y `"danger"`).
 
 | Rol | Token | Pyzed Dark | Pyzed Light | Uso |
 | --- | --- | --- | --- | --- |
@@ -398,7 +402,8 @@ pz.run(NewProject)
 ## 16. Antes de entregar: la revisión de diseño
 
 Pasa `review_design(code)` y arregla lo que diga; luego revisa a ojo con `screenshot` (o `screenshot_project`) en
-los dos temas y a un tamaño estrecho y otro ancho:
+los dos temas y a un tamaño estrecho y otro ancho (fuera del servidor MCP,
+`pyzed record shot main.py --theme "Pyzed Dark,Pyzed Light" --size 800x600,1280x800` graba las cuatro):
 
 1. ¿Hay exactamente una acción principal por vista, y está donde termina el flujo?
 2. ¿Se distinguen de un vistazo el título, el contenido y el texto secundario (prueba de entrecerrar los ojos)?
