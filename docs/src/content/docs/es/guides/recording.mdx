@@ -1,0 +1,171 @@
+---
+title: Grabar capturas y clips
+description: "pyzed record: capturas, clips en WebP animado, GIF y MP4 de una interfaz gráfica en Python, grabados sin ventana, de uno en uno o muchos en paralelo desde un archivo de trabajos o una ventana."
+sidebar:
+  order: 11
+---
+
+import Commands from '../../../../components/Commands.astro';
+
+`pyzed record` graba tu app **sin pantalla**: no hace falta ventana, monitor ni GPU. El puntero, el teclado
+y el reloj son simulados, así que los estados al pasar el ratón y al pulsar, los tooltips, lo que se escribe y
+las animaciones salen como en una ventana, y un clip sale igual en cualquier máquina. Todas las imágenes y
+animaciones de esta documentación se hacen así.
+
+## Una captura o un clip
+
+<Commands
+	uv={`
+		uv run pyzed record shot app.py -o app.png --size 800x600
+		uv run pyzed record clip app.py --steps "hover('Save'); press(); wait(600)" -f webp,gif,mp4
+	`}
+	pip={`
+		pyzed record shot app.py -o app.png --size 800x600
+		pyzed record clip app.py --steps "hover('Save'); press(); wait(600)" -f webp,gif,mp4
+	`}
+	python={`
+		{py} -m pyzed.recording shot app.py -o app.png --size 800x600
+		{py} -m pyzed.recording clip app.py --steps "hover('Save'); press(); wait(600)" -f webp,gif,mp4
+	`}
+/>
+
+Qué grabar (el **objetivo**):
+
+- `app.py` o `app.py:MiApp`: una `pz.App` de un archivo (sin nombre, la `app` del archivo o la última App que define).
+- `paquete.modulo:MiApp`: lo mismo, desde un módulo importable.
+- `login.pzform` / `tarjeta.pzcomp`: un formulario o componente hecho con el diseñador.
+- `code:ui.button('Save', None)`: un fragmento cuya última línea es el widget.
+
+Las opciones separadas por comas graban **todas las combinaciones**: `--theme "Pyzed Dark,Pyzed Light" --scale 1,2`
+hace cuatro archivos, llamados `app.pyzed-dark.1x.png`, `app.pyzed-dark.2x.png`... (`-o` acepta `{name}`,
+`{variant}`, `{theme}`, `{size}`, `{scale}`, `{fps}` y `{ext}`).
+
+| Opción | |
+| --- | --- |
+| `-f`, `--formats` | `webp` (animado), `png` (una imagen fija), `gif`, `apng`, `mp4`, `webm` (los dos últimos necesitan ffmpeg) |
+| `--size`, `--scale`, `--theme`, `--fps` | el lienzo en píxeles lógicos, píxeles por píxel lógico, temas, fotogramas por segundo |
+| `--steps`, `--duration` | lo que pasa (abajo) y los milisegundos que se graban después |
+| `--crop` | recorta el clip a lo dibujado, más `--margin` píxeles |
+| `--max-bytes`, `--max-width` | baja la calidad hasta que cada archivo quepa, reduce los clips anchos |
+| `--poster` | escribe también el primer fotograma como `.still.webp` (para «reducir movimiento») |
+| `--renderer` | `auto`, `gpu` o `cpu` (ver [Velocidad](#velocidad)) |
+
+## Pasos
+
+Los pasos mueven el puntero y el teclado mientras se graban los fotogramas, uno por línea o separados por `;`:
+
+```python
+hover("Save")            # va hasta el texto "Save" y se queda
+press()                  # un clic donde está el puntero (o press("Save"))
+drag("@0.2,0.5", "@0.8,0.5")   # puntos relativos a lo dibujado
+type_text("Ada", cps=12) # escribe en el campo con el foco
+key("Enter")             # o key("s", "ctrl")
+scroll(3)                # la rueda, tres líneas hacia abajo
+wait(600)                # pasa el tiempo: animaciones y spinners se mueven
+leave()                  # el puntero se va
+theme("Pyzed Light")     # cambia de tema en mitad del clip
+```
+
+Un objetivo es un texto en pantalla (`"Save"`; `"1#1"` es el segundo texto `"1"`, en orden de lectura), un
+punto `(x, y)`, `"@0.25,0.5"` (relativo a lo dibujado), `"input"` / `"input:1"`, `"center"`, o `("Save", 0, 30)`
+para apuntar al lado de un texto. Solo se admiten estos pasos y valores simples, así que un archivo de trabajos
+nunca ejecuta otro código.
+
+## Muchas a la vez: archivos de trabajos
+
+Un archivo de trabajos lista grabaciones en TOML (o JSON). Las listas de un trabajo graban todas las
+combinaciones, y `formats` escribe una misma grabación en varios formatos:
+
+```toml
+out_dir = "media"              # junto a este archivo
+
+[defaults]
+theme = ["Pyzed Dark", "Pyzed Light"]
+formats = ["webp", "png"]
+
+[[job]]
+name = "counter"
+target = "../counter.py"
+steps = """
+hover('1#1')
+press()
+wait(500)
+"""
+
+[[job]]
+name = "login"
+target = "../designer/login.pzform"
+size = "640x420"
+scale = [1, 2]
+formats = ["png"]
+```
+
+<Commands
+	uv={`
+		uv run pyzed record batch examples/recording/jobs.toml            # todos los trabajos
+		uv run pyzed record batch examples/recording/jobs.toml counter    # solo algunos
+		uv run pyzed record batch examples/recording/jobs.toml --dry-run  # lista lo que escribiría
+	`}
+	pip={`
+		pyzed record batch examples/recording/jobs.toml            # todos los trabajos
+		pyzed record batch examples/recording/jobs.toml counter    # solo algunos
+		pyzed record batch examples/recording/jobs.toml --dry-run  # lista lo que escribiría
+	`}
+	python={`
+		{py} -m pyzed.recording batch examples/recording/jobs.toml            # todos los trabajos
+		{py} -m pyzed.recording batch examples/recording/jobs.toml counter    # solo algunos
+		{py} -m pyzed.recording batch examples/recording/jobs.toml --dry-run  # lista lo que escribiría
+	`}
+/>
+
+El lote usa un proceso por núcleo (`--jobs N` para elegir) y **se salta lo que no cambió**: una caché en
+`out_dir` recuerda los ajustes y el archivo de cada resultado. `--force` lo graba todo de nuevo (úsalo
+cuando cambió un módulo que importa la app). Un trabajo que falla se informa y el resto sigue; `--json`
+imprime una línea por grabación para otras herramientas.
+
+La lista completa de ajustes está en el docstring de `pyzed.recording.batch`, y
+[examples/recording/jobs.toml](https://github.com/albakore/pyzed/blob/main/examples/recording/jobs.toml)
+es un ejemplo completo.
+
+## La ventana del grabador
+
+<Commands
+	uv={`uv run pyzed record gui examples/recording/jobs.toml`}
+	pip={`pyzed record gui examples/recording/jobs.toml`}
+	python={`{py} -m pyzed.recording gui examples/recording/jobs.toml`}
+/>
+
+![La ventana del grabador: los trabajos a la izquierda, los ajustes del trabajo elegido en el centro, la vista previa y la cola a la derecha](../../../../assets/guides/recorder.png)
+
+Los trabajos están a la izquierda, los ajustes del trabajo elegido en el centro (temas y formatos se activan
+con un clic), y la vista previa y la cola a la derecha. **Preview** graba una vez el trabajo elegido;
+**Record all** ejecuta el lote en otros procesos, así que la ventana sigue respondiendo y **Stop** lo
+detiene. Un clic en una grabación terminada la muestra. **Save** escribe el archivo de trabajos que lee la
+línea de comandos.
+
+## Desde Python
+
+```python
+from pyzed import recording as rec
+
+take = rec.record(MiApp, [rec.hover("Save"), rec.press(), rec.wait(600)], size=(480, 270), fps=20)
+rec.encode(take.images(), "save.webp", "webp", fps=take.fps, target=200_000)
+rec.screenshot(MiApp, size=(800, 600)).save("app.png")
+```
+
+`take.images(pointer=False)` deja fuera el puntero, y `rec.crop_box(...)` encuentra lo dibujado.
+
+## Velocidad
+
+- Cada proceso conserva su renderer (un dispositivo de GPU y sus pipelines) entre grabaciones, así que un
+  lote lo paga una sola vez. Cada fotograma construye la vista dos veces, no tres, y llega al codificador
+  como píxeles, sin un PNG de por medio.
+- El WebP se codifica con esfuerzo 4: el esfuerzo 6 tarda diez veces más para archivos un 2 % más
+  pequeños. La calidad que cabe en `max_bytes` se busca por bisección, en tres o cuatro intentos.
+- `--renderer auto` dibuja con la GPU si la hay, incluido un Vulkan por software (lavapipe), así que las
+  grabaciones se ven igual en todas partes. En una máquina cuya GPU es por software (`pyzed record info` lo
+  dice), `--renderer cpu` es de dos a tres veces más rápido para borradores, pero el desenfoque, el brillo
+  y el cristal salen un poco distintos y `pz.shader` muestra su color de respaldo.
+
+En una máquina de 4 núcleos con lavapipe, el clip `overview` de la sección de animación (120 fotogramas a
+1520×720) pasó de 162 s a 26 s.

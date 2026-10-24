@@ -1174,23 +1174,18 @@ def hover_clip(c: Clip):
 # -- rendering -------------------------------------------------------------------------------------
 def render_offscreen(c: Clip, folder: Path) -> int:
     """Renders the clip's frames to ``folder/00001.png``...; returns how many there are."""
-    import pyzed as pz
-    from PIL import Image
+    from pyzed import recording
 
     n = 0
-    last: Path | None = None
     started = time.time()
     for frame in c.make(c):
-        path = folder / "render.png"
-        pz.screenshot(frame.app, path, size=frame.size, scale=SCALE, wait=0.0)
-        with Image.open(path) as im:
-            im = im.convert("RGB")
-            if frame.pointer is not None:
-                draw_pointer(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed, SCALE)
-            for _ in range(frame.hold):
-                n += 1
-                last = folder / f"{n:05d}.png"
-                im.save(last, compress_level=1)
+        # Drawn straight to pixels with the renderer the process keeps (no PNG to read back).
+        im = recording.screenshot(frame.app, size=frame.size, scale=SCALE, wait=0.0)
+        if frame.pointer is not None:
+            draw_pointer(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed, SCALE)
+        for _ in range(frame.hold):
+            n += 1
+            im.save(folder / f"{n:05d}.png", compress_level=1)
     print(f"  {n} frames in {time.time() - started:.0f}s")
     return n
 
