@@ -10,7 +10,7 @@ from pyzed import ui
 class Settings(pz.App):
     title = "Settings"
     size = (640, 420)
-    theme = "One Dark"  # any name from pz.themes.names(), a Theme, or pz.themes.auto()
+    theme = "Pyzed Dark"  # any name from pz.themes.names(), a Theme, or pz.themes.auto()
 
     def __init__(self):
         self.font_size = 14

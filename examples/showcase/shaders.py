@@ -36,7 +36,7 @@ TINTS = {"Ripple": "#7dd3fc", "Voronoi": "#a78bfa"}
 class Shaders(pz.App):
     title = "Shaders"
     size = (1140, 720)
-    theme = pz.themes.ONE_DARK
+    theme = pz.themes.PYZED_DARK
 
     def __init__(self):
         self.speed = 1.0

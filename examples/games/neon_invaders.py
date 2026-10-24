@@ -69,7 +69,7 @@ class Invader:
 class NeonInvaders(pz.App):
     title = "Neon Invaders"
     size = (W + 32, H + 32)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

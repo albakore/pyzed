@@ -35,7 +35,7 @@ margin. ``poster=`` also writes the first frame as a still WebP (for ``prefers-r
 CLI (records a snippet, the last expression of which is the widget, with a list of steps)::
 
     python docs/scripts/anim_webp.py out.webp --code 'ui.button("Save", None)' \\
-        --steps 'hover("Save"); press(); wait(500)' --size 320x120 --theme "One Light"
+        --steps 'hover("Save"); press(); wait(500)' --size 320x120 --theme "Pyzed Light"
 """
 
 from __future__ import annotations
@@ -58,8 +58,8 @@ from pyzed import _core
 
 Point = tuple[float, float]
 
-DARK_THEMES = ["One Dark", "Ayu Mirage", "Gruvbox Dark", "Pyzed Midnight"]
-LIGHT_THEMES = ["One Light", "Ayu Light", "Gruvbox Light", "Pyzed Dawn"]
+DARK_THEMES = ["Pyzed Dark", "One Dark", "Ayu Mirage", "Gruvbox Dark"]
+LIGHT_THEMES = ["Pyzed Light", "One Light", "Ayu Light", "Gruvbox Light"]
 
 
 # -- steps -----------------------------------------------------------------------------------------
@@ -371,7 +371,7 @@ def as_app(target: Any, theme_name: str | None = None, bg: str | None = "editor"
     build = target
 
     class Clip(pz.App):
-        theme = pz.themes.get(theme_name or "One Dark")
+        theme = pz.themes.get(theme_name or "Pyzed Dark")
 
         def view(self):
             widget = build()
@@ -530,7 +530,7 @@ def save_poster(image, out: Path | str, quality: int = 82) -> None:
 
 
 def record_webp(target: Any, steps: Sequence[Step], *, out: Path | str, size: Point = (720, 360),
-                theme: str | None = "One Dark", scale: float = 2, fps: int = 20, pointer: bool = True,
+                theme: str | None = "Pyzed Dark", scale: float = 2, fps: int = 20, pointer: bool = True,
                 crop: str | tuple | None = None, margin: int = 40, quality: int = 80, poster: Path | str | None = None,
                 fit: tuple[int, int] | None = None) -> dict:
     """Records ``target`` (an App, App class or a function returning the widget) playing ``steps``
@@ -610,7 +610,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--steps", default="hover('center'); press(); wait(600)",
                         help="steps separated by ';' (wait, move, hover, press, drag, type_text, key, scroll...)")
     parser.add_argument("--size", default="720x360", help="canvas in logical pixels, WxH")
-    parser.add_argument("--theme", default="One Dark")
+    parser.add_argument("--theme", default="Pyzed Dark")
     parser.add_argument("--fps", type=int, default=20)
     parser.add_argument("--quality", type=int, default=80)
     parser.add_argument("--crop", action="store_true", help="trim to the content plus a margin")

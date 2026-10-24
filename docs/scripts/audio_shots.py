@@ -26,18 +26,19 @@ SR = 48000
 W, H = 720, 300
 FPS = 20
 
-BG = (30, 33, 40)
-PANEL = (40, 44, 52)
-GRID = (55, 60, 70)
-FG = (171, 178, 191)
-DIM = (110, 118, 130)
-BLUE = (97, 175, 239)
-GREEN = (152, 195, 121)
-ORANGE = (209, 154, 102)
-RED = (224, 108, 117)
-PURPLE = (198, 120, 221)
-CYAN = (86, 182, 194)
-YELLOW = (229, 192, 123)
+# Pyzed Dark (python/pyzed/theme_palettes.py)
+BG = (20, 22, 27)
+PANEL = (25, 28, 34)
+GRID = (42, 47, 57)
+FG = (220, 223, 229)
+DIM = (124, 132, 145)
+BLUE = (111, 195, 255)
+GREEN = (63, 207, 142)
+ORANGE = (245, 165, 36)
+RED = (242, 109, 133)
+PURPLE = (139, 131, 255)
+CYAN = (98, 210, 196)
+YELLOW = (245, 181, 71)
 
 
 def font(size: int, mono: bool = False, bold: bool = False) -> ImageFont.FreeTypeFont:

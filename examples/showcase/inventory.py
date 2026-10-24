@@ -46,7 +46,7 @@ SLOT = 76
 class Inventory(pz.App):
     title = "Inventory"
     size = (1180, 640)
-    theme = pz.themes.ONE_DARK
+    theme = pz.themes.PYZED_DARK
 
     def __init__(self):
         self.selected = 0

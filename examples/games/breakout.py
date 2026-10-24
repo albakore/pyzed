@@ -26,7 +26,7 @@ ROW_COLORS = ["#d07277", "#dfa067", "#e5c07b", "#a1c181", "#6eb4bf", "#74ade8"]
 class Breakout(pz.App):
     title = "Breakout"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

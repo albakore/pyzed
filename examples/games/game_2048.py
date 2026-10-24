@@ -88,7 +88,7 @@ class Tile:
 class Game2048(pz.App):
     title = "2048"
     size = (BOARD + 48, BOARD + 150)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

@@ -23,7 +23,7 @@ MUTED = "#ffffffaa"
 class Dashboard(pz.App):
     title = "Control center"
     size = (1180, 700)
-    theme = pz.themes.ONE_DARK
+    theme = pz.themes.PYZED_DARK
 
     def __init__(self):
         self.playing = True

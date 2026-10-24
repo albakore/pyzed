@@ -125,7 +125,7 @@ class FrameAnimation:
 class Walker(pz.App):
     title = "Walker"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.held = None            # the keys held down; None reads the keyboard

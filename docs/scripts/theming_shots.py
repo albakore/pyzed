@@ -65,7 +65,7 @@ class BundledThemes(pz.App):
 
 
 class ButtonVariants(pz.App):
-    """The button variants and tints in One Dark."""
+    """The button variants and tints in the default theme (Pyzed Dark)."""
 
     size = (760, 170)
 

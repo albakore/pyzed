@@ -129,7 +129,7 @@ class HighScores:
 class TargetRush(pz.App):
     title = "Target Rush"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None, path=None, sound_backend="auto"):
         self.random = random.Random(seed)

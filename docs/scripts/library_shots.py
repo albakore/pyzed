@@ -65,7 +65,7 @@ import pyzed as pz
 from pyzed import draw, ui
 
 ui.base.KEY_STYLE = "words"
-THEMES = {"dark": "One Dark", "light": "One Light"}
+THEMES = {"dark": "Pyzed Dark", "light": "Pyzed Light"}
 CYCLE = {"dark": aw.DARK_THEMES, "light": aw.LIGHT_THEMES}
 PREVIEW_SIZE = (720, 360)
 EXAMPLE_SIZE = (720, 200)
@@ -420,7 +420,7 @@ def render_entry(args) -> tuple[str, dict, list[str], float]:
 
 def sandbox() -> Path:
     folder = Path(tempfile.mkdtemp(prefix="pyzed-library-"))
-    shutil.copy(ROOT / "docs" / "screenshots" / "zed-one-dark.png", folder / "photo.png")
+    shutil.copy(ROOT / "docs" / "screenshots" / "zed-dark.png", folder / "photo.png")
     shutil.copy(HERE.parent / "src" / "assets" / "logo.svg", folder / "logo.svg")
     return folder
 
@@ -440,7 +440,7 @@ def probe(slug: str) -> None:
         found.extend((yield ("probe",)))
         yield from ctx.tick()
 
-    aw.record_frames(Shot(code, "One Dark", preview.get("fill", False), preview.get("start")), [aw.Step(grab)],
+    aw.record_frames(Shot(code, THEMES["dark"], preview.get("fill", False), preview.get("start")), [aw.Step(grab)],
                      size=tuple(preview.get("size", PREVIEW_SIZE)))
     for kind, text, x, y, w, h in found:
         if kind != "container":

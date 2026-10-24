@@ -52,7 +52,7 @@ CYAN = "#22d3ee"
 PINK = "#f472b6"
 GOLD = "#fbbf24"
 GREEN = "#34d399"
-THEME = pz.themes.ONE_DARK
+THEME = pz.themes.PYZED_DARK
 
 
 # -- freezing animations at a time ----------------------------------------------------------------

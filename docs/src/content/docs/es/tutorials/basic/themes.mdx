@@ -23,13 +23,13 @@ coloreas los componentes uno por uno.
 
 ## Qué vas a aprender
 
-- Elegir un tema en código (`theme = "One Light"`) y en el diseñador (**Propiedades → Aspecto → Tema**).
+- Elegir un tema en código (`theme = "Pyzed Light"`) y en el diseñador (**Propiedades → Aspecto → Tema**).
 - Cambiar solo el color de **acento**.
 - Seguir el modo **claro u oscuro** del sistema operativo.
 - Crear **tu propio tema** a partir de tres colores y darle un nombre.
 - Usar **colores del tema** (`"accent"`, `"text_muted"`) en lugar de valores `#hex` fijos.
 
-<Media src={sunset} light={light} alt="El selector de temas con un tema propio, Sunset" caption="La misma ventana con un tema propio, “Sunset” (y, en la versión clara de esta página, One Light con acento violeta)." eager />
+<Media src={sunset} light={light} alt="El selector de temas con un tema propio, Sunset" caption="La misma ventana con un tema propio, “Sunset” (y, en la versión clara de esta página, Pyzed Light con acento violeta)." eager />
 
 ## Pasos
 
@@ -40,7 +40,7 @@ coloreas los componentes uno por uno.
 
    ```python
    class ThemeSwitcher(pz.App):
-       theme = "One Dark"
+       theme = "Pyzed Dark"
    ```
 
 2. **Cámbialo mientras la app corre.** Asigna `self.theme`; el siguiente redibujado lo usa. Un desplegable con todos
@@ -54,14 +54,14 @@ coloreas los componentes uno por uno.
    los enlaces:
 
    ```python
-   self.theme = pz.themes.get("One Dark").with_accent("#e5c07b")
+   self.theme = pz.themes.get("Pyzed Dark").with_accent("#e5c07b")
    ```
 
 4. **Sigue al sistema.** `pz.themes.auto(light, dark)` cambia solo cuando el usuario pasa su sistema operativo de
    modo claro a oscuro:
 
    ```python
-   self.theme = pz.themes.auto("One Light", "One Dark")
+   self.theme = pz.themes.auto("Pyzed Light", "Pyzed Dark")
    ```
 
 5. **Crea el tuyo.** `pz.Theme.generate` deduce cada superficie, borde, estado hover y texto atenuado a partir de
@@ -132,7 +132,7 @@ fábrica sirve a los tres controles.
 ```python
 def on_key(self, combo):                    # un atajo para todas las ventanas de la app
     if combo == "ctrl-t":                   # Ctrl+T: alterna claro y oscuro
-        self.base = "One Light" if self.resolved_theme().is_dark else "One Dark"
+        self.base = "Pyzed Light" if self.resolved_theme().is_dark else "Pyzed Dark"
         self.follow_system = False
 
 def on_resize(self, width, height):         # el evento de tamaño de la propia ventana

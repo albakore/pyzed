@@ -90,7 +90,7 @@ class Host(pz.App):
 # -- the welcome window ----------------------------------------------------------------------------
 @shot
 def welcome():
-    for theme, suffix in (("One Dark", ""), ("One Light", "-light")):
+    for theme, suffix in (("Pyzed Dark", ""), ("Pyzed Light", "-light")):
         app = make(None, theme)
         app.welcome.open()
         save(app, EDITOR / f"welcome{suffix}.png")
@@ -142,7 +142,7 @@ def window_frames(width=1100, gap=12):
         with Image.open(tmp) as im:
             bars.append(im.convert("RGB").crop((0, 0, im.width, ui_frame.HEIGHTS[style] * SCALE)))
     pad = gap * SCALE
-    bg = pz.themes.get("One Dark").editor
+    bg = pz.themes.PYZED_DARK.editor
     sheet = Image.new("RGB", (bars[0].width + 2 * pad, sum(b.height + pad for b in bars) + pad),
                       tuple(int(bg.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
     y = pad
@@ -167,7 +167,7 @@ def menus():
 # -- the main views --------------------------------------------------------------------------------
 @shot
 def form_view():
-    for theme, suffix in (("One Dark", ""), ("One Light", "-light"), ("Gruvbox Dark", "-gruvbox"),
+    for theme, suffix in (("Pyzed Dark", ""), ("Pyzed Light", "-light"), ("Gruvbox Dark", "-gruvbox"),
                           ("Ayu Mirage", "-ayu")):
         app = make(theme=theme)
         app.doc.select("sign_in")
@@ -182,9 +182,43 @@ def component_view():
     if not comps:
         print("no components in", folder)
         return
-    for theme, suffix in (("One Dark", ""), ("One Light", "-light")):
+    for theme, suffix in (("Pyzed Dark", ""), ("Pyzed Light", "-light")):
         app = make(comps[0], theme)
         save(app, EDITOR / f"component-view{suffix}.png")
+
+
+@shot
+def status_bar():
+    """The status bar alone, with the login form's sign_in button selected."""
+    app = make()
+    app.doc.select("sign_in")
+    app._selection_changed()
+    out = EDITOR / "status-bar.png"
+    pz.screenshot(Host(lambda: app.status_bar(app.theme_obj), app.theme), out, size=(904, 27), scale=SCALE)
+    print("wrote", out.relative_to(ROOT))
+
+
+@shot
+def style_picker():
+    """A sidebar button with a masked gradient, a serif global font and the color picker open."""
+    from pyzed import style as pz_style
+    from pyzed.designer import new, styling
+
+    work = Path(tempfile.mkdtemp(prefix="pyzed-style-"))
+    app = Designer(new.new_form(work / "side", template="sidebar"), language_servers=False)
+    app.frame = "gnome"
+    app.toasts.clear()
+    app.dialog = None
+    app.doc.select("nav1")
+    app._selection_changed()
+    app.set_style(None, "font", "serif")
+    app.set_style(None, "color", "#f5b547")
+    app.set_style("nav1", "weight", "bold")
+    gradient = pz_style.Gradient(["#8b83ff", "#3fcf8e"], angle=90)
+    app.set_style_value("nav1", "background", styling.picked(pz_style.Paint(gradient, mask=pz_style.Mask([1, 0]))))
+    app.toggle_color_picker("nav1", "background")
+    app.picker_at = (1050, 480)  # left of the Properties panel, beside the form
+    save(app, ROOT / "docs" / "screenshots" / "designer-style.png")
 
 
 # -- settings --------------------------------------------------------------------------------------
@@ -381,7 +415,7 @@ def shader_view():
     shutil.copy(TEMPLATES / "glow_ring.pzshad", work / "glow_ring.pzshad")
     # the views and panels, on the glow ring
     dst = work / "glow_ring.pzshad"
-    for theme, suffix in (("One Dark", ""), ("One Light", "-light")):
+    for theme, suffix in (("Pyzed Dark", ""), ("Pyzed Light", "-light")):
         app = shader_app(dst, theme)
         fitted(app, SHADING / f"shader-view{suffix}.png")
     app = shader_app(dst)

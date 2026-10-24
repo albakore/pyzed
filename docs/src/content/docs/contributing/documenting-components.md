@@ -210,8 +210,8 @@ python docs/scripts/gen_library.py --check       # coverage and consistency, wri
 ```
 
 Previews are animated WebP recorded off-screen at scale 2 with
-[`anim_webp.py`](/pyzed/contributing/docs/#animated-captures), centered on the theme background, in One
-Dark and One Light (examples: `<slug>-<n>.<theme>.webp`; each with a still `*.still.webp` for reduced
+[`anim_webp.py`](/pyzed/contributing/docs/#animated-captures), centered on the theme background, in Pyzed
+Dark and Pyzed Light (examples: `<slug>-<n>.<theme>.webp`; each with a still `*.still.webp` for reduced
 motion). By default the pointer hovers and presses the middle of the preview, and each variant is
 hovered and pressed (or clicked and typed into when it has a text field); a clip in which nothing changes
 plays a theme cycle instead. Give the new component a script in `docs/scripts/library_anim.py` when it
@@ -263,7 +263,7 @@ Tips for good images:
   just the default.
 - Use realistic text ("How was your stay?"), never "foo" or "test".
 - Keep the size tight: the scripts render at scale 2, so 300×140 logical pixels is a 600×280 image.
-- One Dark is the default theme of the images; the library pages also have One Light.
+- Pyzed Dark is the default theme of the images; the library pages also have Pyzed Light.
 
 ## 5. Guides and the editor docs
 

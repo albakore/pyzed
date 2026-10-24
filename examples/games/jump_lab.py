@@ -52,7 +52,7 @@ class Ball:
 class JumpLab(pz.App):
     title = "Jump Lab"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         rnd = random.Random(seed)

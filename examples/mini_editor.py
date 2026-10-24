@@ -78,7 +78,7 @@ class MiniEditor(pz.App):
         self.show_left = not self.show_left
 
     def toggle_theme(self):
-        self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
+        self.theme = "Pyzed Light" if self.resolved_theme().is_dark else "Pyzed Dark"
 
     def commands(self):
         return [
