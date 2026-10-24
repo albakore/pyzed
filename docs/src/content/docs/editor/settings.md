@@ -12,8 +12,8 @@ preference of the designer and of its code editor in one dialog. Changes apply a
 ![The settings dialog](../../../assets/editor/settings.png)
 
 - **The index** on the left groups the pages: *Designer* (General, Fonts and size, Form canvas, Running, Logs and
-  errors, Telemetry), *Code editor* (Appearance, Cursor, Editing, Deleting, Scrolling and wrapping, Code lens and
-  diagnostics, Language servers) and, with a project open, *Project* (Rendering). A number next to a page counts
+  errors, Rendering, Telemetry), *Code editor* (Appearance, Cursor, Editing, Deleting, Scrolling and wrapping, Code
+  lens and diagnostics, Language servers) and *Project* (App rendering, which asks you to open a project first). A number next to a page counts
   its changed settings.
 - **Search settings…** (focused when the dialog opens) finds a setting by its name or its help, in English or in
   your language, across every page.
@@ -66,7 +66,17 @@ updates, the log file).
 
 ## Rendering
 
-**Project → Rendering** chooses how the project's app draws its windows. It is saved in the project's
+There are two renderers to choose: Pyzed Design's own, and the one of each project's app.
+
+**Designer → Rendering** chooses how Pyzed Design draws its own windows: *Renderer* (Auto, GPU or CPU), the
+*Graphics API* and, on laptops with two, the *GPU*. It is a user setting and applies the next time Pyzed Design
+starts (the page says so while a change waits, and shows what draws the windows now). The CPU renderer works
+without a GPU, but shader previews need one. The apps the designer starts (Run, an exported app) do not inherit
+it: they follow their own project.
+
+![Pyzed Design's own renderer](../../../assets/editor/settings-designer-rendering.png)
+
+**Project → App rendering** chooses how the project's app draws its windows. It is saved in the project's
 `pyproject.toml`, so it applies when the designer runs the project, when you run it with `pz.run` or
 `pyzed run`, and in the [exported app](/pyzed/editor/exporting/).
 

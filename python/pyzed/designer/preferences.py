@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .. import rendering as _rendering
 from .settings import _read, settings_path
 
 #: Smallest and largest interface scale, and the step of zooming in and out.
@@ -56,6 +57,12 @@ class DesignerSettings:
     window_frame: bool = True
     #: Platform whose window frame the canvas shows around the form ("" follows this system).
     preview_frame: str = ""
+    #: How the designer draws its own windows: "auto", "gpu" or "cpu" (read when it starts, see ``rendering``).
+    renderer: str = "auto"
+    #: The graphics API of the designer's GPU renderer ("auto", "vulkan", "metal", "dx12" or "gl").
+    gpu_api: str = "auto"
+    #: Which GPU the designer uses on machines with two: "auto", "high" (the fast one) or "low".
+    gpu_power: str = "auto"
     #: Save the form before running it.
     save_on_run: bool = False
     #: Open the console when a form starts running.
@@ -117,12 +124,20 @@ class DesignerSettings:
         out.grid = min(max(out.grid, 2), 64)
         if out.outline_eye not in EYE_MODES:
             out.outline_eye = "visible"
+        for name, choices in (("renderer", _rendering.RENDERERS), ("gpu_api", _rendering.GPU_APIS),
+                              ("gpu_power", _rendering.POWER)):
+            if getattr(out, name) not in choices:
+                setattr(out, name, "auto")
         out.ui_scale = min(max(round(out.ui_scale, 2), UI_SCALE[0]), UI_SCALE[1])
         out.docks = {k: v for k, v in out.docks.items() if is_place(v)}
         out.layouts = {str(k): v for k, v in out.layouts.items() if isinstance(v, dict)}
         out.sizes = {k: float(v) for k, v in out.sizes.items() if k in DOCKS and isinstance(v, (int, float))}
         out.recent = [str(p) for p in out.recent][:10]
         return out
+
+    def rendering(self) -> _rendering.Rendering:
+        """The designer's own renderer settings (the projects' apps follow their ``pyproject.toml``)."""
+        return _rendering.Rendering(renderer=self.renderer, gpu_api=self.gpu_api, power=self.gpu_power)
 
     def remember(self, path: Path) -> None:
         """Puts ``path`` first in the recent files."""

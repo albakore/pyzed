@@ -87,6 +87,11 @@ _LINE_HEIGHTS = tuple((name, name.capitalize()) for name in _settings.LINE_HEIGH
 _CURSORS = tuple((shape, shape.capitalize()) for shape in _settings.CURSOR_SHAPES)
 _EYES = (("visible", "Hidden when running"), ("editor", "Hidden in the editor only"))
 _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
+_RENDERERS = (("auto", "Auto"), ("gpu", "GPU"), ("cpu", "CPU"))
+_GPU_APIS = (("auto", "Auto"), ("vulkan", "Vulkan"), ("metal", "Metal"), ("dx12", "DirectX 12"), ("gl", "OpenGL"))
+_POWER = (("auto", "Auto"), ("high", "Fast"), ("low", "Saves battery"))
+#: The designer's own renderer: read when it starts, so a change asks for a restart.
+RESTART_KEYS = frozenset({"renderer", "gpu_api", "gpu_power"})
 
 #: Every preference the dialog shows, page by page.
 SETTINGS: Tuple[Setting, ...] = (
@@ -140,6 +145,17 @@ SETTINGS: Tuple[Setting, ...] = (
             "With buttons to copy the error and go to its line; errors are always in View → Logs"),
     Setting("designer", "log_file", "logs", "Write a log file",
             "pyzed-design.log in the Pyzed config folder, for bug reports (applies on restart)", project=False),
+    # the designer's own rendering
+    Setting("designer", "renderer", "rendering", "Renderer",
+            "How Pyzed Design draws its windows. Auto: the GPU when there is a real one, else the CPU. CPU works "
+            "without a GPU but shader previews need the GPU (applies on restart)", kind="segmented",
+            options=_RENDERERS, project=False),
+    Setting("designer", "gpu_api", "rendering", "Graphics API",
+            "Auto tries Vulkan, Metal or DirectX 12, then OpenGL (applies on restart)", kind="select",
+            options=_GPU_APIS, project=False),
+    Setting("designer", "gpu_power", "rendering", "GPU",
+            "On laptops with two: the dedicated GPU or the integrated one (applies on restart)", kind="segmented",
+            options=_POWER, project=False),
     # code editor
     Setting("editor", "theme", "editor.appearance", "Editor theme", kind="select", options=_editor_themes),
     Setting("editor", "font_family", "editor.appearance", "Font", kind="font", default="IBM Plex Mono"),
@@ -200,6 +216,7 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("canvas", "Form canvas", "layout-grid"),
         ("running", "Running", "play"),
         ("logs", "Logs and errors", "scroll-text"),
+        ("rendering", "Rendering", "monitor-cog"),
         ("telemetry", "Telemetry", "chart-no-axes-column"),
     )),
     ("Code editor", (
@@ -212,7 +229,7 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("editor.servers", "Language servers", "server"),
     )),
     ("Project", (
-        ("project.rendering", "Rendering", "monitor-cog"),
+        ("project.rendering", "App rendering", "app-window"),
     )),
 )
 
@@ -463,9 +480,13 @@ def _servers(c: SettingsController, t: Theme) -> List[Any]:
 def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
     """The project's renderer: GPU or CPU, the graphics API, the GPU to use and vsync."""
     r = c.rendering()
+    designer = ui.button(tr("Pyzed Design's renderer"), lambda: c.show("rendering"), icon="monitor-cog",
+                         variant="ghost", size="sm", theme=t)
     if r is None:
-        return [ui.callout(tr("Open a project"), tr("The rendering settings are saved in the project's "
-                                                   "pyproject.toml."), tint="info", theme=t)]
+        return [ui.callout(tr("Open a project"), tr("How the project's app draws is saved in its pyproject.toml: "
+                                                   "open a project to change it. Pyzed Design's own renderer is "
+                                                   "in Designer → Rendering."), tint="info", theme=t),
+                _core.row([designer])]
 
     def seg(key: str, options: Sequence[Tuple[str, str]], disabled: bool = False) -> Any:
         labels = {tr(label): value for value, label in options}
@@ -532,12 +553,34 @@ def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
     ]
     env = "  ".join(f"{k}={v}" for k, v in r.env().items()) or tr("Nothing: Pyzed decides")
     return [
-        ui.settings_group(tr("Rendering"), rows, theme=t,
+        ui.settings_group(tr("App rendering"), rows, theme=t, end=designer,
                           description=tr("Saved in pyproject.toml ([tool.pyzed.rendering]): used by Run, pz.run and "
-                                         "the exported app")),
+                                         "the exported app, not by Pyzed Design itself")),
         ui.settings_group(tr("Quality and frame rate"), quality, theme=t,
                           description=tr("Lower them on touch panels, phones and laptops on battery")),
         ui.label(f"{tr('Environment')}: {env}", size="xs", mono=True, color="text_muted", theme=t),
+    ]
+
+
+def designer_rendering_page(c: SettingsController, t: Theme) -> List[Any]:
+    """Pyzed Design's own renderer (its settings, read when it starts) and what draws its windows now."""
+    from ..app import renderer_info
+
+    settings = [s for s in SETTINGS if s.page == "rendering"]
+    if c.value(settings[0]) == "cpu":
+        settings = settings[:1]  # the GPU's settings mean nothing to the CPU renderer
+    info = renderer_info()
+    now = (f"{info[0]} · {info[1]}" if info else tr("Unknown"))
+    wanted = c.d.prefs.rendering().env()
+    pending = c.d.rendering_started is not None and wanted != c.d.rendering_started
+    return [
+        _group(c, tr("Rendering"), settings, t),
+        ui.callout(tr("Restart Pyzed Design to apply the change"), tr("The renderer is chosen when Pyzed Design "
+                                                                     "starts."), tint="warning", theme=t)
+        if pending else None,
+        ui.label(f"{tr('Drawing now with')}: {now}", size="sm", color="text_muted", theme=t),
+        ui.label(tr("Each project's app has its own renderer: Project → App rendering"), size="sm",
+                 color="text_muted", theme=t),
     ]
 
 
@@ -549,6 +592,8 @@ def page_content(c: SettingsController, page: str, t: Theme) -> List[Any]:
         return rendering_page(c, t)
     if page == "telemetry":
         return [telemetry_group(c.d, t)]
+    if page == "rendering":
+        return designer_rendering_page(c, t)
     title = tr(page_titles().get(page, (page, ""))[0])
     out: List[Any] = [_group(c, title, [s for s in SETTINGS if s.page == page], t)]
     if page == "editor.servers":
@@ -568,11 +613,8 @@ def search_content(c: SettingsController, t: Theme) -> List[Any]:
 
 
 def _index(c: SettingsController, t: Theme) -> Any:
-    has_project = c.project_root is not None
     items: List[Any] = []
     for group, pages in PAGES:
-        if group == "Project" and not has_project:
-            continue
         items.append(_core.container(ui.label(tr(group).upper(), size="xs", mono=True, color="text_muted", theme=t),
                                      padding=(8, 8, 2, 8)))
         for key, title, icon in pages:
@@ -639,8 +681,6 @@ def dialog(d: "Designer", t: Theme) -> Any:
     """The Settings dialog: search, scope and profile on top, the index of pages on the left and the chosen page
     (or the search results) on the right; Reset all and the settings file in the footer."""
     c = d.settings_ui
-    if c.page.startswith("project.") and c.project_root is None:
-        c.page = "general"
     content = search_content(c, t) if c.query.strip() else page_content(c, c.page, t)
     if c.scope == "project":
         content.insert(0, ui.callout(tr("Project settings"),
