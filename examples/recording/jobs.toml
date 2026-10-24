@@ -1,0 +1,50 @@
+# Recording jobs for `pyzed record`: run them all with
+#
+#     pyzed record batch examples/recording/jobs.toml
+#
+# or open them in the recorder's window with `pyzed record gui examples/recording/jobs.toml`.
+# Files land in examples/recording/media; a job whose settings and app didn't change is skipped.
+
+out_dir = "media"
+
+[defaults]
+theme = ["Pyzed Dark", "Pyzed Light"]   # lists record every combination: 2 themes here
+formats = ["webp", "png"]               # one recording, written in every format
+fps = 20
+
+# A clip: the pointer presses "+ 1" twice ('1#1': the second text "1" on screen, in reading order).
+[[job]]
+name = "counter"
+target = "../counter.py"
+size = "360x220"
+steps = """
+hover('1#1')
+press()
+press()
+wait(500)
+"""
+
+# A clip at two sizes, cropped to what is drawn.
+[[job]]
+name = "save-button"
+target = "code:ui.button('Save', lambda: None, icon='save', variant='solid')"
+size = ["320x160", "480x200"]
+steps = "hover('Save'); press(); wait(600); leave()"
+crop = "content"
+poster = true
+
+# A still of a form made with the designer, at two pixel densities.
+[[job]]
+name = "login"
+target = "../designer/login.pzform"
+size = "640x420"
+scale = [1, 2]
+formats = ["png"]
+
+# Time passing with nobody touching anything, as a small video and a GIF.
+[[job]]
+name = "stopwatch"
+target = "../stopwatch.py"
+duration = 2000
+formats = ["mp4", "gif"]
+max_width = 640
