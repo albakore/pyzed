@@ -25,6 +25,10 @@ into the packaged app. The settings become the environment variables Iced and wg
 (``ICED_BACKEND``, ``WGPU_BACKEND``, ``WGPU_ADAPTER_NAME``, ``WGPU_POWER_PREF``, ``ICED_PRESENT_MODE``,
 ``ICED_MSAA``, ``ICED_FRAME_LATENCY``, ``ICED_MEMORY``, ``ICED_MAX_FPS``, ``ICED_BACKGROUND_FPS``), so a
 variable you set yourself still wins, and a deployed app can be tuned without touching its code.
+
+Pyzed Design draws its own windows with the renderer of its settings (Settings → Rendering). It lists
+the variables it set for itself in ``PYZED_DESIGNER_RENDERING``, and an app it starts (Run, an exported
+app) drops them when it imports Pyzed, so the app follows its own project instead of the designer's.
 """
 
 from __future__ import annotations
@@ -74,6 +78,8 @@ _ENV = {
 #: Settings that matter for the CPU renderer too (the rest only configure the GPU).
 _BOTH = {"renderer", "max_fps", "background_fps"}
 TABLE = "tool.pyzed.rendering"
+#: The variables Pyzed Design set for its own windows (comma separated), which the apps it starts drop.
+DESIGNER_ENV = "PYZED_DESIGNER_RENDERING"
 
 
 def _fps(value: Any, *, name: str, strict: bool) -> Optional[int]:
@@ -228,3 +234,26 @@ def save(root: Union[str, Path], rendering: Rendering) -> Path:
         text = text.rstrip() + "\n\n" + new
     file.write_text(re.sub(r"\n{3,}", "\n\n", text).rstrip() + "\n", encoding="utf-8")
     return file
+
+
+def keep_to_self(names: List[str], environ: Optional[MutableMapping[str, str]] = None) -> None:
+    """Notes that the variables ``names`` (set by ``Rendering.apply`` for Pyzed Design's own windows) must
+    not reach the apps it starts: they drop them (see ``forget_inherited``)."""
+    environ = os.environ if environ is None else environ
+    if names:
+        environ[DESIGNER_ENV] = ",".join(names)
+    else:
+        environ.pop(DESIGNER_ENV, None)
+
+
+def forget_inherited(environ: Optional[MutableMapping[str, str]] = None) -> List[str]:
+    """Removes the variables Pyzed Design set for itself and left to this process (a Run, an exported app
+    tried from it); returns them. Variables the user set stay."""
+    environ = os.environ if environ is None else environ
+    names = [name for name in environ.pop(DESIGNER_ENV, "").split(",") if name]
+    for name in names:
+        environ.pop(name, None)
+    return names
+
+
+forget_inherited()  # an app started by Pyzed Design draws with its own project's settings

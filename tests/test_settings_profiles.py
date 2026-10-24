@@ -133,7 +133,7 @@ def test_the_settings_dialog(project):
         for key, _title, _icon in pages:
             d.settings_ui.show(key)
             assert d.dialog_view(t) is not None
-    assert d.settings_ui.page == "general"  # the project's pages need a project
+    assert d.settings_ui.page == "project.rendering"  # shown without a project too, asking to open one
     d.settings_ui.set_query("minimap")
     assert [s.key for s in settings_ui.search("minimap")] == ["minimap"] and d.dialog_view(t) is not None
     d.settings_ui.set_query("nothing like this")
@@ -215,3 +215,58 @@ def test_pz_run_reads_the_projects_renderer(project, monkeypatch):
     del environ["ICED_BACKEND"]
     pz.run(Gpu)
     assert environ["ICED_BACKEND"] == "wgpu"
+
+
+def _callouts(monkeypatch):
+    shown = []
+    real = settings_ui.ui.callout
+
+    def callout(title, *args, **kwargs):
+        shown.append(title)
+        return real(title, *args, **kwargs)
+
+    monkeypatch.setattr(settings_ui.ui, "callout", callout)
+    return shown
+
+
+def test_the_designers_own_renderer_is_a_user_setting(monkeypatch):
+    prefs = preferences.DesignerSettings.from_dict({"renderer": "cpu", "gpu_api": "dx12", "gpu_power": "fast"})
+    assert (prefs.renderer, prefs.gpu_api, prefs.gpu_power) == ("cpu", "dx12", "auto")
+    assert prefs.rendering().env() == {"ICED_BACKEND": "tiny-skia"}
+    assert preferences.DesignerSettings().rendering().env() == {}
+    assert preferences.DesignerSettings(gpu_api="vulkan", gpu_power="low").rendering().env() == {
+        "WGPU_BACKEND": "vulkan", "WGPU_POWER_PREF": "low"}
+
+    d = Designer(language_servers=False)
+    t = d.theme_obj
+    d.open_settings("rendering")
+    assert d.dialog_view(t) is not None
+    renderer = next(s for s in settings_ui.SETTINGS if s.key == "renderer")
+    assert not renderer.project
+    d.rendering_started = d.prefs.rendering().env()
+    d.settings_ui.change(renderer, "cpu")
+    assert d.prefs.renderer == "cpu" and preferences.load().renderer == "cpu"
+    assert d.toasts[-1].title == "Rendering"
+    shown = _callouts(monkeypatch)
+    assert d.dialog_view(t) is not None
+    assert shown == ["Restart Pyzed Design to apply the change"]  # it waits for a restart
+
+
+def test_rendering_pages_show_without_a_project(monkeypatch):
+    d = Designer(language_servers=False)
+    t = d.theme_obj
+    d.projects.attach(None)
+    d.open_settings("project.rendering")
+    shown = _callouts(monkeypatch)
+    assert d.dialog_view(t) is not None
+    assert d.settings_ui.page == "project.rendering" and shown == ["Open a project"]  # it stays, asking for one
+
+
+def test_apps_started_by_the_designer_drop_its_renderer():
+    environ = {"ICED_BACKEND": "wgpu"}  # set by the user: kept
+    rendering.keep_to_self(rendering.Rendering(renderer="gpu", gpu_api="vulkan").apply(environ), environ)
+    assert environ == {"ICED_BACKEND": "wgpu", "WGPU_BACKEND": "vulkan", rendering.DESIGNER_ENV: "WGPU_BACKEND"}
+    assert rendering.forget_inherited(environ) == ["WGPU_BACKEND"]
+    assert environ == {"ICED_BACKEND": "wgpu"}
+    rendering.keep_to_self([], environ)
+    assert rendering.forget_inherited(environ) == [] and environ == {"ICED_BACKEND": "wgpu"}

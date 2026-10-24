@@ -239,6 +239,10 @@ def settings():
     app.switch_profile("Default")
     app.delete_profile("Presentation")
     app.close_dialog()
+    # the designer's own renderer, read when it starts
+    app.open_settings("rendering")
+    save(app, EDITOR / "settings-designer-rendering.png")
+    app.close_dialog()
 
     # a project's own settings and its renderer
     project = Path(tempfile.mkdtemp(prefix="pyzed-shots-project-")) / "shop"

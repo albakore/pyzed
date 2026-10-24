@@ -12,9 +12,9 @@ guardan enseguida; **Listo** cierra el diálogo.
 ![El diálogo de ajustes](../../../../assets/editor/settings.png)
 
 - **El índice** de la izquierda agrupa las páginas: *Diseñador* (General, Fuentes y tamaño, Lienzo del formulario,
-  Ejecución, Logs y errores, Telemetría), *Editor de código* (Apariencia, Cursor, Edición, Borrado, Desplazamiento
-  y ajuste de línea, Code lens y diagnósticos, Servidores de lenguaje) y, con un proyecto abierto, *Proyecto*
-  (Renderizado). Un número junto a una página cuenta sus ajustes cambiados.
+  Ejecución, Logs y errores, Renderizado, Telemetría), *Editor de código* (Apariencia, Cursor, Edición, Borrado,
+  Desplazamiento y ajuste de línea, Code lens y diagnósticos, Servidores de lenguaje) y *Proyecto* (Renderizado de
+  la app, que primero pide abrir un proyecto). Un número junto a una página cuenta sus ajustes cambiados.
 - **Buscar ajustes…** (tiene el foco al abrir el diálogo) encuentra un ajuste por su nombre o su ayuda, en inglés o
   en tu idioma, en todas las páginas.
 - **Un punto** tras el nombre de un ajuste indica que no tiene su valor por defecto; el botón **↺** a su derecha lo
@@ -68,7 +68,17 @@ marco de ventana, las actualizaciones, el archivo de logs).
 
 ## Renderizado
 
-**Proyecto → Renderizado** elige cómo dibuja sus ventanas la app del proyecto. Se guarda en el `pyproject.toml`
+Hay dos renderizadores que elegir: el del propio Pyzed Design y el de la app de cada proyecto.
+
+**Diseñador → Renderizado** elige cómo dibuja Pyzed Design sus propias ventanas: *Renderizador* (Auto, GPU o
+CPU), la *API gráfica* y, en portátiles con dos, la *GPU*. Es un ajuste de usuario y se aplica la próxima vez que
+abres Pyzed Design (la página lo avisa mientras un cambio espera y muestra con qué se dibujan ahora las ventanas).
+El renderizador por CPU funciona sin GPU, pero las vistas previas de shaders la necesitan. Las apps que inicia el
+diseñador (Ejecutar, una app exportada) no lo heredan: siguen a su propio proyecto.
+
+![El renderizador del propio Pyzed Design](../../../../assets/editor/settings-designer-rendering.png)
+
+**Proyecto → Renderizado de la app** elige cómo dibuja sus ventanas la app del proyecto. Se guarda en el `pyproject.toml`
 del proyecto, así que vale cuando el diseñador ejecuta el proyecto, cuando lo ejecutas con `pz.run` o
 `pyzed run`, y en la [app exportada](/pyzed/es/editor/exporting/).
 
