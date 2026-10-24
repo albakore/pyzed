@@ -22,7 +22,7 @@ class Styling(pz.App):
 
     def __init__(self):
         self.mode = "Bundled"
-        self.base = "One Dark"
+        self.base = "Pyzed Dark"
         self.accent = None
         self.custom_bg = 0.12
         self.custom_hue = 0
@@ -34,7 +34,7 @@ class Styling(pz.App):
 
     def apply(self):
         if self.mode == "Follow OS":
-            self.theme = pz.themes.auto("One Light", "One Dark")
+            self.theme = pz.themes.auto("Pyzed Light", "Pyzed Dark")
             return
         if self.mode == "Custom":
             level = int(self.custom_bg * 255)

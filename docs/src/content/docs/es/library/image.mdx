@@ -55,7 +55,7 @@ pz.row([
 ## Variantes
 
 :::note[Sobre estas capturas]
-Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. El puntero pasa por encima, pulsa o escribe en él; un componente que no reacciona al puntero recorre algunos temas. Con movimiento reducido ves el primer fotograma. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en Pyzed Dark o Pyzed Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. El puntero pasa por encima, pulsa o escribe en él; un componente que no reacciona al puntero recorre algunos temas. Con movimiento reducido ves el primer fotograma. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
 :::
 
 ### Ajuste
@@ -133,6 +133,7 @@ image(
     rotation=0.0,
     scale=1.0,
     size=None,
+    background=None,
 )
 ```
 
@@ -150,6 +151,7 @@ Una imagen de mapa de bits (PNG, JPEG, GIF, BMP, WebP…) desde una ruta o `byte
 | `rotation` | `0.0` | Rotación en grados. |
 | `scale` | `1.0` | Escala. |
 | `size` | `None` | `(ancho, alto)` cuando `source` son píxeles RGBA crudos. |
+| `background` | `None` | Decodificar en un hilo aparte: `None` (por defecto) lo hace con archivos desde 256 KB, `True` siempre, `False` nunca. Hasta que esté lista la imagen no muestra nada, así que dale `width` y `height` para conservar su espacio. |
 
 [Referencia completa →](/pyzed/es/reference/widgets/#image)
 

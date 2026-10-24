@@ -280,7 +280,7 @@ TEXT = {
     "en": {
         "run": "Run it", "run_text": "From the repository root:",
         "theme": "The screenshot follows the site's theme: switch between light and dark at the top of the page to "
-                 "see the block in One Light and One Dark.",
+                 "see the block in Pyzed Light and Pyzed Dark.",
         "shows": "What it shows", "uses": "Components used", "component": "Component", "for": "Used for",
         "code": "Code",
         "code_text": "The whole block, ready to copy. It only needs `pip install pyzed-ui`.",
@@ -295,7 +295,7 @@ TEXT = {
     "es": {
         "run": "Ejecutarlo", "run_text": "Desde la raíz del repositorio:",
         "theme": "La captura sigue el tema del sitio: cambia entre claro y oscuro arriba de la página para ver el "
-                 "bloque en One Light y One Dark.",
+                 "bloque en Pyzed Light y Pyzed Dark.",
         "shows": "Qué muestra", "uses": "Componentes que usa", "component": "Componente", "for": "Para",
         "code": "Código",
         "code_text": "El bloque completo, listo para copiar. Solo necesita `pip install pyzed-ui`.",

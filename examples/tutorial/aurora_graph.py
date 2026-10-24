@@ -61,7 +61,7 @@ AURORA = build_aurora()
 class Aurora(pz.App):
     title = "Aurora"
     size = (760, 480)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self):
         self.speed = 0.3

@@ -14,7 +14,7 @@ Cada componente tiene ahora su propia página, con vista previa, ejemplos y su A
 [Zed](https://zed.dev). Son **funciones** que devuelven widgets, así que se combinan libremente
 con los [widgets base](/pyzed/es/reference/widgets/) y entre sí.
 
-![Galería de componentes (One Dark)](../../../../../screenshots/components-dark.png)
+![Galería de componentes (Pyzed Dark)](../../../../../screenshots/components-dark.png)
 
 ```python
 import pyzed as pz

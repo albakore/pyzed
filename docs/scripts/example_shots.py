@@ -1,4 +1,4 @@
-"""Renders the example screenshots (docs/src/assets/tutorials and docs/src/assets/examples).
+"""Renders the example screenshots (docs/src/assets: tutorials, examples, showcase, games, contributing).
 
     python docs/scripts/example_shots.py              # all of them
     python docs/scripts/example_shots.py styling      # only some
@@ -10,6 +10,7 @@ They are drawn off-screen with ``App.screenshot`` (no window or GPU). The showca
 
 from __future__ import annotations
 
+import os
 import random
 import sys
 from pathlib import Path
@@ -59,7 +60,7 @@ class Windows(pz.App):
         self.main.windows, self.main.opened = self.notes, 2
 
     def view(self):
-        main = frame(self.main.title, self.main.view, (420, 300), "One Dark")
+        main = frame(self.main.title, self.main.view, (420, 300), "Pyzed Dark")
         notes = [frame(n.title, n.view, (360, 236), n.theme) for n in self.notes]
         return pz.container(pz.row([main, pz.column(notes, spacing=16)], spacing=16),
                             padding=20, width="fill", height="fill", bg="#1b1d22")
@@ -181,6 +182,144 @@ def invaders_title_setup(app):
         app.tick(1 / 60)
 
 
+def contacts_app():
+    """The contacts tutorial on a throwaway database with four people in it."""
+    import tempfile
+
+    import contacts_backend
+
+    repo = contacts_backend.ContactsRepository(Path(tempfile.mkdtemp()) / "contacts.db", delay=0)
+    repo.add("Grace Hopper", "grace@example.com")
+    repo.add("Katherine Johnson", "katherine@example.com")
+    instance = contacts_backend.Contacts(repo)
+    instance.loaded(repo.search())
+    return instance
+
+
+def dodge_setup(app):
+    for _ in range(150):
+        app.tick(1 / 60)
+
+
+def feedback_errors_setup(app):
+    app.email = "ada@"
+    app.submit()
+
+
+def feedback_confirm_setup(app):
+    app.name, app.email, app.password = "Ada", "ada@example.com", "analytical"
+    app.submit()
+
+
+def books_setup(app):
+    import lists_tables
+
+    app.selected = next(b for b in lists_tables.BOOKS if b["title"] == "Neuromancer")
+
+
+def settings_page_setup(app):
+    app.on_key("ctrl-3")
+    app.tab = "Notifications"
+
+
+def themes_light_setup(app):
+    app.choose("base")("Pyzed Light")
+    app.choose("accent")("Purple")
+
+
+def themes_sunset_setup(app):
+    app.choose("base")("Sunset")
+
+
+def context_menu_setup(app):
+    app.log += ["Copy", "Paste"]
+    app.menu_at = (220, 150)
+
+
+def ticker_setup(app):
+    """A minute of made-up prices, the same on every run, with the feed itself switched off."""
+    rng = random.Random(7)
+    for symbol in app.history:
+        price = rng.uniform(80, 180)
+        for _ in range(60):
+            price *= 1 + rng.gauss(0, 0.01)
+            app.history[symbol].append(price)
+    app.subscriptions = lambda: []
+
+
+def gallery_app():
+    import gallery
+
+    return gallery.Gallery(pz.themes.PYZED_DARK)
+
+
+def form(name, setup=None):
+    """A tutorial form (examples/tutorial/designer) run as the reader runs it, ``setup(runtime)`` applied."""
+    def make():
+        from pyzed.designer.runtime import open_form
+
+        instance = open_form(ROOT / "examples" / "tutorial" / "designer" / f"{name}.pzform")
+        instance.runtime.load()
+        if setup:
+            setup(instance.runtime)
+        return instance
+    return make
+
+
+def typed(rt, values):
+    for control, prop, value in values:
+        rt.ctx.on(rt.form[control], "change", prop)(value)
+
+
+def hello_setup(rt):
+    typed(rt, [("your_name", "text", "Ada")])
+    rt.dispatch(rt.form["greet"], "click")
+
+
+def contact_setup(rt):
+    typed(rt, [("your_name", "text", "Ada Lovelace"), ("email", "text", "ada@example.com"),
+               ("message", "text", "Can Pyzed draw a whole app without code?")])
+    rt.dispatch(rt.form["send"], "click")
+
+
+def signup_setup(rt):
+    typed(rt, [("your_name", "text", "Ada"), ("email", "text", "ada@example"), ("password", "text", "abc")])
+    rt.dispatch(rt.form["create"], "click")
+
+
+def rating_shots():
+    """The two images of contributing/adding-components (the code on that page, in a temporary folder)."""
+    import tempfile
+
+    sys.path.insert(0, str(ROOT / "examples" / "designer" / "components"))
+    import rating  # noqa: F401 - registers the component
+
+    from pyzed import designer
+    from pyzed.designer import Document
+
+    folder = Path(tempfile.mkdtemp())
+    doc = Document(designer.Form(name="review", title="Review", width=360, height=150))
+    doc.add("label", 16, 16, 320, 24).props["text"] = "How was your stay?"
+    doc.add("rating", 16, 48)
+    doc.add("label", 16, 88, 320, 24)
+    doc.rename("label2", "status")
+    handler = doc.wire("rating1", "change")
+    doc.set_handler_source(handler, (
+        "def rating1_change(form, event):\n"
+        '    form.status.text = f"You gave it {event.value} stars"\n'))
+    path = doc.save(folder / "review.pzform")
+    out = ASSETS / "contributing"
+    app = designer.open_form(path)
+    rt = app.runtime
+    rt.ctx.on(rt.form["rating1"], "change", "value")(4)
+    app.screenshot(out / "rating-run.png", scale=2)
+    os.environ["PYZED_TRUST_ALL"] = "1"  # a temporary folder would open in restricted mode
+    editor = designer.Designer(path)
+    editor.doc.select("rating1")
+    editor.screenshot(out / "rating-designer.png", size=(1280, 760), scale=2)
+    print("wrote docs/src/assets/contributing/rating-run.png, rating-designer.png")
+
+
 SHOTS = {
     # Guide illustrations
     "tutorials/multi-window": (Windows, (820, 560)),
@@ -218,6 +357,29 @@ SHOTS = {
     "tutorials/step3": (app("step3_layout", "Settings"), None),
     "tutorials/step4": (app("step4_async", "Quotes"), None),
     "tutorials/step5": (app("step5_notes", "Notes"), None),
+    "tutorials/layout-basics": (app("layout_basics", "Profile"), None),
+    "tutorials/lists-tables": (app("lists_tables", "Library", books_setup), None),
+    "tutorials/navigation": (app("navigation", "Navigation", lambda a: a.go("Inbox")), None),
+    "tutorials/navigation-settings": (app("navigation", "Navigation", settings_page_setup), None),
+    "tutorials/feedback-errors": (app("feedback", "Signup", feedback_errors_setup), None),
+    "tutorials/feedback-confirm": (app("feedback", "Signup", feedback_confirm_setup), None),
+    "tutorials/themes-light": (app("theme_switcher", "ThemeSwitcher", themes_light_setup), None),
+    "tutorials/themes-sunset": (app("theme_switcher", "ThemeSwitcher", themes_sunset_setup), None),
+    "tutorials/contacts-backend": (contacts_app, None),
+    "tutorials/dodge": (app("dodge", "Dodge", dodge_setup, 1), None),
+    "tutorials/aurora": (app("aurora_graph", "Aurora"), None),
+    "tutorials/designer-hello": (form("hello", hello_setup), None),
+    "tutorials/designer-contact": (form("contact", contact_setup), None),
+    "tutorials/designer-signup": (form("signup", signup_setup), None),
+    "tutorials/designer-welcome": (form("welcome"), None),
+    # Showcase of the example apps (examples/)
+    "showcase/apps/animations": (app("animations", "Animations"), None),
+    "showcase/apps/context_menu": (app("context_menu", "ContextMenu", context_menu_setup), None),
+    "showcase/apps/effects": (app("effects", "Effects"), None),
+    "showcase/apps/gallery": (gallery_app, None),
+    "showcase/apps/panes": (app("panes", "Panes"), None),
+    "showcase/apps/styles": (app("styles", "StylesDemo"), None),
+    "showcase/apps/websocket_stream": (app("websocket_stream", "Ticker", ticker_setup), None),
     # Examples gallery
     "examples/clock": (app("clock", "Clock"), None),
     "examples/image_viewer": (app("image_viewer", "Viewer"), None),
@@ -237,6 +399,8 @@ def main(names):
         instance = make()
         instance.screenshot(out, size=size or getattr(instance, "size", (800, 600)), scale=2, wait=0.3)
         print(f"wrote {out.relative_to(ROOT)}")
+    if not names or any(n in "contributing/rating" for n in names):
+        rating_shots()
 
 
 if __name__ == "__main__":

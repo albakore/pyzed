@@ -55,7 +55,7 @@ pz.row([
 ## Variants
 
 :::note[About these captures]
-Each capture is recorded by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. The pointer hovers, presses or types into it; a component that does not react to the pointer cycles through a few themes. With reduced motion you see the first frame. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+Each capture is recorded by pyzed itself, off-screen at 2x, in Pyzed Dark or Pyzed Light to match this site's theme, and cropped to the component so it shows at its real size. The pointer hovers, presses or types into it; a component that does not react to the pointer cycles through a few themes. With reduced motion you see the first frame. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
 :::
 
 ### Fit
@@ -133,6 +133,7 @@ image(
     rotation=0.0,
     scale=1.0,
     size=None,
+    background=None,
 )
 ```
 
@@ -150,6 +151,7 @@ A bitmap image (PNG, JPEG, GIF, BMP, WebP…) from a path or `bytes`, or raw RGB
 | `rotation` | `0.0` | Rotation in degrees. |
 | `scale` | `1.0` | Scale. |
 | `size` | `None` | `(width, height)` when `source` is raw RGBA pixels. |
+| `background` | `None` | Decode on a worker thread: `None` (the default) does it for files of 256 KB and up, `True` always, `False` never. Until it is ready the image shows nothing, so give it a `width` and `height` to keep its space. |
 
 [Full reference →](/pyzed/reference/widgets/#image)
 

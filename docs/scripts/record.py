@@ -702,7 +702,7 @@ class _ShaderWall:
         folder = EXAMPLES / "showcase" / "shaders"
         self.names = ["plasma", "tunnel", "fire", "voronoi", "synthwave", "nebula"]
         self.files = [str(folder / f"{n}.pzshad") for n in self.names]
-        self.theme = "One Dark"
+        self.theme = "Pyzed Dark"
 
     def view(self):
         pz = self.pz
@@ -716,7 +716,7 @@ class _ShaderWall:
             ], spacing=6))
         rows = [pz.row(cells[i:i + 3], spacing=16) for i in range(0, len(cells), 3)]
         return pz.container(pz.column(rows, spacing=14), padding=24, width="fill", height="fill", center=True,
-                            bg=self.pz.themes.get("One Dark").editor)
+                            bg=self.pz.themes.PYZED_DARK.editor)
 
 
 @clip("shaders", "Shader graphs", "Six node-based shaders from examples/showcase/shaders running at once.",
@@ -734,7 +734,7 @@ def shaders_clip(c: Clip):
 
 
 # -- themes ----------------------------------------------------------------------------------------
-THEMES = ["One Dark", "One Light", "Ayu Mirage", "Gruvbox Dark", "Ayu Light", "Gruvbox Light"]
+THEMES = ["Pyzed Dark", "Pyzed Light", "One Dark", "Ayu Mirage", "Gruvbox Dark", "Gruvbox Light"]
 
 
 @clip("themes", "One app, six themes", "The component gallery (examples/gallery.py) switching between built-in themes.",
@@ -1114,7 +1114,7 @@ def controls_app():
     class Controls(pz.App):
         title = "Controls"
         size = (640, 360)
-        theme = "One Dark"
+        theme = "Pyzed Dark"
 
         def __init__(self):
             self.on, self.checked, self.volume, self.view_ = False, False, 0.3, "Day"

@@ -21,7 +21,7 @@ class MixedApp(pz.App):
     size = (980, 580)
 
     def __init__(self):
-        self.theme = "One Dark"
+        self.theme = "Pyzed Dark"
         if SAVED.exists():
             self.theme = pz.themes.register(pz.Theme.load(SAVED)).name
 
@@ -31,11 +31,11 @@ class MixedApp(pz.App):
 
     def view(self):
         current = self.resolved_theme().name
-        with pz.themes.get("One Light"):  # everything built in this block uses One Light
+        with pz.themes.get("Pyzed Light"):  # everything built in this block uses Pyzed Light
             sidebar = pz.container(pz.column([
                 ui.heading("Settings", level=3),
                 ui.field("Theme", ui.select(pz.themes.names(), current, self.pick, width=200)),
-                ui.muted("This panel always uses One Light."),
+                ui.muted("This panel always uses Pyzed Light."),
             ], spacing=12), padding=16, width=300, height="fill").style(background="background")
         main = pz.container(preview(current, "The main area follows the theme you pick."),
                             padding=24, width="fill", height="fill")

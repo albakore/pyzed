@@ -339,7 +339,7 @@ def preview():
     for name, key in (("title", "welcome"), ("user_label", "email"), ("password_label", "password"),
                       ("remember", "remember"), ("sign_in", "sign_in")):
         form[name].props["text"] = f"@login.{key}"
-    app.set_preview("theme", "One Light")
+    app.set_preview("theme", "Pyzed Light")
     app.set_preview("language", "es")
     app.open_preview_picker("language")
     save(app, "preview")

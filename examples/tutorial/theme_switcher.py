@@ -24,10 +24,10 @@ ACCENTS = {"Theme": None, "Blue": "#74ade8", "Purple": "#b477cf", "Green": "#a1c
 class ThemeSwitcher(pz.App):
     title = "Themes"
     size = (760, 520)
-    theme = "One Dark"  # the theme the window opens with
+    theme = "Pyzed Dark"  # the theme the window opens with
 
     def __init__(self):
-        self.base = "One Dark"
+        self.base = "Pyzed Dark"
         self.accent = "Theme"
         self.follow_system = False
         self.name = "Ada"
@@ -35,7 +35,7 @@ class ThemeSwitcher(pz.App):
     def apply(self):
         """Builds the theme from the choices and assigns it: the next view() uses it."""
         if self.follow_system:
-            self.theme = pz.themes.auto("One Light", "One Dark")
+            self.theme = pz.themes.auto("Pyzed Light", "Pyzed Dark")
             return
         theme = pz.themes.get(self.base)
         color = ACCENTS[self.accent]

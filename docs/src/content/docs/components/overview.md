@@ -14,7 +14,7 @@ Every component now has its own page, with a live preview, examples and its full
 [Zed](https://zed.dev) editor. They are **functions** that return widgets, so they combine freely
 with the [base widgets](/pyzed/reference/widgets/) and with each other.
 
-![Component gallery (One Dark)](../../../../screenshots/components-dark.png)
+![Component gallery (Pyzed Dark)](../../../../screenshots/components-dark.png)
 
 ```python
 import pyzed as pz

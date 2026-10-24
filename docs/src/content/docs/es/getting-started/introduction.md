@@ -8,7 +8,7 @@ description: "Qué es Pyzed: un framework de GUI de escritorio para Python rende
 inspirados en el editor [Zed](https://zed.dev): pestañas, árbol de archivos, paleta de comandos,
 editor de código, terminal, menús, notificaciones y un workspace con paneles acoplables.
 
-![Un editor de código hecho con Pyzed (tema One Light)](../../../../../screenshots/zed-one-light.png)
+![Un editor de código hecho con Pyzed (tema Pyzed Light)](../../../../../screenshots/zed-light.png)
 
 :::note[Dónde está Pyzed hoy]
 Pyzed 1.x es estable para apps de escritorio en Windows, macOS y Linux: su API pública sigue el versionado

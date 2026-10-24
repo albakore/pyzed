@@ -127,7 +127,7 @@ ui.list_item("main.py", self.open, icon="file").on(   # on_press is its own even
                     "shows the three ways of handling them.",
         },
         "shots_title": "About these captures",
-        "shots_text": "Each capture is recorded by pyzed itself, off-screen at 2x, in One Dark or One Light to "
+        "shots_text": "Each capture is recorded by pyzed itself, off-screen at 2x, in Pyzed Dark or Pyzed Light to "
                       "match this site's theme, and cropped to the component so it shows at its real size. "
                       "The pointer hovers, presses or types into it; a component that does not react to the "
                       "pointer cycles through a few themes. With reduced motion you see the first frame. "
@@ -249,7 +249,7 @@ ui.list_item("main.py", self.abrir, icon="file").on(  # on_press es su evento pr
                     "con las tres formas de manejarlos.",
         },
         "shots_title": "Sobre estas capturas",
-        "shots_text": "Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light "
+        "shots_text": "Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en Pyzed Dark o Pyzed Light "
                       "según el tema de este sitio, y recortada al componente para que se vea a su tamaño "
                       "real. El puntero pasa por encima, pulsa o escribe en él; un componente que no "
                       "reacciona al puntero recorre algunos temas. Con movimiento reducido ves el primer "

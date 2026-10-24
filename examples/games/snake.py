@@ -26,7 +26,7 @@ DIRECTIONS = {
 class Snake(pz.App):
     title = "Snake"
     size = (COLS * CELL + 32, ROWS * CELL + 96)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

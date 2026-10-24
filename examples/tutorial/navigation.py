@@ -71,7 +71,7 @@ class Navigation(pz.App):
     def settings(self):
         tabs = ui.segmented(["General", "Notifications", "About"], self.tab, lambda tab: setattr(self, "tab", tab))
         if self.tab == "General":
-            body = ui.field("Theme", ui.select(["One Dark", "One Light"], self.resolved_theme().name,
+            body = ui.field("Theme", ui.select(["Pyzed Dark", "Pyzed Light"], self.resolved_theme().name,
                                                lambda name: setattr(self, "theme", name), width=180))
         elif self.tab == "Notifications":
             body = ui.field("Show notifications", ui.switch(self.notifications,

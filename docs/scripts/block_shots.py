@@ -4,7 +4,7 @@
     python docs/scripts/block_shots.py login chat   # only some
 
 Each block is drawn off-screen with ``App.screenshot`` (no window or GPU) at 1200x760, scale 2, once with
-One Dark (``<name>-dark.png``) and once with One Light (``<name>-light.png``).
+Pyzed Dark (``<name>-dark.png``) and once with Pyzed Light (``<name>-light.png``).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ sys.path.insert(0, str(BLOCKS))
 
 import pyzed as pz  # noqa: E402
 
-THEMES = {"dark": "One Dark", "light": "One Light"}
+THEMES = {"dark": "Pyzed Dark", "light": "Pyzed Light"}
 SIZE = (1200, 760)
 
 

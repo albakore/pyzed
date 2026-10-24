@@ -25,7 +25,7 @@ PLAYER_W, PLAYER_H, PLAYER_Y = 56, 14, H - 48
 class Dodge(pz.App):
     title = "Dodge"
     size = (W + 32, H + 88)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

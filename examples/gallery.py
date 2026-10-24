@@ -17,7 +17,7 @@ class Gallery(pz.App):
     title = "Pyzed components"
     size = (1440, 900)
 
-    def __init__(self, theme=pz.themes.ONE_DARK):
+    def __init__(self, theme=pz.themes.PYZED_DARK):
         self.theme = theme
         self.name = "Pyzed"
         self.query = ""

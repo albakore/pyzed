@@ -29,7 +29,7 @@ ROUND = 30.0         # seconds per round
 class CoinChase(pz.App):
     title = "Coin Chase"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

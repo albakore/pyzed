@@ -37,7 +37,7 @@ IDLE = pz.Clip("idle", length=1.2, loop="pingpong", tracks=[
 class Timeline(pz.App):
     title = "Timeline"
     size = (760, 560)
-    theme = pz.themes.ONE_DARK
+    theme = pz.themes.PYZED_DARK
 
     def __init__(self):
         self.score = 0

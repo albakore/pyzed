@@ -65,7 +65,7 @@ class Rock:
 class Asteroids(pz.App):
     title = "Rock Storm"
     size = (W + 32, H + 92)
-    theme = "One Dark"
+    theme = "Pyzed Dark"
 
     def __init__(self, seed=None):
         self.random = random.Random(seed)

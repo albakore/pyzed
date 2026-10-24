@@ -213,8 +213,8 @@ python docs/scripts/gen_library.py --check       # cobertura y coherencia, no es
 ```
 
 Las vistas previas son WebP animados grabados sin pantalla a escala 2 con
-[`anim_webp.py`](/pyzed/es/contributing/docs/#capturas-animadas), centrados sobre el fondo del tema, en One
-Dark y One Light (ejemplos: `<slug>-<n>.<tema>.webp`; cada uno con un `*.still.webp` quieto para el
+[`anim_webp.py`](/pyzed/es/contributing/docs/#capturas-animadas), centrados sobre el fondo del tema, en Pyzed
+Dark y Pyzed Light (ejemplos: `<slug>-<n>.<tema>.webp`; cada uno con un `*.still.webp` quieto para el
 movimiento reducido). Por defecto el puntero pasa por encima del centro de la vista previa y lo pulsa, y
 cada variante se sobrevuela y se pulsa (o se hace clic y se escribe si tiene un campo de texto); un clip en
 el que nada cambia recorre algunos temas. Dale al componente nuevo un guion en
@@ -267,7 +267,7 @@ Consejos para buenas imágenes:
   no solo el valor por defecto.
 - Usa textos realistas («How was your stay?»), nunca «foo» o «test».
 - Ajusta el tamaño: los scripts dibujan a escala 2, así que 300×140 píxeles lógicos son una imagen de 600×280.
-- One Dark es el tema por defecto de las imágenes; las páginas de la biblioteca también tienen One Light.
+- Pyzed Dark es el tema por defecto de las imágenes; las páginas de la biblioteca también tienen Pyzed Light.
 
 ## 5. Guías y documentación del editor
 

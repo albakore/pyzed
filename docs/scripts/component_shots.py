@@ -3,7 +3,7 @@
     python docs/scripts/component_shots.py            # all of them
     python docs/scripts/component_shots.py tabs tree  # only some
 
-They are drawn off-screen with ``App.screenshot`` (no window or GPU), in the One Dark theme.
+They are drawn off-screen with ``App.screenshot`` (no window or GPU), in the Pyzed Dark theme.
 """
 
 from __future__ import annotations
@@ -355,7 +355,7 @@ def content():
 
 
 def media():
-    img = str(Path(__file__).resolve().parents[2] / "docs" / "screenshots" / "zed-one-dark.png")
+    img = str(Path(__file__).resolve().parents[2] / "docs" / "screenshots" / "zed-dark.png")
     return pz.row([
         pz.image(img, width=240, height=140, content_fit="contain"),
         pz.image(img, width=160, height=140, content_fit="contain", opacity=0.5),
@@ -364,14 +364,14 @@ def media():
 
 
 def split():
-    t = pz.themes.get("One Dark")
+    t = pz.themes.PYZED_DARK
     pane = lambda title, color: pz.container(ui.label(title), padding=12, width="fill", height="fill", bg=color)
     return ui.split(pane("Left", t.panel), ui.split(pane("Top", t.editor), pane("Bottom", t.background),
                                                          vertical=True), ratio=0.4, on_resize=noop)
 
 
 def widgets():
-    t = pz.themes.get("One Dark")
+    t = pz.themes.PYZED_DARK
     return pz.column([
         pz.row([
             pz.button("pz.button", noop, bg=t.accent, color=t.background, radius=4, padding=(6, 12)),

@@ -57,7 +57,7 @@ ui.status_bar(
 ## Variants
 
 :::note[About these captures]
-Each capture is recorded by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. The pointer hovers, presses or types into it; a component that does not react to the pointer cycles through a few themes. With reduced motion you see the first frame. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+Each capture is recorded by pyzed itself, off-screen at 2x, in Pyzed Dark or Pyzed Light to match this site's theme, and cropped to the component so it shows at its real size. The pointer hovers, presses or types into it; a component that does not react to the pointer cycles through a few themes. With reduced motion you see the first frame. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
 :::
 
 ### Items
@@ -211,6 +211,7 @@ status_item(
     selected=False,
     tooltip=None,
     keys=None,
+    led=None,
     theme=None,
 )
 ```
@@ -226,6 +227,7 @@ An icon and/or text in the status bar (diagnostics, cursor position, language…
 | `selected` | `False` | Marks it as selected. |
 | `tooltip` | `None` | Tooltip text. |
 | `keys` | `None` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `led` | `None` | Color token or hex of a small LED before it (`"success"` for a running server). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_press` ([events](#events)).

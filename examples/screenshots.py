@@ -116,7 +116,7 @@ def designer_shots(scale):
     app._selection_changed()
     app.doc.form.theme = "Gruvbox Light"
     app.doc.form.accent = "#b16286"
-    app.theme = pz.themes.ONE_LIGHT
+    app.theme = pz.themes.PYZED_LIGHT
     app.screenshot(OUT / "designer-light.png", size=(1440, 900), scale=scale)
 
     designer.open_form(login).screenshot(OUT / "designer-run.png", scale=2)
@@ -526,27 +526,27 @@ def main():
     # Logical sizes stay the same; scale 2 renders sharp HiDPI images for the docs.
     scale = 2
 
-    dark = workspace(pz.themes.ONE_DARK, ["src/app.rs", "python/pyzed/ui/overlays.py"], "src/render.rs",
+    dark = workspace(pz.themes.PYZED_DARK, ["src/app.rs", "python/pyzed/ui/overlays.py"], "src/render.rs",
                      expanded={"src", "python", "python/pyzed", "examples"})
     dark.dirty.add("python/pyzed/ui/overlays.py")
     dark.cursor = (28, 14)
-    dark.screenshot(OUT / "zed-one-dark.png", scale=scale)
+    dark.screenshot(OUT / "zed-dark.png", scale=scale)
 
     dark.palette, dark.query = "commands", "toggle"
     dark.screenshot(OUT / "zed-command-palette.png", scale=scale)
 
-    light = workspace(pz.themes.ONE_LIGHT, ["src/app.rs", "examples/gallery.py"], "python/pyzed/ui/overlays.py",
+    light = workspace(pz.themes.PYZED_LIGHT, ["src/app.rs", "examples/gallery.py"], "python/pyzed/ui/overlays.py",
                       expanded={"python", "python/pyzed", "python/pyzed/ui"}, show_bottom=True, show_right=True)
     light.cursor = (14, 5)
-    light.screenshot(OUT / "zed-one-light.png", scale=scale)
+    light.screenshot(OUT / "zed-light.png", scale=scale)
 
     finder = Zed(str(ROOT), status=STATUS)
     finder.theme = pz.themes.GRUVBOX_DARK
     finder.palette, finder.query = "files", "ui"
     finder.screenshot(OUT / "zed-file-finder.png", scale=scale)
 
-    Gallery().screenshot(OUT / "components-dark.png", scale=scale)
-    Gallery(pz.themes.ONE_LIGHT).screenshot(OUT / "components-light.png", scale=scale)
+    Gallery(pz.themes.PYZED_DARK).screenshot(OUT / "components-dark.png", scale=scale)
+    Gallery(pz.themes.PYZED_LIGHT).screenshot(OUT / "components-light.png", scale=scale)
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
     designer_shots(scale)
