@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer::{self, Quad};
-use iced::advanced::text::{self as core_text, Highlighter as _, Paragraph as _, Renderer as _};
+use iced::advanced::text::{self as core_text, Paragraph as _, Renderer as _};
 use iced::advanced::widget::{Tree, Widget};
 use iced::advanced::{Clipboard, Shell, mouse};
 use iced::widget::text::LineHeight;
@@ -15,7 +15,7 @@ use iced::{Background, Color, Element, Event, Length, Pixels, Point, Rectangle, 
 
 use super::{EditorState, Measure, Metrics, PAD_LEFT, PAD_Y, indent_of, paragraph};
 use crate::app::Message;
-use crate::highlighter::{self, Highlighter};
+use crate::highlighter;
 use crate::widget::EditorProps;
 
 type Renderer = iced::Renderer;
@@ -30,7 +30,11 @@ pub struct Hit {
     pub end: usize,
     pub x: f32,
     pub y: f32,
+    /// How wide the word is drawn (0 when it wraps onto the next row).
+    pub width: f32,
     pub height: f32,
+    /// The visible line (the editor's own line, which folds can make differ from `line`).
+    pub visible: usize,
 }
 
 impl Hit {
@@ -46,6 +50,9 @@ fn is_word(c: char) -> bool {
 
 /// The byte range of the identifier with the character at byte `at`, if it is part of one.
 fn word_at(line: &str, at: usize) -> Option<(usize, usize)> {
+    let at = (0..=at.min(line.len()))
+        .rev()
+        .find(|&i| line.is_char_boundary(i))?;
     let c = line.get(at..)?.chars().next()?;
     if !is_word(c) {
         return None;
@@ -123,11 +130,22 @@ impl EditorState {
                     end,
                     x: m.left + PAD_LEFT + x0 - viewport.x,
                     y: PAD_Y + (m.starts[visible] + r0) as f32 * lh - viewport.y,
+                    width: if r0 == r1 { x1 - x0 } else { 0.0 },
                     height: lh,
+                    visible,
                 });
             }
         }
         None
+    }
+
+    /// The name at `local` that may lead to a definition (Ctrl+hover underlines it), with its
+    /// syntax color.
+    pub(crate) fn link(&self, local: Point) -> Option<(Hit, Option<Color>)> {
+        let hit = self.hit(local)?;
+        let document = self.syntax.lock();
+        let span = document.span_at(hit.visible, hit.start)?;
+        (span.link && hit.width > 0.0).then_some((hit, span.color))
     }
 
     /// The visible lines whose headers stick to the top while the editor scrolls, outermost
@@ -267,25 +285,15 @@ fn block_end(text: &dyn Fn(usize) -> Option<String>, header: usize, count: usize
 pub struct StickyScroll<'a> {
     state: &'a EditorState,
     props: Arc<EditorProps>,
-    token: String,
-    theme_id: u64,
     /// Width on the right left uncovered (the minimap and the vertical scrollbar).
     right: f32,
 }
 
 impl<'a> StickyScroll<'a> {
-    pub fn new(
-        state: &'a EditorState,
-        props: Arc<EditorProps>,
-        token: String,
-        theme_id: u64,
-        right: f32,
-    ) -> Self {
+    pub fn new(state: &'a EditorState, props: Arc<EditorProps>, right: f32) -> Self {
         Self {
             state,
             props,
-            token,
-            theme_id,
             right,
         }
     }
@@ -409,12 +417,12 @@ impl Widget<Message, Theme, Renderer> for StickyScroll<'_> {
             let hovered = cursor
                 .position_in(area)
                 .map(|at| ((at.y / lh) as usize).min(lines.len() - 1));
-            let mut highlighter = Highlighter::new(&highlighter::Settings {
-                token: self.token.clone(),
-                theme: self.theme_id,
-                font: p.font,
-                default: p.text_color,
-            });
+            // Colored as in the text: from the parser's state at each line, not from the
+            // headers alone (a signature left open would color the next header as parameters).
+            let mut document = self.state.syntax.lock();
+            if let Some(&last) = lines.iter().max() {
+                document.ensure(last);
+            }
             let mut measure = self.state.measure.borrow_mut();
             // The innermost header first: pushed up, it slides under the others.
             for (slot, &line) in lines.iter().enumerate().rev() {
@@ -444,20 +452,30 @@ impl Widget<Message, Theme, Renderer> for StickyScroll<'_> {
                     Size::new((width - left).max(0.0), lh),
                 );
                 let origin = bounds.x + left + PAD_LEFT - scroll_x;
-                for (range, highlight) in highlighter.highlight_line(&text) {
-                    let piece = &text[range.clone()];
+                let plain = [highlighter::Span {
+                    range: 0..text.len(),
+                    color: p.text_color,
+                    font: None,
+                    link: false,
+                }];
+                let spans = document.spans(line).map_or(&plain[..], |spans| &spans[..]);
+                for span in spans {
+                    let range = span.range.clone();
+                    let Some(piece) = text.get(range.clone()) else {
+                        continue;
+                    };
                     if piece.trim().is_empty() {
                         continue;
                     }
-                    let format = highlight.to_format(theme);
-                    let x = origin + measure.width(&text[..range.start], p.font, p.size, lh);
+                    let prefix = &text[..range.start]; // `get` above checked the boundary
+                    let x = origin + measure.width(prefix, p.font, p.size, lh);
                     renderer.fill_text(
                         core_text::Text {
                             content: piece.to_owned(),
                             bounds: Size::new(f32::INFINITY, lh),
                             size: Pixels(p.size),
                             line_height: LineHeight::Absolute(Pixels(lh)),
-                            font: format.font.unwrap_or(p.font),
+                            font: span.font.unwrap_or(p.font),
                             align_x: core_text::Alignment::Default,
                             align_y: iced::alignment::Vertical::Top,
                             shaping: core_text::Shaping::Advanced,
@@ -465,7 +483,7 @@ impl Widget<Message, Theme, Renderer> for StickyScroll<'_> {
                             letter_spacing: iced::Em::ZERO,
                         },
                         Point::new(x, y),
-                        format.color.unwrap_or(text_color),
+                        span.color.unwrap_or(text_color),
                         code,
                     );
                 }

@@ -85,6 +85,7 @@ def _frames() -> List[Tuple[str, str]]:
 
 _LINE_HEIGHTS = tuple((name, name.capitalize()) for name in _settings.LINE_HEIGHTS)
 _CURSORS = tuple((shape, shape.capitalize()) for shape in _settings.CURSOR_SHAPES)
+_GUIDES = (("fixed", "One color"), ("rainbow", "Rainbow"))
 _EYES = (("visible", "Hidden when running"), ("editor", "Hidden in the editor only"))
 _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
 
@@ -149,6 +150,10 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("editor", "line_numbers", "editor.appearance", "Line numbers"),
     Setting("editor", "highlight_line", "editor.appearance", "Highlight current line"),
     Setting("editor", "show_whitespace", "editor.appearance", "Show whitespace", "Spaces as · and tabs as →"),
+    Setting("editor", "indent_guides", "editor.appearance", "Indent guides",
+            "A line at each level of indentation; the one of the block around the cursor stands out"),
+    Setting("editor", "indent_guides_coloring", "editor.appearance", "Indent guide colors",
+            "Rainbow gives each depth its own color", kind="segmented", options=_GUIDES),
     Setting("editor", "cursor_shape", "editor.cursor", "Shape", kind="segmented", options=_CURSORS),
     Setting("editor", "cursor_blink", "editor.cursor", "Blink"),
     Setting("editor", "cursor_width", "editor.cursor", "Width", "Of the bar cursor, in pixels", kind="number",

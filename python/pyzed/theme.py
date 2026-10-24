@@ -453,6 +453,8 @@ SCOPES = [
     ("entity.name.label, storage.modifier.lifetime", "label"),
     ("punctuation, meta.brace", "punctuation"),
     ("punctuation.section, punctuation.separator, meta.brace.round, meta.brace.square", "punctuation.bracket"),
+    # The braces of an f-string's `{name}` (Zed's punctuation.special).
+    ("punctuation.section.interpolation, punctuation.definition.interpolation", "punctuation.special"),
     ("markup.heading, entity.name.section, markup.heading punctuation.definition", "title"),
     ("markup.bold", "emphasis.strong"),
     ("markup.italic", "emphasis"),
