@@ -2835,6 +2835,7 @@ editor(
     on_hover=None,
     hover_delay=500,
     sticky_scroll=0,
+    indent_guides=False,
     theme=None,
 )
 ```
@@ -2885,6 +2886,7 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `on_hover` | Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información). |
 | `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
 | `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
+| `indent_guides` | `True` dibuja una línea fina en cada nivel de sangría (la del bloque donde está el cursor resalta); `"rainbow"` da a cada profundidad su propio color. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

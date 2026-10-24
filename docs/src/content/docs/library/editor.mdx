@@ -360,6 +360,7 @@ editor(
     on_hover=None,
     hover_delay=500,
     sticky_scroll=0,
+    indent_guides=False,
     theme=None,
 )
 ```
@@ -404,6 +405,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `readonly` | `False` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 | `hover_delay` | `500` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `False` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
@@ -483,6 +485,8 @@ code_editor(
     on_hover=None,
     hover_delay=500.0,
     sticky_scroll=0,
+    indent_guides=None,
+    indent_guides_active=None,
 )
 ```
 
@@ -541,6 +545,8 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `repeat_rate` | `None` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
 | `hover_delay` | `500.0` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `None` | Colors of the indent guides, one per depth (they repeat); none: no guides. |
+| `indent_guides_active` | `None` | Colors of the guide of the block around the cursor, by depth like `indent_guides`. |
 
 Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
 

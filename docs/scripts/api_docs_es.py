@@ -480,6 +480,8 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
                         "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
                         "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
+                        "indent_guides": "Colores de las guías de sangría, uno por profundidad (se repiten); sin colores no hay guías.",
+                        "indent_guides_active": "Colores de la guía del bloque donde está el cursor, por profundidad como `indent_guides`.",
                     },
                 },
             }),
@@ -891,6 +893,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "on_hover": "Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información).",
                         "hover_delay": "Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`.",
                         "sticky_scroll": "Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna).",
+                        "indent_guides": '`True` dibuja una línea fina en cada nivel de sangría (la del bloque donde está el cursor resalta); `"rainbow"` da a cada profundidad su propio color.',
                     },
                 },
                 "pyzed.ui.language_token": {
