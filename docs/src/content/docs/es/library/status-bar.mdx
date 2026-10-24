@@ -57,7 +57,7 @@ ui.status_bar(
 ## Variantes
 
 :::note[Sobre estas capturas]
-Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. El puntero pasa por encima, pulsa o escribe en él; un componente que no reacciona al puntero recorre algunos temas. Con movimiento reducido ves el primer fotograma. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+Cada captura la graba pyzed mismo, fuera de pantalla a 2x, en Pyzed Dark o Pyzed Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. El puntero pasa por encima, pulsa o escribe en él; un componente que no reacciona al puntero recorre algunos temas. Con movimiento reducido ves el primer fotograma. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
 :::
 
 ### Elementos
@@ -211,6 +211,7 @@ status_item(
     selected=False,
     tooltip=None,
     keys=None,
+    led=None,
     theme=None,
 )
 ```
@@ -226,6 +227,7 @@ Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, l
 | `selected` | `False` | Lo marca como seleccionado. |
 | `tooltip` | `None` | Texto del tooltip. |
 | `keys` | `None` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `led` | `None` | Token de color o hex de un LED pequeño delante (`"success"` para un servidor en marcha). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_press` ([eventos](#eventos)).
