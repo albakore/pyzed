@@ -16,6 +16,7 @@ like the Zed editor). Instructions for the AI coding agents working on it.
 - Check (ruff + ty): `uv run pyzed check`
 - Tests: `uv run pytest -q`
 - Add a library: `uv run pyzed add <name>`
+- Look at it in both themes: `uv run pyzed record shot ui/main.pzform --theme "Pyzed Dark,Pyzed Light"`
 - Package: `uv run pyzed build`
 
 ## Where things go
