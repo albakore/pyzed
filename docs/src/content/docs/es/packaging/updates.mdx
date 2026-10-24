@@ -134,7 +134,9 @@ class Shop(pz.App):
 | `Release.asset_for(nombre)` | El archivo de la versión con ese nombre, o `None` si la versión no tiene compilación para este sistema. |
 | `download(asset, folder=None, progress=None)` | Descarga en `folder` (una carpeta temporal si no se indica), verifica el SHA-256 y devuelve la ruta. `progress` recibe la fracción completada, de 0 a 1. Si `folder` ya tiene el archivo con el SHA-256 correcto, lo reutiliza. |
 | `extract(archivo)` | Descomprime el zip y devuelve la app que contiene. |
-| `replace_on_exit(bundle, relaunch=True, args=(), keep=())` | Arranca un pequeño script que espera a que la app se cierre, cambia la carpeta vieja por `bundle` (restaurando la vieja si falla) y arranca la versión nueva. `keep` lista archivos a conservar, como el desinstalador de un instalador (`"unins*"`). Para antes los procesos hijos de la app: en Windows una carpeta en uso no se puede mover (el script reintenta unos 30 segundos y luego vuelve a abrir la versión vieja). |
+| `replace_on_exit(bundle, relaunch=True, args=(), keep=())` | Arranca un pequeño script que espera a que la app se cierre, cambia la carpeta vieja por `bundle` (restaurando la vieja si falla) y arranca la versión nueva. `keep` lista archivos a conservar, como el desinstalador de un instalador (`"unins*"`). Para antes los procesos hijos de la app: en Windows una carpeta en uso no se puede mover. El script entonces cierra los ayudantes que siguen corriendo desde la carpeta (nunca otra ventana de la app), anota en su log qué programas tienen un archivo abierto, reintenta unos 30 segundos y, si se rinde, vuelve a abrir la versión vieja. |
+| `child_processes()` / `stop_processes(found)` | Lo que la app arrancó y sigue corriendo, y lo que eso arrancó (Windows). Búscalos antes de parar tus procesos hijos y termina lo que quede después: un nieto cuyo padre ya terminó no se puede encontrar, y uno que corre desde la carpeta de la app impide la actualización. |
+| `install_on_exit(setup)` | Windows: ejecuta un instalador (Inno Setup) en silencio cuando la app se cierra; cierra lo que tenga sus archivos abiertos y vuelve a abrir la app. La salida cuando `replace_on_exit` no pudo cambiar la carpeta. |
 | `is_frozen()` | Si es una app empaquetada. |
 | `install_dir()` | La carpeta (o `.app`) de la app en ejecución, `None` si corre desde Python. |
 | `can_update_in_place()` | Si la app está empaquetada y su carpeta admite escritura, para que `replace_on_exit` funcione. |
@@ -154,8 +156,9 @@ app.
 - **Solo compilaciones en carpeta.** Una compilación `--onefile` no puede actualizarse así.
 - **Las apps firmadas siguen firmadas** en macOS si el zip se creó con `ditto` a partir de una `.app` firmada (y
   notarizada).
-- **La API de GitHub tiene límite** de 60 peticiones por hora por IP sin token: busca una vez al día, no en cada
-  arranque.
+- **La API de GitHub tiene límite** de 60 peticiones por hora por IP sin token. `latest` pregunta con el ETag de su
+  última respuesta, así que una release sin cambios vuelve como «304 Not Modified», que no cuenta para ese límite (y si
+  GitHub rechaza la petición, se usa la última respuesta): buscar en cada arranque y cada media hora no es problema.
 
 <Aside type="caution" title="Recordar las búsquedas">
 `updater.load_state()`, `save_state()` y `due()` guardan sus datos en un archivo compartido por todas las apps Pyzed

@@ -23,7 +23,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from .. import _core, _platform, ui
+from .. import _core, _platform, ui, updater
 from ..app import App, renderer_info
 from ..ui import frame as ui_frame
 from ..icons import icon as _icon
@@ -56,7 +56,7 @@ from . import keymap_editor
 from .keymap_editor import KeymapEditor
 from .model import SUFFIX, Control
 from .project_panel import ProjectController
-from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from .updates import TAB_ID as _NOTES_TAB, TICK as _UPDATE_TICK, UpdateController
 from . import project_picker as _project_picker
 from . import welcome as _welcome
 from . import workspace as _workspace
@@ -406,8 +406,8 @@ class Designer(App):
             subs.append(_core.every(1.0, self.projects.poll, key="designer-dependencies"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
-        else:  # looks for a new version again every few hours while the designer stays open
-            subs.append(_core.every(600, self.updates.tick, key="designer-update-check"))
+        else:  # looks for a new version again now and then while the designer stays open
+            subs.append(_core.every(_UPDATE_TICK, self.updates.tick, key="designer-update-check"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread
             subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
         if self.exporter.running:  # the elapsed time of the build in the Export dialog
@@ -3424,8 +3424,12 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     if designer.updates.restart_pending:
         # The update swaps the app folder once this process is gone. A child process still running from it (the
         # bundled uv behind the language servers, a run, an export, an agent) would keep the folder in use and,
-        # on Windows, make the swap fail: stop them all first.
+        # on Windows, make the swap fail: stop them all first. What they started in turn (the MCP server an agent
+        # runs with this app's own program, the Python behind uv) is found before, since once its parent is gone
+        # nothing leads to it, and ended after.
+        started = updater.child_processes()
         designer.stop_children()
+        updater.stop_processes(started)
         # A background task still running (a download, a sign-in) must not keep the old version alive either.
         for stream in (sys.stdout, sys.stderr):  # None in an app without a console (Windows)
             if stream is not None:

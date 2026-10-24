@@ -41,7 +41,7 @@ import sys
 import threading
 import webbrowser
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 __all__ = ["browser_env", "desktop_notification_command", "is_wsl", "notify", "prepare", "use_user_path",
            "use_windows_browser", "user_path", "which", "windows_command"]
@@ -305,6 +305,129 @@ def process_age() -> Optional[float]:
     except (OSError, ValueError, IndexError, AttributeError):
         return None
     return None
+
+
+#: A process found by ``descendants``: its id and when it started (Windows reuses the ids of ended processes).
+Process = Tuple[int, int]
+
+
+def descendants(pid: Optional[int] = None, *, skip: Tuple[int, ...] = ()) -> List[Process]:
+    """The processes ``pid`` (this one by default) started, the ones they started, and so on (Windows only; ``[]``
+    elsewhere). ``skip`` leaves out those processes and what they started.
+
+    Windows does not stop what a process started when it ends, and a process whose parent ended can no longer be
+    found from it: look them up before stopping the parents, and ``stop`` what is left afterwards.
+    """
+    if sys.platform != "win32":
+        return []
+    try:
+        table = _windows_processes()
+    except (OSError, AttributeError, ValueError):
+        return []
+    children: Dict[int, List[int]] = {}
+    for child, parent in table:
+        if child != parent:
+            children.setdefault(parent, []).append(child)
+    found: List[Process] = []
+    seen = set(skip)
+    todo = [pid or os.getpid()]
+    while todo:
+        parent = todo.pop()
+        born = _windows_started(parent)
+        for child in children.get(parent, []):
+            started = _windows_started(child)
+            # a process older than its "parent" got the id of an ended one: it is not a child
+            if child in seen or born is None or started is None or started < born:
+                continue
+            seen.add(child)
+            found.append((child, started))
+            todo.append(child)
+    return found
+
+
+def stop(processes: List[Process]) -> int:
+    """Ends the ``processes`` that ``descendants`` found and are still running; returns how many it ended."""
+    if sys.platform != "win32":
+        return 0
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    ended = 0
+    for pid, started in processes:
+        if _windows_started(pid) != started:  # already ended (and its id maybe taken by another process)
+            continue
+        handle = kernel32.OpenProcess(0x0001, False, pid)  # PROCESS_TERMINATE
+        if not handle:
+            continue
+        try:
+            ended += bool(kernel32.TerminateProcess(handle, 1))
+        finally:
+            kernel32.CloseHandle(handle)
+    return ended
+
+
+def _windows_processes() -> List[Tuple[int, int]]:
+    """``(process id, parent id)`` of every process running."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Entry(ctypes.Structure):  # PROCESSENTRY32W
+        _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD), ("th32ProcessID", wintypes.DWORD),
+                    ("th32DefaultHeapID", ctypes.c_size_t), ("th32ModuleID", wintypes.DWORD),
+                    ("cntThreads", wintypes.DWORD), ("th32ParentProcessID", wintypes.DWORD),
+                    ("pcPriClassBase", ctypes.c_long), ("dwFlags", wintypes.DWORD),
+                    ("szExeFile", ctypes.c_wchar * 260)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    kernel32.Process32FirstW.argtypes = kernel32.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(Entry)]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    snapshot = kernel32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+    if not snapshot or snapshot == wintypes.HANDLE(-1).value:
+        raise OSError(ctypes.get_last_error(), "could not list the processes")
+    entry = Entry()
+    entry.dwSize = ctypes.sizeof(Entry)
+    found = []
+    try:
+        more = kernel32.Process32FirstW(snapshot, ctypes.byref(entry))
+        while more:
+            found.append((int(entry.th32ProcessID), int(entry.th32ParentProcessID)))
+            more = kernel32.Process32NextW(snapshot, ctypes.byref(entry))
+    finally:
+        kernel32.CloseHandle(snapshot)
+    return found
+
+
+def _windows_started(pid: int) -> Optional[int]:
+    """When process ``pid`` started (a FILETIME), ``None`` when it is gone or can't be asked."""
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE, *[ctypes.POINTER(wintypes.FILETIME)] * 4]
+    kernel32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        return None
+    try:
+        code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)) or code.value != 259:  # STILL_ACTIVE
+            return None
+        times = [wintypes.FILETIME() for _ in range(4)]
+        if not kernel32.GetProcessTimes(handle, *(ctypes.byref(t) for t in times)):
+            return None
+        return (times[0].dwHighDateTime << 32) | times[0].dwLowDateTime
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def which(name: str) -> Optional[str]:

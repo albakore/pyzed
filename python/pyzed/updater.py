@@ -22,6 +22,7 @@ friends raise ``UpdateError`` with a readable message instead.
 
 from __future__ import annotations
 
+import glob
 import hashlib
 import json
 import os
@@ -121,18 +122,58 @@ class Release:
 
 
 def _get(url: str, timeout: float) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"})
+    """GitHub's answer for ``url``, asked with the ETag of the last answer: an unchanged release comes back as a
+    short "304 Not Modified", which is quicker and does not count against GitHub's limit of 60 requests an hour,
+    so the app can look often. When GitHub refuses (that limit), the last answer is used."""
+    cached = _cached().get(url) or {}
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"}
+    if cached.get("etag") and "body" in cached:
+        headers["If-None-Match"] = str(cached["etag"])
+    request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https URL
-            return json.loads(response.read().decode("utf-8"))
+            body = json.loads(response.read().decode("utf-8"))
+            etag = response.headers.get("ETag")
     except urllib.error.HTTPError as err:
+        if err.code == 304 and "body" in cached:
+            return cached["body"]
         if err.code == 404:
             raise UpdateError("no release found") from err
-        if err.code == 403:
+        if err.code in (403, 429):
+            if "body" in cached:
+                return cached["body"]
             raise UpdateError("GitHub refused the request (rate limit); try again later") from err
         raise UpdateError(f"GitHub answered {err.code}") from err
     except (urllib.error.URLError, OSError, ValueError) as err:
         raise UpdateError(f"could not reach GitHub: {getattr(err, 'reason', err)}") from err
+    if etag:
+        _remember(url, {"etag": etag, "body": body})
+    return body
+
+
+def _cache_file() -> Path:
+    from .project import config_dir
+
+    return config_dir() / "updates-cache.json"
+
+
+def _cached() -> Dict[str, Any]:
+    try:
+        data = json.loads(_cache_file().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _remember(url: str, entry: Dict[str, Any]) -> None:
+    """Keeps GitHub's last answer for ``url`` with its ETag (errors are ignored: the next check asks in full)."""
+    data = _cached()
+    data[url] = entry
+    try:
+        _cache_file().parent.mkdir(parents=True, exist_ok=True)
+        _cache_file().write_text(json.dumps(data), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def latest(repo: str, *, prerelease: bool = False, timeout: float = 10) -> Release:
@@ -171,6 +212,11 @@ def asset_name(app: str) -> str:
     return f"{app}-{system_name()}-{machine_name()}.zip"
 
 
+def installer_name(app: str) -> str:
+    """The Windows setup program next to the zip: ``pyzed-design-windows-x86_64-setup.exe``."""
+    return asset_name(app)[:-4] + "-setup.exe"
+
+
 def is_frozen() -> bool:
     """Whether this process is a packaged app (PyInstaller or Nuitka), which can update itself."""
     return bool(getattr(sys, "frozen", False)) or "__compiled__" in globals()
@@ -188,10 +234,39 @@ def install_dir() -> Optional[Path]:
     return exe.parent
 
 
+_replaceable: Dict[Path, bool] = {}
+
+
 def can_update_in_place() -> bool:
-    """Whether ``replace_on_exit`` can swap this app: packaged, and its folder is writable."""
+    """Whether ``replace_on_exit`` can swap this app: packaged, and this user may move its files out of its folder.
+
+    Tried once with a small file, since ``os.access`` can't tell on Windows: an app installed for all users (in
+    ``C:\\Program Files``) answers "writable" but every move is "Access is denied" without administrator rights.
+    """
     folder = install_dir()
-    return folder is not None and os.access(folder.parent, os.W_OK)
+    if folder is None:
+        return False
+    if folder not in _replaceable:
+        _replaceable[folder] = _can_move_out(folder)
+    return _replaceable[folder]
+
+
+def _can_move_out(folder: Path) -> bool:
+    """Creates a file in ``folder``, moves it next to the folder and deletes it: what the swap does to the app."""
+    inside = folder / f".pyzed-update-test-{os.getpid()}"
+    outside = folder.with_name(f"{folder.name}.update-test-{os.getpid()}")
+    try:
+        inside.write_bytes(b"")
+        inside.replace(outside)
+        outside.unlink()
+        return True
+    except OSError:
+        for path in (inside, outside):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+        return False
 
 
 # -- downloading and installing ----------------------------------------------------------------
@@ -331,9 +406,11 @@ if not defined held goto emptied
 for /d %%e in ({old_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL
 for %%e in ({old_all}) do move "%%~e" "{target_raw}\\%%~nxe" >NUL
 rmdir {old} 2>NUL
-rem A file of the old app can stay open for a while (an antivirus scan, a child process still ending): retry.
+rem A file of the old app can stay open for a while (an antivirus scan, a child process still ending): free what
+rem can be freed, say in the log what holds it, and retry.
 set /a tries+=1
-if %tries% EQU {list_after} {list}
+if %tries% EQU {free_after} {free}
+if %tries% EQU {free_again} {free}
 if %tries% GEQ {tries} (echo The app folder is still in use: the update was not installed. & {fail})
 ping -n 2 127.0.0.1 >NUL
 goto swap
@@ -347,24 +424,123 @@ goto installed
 move {new} {target} >NUL || (move {old} {target} >NUL & echo Could not move the new version in. & {fail})
 :installed
 {keep}rmdir /S /Q {old}
+del {free_script} 2>NUL
 {launch}
 rem deletes this script without cmd then failing to read its next line ("The batch file cannot be found")
 (goto) 2>NUL & del "%~f0"
 """
 #: How many seconds (about) the Windows swap waits for the app folder to be free.
 SWAP_TRIES = 30
-#: After how many failed tries the Windows swap writes in its log the programs running from the app folder.
-LIST_AFTER = 3
-#: Lists (in the log) the processes whose program is inside the app folder (``PYZED_APP``), naming another
-#: window of this app (``PYZED_EXE``) first: the usual reason a file of the folder stays open.
-_LIST_PROGRAMS = (
-    "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \""
-    "$d = $env:PYZED_APP.TrimEnd('\\') + '\\'; "
-    "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and "
-    "$_.ExecutablePath.StartsWith($d, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { "
-    "if ($_.Name -ieq $env:PYZED_EXE) { 'Another ' + $_.Name + ' (' + $_.ProcessId + ') is open: close it' } "
-    "else { 'Running from the app folder: ' + $_.Name + ' (' + $_.ProcessId + ')' } }\""
-)
+#: After how many failed tries the Windows swap stops the helpers still running from the app folder and writes in
+#: its log what keeps the folder in use; it looks again after ``FREE_AGAIN`` tries.
+FREE_AFTER = 1
+FREE_AGAIN = 15
+#: Run by the Windows swap (PowerShell) when the app folder (``PYZED_APP``) is in use. It stops what runs from the
+#: folder but is not a window of the app (``PYZED_EXE``): helpers it started with ``-m`` (the MCP server an agent
+#: keeps, a preview) and its bundled tools (uv), which outlive the app that started them. Another window of the
+#: app is named, never closed (it may have unsaved work). Then Windows' Restart Manager names the programs that
+#: keep a file of the folder open: an antivirus, an indexer, an editor...
+_FREE_FOLDER = r"""$ErrorActionPreference = 'SilentlyContinue'
+$app = $env:PYZED_APP.TrimEnd('\') + '\'
+foreach ($p in Get-CimInstance Win32_Process) {
+  $path = $p.ExecutablePath
+  if (-not $path -or -not $path.StartsWith($app, [StringComparison]::OrdinalIgnoreCase)) { continue }
+  if ($p.Name -ieq $env:PYZED_EXE -and $p.CommandLine -notmatch '\s-m\s') {
+    'Another ' + $p.Name + ' (' + $p.ProcessId + ') is open: close it'
+  } else {
+    Stop-Process -Id $p.ProcessId -Force
+    'Stopped ' + $p.Name + ' (' + $p.ProcessId + '): it was running from the app folder'
+  }
+}
+try {
+  Add-Type -ErrorAction Stop -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+public static class PyzedFolderUsers {
+    [StructLayout(LayoutKind.Sequential)]
+    struct UniqueProcess { public int Pid; public System.Runtime.InteropServices.ComTypes.FILETIME Started; }
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct ProcessInfo {
+        public UniqueProcess Process;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string App;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)] public string Service;
+        public int Type; public int Status; public int Session;
+        [MarshalAs(UnmanagedType.Bool)] public bool Restartable;
+    }
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    static extern int RmStartSession(out uint session, int flags, string key);
+    [DllImport("rstrtmgr.dll")]
+    static extern int RmEndSession(uint session);
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    static extern int RmRegisterResources(uint session, uint files, string[] names, uint processes,
+                                          UniqueProcess[] ids, uint services, string[] serviceNames);
+    [DllImport("rstrtmgr.dll")]
+    static extern int RmGetList(uint session, out uint needed, ref uint count, [In, Out] ProcessInfo[] found,
+                                ref uint reasons);
+    public static string[] Of(string[] files) {
+        var users = new List<string>();
+        uint session;
+        if (RmStartSession(out session, 0, Guid.NewGuid().ToString()) != 0) return users.ToArray();
+        try {
+            if (RmRegisterResources(session, (uint)files.Length, files, 0, null, 0, null) != 0) return users.ToArray();
+            uint needed = 0, count = 0, reasons = 0;
+            int status = RmGetList(session, out needed, ref count, null, ref reasons);
+            if (status != 234 || needed == 0) return users.ToArray();  // 234: ERROR_MORE_DATA
+            var found = new ProcessInfo[needed];
+            count = needed;
+            if (RmGetList(session, out needed, ref count, found, ref reasons) != 0) return users.ToArray();
+            for (int i = 0; i < count; i++) users.Add(found[i].App + " (" + found[i].Process.Pid + ")");
+        } finally { RmEndSession(session); }
+        return users.ToArray();
+    }
+}
+'@
+  $files = @(Get-ChildItem -LiteralPath $env:PYZED_APP -Recurse -File -Force | ForEach-Object { $_.FullName })
+  foreach ($user in [PyzedFolderUsers]::Of($files)) { 'A file of the app folder is open in ' + $user }
+} catch {
+  'Could not ask Windows which programs use the app folder: ' + $_
+}
+"""
+
+
+#: The process of the swap script ``replace_on_exit`` started on Windows: it must outlive this app.
+_swap_pid: Optional[int] = None
+
+
+def child_processes() -> List[Tuple[int, int]]:
+    """What this app started that still runs, and what those started (Windows; ``[]`` elsewhere), except the swap
+    script. Look them up before stopping the app's own children, then end what is left with ``stop_processes``:
+    on Windows a process that outlives the app, and runs from its folder or works in it, keeps an update out."""
+    from . import _platform
+
+    return _platform.descendants(skip=(_swap_pid,) if _swap_pid else ())
+
+
+def stop_processes(processes: List[Tuple[int, int]]) -> int:
+    """Ends the processes ``child_processes`` found that are still running; returns how many."""
+    from . import _platform
+
+    return _platform.stop(processes)
+
+
+def _aside(target: Path) -> Path:
+    """Where the swap moves the old app: ``<app>.old``, or ``<app>.old-<pid>`` when an earlier attempt left a
+    ``.old`` that can't be deleted (a file of it still open), so the two are never mixed."""
+    old = target.with_name(target.name + ".old")
+    if old.exists():
+        shutil.rmtree(old, ignore_errors=True)
+    return old if not old.exists() else target.with_name(f"{target.name}.old-{os.getpid()}")
+
+
+def remove_leftovers(target: Optional[Union[str, Path]] = None) -> None:
+    """Deletes what earlier updates left next to the app (``<app>.old*`` folders whose files were still open)."""
+    target = Path(target) if target else install_dir()
+    if target is None or not target.parent.is_dir():
+        return
+    for entry in target.parent.glob(glob.escape(target.name) + ".old*"):
+        if entry.is_dir():
+            shutil.rmtree(entry, ignore_errors=True)
 
 
 def _fresh_environment() -> Dict[str, str]:
@@ -401,28 +577,35 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
     target = Path(target).resolve() if target else install_dir()
     if target is None:
         raise UpdateError("only a packaged app can replace itself; update with pip or uv instead")
-    old = target.with_name(target.name + ".old")
+    old = _aside(target)
     exe_name = Path(sys.executable).name
     env = _fresh_environment()
     if os.name == "nt":
         q = lambda p: f'"{p}"'  # noqa: E731
+        script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
+        free_script = script.with_suffix(".ps1")
+        free_script.write_text(_FREE_FOLDER, encoding="utf-8-sig")  # with a BOM: Windows PowerShell reads it as UTF-8
+        free = f"powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {q(free_script)}"
         launch = f'start "" {q(target / exe_name)} {" ".join(q(a) for a in args)}' if relaunch else ""
         kept = "".join(f'for %%f in ({q(old / p)}) do copy /Y "%%~f" {q(target)} >NUL\n' for p in keep)
         # when the swap fails the old version starts again (the updater then tells what happened)
-        fail = f"{launch} & exit /b 1" if launch else "exit /b 1"
+        fail = f"del {q(free_script)} 2>NUL & " + (f"{launch} & exit /b 1" if launch else "exit /b 1")
         text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch,
-                                      keep=kept, tries=SWAP_TRIES, fail=fail, list_after=LIST_AFTER,
-                                      list=_LIST_PROGRAMS, app=target, exe=exe_name, old_raw=old, target_raw=target,
-                                      target_all=q(target / "*"), old_all=q(old / "*"), new_all=q(bundle / "*"))
-        script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
+                                      keep=kept, tries=SWAP_TRIES, fail=fail, free_after=FREE_AFTER,
+                                      free_again=FREE_AGAIN, free=free, free_script=q(free_script), app=target,
+                                      exe=exe_name, old_raw=old, target_raw=target, target_all=q(target / "*"),
+                                      old_all=q(old / "*"), new_all=q(bundle / "*"))
         script.write_text(text, encoding="utf-8")
         # A hidden console, not DETACHED_PROCESS: without one, each tasklist/find/ping the script runs while
         # it waits would open a console window of its own.
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        global _swap_pid
         with open(script.with_suffix(".log"), "w") as log:
             # started outside the app folder: a process whose current folder is in it keeps it from moving
-            subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True, env=env,  # noqa: S603, S607
-                             cwd=script.parent, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+            started = subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags,  # noqa: S603, S607
+                                       close_fds=True, env=env, cwd=script.parent, stdin=subprocess.DEVNULL,
+                                       stdout=log, stderr=subprocess.STDOUT)
+        _swap_pid = getattr(started, "pid", None)
         return script
     import shlex
 
@@ -441,6 +624,43 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         subprocess.Popen(["/bin/sh", str(script)], start_new_session=True, close_fds=True, env=env,  # noqa: S603
                          cwd=script.parent, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
     return script
+
+
+_INSTALLER_SCRIPT = """@echo off
+rem Waits for the app to exit, then runs the new version's setup program, which starts it again.
+:wait
+tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >NUL & goto wait)
+{setup}
+echo The setup program ended with code %errorlevel%.
+(goto) 2>NUL & del "%~f0"
+"""
+#: How the Windows setup program (Inno Setup) runs for an update: with its progress only, closing (through Windows'
+#: Restart Manager) the programs that use the app's files, and starting the app again.
+SETUP_ARGS = ("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CLOSEAPPLICATIONS", "/FORCECLOSEAPPLICATIONS",
+              "/RELAUNCH=1")
+
+
+def install_on_exit(setup: Union[str, Path], *, all_users: bool = False) -> Path:
+    """Runs the setup program ``setup`` (Windows) once this process exits: the way out when ``replace_on_exit`` can't
+    swap the app folder, since the setup closes what keeps the app's files in use and, for a copy installed for all
+    users (``all_users``), asks for administrator rights. Its log is the returned path; the setup restarts the app
+    when it ends. Quit right after calling it, like after ``replace_on_exit``."""
+    if os.name != "nt":
+        raise UpdateError("only Windows updates with a setup program")
+    q = lambda p: f'"{p}"'  # noqa: E731
+    script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}-setup.cmd"
+    log = script.with_suffix(".log")
+    scope = "/ALLUSERS" if all_users else "/CURRENTUSER"
+    command = " ".join([q(setup), *SETUP_ARGS, scope, q(f"/LOG={log.with_name(log.stem + '-inno.log')}")])
+    script.write_text(_INSTALLER_SCRIPT.format(pid=os.getpid(), setup=command), encoding="utf-8")
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    global _swap_pid
+    with open(log, "w") as out:
+        started = subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True,  # noqa: S603, S607
+                                   env=_fresh_environment(), cwd=script.parent, stdin=subprocess.DEVNULL, stdout=out,
+                                   stderr=subprocess.STDOUT)
+    _swap_pid = getattr(started, "pid", None)
+    return log
 
 
 # -- remembering checks ---------------------------------------------------------------------------

@@ -828,6 +828,8 @@
   "the app folder was in use": "la carpeta de la app estaba en uso",
   "Restart to update again, or install it with the installer from the Download page.": "Vuelve a pulsar Reiniciar para actualizar, o instálala con el instalador de la página de Descargas.",
   "Details: {path}": "Detalles: {path}",
+  "Restart to update again: this time the installer updates it.": "Vuelve a pulsar Reiniciar para actualizar: esta vez lo hará el instalador.",
+  "The app folder is still in use: the update was not installed.": "La carpeta de la app sigue en uso: no se instaló la actualización.",
   "Restart to update": "Reiniciar para actualizar",
   "Loading the release notes…": "Cargando las notas de la versión…",
   "Could not load the release notes: {error}": "No se pudieron cargar las notas de la versión: {error}",

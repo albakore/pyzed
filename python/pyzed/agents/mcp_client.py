@@ -202,13 +202,20 @@ class JsonRpcProcess:
             pass
 
     def close(self) -> None:
+        """Closes the program's input (it should exit), kills it if it does not, and on Windows ends what it started
+        too: ``npx`` there is a ``cmd`` behind ``node`` and the agent's own MCP servers, which outlive it otherwise
+        (and one running from Pyzed Design's folder keeps an update from replacing it)."""
         if self.alive:
+            from .. import _platform
+
+            started = _platform.descendants(self.process.pid)
             try:
                 assert self.process.stdin is not None
                 self.process.stdin.close()
                 self.process.wait(timeout=3)
             except (OSError, subprocess.TimeoutExpired, ValueError):
                 self.process.kill()
+            _platform.stop(started)
 
 
 class HttpTransport:

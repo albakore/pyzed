@@ -121,3 +121,29 @@ def test_wsl_runs_terminal_commands_in_windows_terminal(wsl, tmp_path, monkeypat
     wsl[0].joinpath("wt.exe").write_text("")
     command = file_ops.run_in_terminal_command(["claude"], tmp_path)
     assert command[0].endswith("wt.exe") and command[1] == "wsl.exe"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process tree")
+def test_descendants_finds_grandchildren_after_their_parent_ends():
+    """Windows does not end what a process started when it ends (``npx`` -> ``node`` -> an MCP server): found
+    before, the grandchild can still be ended after its parent is gone."""
+    import subprocess
+    import time
+
+    code = ("import subprocess, sys, time; subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+            "print('ready', flush=True); time.sleep(60)")
+    parent = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True)
+    try:
+        assert parent.stdout.readline().strip() == "ready"
+        assert parent.pid in [pid for pid, _ in _platform.descendants()]
+        assert parent.pid not in [pid for pid, _ in _platform.descendants(skip=(parent.pid,))]
+        found = _platform.descendants(parent.pid)
+        assert found and parent.pid not in [pid for pid, _ in found]
+        parent.kill()
+        parent.wait()
+        assert _platform.stop(found) >= 1  # the grandchild, still running
+        time.sleep(0.5)
+        assert all(_platform._windows_started(pid) is None for pid, _ in found)
+    finally:
+        if parent.poll() is None:
+            parent.kill()
