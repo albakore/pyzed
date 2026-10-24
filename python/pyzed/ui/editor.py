@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .. import _core
-from ..theme import Theme, alpha
+from ..theme import Theme, alpha, mix
 from .base import _theme
 
 _EXT_TOKENS = {"py": "py", "rs": "rs", "js": "js", "ts": "ts", "tsx": "tsx", "jsx": "js", "md": "md", "toml": "toml",
@@ -165,6 +165,7 @@ def editor(
     on_hover: Any = None,
     hover_delay: float = 500,
     sticky_scroll: int = 0,
+    indent_guides: Union[bool, str] = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -242,6 +243,10 @@ a log, a traceback or generated code to look at.
     - Ctrl+click (Cmd+click) moves the cursor and calls ``on_action("go_to_definition")``.
     - ``sticky_scroll=5`` pins up to five headers of the blocks around the first visible line (the
       ``class`` and ``def`` you are scrolling through) to the top; a click on one jumps to it.
+    - Holding Ctrl (Cmd) over a name underlines it like a link, since Ctrl+click goes to its definition.
+
+    ``indent_guides=True`` draws a thin line at each level of indentation (the one of the block around
+    the cursor stands out); ``indent_guides="rainbow"`` colors them by depth with the theme's player colors.
 
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
@@ -261,6 +266,7 @@ a log, a traceback or generated code to look at.
     t = _theme(theme)
     size = font_size or t.buffer_font_size
     status_colors = {"created": t.created, "modified": t.modified, "deleted": t.deleted}
+    guides, guides_active = _guide_colors(t, indent_guides)
     return _core.code_editor(
         id,
         text,
@@ -314,7 +320,18 @@ a log, a traceback or generated code to look at.
         on_hover=on_hover,
         hover_delay=hover_delay,
         sticky_scroll=sticky_scroll,
+        indent_guides=guides,
+        indent_guides_active=guides_active,
     )
+
+
+def _guide_colors(t: Theme, guides: Union[bool, str]) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+    """The indent guide colors of ``editor(indent_guides=...)`` and those of the active guide."""
+    if not guides:
+        return None, None
+    if guides == "rainbow" and t.players:
+        return [alpha(c, 0.4) for c in t.players], [alpha(c, 0.95) for c in t.players]
+    return [mix(t.editor, t.text_muted, 0.2)], [mix(t.editor, t.text_muted, 0.55)]
 
 
 Segment = Tuple[str, Optional[str]]

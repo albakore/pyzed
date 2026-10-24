@@ -484,6 +484,7 @@ class CodeIntel:
         self.offset = 0
         self.length = 0
         self._raw: Dict[str, List[Dict[str, Any]]] = {}
+        self._diagnostics: Optional[Tuple[Any, List[Diagnostic]]] = None
         self._completion: Optional[Tuple[lsp.LanguageServer, int]] = None
         self.lenses: List[Lens] = []
         self._lens_timer: Optional[threading.Timer] = None
@@ -605,8 +606,12 @@ class CodeIntel:
         """Diagnostics inside the editor's text, sorted by position.
 
         ty and ruff often report the same problem (an undefined name, a syntax error) at the same
-        place; only ty's is kept.
+        place; only ty's is kept. The view asks several times a frame, so the list is kept until the servers
+        report again or the code moves.
         """
+        key = (self.offset, self.length, tuple(self._raw.items()))
+        if self._diagnostics is not None and self._diagnostics[0] == key:
+            return list(self._diagnostics[1])
         out: List[Diagnostic] = []
         seen = set()
         for _, items in sorted(self._raw.items(), key=lambda pair: pair[0] != "ty"):
@@ -627,6 +632,7 @@ class CodeIntel:
                     severity=item.get("severity") or 1, message=str(item.get("message", "")).split("\n")[0],
                     source=str(item.get("source") or ""), code=str(code) if code is not None else None))
         out.sort(key=lambda d: (d.line, d.column, d.severity))
+        self._diagnostics = (key, out)
         return out
 
     # -- completion ---------------------------------------------------------
@@ -808,21 +814,25 @@ class CodeIntel:
             self._fallback_references(defs)
             return
         generation = self._generation
-        for lens in self.lenses:
-            d = next(x for x in defs if x.line - self.offset == lens.line and x.name == lens.name)
+        waiting = [len(self.lenses)]
 
-            def done(result: Any, lens: Lens = lens) -> None:
-                if generation != self._generation:
-                    return
-                count = len(result or [])
-                lens.parts.insert(0, _plural(count, "reference"))
+        def done(result: Any, lens: Lens) -> None:
+            if generation != self._generation:
+                return
+            lens.parts.insert(0, _plural(len(result or []), "reference"))
+            waiting[0] -= 1
+            if waiting[0] % 64 == 0:  # a redraw for every 64 answers and the last, not one per definition
                 self._changed()
 
-            server.request("textDocument/references", {
-                "textDocument": {"uri": self.uri},
-                "position": {"line": d.line - 1, "character": d.column},
-                "context": {"includeDeclaration": False},
-            }, done)
+        by_line = {(x.line - self.offset, x.name): x for x in reversed(defs)}
+        with server.batch():
+            for lens in self.lenses:
+                d = by_line[lens.line, lens.name]
+                server.request("textDocument/references", {
+                    "textDocument": {"uri": self.uri},
+                    "position": {"line": d.line - 1, "character": d.column},
+                    "context": {"includeDeclaration": False},
+                }, lambda result, lens=lens: done(result, lens))
 
     def _fallback_references(self, defs: List["Definition"]) -> None:
         counts = name_counts(self.text)

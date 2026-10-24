@@ -151,13 +151,6 @@ struct Fold {
     hidden: Vec<String>,
 }
 
-/// Minimap colors per line: `(column, length, color)` runs of non-blank text.
-#[derive(Default)]
-pub(crate) struct MinimapCache {
-    key: u64,
-    pub(crate) lines: Vec<Vec<(u16, u16, Color)>>,
-}
-
 /// The persistent state of one editor (keyed by its `id`).
 pub struct EditorState {
     pub content: text_editor::Content,
@@ -169,7 +162,8 @@ pub struct EditorState {
     pub(crate) viewport: Cell<Option<Rectangle>>,
     /// Whether the text editor has focus (recorded while drawing it).
     pub(crate) focused: Cell<bool>,
-    pub(crate) minimap: RefCell<MinimapCache>,
+    /// The text's syntax highlighting, shared by the editor, sticky scroll and the minimap.
+    pub(crate) syntax: highlighter::Shared,
     /// The other cursors (the primary one is the `text_editor`'s), in visible lines.
     pub(crate) extra: Vec<text_editor::Cursor>,
     pub(crate) history: actions::History,
@@ -203,7 +197,7 @@ impl EditorState {
             measure: RefCell::default(),
             viewport: Cell::new(None),
             focused: Cell::new(false),
-            minimap: RefCell::default(),
+            syntax: highlighter::Shared::default(),
             extra: Vec::new(),
             history: actions::History::default(),
             modifiers: Cell::new(keyboard::Modifiers::default()),
@@ -1785,6 +1779,14 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     } else {
         "txt".into()
     };
+    let highlight = highlighter::Settings {
+        token: token.clone(),
+        theme: theme_id,
+        font: props.font,
+        default: props.text_color,
+        document: Some(state.syntax.clone()),
+    };
+    state.syntax.lock().update(&highlight, &lines);
 
     let page_id = props.id.clone();
     let page_cursor = props.on_cursor.clone();
@@ -1903,7 +1905,10 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             if capture_strokes.iter().any(|k| k.matches(&press)) {
                 return None;
             }
+            // The keys the editor uses are claimed so they don't also reach the app's `on_key`
+            // (the designer's keymap would run the same action a second time).
             let run = |action: EditorAction| {
+                crate::app::claim_key(&press.key);
                 Some(Binding::Custom(Message::EditorAction {
                     id: props.id.clone(),
                     action,
@@ -1911,6 +1916,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 }))
             };
             let fold = |op: FoldOp| {
+                crate::app::claim_key(&press.key);
                 Some(Binding::Custom(Message::EditorFold {
                     id: props.id.clone(),
                     op,
@@ -1984,6 +1990,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                         _ => None,
                     };
                     if let Some(step) = step {
+                        crate::app::claim_key(&press.key);
                         return Some(Binding::Custom(Message::Slide(cb.clone(), step)));
                     }
                 }
@@ -1994,11 +2001,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                         _ => None,
                     };
                     if let Some(op) = op {
-                        return Some(Binding::Custom(Message::EditorFold {
-                            id: props.id.clone(),
-                            op,
-                            on_cursor: props.on_cursor.clone(),
-                        }));
+                        return fold(op);
                     }
                 }
             }
@@ -2052,15 +2055,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     if let Some(p) = &props.placeholder {
         editor = editor.placeholder(p.clone());
     }
-    let editor = editor.highlight_with::<Highlighter>(
-        highlighter::Settings {
-            token: token.clone(),
-            theme: theme_id,
-            font: props.font,
-            default: props.text_color,
-        },
-        highlighter::Highlight::to_format,
-    );
+    let editor = editor.highlight_with::<Highlighter>(highlight, highlighter::Highlight::to_format);
 
     let total_height = 2.0 * PAD_Y + starts[starts.len() - 1] as f32 * lh;
     let mut layers: Vec<Element<'a, Message>> = Vec::new();
@@ -2099,6 +2094,19 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         );
         // Always there, even empty, so the editor's widget state (its focus) keeps its place.
         layers.push(Boxes { rects }.into());
+        if !props.indent_guides.is_empty() {
+            layers.push(
+                editor_widgets::IndentGuides {
+                    state,
+                    colors: props.indent_guides.clone(),
+                    active: props.indent_guides_active.clone(),
+                    tab: props.tab_size.unwrap_or(4),
+                    column: measure.width(" ", props.font, props.size, lh),
+                    line_height: lh,
+                }
+                .into(),
+            );
+        }
     }
     layers.push(editor.into());
 
@@ -2469,6 +2477,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         props.on_hover.clone(),
         props.hover_delay,
     )
+    .highlight_all(props.minimap.is_some())
     .into();
     // The minimap sits over the right edge of the scrollable, just left of its vertical
     // scrollbar (a `row` would give the scrollable finite limits and let the gutter fill them).
@@ -2480,14 +2489,11 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let mut layers = vec![scroller];
     if props.sticky_scroll > 0 {
         let right = props.minimap.map_or(0.0, |m| m.width) + bar;
-        layers.push(
-            ide::StickyScroll::new(state, props.clone(), token.clone(), theme_id, right).into(),
-        );
+        layers.push(ide::StickyScroll::new(state, props.clone(), right).into());
     } else {
         state.sticky_height.set(0.0);
     }
     if let Some(minimap) = props.minimap {
-        update_minimap(state, &lines, &token, theme_id, props);
         let height = (size.height - bar).max(0.0);
         let minimap = Minimap {
             state,
@@ -2497,6 +2503,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             line_height: lh,
             thumb: minimap.thumb,
             background: props.background,
+            text_color: props.text_color.unwrap_or(Color::WHITE),
         };
         layers.push(
             widget::pin(minimap)
@@ -2511,78 +2518,6 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         .width(Length::Fill)
         .height(Length::Fill)
         .into()
-}
-
-/// Recomputes the minimap's colored runs when the visible text or the theme changed.
-fn update_minimap(
-    state: &EditorState,
-    lines: &[String],
-    token: &str,
-    theme_id: u64,
-    props: &EditorProps,
-) {
-    use iced::advanced::text::Highlighter as _;
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    lines.hash(&mut hasher);
-    token.hash(&mut hasher);
-    theme_id.hash(&mut hasher);
-    let key = hasher.finish();
-    let mut cache = state.minimap.borrow_mut();
-    if cache.key == key && !cache.lines.is_empty() {
-        return;
-    }
-    let mut highlighter = Highlighter::new(&highlighter::Settings {
-        token: token.to_owned(),
-        theme: theme_id,
-        font: props.font,
-        default: props.text_color,
-    });
-    let fallback = props.text_color.unwrap_or(Color::WHITE);
-    cache.key = key;
-    cache.lines = lines
-        .iter()
-        .map(|line| {
-            let mut runs: Vec<(u16, u16, Color)> = Vec::new();
-            // Byte offset -> column, with tabs every 4 columns.
-            let mut columns = Vec::with_capacity(line.len() + 1);
-            let mut col = 0u16;
-            for (i, ch) in line.char_indices() {
-                while columns.len() <= i {
-                    columns.push(col);
-                }
-                col = if ch == '\t' {
-                    (col / 4 + 1) * 4
-                } else {
-                    col.saturating_add(1)
-                };
-            }
-            while columns.len() <= line.len() {
-                columns.push(col);
-            }
-            for (range, highlight) in highlighter.highlight_line(line) {
-                let color = highlight.color().unwrap_or(fallback);
-                let text = &line[range.clone()];
-                // Split the span at whitespace so blank stretches stay empty.
-                let mut start = None;
-                for (i, ch) in text
-                    .char_indices()
-                    .chain(std::iter::once((text.len(), ' ')))
-                {
-                    let at = range.start + i;
-                    match (ch.is_whitespace(), start) {
-                        (false, None) => start = Some(at),
-                        (true, Some(s)) => {
-                            let (a, b) = (columns[s], columns[at]);
-                            runs.push((a, b.saturating_sub(a).max(1), color));
-                            start = None;
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            runs
-        })
-        .collect();
 }
 
 // The crate links against Python only when loaded by it, so run these with libpython:

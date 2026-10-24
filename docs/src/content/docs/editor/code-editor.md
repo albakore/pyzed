@@ -57,6 +57,8 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 - **Input methods**: Chinese, Japanese and Korean input methods (IME) work: the text being composed is
   drawn at the cursor and the committed text goes in at every cursor.
 - **Whitespace**: optionally draws spaces as `·` and tabs as `→`.
+- **Indent guides**: a thin line at each level of indentation shows where every block starts and ends; the one of
+  the block around the cursor stands out. *Indent guide colors* → *Rainbow* gives each depth its own color.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> or <kbd>Ctrl</kbd>+wheel change the font size;
   <kbd>Ctrl</kbd>+<kbd>0</kbd> resets it. The size is saved.
 - **Scrolling**: the mouse wheel scrolls the code (<kbd>Shift</kbd>+wheel sideways) and the scrollbars sit right of
@@ -209,7 +211,8 @@ knows (the controls of the form).
   (as Markdown), plus the problems at that spot. `form.email` and `form.email.text` describe the control and its
   property. The card stays while the mouse is over it, so you can scroll it and select its text. Turn it off with
   *Information on hover* in the settings.
-- **Go to definition**: <kbd>F12</kbd> or <kbd>Ctrl</kbd>+click on a name opens where it is defined: further down
+- **Go to definition**: <kbd>F12</kbd> or <kbd>Ctrl</kbd>+click on a name opens where it is defined (holding
+  <kbd>Ctrl</kbd> underlines the name under the mouse, like a link): further down
   the same code, another handler of the form (the editor switches to it), a file of your project or a library in
   the `.venv` (opened read-only in a tab). <kbd>Ctrl</kbd>+<kbd>F12</kbd> goes to the definition of its **type**.
   On `form.email`, it selects the control on the canvas. Without ty it still finds the `def` and `class` of the
@@ -315,6 +318,8 @@ to its default, and the *Project* scope to give a project its own (its tab size,
 | | **Line height** | Compact, Standard or Comfortable. |
 | | **Line numbers**, **Highlight current line** | The gutter and the current-line band. |
 | | **Show whitespace** | Spaces as `·`, tabs as `→`. |
+| | **Indent guides** | A line at each level of indentation; the one of the block around the cursor stands out. |
+| | **Indent guide colors** | One color, or Rainbow: a color per depth. |
 | Cursor | **Shape** | Bar, Block, Underline or Hollow. |
 | | **Blink** | Whether the cursor blinks. |
 | | **Width** | 1 to 4 pixels, for the bar cursor. |

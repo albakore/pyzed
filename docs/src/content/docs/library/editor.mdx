@@ -210,7 +210,7 @@ pz.container(ui.editor("ws.py", "def greet(name):\n    return f'Hello, {name}'\n
 
 ## Events
 
-Editor has **6 events of its own**, listed below. Like every widget it also has the **18 common events** (`click`, `double_click`, `right_click`, `mouse_enter`, `drag`, `key_down`, `resize`…), attached with `.on(...)`: see [Events](/pyzed/guides/events/) and [Events of every component](/pyzed/library/events/).
+Editor has **7 events of its own**, listed below. Like every widget it also has the **18 common events** (`click`, `double_click`, `right_click`, `mouse_enter`, `drag`, `key_down`, `resize`…), attached with `.on(...)`: see [Events](/pyzed/guides/events/) and [Events of every component](/pyzed/library/events/).
 
 | Event | Of | Handler gets | When |
 | --- | --- | --- | --- |
@@ -219,6 +219,7 @@ Editor has **6 events of its own**, listed below. Like every widget it also has 
 | `on_scroll` | `ui.editor`, `pz.code_editor` | `(info)` | Called on scroll. |
 | `on_zoom` | `ui.editor`, `pz.code_editor` | `(step)` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
 | `on_action` | `ui.editor`, `pz.code_editor` | `(name)` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…), e.g. to count them. |
+| `on_paste` | `ui.editor`, `pz.code_editor` | `()` | Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`. |
 | `on_hover` | `ui.editor`, `pz.code_editor` | `()` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
 
 **Handler gets** is what Pyzed passes to your callable: `()` means nothing. Any handler can also be a message (a value that is not callable), which goes to `update()`.
@@ -350,6 +351,7 @@ editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
@@ -360,6 +362,7 @@ editor(
     on_hover=None,
     hover_delay=500,
     sticky_scroll=0,
+    indent_guides=False,
     theme=None,
 )
 ```
@@ -404,9 +407,10 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `readonly` | `False` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 | `hover_delay` | `500` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `False` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
-Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
+Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([events](#events)).
 
 [Full reference →](/pyzed/reference/ui/#editor)
 
@@ -469,6 +473,7 @@ code_editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     highlight_color=None,
     match_brackets=True,
@@ -483,6 +488,8 @@ code_editor(
     on_hover=None,
     hover_delay=500.0,
     sticky_scroll=0,
+    indent_guides=None,
+    indent_guides_active=None,
 )
 ```
 
@@ -541,8 +548,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `repeat_rate` | `None` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
 | `hover_delay` | `500.0` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `None` | Colors of the indent guides, one per depth (they repeat); none: no guides. |
+| `indent_guides_active` | `None` | Colors of the guide of the block around the cursor, by depth like `indent_guides`. |
 
-Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_hover` ([events](#events)).
+Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([events](#events)).
 
 [Full reference →](/pyzed/reference/widgets/#code_editor)
 

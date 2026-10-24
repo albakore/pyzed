@@ -573,7 +573,7 @@ impl Widget<crate::app::Message, iced::Theme, Rend> for KeyFocus<'_> {
         {
             state.visible = true;
             shell.publish(crate::app::Message::Input(on_key.clone(), combo));
-            crate::app::claim_key();
+            crate::app::claim_key(key);
             shell.capture_event();
             shell.request_redraw();
             return;

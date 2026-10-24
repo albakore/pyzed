@@ -20,6 +20,8 @@ MIN_FONT, MAX_FONT, DEFAULT_FONT = 8.0, 32.0, 14.0
 DEFAULT_REPEAT_DELAY, MAX_REPEAT_DELAY = 500.0, 2000.0
 DEFAULT_REPEAT_RATE, MAX_REPEAT_RATE = 20.0, 100.0
 CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
+#: How indent guides are colored: one color, or one per depth.
+GUIDE_COLORINGS = ("fixed", "rainbow")
 #: Line heights, as a multiple of the font size.
 LINE_HEIGHTS = {"compact": 1.35, "standard": 1.6, "comfortable": 1.85}
 
@@ -43,6 +45,10 @@ class EditorSettings:
     #: Holding Backspace or Delete: deletions per second at most (0 keeps the system's).
     repeat_rate: float = DEFAULT_REPEAT_RATE
     show_whitespace: bool = False
+    #: A thin line at each level of indentation (the block around the cursor stands out).
+    indent_guides: bool = True
+    #: ``"fixed"`` (one color) or ``"rainbow"`` (a color per depth).
+    indent_guides_coloring: str = "fixed"
     wrap: bool = False
     line_numbers: bool = True
     highlight_line: bool = True
@@ -108,6 +114,8 @@ class EditorSettings:
             out.cursor_shape = "bar"
         if out.line_height not in LINE_HEIGHTS:
             out.line_height = "standard"
+        if out.indent_guides_coloring not in GUIDE_COLORINGS:
+            out.indent_guides_coloring = "fixed"
         out.cursor_width = min(max(out.cursor_width, 1.0), 4.0)
         out.repeat_delay = min(max(out.repeat_delay, 0.0), MAX_REPEAT_DELAY)
         out.repeat_rate = min(max(out.repeat_rate, 0.0), MAX_REPEAT_RATE)

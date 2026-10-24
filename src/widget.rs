@@ -188,6 +188,10 @@ pub struct EditorProps {
     pub hover_delay: std::time::Duration,
     /// Most block headers pinned to the top while scrolling (0: no sticky scroll).
     pub sticky_scroll: usize,
+    /// Indent guide colors by depth, taking turns (empty: no guides), and those of the guide
+    /// of the block around the cursor.
+    pub indent_guides: Vec<Color>,
+    pub indent_guides_active: Vec<Color>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1650,6 +1654,12 @@ pub fn progress_bar(
 ///
 /// `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
 /// the top of the editor (0 turns it off); a click on one moves the cursor there.
+///
+/// `indent_guides` draws a guide at each level of indentation in these colors, taking turns by
+/// depth (one color, or several for rainbow guides); the guide of the block around the cursor
+/// takes the colors of `indent_guides_active`.
+///
+/// Holding Ctrl (Cmd) over a name underlines it; Ctrl+click reports `"go_to_definition"`.
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
@@ -1662,7 +1672,7 @@ pub fn progress_bar(
     highlight_color=None, match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true,
     readonly=false,
     hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None, on_hover=None,
-    hover_delay=500.0, sticky_scroll=0))]
+    hover_delay=500.0, sticky_scroll=0, indent_guides=None, indent_guides_active=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1721,7 +1731,12 @@ pub fn code_editor(
     on_hover: Any<'_>,
     hover_delay: f32,
     sticky_scroll: usize,
+    indent_guides: Option<Vec<Bound<'_, PyAny>>>,
+    indent_guides_active: Option<Vec<Bound<'_, PyAny>>>,
 ) -> PyResult<Py<Widget>> {
+    let colors = |list: Option<Vec<Bound<'_, PyAny>>>| -> PyResult<Vec<Color>> {
+        list.unwrap_or_default().iter().map(style::color).collect()
+    };
     // Held Backspace/Delete: kept after `repeat_delay` ms, then `repeat_rate` times a second.
     let key_repeat =
         (repeat_delay.is_some() || repeat_rate.is_some()).then(|| crate::editor::KeyRepeat {
@@ -1850,6 +1865,8 @@ pub fn code_editor(
             on_hover: PyMsg::maybe(&on_hover),
             hover_delay: std::time::Duration::from_secs_f32(hover_delay.max(0.0) / 1000.0),
             sticky_scroll,
+            indent_guides: colors(indent_guides)?,
+            indent_guides_active: colors(indent_guides_active)?,
         })),
     )
 }

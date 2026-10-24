@@ -1,6 +1,6 @@
 [package]
 name = "pyzed"
-version = "1.11.0"
+version = "1.12.0"
 edition = "2024"
 rust-version = "1.88"
 description = "Fast, modern GUIs for Python powered by Iced"
@@ -107,20 +107,20 @@ strip = true
 # `iced_winit::quiet`, the Android handoff) and the community pull requests listed in its PYZED.md.
 # To update it, push to the `pyzed-0.14` branch of albakore/iced and bump `rev` here.
 [patch.crates-io]
-iced = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_core = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_debug = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_futures = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_graphics = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_program = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_renderer = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_runtime = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_selector = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_test = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_wgpu = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_widget = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
-iced_winit = { git = "https://github.com/albakore/iced", rev = "ae3085777218857abb2c85860eff15ab7d47074b" }
+iced = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_core = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_debug = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_futures = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_graphics = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_program = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_renderer = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_runtime = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_selector = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_test = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_tiny_skia = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_wgpu = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_widget = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
+iced_winit = { git = "https://github.com/albakore/iced", rev = "be63ed4a01caaea0f838567591cfbdbccd6cb704" }
 
 # Code that runs once (parsing shaders, SVG files and syntax definitions, D-Bus for the tray and
 # the system theme, the clipboard) is optimized for size: the hot paths keep opt-level 3.

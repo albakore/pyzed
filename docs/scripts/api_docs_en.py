@@ -481,6 +481,8 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
                         "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+                        "indent_guides": "Colors of the indent guides, one per depth (they repeat); none: no guides.",
+                        "indent_guides_active": "Colors of the guide of the block around the cursor, by depth like `indent_guides`.",
                     },
                 },
             }),
@@ -893,6 +895,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
                         "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
+                        "indent_guides": '`True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color.',
                     },
                 },
                 "pyzed.ui.language_token": {

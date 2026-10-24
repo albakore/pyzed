@@ -1145,7 +1145,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a"
 dependencies = [
- "libloading 0.8.9",
+ "libloading 0.7.4",
 ]
 
 [[package]]
@@ -1849,7 +1849,7 @@ checksum = "62adaabb884c94955b19907d60019f4e145d091c75345379e70d1ee696f7854f"
 [[package]]
 name = "iced"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_core",
  "iced_debug",
@@ -1865,7 +1865,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "bitflags 2.13.2",
  "bytes",
@@ -1882,7 +1882,7 @@ dependencies = [
 [[package]]
 name = "iced_debug"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_core",
  "iced_futures",
@@ -1892,7 +1892,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "futures",
  "iced_core",
@@ -1905,7 +1905,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",
@@ -1926,7 +1926,7 @@ dependencies = [
 [[package]]
 name = "iced_program"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_graphics",
  "iced_runtime",
@@ -1935,7 +1935,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -1947,7 +1947,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "bytes",
  "iced_core",
@@ -1959,7 +1959,7 @@ dependencies = [
 [[package]]
 name = "iced_selector"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_core",
 ]
@@ -1967,7 +1967,7 @@ dependencies = [
 [[package]]
 name = "iced_test"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_futures",
  "iced_program",
@@ -1985,7 +1985,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -2002,7 +2002,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",
@@ -2023,7 +2023,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.14.2"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_renderer",
  "log",
@@ -2038,7 +2038,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.14.1"
-source = "git+https://github.com/albakore/iced?rev=ae3085777218857abb2c85860eff15ab7d47074b#ae3085777218857abb2c85860eff15ab7d47074b"
+source = "git+https://github.com/albakore/iced?rev=be63ed4a01caaea0f838567591cfbdbccd6cb704#be63ed4a01caaea0f838567591cfbdbccd6cb704"
 dependencies = [
  "iced_core",
  "iced_debug",
@@ -3422,7 +3422,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.45.0",
 ]
 
 [[package]]
@@ -3843,7 +3843,7 @@ dependencies = [
 
 [[package]]
 name = "pyzed"
-version = "1.11.0"
+version = "1.12.0"
 dependencies = [
  "arboard",
  "bytes",

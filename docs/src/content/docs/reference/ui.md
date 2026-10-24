@@ -2810,6 +2810,7 @@ editor(
     on_hover=None,
     hover_delay=500,
     sticky_scroll=0,
+    indent_guides=False,
     theme=None,
 )
 ```
@@ -2861,6 +2862,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
 | `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
+| `indent_guides` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

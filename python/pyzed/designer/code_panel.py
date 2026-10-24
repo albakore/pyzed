@@ -41,6 +41,8 @@ CHAR_WIDTH = 0.6
 
 POPUP_ROWS = 9
 ROW_HEIGHT = 24.0
+#: Height of a row of the problems list under the editor.
+PROBLEM_ROW = 22.0
 #: Height of the list's padding and footer.
 FOOTER = 34.0
 LIST_WIDTH = 320.0
@@ -1685,21 +1687,25 @@ def references_list(a: CodeAssist, refs: References, t: Theme) -> Tuple[Any, flo
 
 
 def problems_list(a: CodeAssist, diags: List[Diagnostic], t: Theme) -> Tuple[Any, float]:
-    """Builds the clickable list of diagnostics under the editor; returns ``(widget, height)`` in pixels."""
+    """Builds the clickable list of diagnostics under the editor; returns ``(widget, height)`` in pixels. Only the
+    rows in view are built, so a file with hundreds of problems still types fast."""
     icons = {1: ("circle-x", t.error), 2: ("triangle-alert", t.warning), 3: ("info", t.info)}
-    rows = []
-    for diag in diags:
+
+    def row(i: int) -> Any:
+        diag = diags[i]
         icon, color = icons.get(diag.severity, icons[3])
         source = " ".join(x for x in (diag.source, f"({diag.code})" if diag.code else "") if x)
-        rows.append(_core.button(
+        return _core.button(
             _core.row([_icon(icon, size=13, color=color),
                        _core.text(f"{diag.line}:{diag.column}", size=12, font="mono", color=t.text_muted, width=52),
                        _core.text(diag.message, size=12, color=t.text, wrap=False, width="fill"),
                        _core.text(source, size=11, color=t.text_muted, wrap=False)], spacing=8, align="center"),
-            lambda diag=diag: a.go_to(diag), padding=(2, 12), width="fill", bg="transparent",
-            hover_bg=t.element_hover))
-    height = min(len(rows), 4) * 22 + 6
-    return _core.container(_core.scrollable(_core.column(rows, width="fill"), scrollbar_width=4),
+            lambda: a.go_to(diag), padding=(2, 12), width="fill", height=PROBLEM_ROW, bg="transparent",
+            hover_bg=t.element_hover)
+
+    height = min(len(diags), 4) * PROBLEM_ROW + 6
+    rows = _core.virtual_column(len(diags), row, item_height=PROBLEM_ROW, overscan=4)
+    return _core.container(_core.scrollable(rows, width="fill", scrollbar_width=4),
                            height=height, width="fill", padding=(3, 0), bg=t.panel), height
 
 
@@ -1758,7 +1764,8 @@ def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any]
         match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, cursor_width=s.cursor_width,
         line_height=a.line_height, scrollbar=s.scrollbar, keymap=a.editor_keymap(),
         on_hover=a.hovered if s.hover and not a.plain else None,
-        sticky_scroll=STICKY_LINES if s.sticky_scroll else 0, readonly=a.readonly, theme=et)
+        sticky_scroll=STICKY_LINES if s.sticky_scroll else 0, readonly=a.readonly,
+        indent_guides=(s.indent_guides_coloring if s.indent_guides else False), theme=et)
 
 
 def _bars(d: "Designer", t: Theme) -> List[Any]:

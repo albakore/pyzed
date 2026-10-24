@@ -413,7 +413,7 @@ def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any 
     - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
     """
     ...
-def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., on_paste: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ...) -> Any:
+def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., on_paste: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ..., indent_guides: Any = ..., indent_guides_active: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
     Editors are *uncontrolled*: `text` is only the initial value for a given `id`.
@@ -437,6 +437,12 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
 
     `sticky_scroll` pins up to that many headers of the blocks around the first visible line to
     the top of the editor (0 turns it off); a click on one moves the cursor there.
+
+    `indent_guides` draws a guide at each level of indentation in these colors, taking turns by
+    depth (one color, or several for rainbow guides); the guide of the block around the cursor
+    takes the colors of `indent_guides_active`.
+
+    Holding Ctrl (Cmd) over a name underlines it; Ctrl+click reports `"go_to_definition"`.
     """
     ...
 def column(children: Any = ..., *, spacing: Any = ..., padding: Any = ..., width: Any = ..., height: Any = ..., align: Any = ..., max_width: Any = ..., clip: Any = ...) -> Any: ...

@@ -2694,13 +2694,30 @@ fn window_moved(
     }
 }
 
-/// Set by a focused control (a select, `focusable`) that used the key being pressed, so the
-/// key does not also reach `on_key`.
-static KEY_CLAIMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// The keys a focused control (a select, `focusable`, a code editor) used, so they do not also
+/// reach `on_key`. Each press is claimed by its key: the presses of a batch (Alt, Shift, then
+/// the arrow of Alt+Shift+Down) all reach `on_key` after the widgets saw them.
+static KEYS_CLAIMED: Mutex<Vec<Key>> = Mutex::new(Vec::new());
 
-/// Marks the key being pressed as used by the focused control (see `KEY_CLAIMED`).
-pub fn claim_key() {
-    KEY_CLAIMED.store(true, std::sync::atomic::Ordering::Relaxed);
+/// Marks the press of `key` as used by the focused control (see `KEYS_CLAIMED`).
+pub fn claim_key(key: &Key) {
+    let mut claimed = KEYS_CLAIMED.lock().unwrap_or_else(|e| e.into_inner());
+    if claimed.len() >= 16 {
+        claimed.remove(0);
+    }
+    claimed.push(key.clone());
+}
+
+/// Whether the press of `key` was claimed (and forgets the claim).
+fn claimed(key: &Key) -> bool {
+    let mut claimed = KEYS_CLAIMED.lock().unwrap_or_else(|e| e.into_inner());
+    match claimed.iter().position(|k| k == key) {
+        Some(i) => {
+            claimed.remove(i);
+            true
+        }
+        None => false,
+    }
 }
 
 fn key_event(
@@ -2709,10 +2726,8 @@ fn key_event(
     window: window::Id,
 ) -> Option<Message> {
     track_keys(&event);
-    if matches!(
-        event,
-        iced::Event::Keyboard(keyboard::Event::KeyPressed { .. })
-    ) && KEY_CLAIMED.swap(false, std::sync::atomic::Ordering::Relaxed)
+    if let iced::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) = &event
+        && claimed(key)
     {
         return None;
     }
@@ -3208,4 +3223,19 @@ pub fn screenshot(
         .write_image_data(&rgba)
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_press_of_a_batch_is_claimed_by_its_key() {
+        let down = Key::Named(Named::ArrowDown);
+        let shift = Key::Named(Named::Shift);
+        claim_key(&down);
+        assert!(!claimed(&shift), "Shift was not used by the control");
+        assert!(claimed(&down));
+        assert!(!claimed(&down), "a claim is used once");
+    }
 }

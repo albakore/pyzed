@@ -16,6 +16,38 @@ stable version.
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-10-24
+
+### Highlights
+
+- **A faster code editor that colors like Zed**: typing sends only the changed range to the language servers, highlighting is incremental and shared with the sticky lines and the minimap, Python names get Zed's colors, and indent guides follow the scopes.
+- **`pyzed record`**: screenshots and clips from the command line, from job files that record every theme and size in parallel, or from its own window, with recordings several times faster.
+- **Design and architecture rules for AI agents**: two new guides, a `review_design` tool and an `AGENTS.md` in new projects, so agents build apps that look and are built like a professional product.
+
+### Features
+
+- ✨ Code editor: Python colors as in Zed (constants, types, properties, variables), sticky lines with their colors, indent guides by scope with the current block highlighted (*Indent guide colors*: One color or Rainbow; `ui.editor(indent_guides=...)`) and Ctrl over a name underlines it when Ctrl+click can follow it. PR [#218](https://github.com/albakore/pyzed/pull/218) by [@albakore](https://github.com/albakore).
+- ⚡️ Typing in big files is fast: edits go to ty and ruff as the changed range, highlighting only parses again until it catches up, the problems list is virtual and the minimap no longer highlights the whole file on each key. PR [#218](https://github.com/albakore/pyzed/pull/218) by [@albakore](https://github.com/albakore).
+- ✨ `pyzed record shot|clip|batch|gui|info`: screenshots and clips in WebP, PNG, GIF, APNG, MP4 or WebM, job files whose lists multiply (themes, sizes, scales), one process per core, a cache that skips what didn't change, and a window to edit, preview and run the jobs. `pyzed.recording` for scripts. PR [#217](https://github.com/albakore/pyzed/pull/217) by [@albakore](https://github.com/albakore).
+- ⚡️ Faster screenshots and recordings: each thread keeps its off-screen renderer (92 to 20 ms per screenshot), recorded frames build the view fewer times and WebP encodes about 8x faster. PR [#217](https://github.com/albakore/pyzed/pull/217) by [@albakore](https://github.com/albakore).
+- ✨ Design and architecture guides for agents (`get_guide("design")`, `get_guide("app-architecture")`, docs pages in en/es), the MCP `review_design` tool and `polish_design` prompt, `theme=` in `screenshot` and `screenshot_project`, and `pyzed new` writes an `AGENTS.md`. PR [#214](https://github.com/albakore/pyzed/pull/214) by [@albakore](https://github.com/albakore).
+- ✨ Settings → Package managers: which uv to use (included, this computer's or a custom path), Install and Update for this computer's, and uv's defaults (Python of new projects, package indexes, pre-releases, offline, link mode). `pyzed.package_managers` is a registry ready for other managers. PR [#213](https://github.com/albakore/pyzed/pull/213) by [@albakore](https://github.com/albakore).
+- ✨ Settings → Rendering chooses Pyzed Design's own renderer, graphics API and GPU; if the choice can't open the windows it goes back to Auto and restarts once. PR [#215](https://github.com/albakore/pyzed/pull/215) by [@albakore](https://github.com/albakore).
+- ✨ Ctrl+V in the Agent panel's message box attaches the image on the clipboard when it holds no text. Editors gain `on_paste`. PR [#216](https://github.com/albakore/pyzed/pull/216) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 uv no longer fails on Windows with "os error 448" (untrusted mount point) when creating a project, preparing its environment or updating `pyzed-ui`. PR [#213](https://github.com/albakore/pyzed/pull/213) by [@albakore](https://github.com/albakore).
+- 🐛 The agent's form screenshots work in the installed Pyzed Design (they opened another editor), run in the project's environment and fall back to capturing a real window when the off-screen renderer fails. `Theme.color` takes short names such as `"muted"`. PR [#216](https://github.com/albakore/pyzed/pull/216) by [@albakore](https://github.com/albakore).
+- 🐛 Settings → Rendering is always shown: the project's page (Project → App rendering) no longer vanishes without a project, and apps started from the designer don't inherit its renderer. PR [#215](https://github.com/albakore/pyzed/pull/215) by [@albakore](https://github.com/albakore).
+- 🐛 Duplicate line (Shift+Alt+Down) and delete line (Ctrl+Shift+K) ran twice. PR [#218](https://github.com/albakore/pyzed/pull/218) by [@albakore](https://github.com/albakore).
+- 🐛 Designed components (`.pzcomp`) take the theme of the form or app they are placed in, so their panels follow Pyzed Light. PR [#214](https://github.com/albakore/pyzed/pull/214) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 🍱 Every illustration of the docs, about 4,400 screenshots and clips, is recorded again in Pyzed Dark and Pyzed Light. PR [#212](https://github.com/albakore/pyzed/pull/212) by [@albakore](https://github.com/albakore).
+- 📝 New guides: "Recording screenshots and clips", "Design" and "App architecture" (en/es). PR [#217](https://github.com/albakore/pyzed/pull/217) by [@albakore](https://github.com/albakore). PR [#214](https://github.com/albakore/pyzed/pull/214) by [@albakore](https://github.com/albakore).
+
 ## [1.11.0] - 2026-10-23
 
 ### Highlights
