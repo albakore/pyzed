@@ -574,6 +574,18 @@ fn is_quote(c: char) -> bool {
     matches!(c, '"' | '\'' | '`')
 }
 
+/// Ctrl+V (Cmd+V on macOS) or Shift+Insert.
+fn is_paste(press: &text_editor::KeyPress) -> bool {
+    let m = press.modifiers;
+    match press.key.as_ref() {
+        keyboard::Key::Character(c) => {
+            m.command() && !m.alt() && !m.shift() && c.eq_ignore_ascii_case("v")
+        }
+        keyboard::Key::Named(keyboard::key::Named::Insert) => m.shift() && !m.control() && !m.alt(),
+        _ => false,
+    }
+}
+
 /// The characters the editor intercepts to auto-close pairs.
 pub fn is_pair_char(c: char) -> bool {
     closing_of(c).is_some() || matches!(c, ')' | ']' | '}')
@@ -1937,6 +1949,15 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 Some(None) => return Binding::from_key_press(press),
                 Some(bound) => return target(bound),
                 None => {}
+            }
+            // Paste the text as usual, then tell the app (a chat box attaches a pasted image).
+            if let Some(cb) = &props.on_paste
+                && is_paste(&press)
+            {
+                return Some(Binding::Sequence(vec![
+                    Binding::Paste,
+                    Binding::Custom(Message::Py(cb.clone())),
+                ]));
             }
             if press.modifiers.command()
                 && !press.modifiers.alt()

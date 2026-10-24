@@ -166,6 +166,8 @@ pub struct EditorProps {
     pub on_zoom: Option<PyMsg>,
     /// `on_action(name)` after a named editor action runs (undo, select_next, move_line_up...).
     pub on_action: Option<PyMsg>,
+    /// `on_paste()` after Ctrl/Cmd+V (or Shift+Insert) pastes the clipboard's text, if it holds any.
+    pub on_paste: Option<PyMsg>,
     /// Ranges painted behind the text (search results): 1-based `(line, column, end_line,
     /// end_column)` with exclusive ends.
     pub highlights: Vec<crate::editor::TextRange>,
@@ -1640,6 +1642,8 @@ pub fn progress_bar(
 ///   Ctrl+wheel.
 /// - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
 ///   `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+/// - `on_paste()`: Called when Ctrl/Cmd+V (or Shift+Insert) is pressed, after the clipboard's text
+///   (if it holds any) is pasted: a chat box reads an image from the clipboard with it.
 /// - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
 ///   its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
 ///   `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.
@@ -1654,8 +1658,9 @@ pub fn progress_bar(
     on_cursor=None, active_line=None, scrollbar_color=None, annotations=None, whitespace=None,
     tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
-    cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
-    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false,
+    cursor_color=None, on_zoom=None, on_action=None, on_paste=None, highlights=None,
+    highlight_color=None, match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true,
+    readonly=false,
     hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None, on_hover=None,
     hover_delay=500.0, sticky_scroll=0))]
 #[allow(clippy::too_many_arguments)]
@@ -1701,6 +1706,7 @@ pub fn code_editor(
     cursor_color: Any<'_>,
     on_zoom: Any<'_>,
     on_action: Any<'_>,
+    on_paste: Any<'_>,
     highlights: Option<Vec<crate::editor::TextRange>>,
     highlight_color: Any<'_>,
     match_brackets: bool,
@@ -1831,6 +1837,7 @@ pub fn code_editor(
             },
             on_zoom: PyMsg::maybe(&on_zoom),
             on_action: PyMsg::maybe(&on_action),
+            on_paste: PyMsg::maybe(&on_paste),
             highlights: highlights.unwrap_or_default(),
             highlight_color: style::opt_color(&highlight_color)?,
             match_brackets,

@@ -554,6 +554,8 @@ enum CommandKind {
     CopyToClipboard(String),
     ReadClipboard(PyMsg),
     ReadClipboardImage(PyMsg),
+    /// Draws the window again into an image and calls `then(png)`.
+    CaptureWindow(PyMsg, Option<PyMsg>),
     PickFiles(PickFiles),
 }
 
@@ -945,6 +947,18 @@ impl Command {
         cmd(CommandKind::ReadClipboardImage(PyMsg::new(then)))
     }
 
+    /// Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when
+    /// it could not be captured). The window is drawn again into an image by the app itself, so it
+    /// works the same on every system, even when other windows cover it.
+    #[staticmethod]
+    #[pyo3(signature = (then, window=None))]
+    fn capture_window(then: &Bound<'_, PyAny>, window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::CaptureWindow(
+            PyMsg::new(then),
+            PyMsg::maybe(&window),
+        ))
+    }
+
     /// Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
     /// list when it is cancelled).
     ///
@@ -1022,6 +1036,7 @@ impl Command {
             CommandKind::CopyToClipboard(_) => "Command.copy(...)",
             CommandKind::ReadClipboard(_) => "Command.paste(...)",
             CommandKind::ReadClipboardImage(_) => "Command.paste_image(...)",
+            CommandKind::CaptureWindow(..) => "Command.capture_window(...)",
             CommandKind::PickFiles(ref p) if p.save.is_some() => "Command.save_file(...)",
             CommandKind::PickFiles(_) => "Command.pick_files(...)",
         }
@@ -1237,6 +1252,21 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 })
             })
         }
+        CommandKind::CaptureWindow(then, obj) => {
+            let then = then.clone();
+            let Some(id) = resolve_window(py, state, obj) else {
+                return Task::done(Message::Call(then, PyMsg::new(py.None().bind(py))));
+            };
+            window::screenshot(id).map(move |shot| {
+                Python::attach(|py| {
+                    let value = match encode_png(&shot.rgba, shot.size.width, shot.size.height) {
+                        Some(data) => PyBytes::new(py, &data).into_any(),
+                        None => py.None().into_bound(py),
+                    };
+                    Message::Call(then.clone(), PyMsg::new(&value))
+                })
+            })
+        }
         // Android has no native file dialog here yet: the callback gets an empty list.
         #[cfg(target_os = "android")]
         CommandKind::PickFiles(pick) => {
@@ -1295,6 +1325,22 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
     }
 }
 
+/// RGBA pixels encoded as PNG.
+fn encode_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
+    if width == 0 || height == 0 {
+        return None;
+    }
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, width, height);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().ok()?;
+        writer.write_image_data(rgba).ok()?;
+    }
+    Some(out)
+}
+
 /// The image on the system clipboard, encoded as PNG (none on Android yet).
 #[cfg(target_os = "android")]
 fn clipboard_png() -> Option<Vec<u8>> {
@@ -1305,15 +1351,7 @@ fn clipboard_png() -> Option<Vec<u8>> {
 #[cfg(not(target_os = "android"))]
 fn clipboard_png() -> Option<Vec<u8>> {
     let image = arboard::Clipboard::new().ok()?.get_image().ok()?;
-    let mut out = Vec::new();
-    {
-        let mut encoder = png::Encoder::new(&mut out, image.width as u32, image.height as u32);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder.write_header().ok()?;
-        writer.write_image_data(&image.bytes).ok()?;
-    }
-    Some(out)
+    encode_png(&image.bytes, image.width as u32, image.height as u32)
 }
 
 // ---------------------------------------------------------------------------

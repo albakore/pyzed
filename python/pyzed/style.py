@@ -151,10 +151,10 @@ def to_hex(color: Any) -> str:
 
 def _token(value: Any) -> Any:
     if isinstance(value, str) and value and not value.startswith("#") and value != "transparent":
-        try:
-            return _theme.current().color(value)
-        except AttributeError:
-            raise ValueError(f"invalid color: {value!r} (not a hex color or a theme token)") from None
+        color = _theme.current().find_color(value)
+        if color is None:
+            raise ValueError(f"invalid color: {value!r} (not a hex color or a theme token)")
+        return color
     return value
 
 

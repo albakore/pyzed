@@ -1596,6 +1596,9 @@ A control whose fields, theme, language and animations are the same as last time
 last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
 Controls made from a `pz.Component` keep their own cache (see `pyzed.component`).
 
+In the designer a control that fails to draw (a wrong prop value) shows its error in its place,
+so the rest of the canvas still draws; a running form raises it.
+
 ## Layout helpers
 
 ### `align`
