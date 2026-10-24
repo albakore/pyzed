@@ -41,7 +41,8 @@ leen tipos ven los parámetros de cada widget incluso sin la documentación.
 
 ## AGENTS.md para un proyecto Pyzed
 
-Muchos agentes leen un `AGENTS.md` en la raíz del proyecto. Copia este; encaja con los proyectos de `pyzed new`.
+Muchos agentes leen un `AGENTS.md` en la raíz del proyecto. `pyzed new` escribe uno completo (comandos, dónde va
+cada capa, las reglas de diseño y las comprobaciones antes de terminar); en otros proyectos, copia este.
 Está en inglés porque los modelos siguen las instrucciones igual de bien y así sirve a todo el equipo, pero puedes
 traducirlo.
 
@@ -79,9 +80,26 @@ If the `pyzed` MCP server is available, use its tools instead of guessing APIs.
 - Reusable pieces with their own state: `pz.Component` with typed props, `pz.state()` and `events`.
 - Call `pz.run(App)` once, under `if __name__ == "__main__":`.
 
+## Design (https://albakore.github.io/pyzed/ai/design.md)
+- Each screen: one job, one primary action (`variant="solid"`), a known pattern (start from a block).
+- Hierarchy: one `ui.heading`, body `ui.label`, secondary text `color="text_muted"`; sizes xs/sm/md/lg/xl/2xl only.
+- Spacing on a 4 px grid (4, 8, 12, 16, 24, 32); inner space smaller than outer space.
+- Theme tokens only, never hex; status colors only for status; check Pyzed Dark and Pyzed Light.
+- Design the loading, empty (`ui.empty_state`), error (`ui.callout(tint="error")`) and ideal states.
+- Visible label for every input (`ui.field`), tooltips on icon buttons, sentence case, verb + object labels.
+
+## Architecture (https://albakore.github.io/pyzed/ai/app-architecture.md)
+- Models, rules and stores in `src/<package>/` without pyzed; databases and APIs in adapters behind Protocols;
+  views, components and the stylesheet in `ui/`; one composition root (`main.py`).
+- One owner per piece of state; change it through store methods or typed messages handled in `update`.
+- Background work returns results as messages; only the UI thread changes state.
+- Settings in `pz.Settings`, secrets in the keychain or the environment, strings through `pz.t`, `logging` not `print`.
+
 ## Before you finish
 - Run `pyzed check` (or the MCP `validate_code` tool) and fix every issue.
-- Smoke-test the UI off-screen: `App().screenshot("shot.png")` (or the MCP `screenshot` tool) and look at it.
+- Run the MCP `review_design` tool on each view and fix what it reports.
+- Smoke-test the UI off-screen: `App().screenshot("shot.png")` (or the MCP `screenshot` tool, also with
+  `theme="Pyzed Light"`) and look at it.
 ```
 
 ## Reglas de Cursor

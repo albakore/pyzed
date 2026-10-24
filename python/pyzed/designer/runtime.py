@@ -56,15 +56,18 @@ _VALUE_PROPS = {
 }
 
 
-def theme_for(form: Form, theme_name: Optional[str] = None) -> Theme:
-    """The theme a form runs with: its base theme (or ``theme_name``, to preview it with another one) plus
-    accent, radius, font and background tweaks."""
+def theme_for(form: Form, theme_name: Optional[str] = None, *, base: Optional[Theme] = None) -> Theme:
+    """The theme a form runs with: its base theme (or ``theme_name``, to preview it with another one, or ``base``,
+    the theme of the app or form a component is placed in) plus accent, radius, font and background tweaks."""
     if theme_name:
         form = dataclasses.replace(form, theme=theme_name)
-    try:
-        theme = themes.get(form.theme)
-    except KeyError:
-        theme = themes.get("Pyzed Dark")
+    if base is not None and not theme_name:
+        theme = base
+    else:
+        try:
+            theme = themes.get(form.theme)
+        except KeyError:
+            theme = themes.get("Pyzed Dark")
     if form.accent:
         theme = theme.with_accent(form.accent)
     changes: Dict[str, Any] = {}

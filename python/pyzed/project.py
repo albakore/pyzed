@@ -2,6 +2,7 @@
 
     my-app/
     ├── pyproject.toml        # uv project, plus a [tool.pyzed] table
+    ├── AGENTS.md             # how AI agents should build, design and check it
     ├── uv.lock
     ├── .venv/
     ├── src/my_app/           # backend: plain Python, importable from anywhere
@@ -1253,6 +1254,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
       dependency and ``ruff``/``ty`` as dev dependencies (``sync=False`` only edits
       ``pyproject.toml``, without resolving or installing anything).
     - ``git=True`` creates a git repository unless the folder is already inside one.
+    - A new project gets an ``AGENTS.md``: how AI agents should build, design and check it.
 
     Raises ``RuntimeError`` with uv's message when ``uv init`` fails.
     """
@@ -1284,6 +1286,11 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
         (root / "main.py").write_text(
             '"""Opens the main window: `uv run main.py`."""\n\nfrom pyzed import project\n\n'
             'if __name__ == "__main__":\n    project.run()\n', encoding="utf-8")
+    agents = root / "AGENTS.md"
+    if fresh and not agents.exists():  # how AI coding agents should work on the project
+        template = (Path(__file__).parent / "templates" / "AGENTS.md").read_text(encoding="utf-8")
+        backend = f"`src/{module}/`" if package else "The modules next to `pyproject.toml`"
+        agents.write_text(template.replace("{backend}", backend), encoding="utf-8")
     project.ui_dir.mkdir(parents=True, exist_ok=True)
     if not project.main_form.exists():
         title = re.sub(r"[-_]+", " ", project.name).strip().title() or "My App"

@@ -33,8 +33,13 @@ What to do for each kind of request:
   Write the UI like a web page: pz.box containers (flex, grid, gap, overflow, absolute children), a
   pz.stylesheet of classes with :hover, transition and @media rules, and components with children,
   a stylesheet and pz.provide / use_context (cookbook "Web-style pages").
-- "Make a component": list_components to reuse what exists, new_component, then validate_code and
-  screenshot with a preview() function.
+  Design like a professional product designer (get_guide("design")): one primary action per view, hierarchy,
+  the 4 px spacing and type scales, theme tokens only, every state (loading, empty, error) and the keyboard.
+  Structure code like a senior engineer (get_guide("app-architecture")): domain and stores in the package
+  without pyzed, adapters behind Protocols, views and components in ui/, slow work off the UI thread.
+  Before you finish, review_design each view and screenshot it with theme="Pyzed Dark" and "Pyzed Light".
+- "Make a component": list_components to reuse what exists, new_component, then validate_code, review_design
+  and screenshot with a preview() function.
 - "Make a designer form": list_components(kind="designer"), new_form, form_animations, validate_form.
 - "A shader / visual effect": get_guide("shaders"); node graphs (.pzshad, drawn with pz.shader("x.pzshad"))
   start from new_shader, use list_shader_nodes and check_shader; style effects (glow, glass...) are in the cookbook.
@@ -43,9 +48,11 @@ What to do for each kind of request:
   .pzanim libraries with new_animation / check_animation.
 - "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
 
-Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
+Knowledge: get_guide("overview"), "best-practices", "design" (UI/UX), "app-architecture" and "cookbook"
+(runnable recipes), list_components /
 describe_component, search_icons, list_themes, list_examples / read_example (blocks are whole screens).
-Checks: validate_code, validate_form, check_project; animation triggers: form_animations; pictures: screenshot, screenshot_project.
+Checks: validate_code, review_design, validate_form, check_project; animation triggers: form_animations;
+pictures: screenshot, screenshot_project (both take theme= to check light and dark).
 Settings: project_settings / set_project_settings (the renderer, GPU or CPU, and the editor preferences the
 project shares, like its tab size).
 Project tools work in the folder the server runs in and in the project's own environment (its .venv through
@@ -97,9 +104,11 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
     @tool()
     def get_guide(topic: str = "overview", lang: str = "en") -> str:
         """How Pyzed works. topic: "overview" (architecture, API layers, components, designer, CLI),
-        "best-practices" (rules for views, state, components, styling, layout and testing), "cookbook"
-        (runnable recipes for the features most apps need) or any topic of list_guides ("games",
-        "shaders", "animation", "performance", "integrations", "editor-shortcuts"...). lang: "en" or "es"."""
+        "best-practices" (rules for views, state, components, styling, layout and testing), "design" (UI and UX
+        rules: hierarchy, spacing, typography, theme tokens, states, feedback, accessibility), "app-architecture"
+        (project layout, layers, state, effects, testing for large apps), "cookbook" (runnable recipes for the
+        features most apps need) or any topic of list_guides ("games", "shaders", "animation", "performance",
+        "integrations", "editor-shortcuts"...). lang: "en" or "es"."""
         return knowledge.guide(topic, lang)
 
     @tool()
@@ -278,6 +287,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(validate.check_code(code))
 
     @tool()
+    def review_design(code: str) -> str:
+        """Reviews the design of Pyzed code against get_guide("design"): fixed hex colors instead of theme tokens,
+        spacing off the 4 px scale, text sizes off the type scale, icon buttons without a tooltip, vague or
+        capitalised button labels, inputs without a label, tables without an empty state and views with more
+        than one primary button. Returns the issues (each with its rule) and the checklist to go through on a
+        screenshot in both themes."""
+        return _json(validate.check_design(code))
+
+    @tool()
     def form_animations() -> str:
         """The animations a .pzform control takes in its "animations" list: every trigger ("on": appearing,
         hover, click, double click, pointer enter/leave, a new value, Enter, a failed validation rule, another
@@ -293,14 +311,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(validate.check_form(form, handlers))
 
     @gated(structured_output=False)  # images, not JSON
-    def screenshot(code: str, width: int = 800, height: int = 600, scale: float = 1.0) -> Any:
+    def screenshot(code: str, width: int = 800, height: int = 600, scale: float = 1.0, theme: str = "") -> Any:
         """Runs Pyzed code off-screen (no window, no GPU) and returns a PNG of its UI.
 
         The code is a script defining a pz.App (pz.run is intercepted) or a top-level preview() function
-        that returns a widget. It runs in a separate process with a 60 second limit."""
+        that returns a widget. It runs in a separate process with a 60 second limit. theme ("Pyzed Light",
+        "Pyzed Dark"...) shows it in that theme instead of its own: check every screen in both."""
         from .preview import render
 
-        return Image(data=render(code, size=(width, height), scale=scale), format="png")
+        return Image(data=render(code, size=(width, height), scale=scale, theme=theme or None), format="png")
 
     # -- projects --------------------------------------------------------------------------------------
     @gated()
@@ -365,11 +384,13 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(projects.run_tests(base, path, args or ()))
 
     @gated(structured_output=False)
-    def screenshot_project(target: str = "", width: int = 0, height: int = 0) -> Any:
+    def screenshot_project(target: str = "", width: int = 0, height: int = 0, theme: str = "") -> Any:
         """Renders a script (.py), form (.pzform), component (.pzcomp) or shader graph (.pzshad) of the folder
         off-screen, in the project's environment, and returns a PNG; by default the project's entry (its script,
-        else its main form). width/height default to the form's size."""
-        caption, png = projects.screenshot(base, target, size=(width, height) if width and height else None)
+        else its main form). width/height default to the form's size. theme ("Pyzed Light", "Pyzed Dark"...)
+        shows it in that theme instead of its own."""
+        caption, png = projects.screenshot(base, target, size=(width, height) if width and height else None,
+                                           theme=theme or None)
         return [caption, Image(data=png, format="png")]
 
     @gated()
@@ -412,6 +433,16 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         """Runnable recipes for the features most apps need."""
         return knowledge.guide("cookbook")
 
+    @server.resource("pyzed://design", mime_type="text/markdown")
+    def design_resource() -> str:
+        """UI and UX rules for professional Pyzed screens."""
+        return knowledge.guide("design")
+
+    @server.resource("pyzed://app-architecture", mime_type="text/markdown")
+    def architecture_resource() -> str:
+        """How to structure large, maintainable Pyzed apps."""
+        return knowledge.guide("app-architecture")
+
     @server.resource("pyzed://reference/{name}", mime_type="text/markdown")
     def reference_resource(name: str) -> str:
         """The reference page of anything in Pyzed (pyzed.game.vector, ui.virtual_list...)."""
@@ -447,44 +478,69 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
     def create_component(description: str) -> str:
         """Design and write a reusable Pyzed component."""
         return (f"Write a reusable Pyzed component: {description}\n\n"
-                "Read get_guide('best-practices') first. Check existing pz.ui components with list_components "
-                "and describe_component so you build on them instead of duplicating them. Start from "
-                "new_component, document every prop and event, use theme tokens for colors, then run "
-                "validate_code and screenshot (with a preview() function) to check the result.")
+                "Read get_guide('best-practices') and get_guide('design') first. Check existing pz.ui components "
+                "with list_components and describe_component so you build on them instead of duplicating them. "
+                "Start from new_component: typed props in, events out, no I/O in render(), document every prop "
+                "and event. Give it every state (hover, pressed, focus, disabled, loading, invalid) with theme "
+                "tokens and the spacing and type scales. Then run validate_code and review_design, and screenshot "
+                "a preview() function with theme='Pyzed Dark' and theme='Pyzed Light'.")
 
     @server.prompt()
     def create_app(description: str) -> str:
         """Plan and write a Pyzed desktop app."""
         return (f"Build a Pyzed desktop app: {description}\n\n"
-                "Read get_guide('overview') and get_guide('best-practices'). Start from new_app (layout "
-                "'workspace' for an editor-like window), keep view() free of side effects, prefer pz.ui "
-                "components (look them up with list_components / describe_component), then check it with "
-                "validate_code and screenshot.")
+                "Read get_guide('overview'), get_guide('best-practices'), get_guide('design') and "
+                "get_guide('app-architecture'). Design first: the job and primary action of each screen, the "
+                "pattern (plan_app names the closest block) and its loading, empty and error states. Start from "
+                "new_app (layout 'workspace' for an editor-like window), keep the state and rules in plain classes "
+                "outside the views, keep view() free of side effects, prefer pz.ui components (look them up with "
+                "list_components / describe_component), then check it with validate_code and review_design, and "
+                "screenshot it in Pyzed Dark and Pyzed Light.")
 
     @server.prompt()
     def create_form(description: str) -> str:
         """Build a form for Pyzed's visual designer."""
         return (f"Create a Pyzed designer form: {description}\n\n"
                 "List the toolbox types with list_components(kind='designer') and their props with "
-                "describe_component('designer:<type>'). Generate the files with new_form, fill in the handlers "
-                "(def <control>_<event>(form, event)), and check both files with validate_form.")
+                "describe_component('designer:<type>'). Read get_guide('design'): lay the form out with row and "
+                "column auto layout (gap 8-16, padding 16-24), a visible label for every input, the primary action "
+                "at the bottom right and one per form. Generate the files with new_form, fill in the handlers "
+                "(def <control>_<event>(form, event), short: they call the package for the rules), check both "
+                "files with validate_form and look at it with screenshot_project in both themes.")
 
     @server.prompt()
     def build_project(description: str) -> str:
         """Build a complete Pyzed app in this folder, watched live, from the project to a clean check."""
         return (f"Build a complete Pyzed desktop app in this folder: {description}\n\n"
                 "1. plan_app with the description; read the guides and the closest examples it names (blocks "
-                "first) and get_guide('best-practices').\n"
+                "first), get_guide('best-practices'), get_guide('design') and get_guide('app-architecture').\n"
                 "2. project_info: the project, its entry and environment. Without a project, create_project.\n"
-                "3. Plan the screens, the state (plain classes in the package, easy to test) and the background "
-                "work. Look up every widget with describe_component or read_reference.\n"
+                "3. Design and plan: each screen's job, primary action, pattern and states (loading, empty, error, "
+                "ideal); the layers (domain and stores in the package without pyzed, adapters behind Protocols, "
+                "views and components in ui/) and the background work. Look up every widget with "
+                "describe_component or read_reference.\n"
                 "4. start_live_preview on the entry, so the user sees the app take shape.\n"
                 "5. write_files in small steps: state and logic, then views or designer forms, then tests. Fix "
                 "what each write reports and what live_preview_status shows. Write the UI like a web page: "
                 "pz.box containers, a pz.stylesheet of classes (:hover, transition, @media) and components "
                 "with children (cookbook 'Web-style pages').\n"
-                "6. add_dependency for libraries, check_project and run_tests until both are clean, and "
-                "screenshot_project each screen to check it looks right. Then tell the user how to run it.")
+                "6. add_dependency for libraries, check_project and run_tests until both are clean.\n"
+                "7. Design review: review_design on every view file, screenshot_project each screen with "
+                "theme='Pyzed Dark' and theme='Pyzed Light', go through the checklist and fix what fails. "
+                "Then tell the user how to run it.")
+
+    @server.prompt()
+    def polish_design(target: str = "") -> str:
+        """Review and improve the design of a screen like a senior product designer."""
+        return (f"Review and improve the design of {target or 'the app in this folder'}.\n\n"
+                "1. Read get_guide('design').\n"
+                "2. Screenshot it (screenshot_project, or screenshot for code) with theme='Pyzed Dark' and "
+                "theme='Pyzed Light', at its size and at a narrow size.\n"
+                "3. Run review_design on its code and go through the checklist it returns. Write down what fails: "
+                "hierarchy, spacing, color, states, feedback, accessibility, writing.\n"
+                "4. Fix the findings in order of impact (structure and states before pixels), keeping behaviour "
+                "the same. Prefer pz.ui components, theme tokens and stylesheet classes.\n"
+                "5. Screenshot both themes again and tell the user what changed and why, in a few lines.")
 
     return server
 

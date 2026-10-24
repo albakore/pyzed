@@ -24,7 +24,8 @@ REPO = "albakore/pyzed"
 SITE = "https://albakore.github.io/pyzed/"
 
 #: Bundled guides, by topic.
-GUIDES = {"overview": "guide.md", "best-practices": "best_practices.md", "cookbook": "cookbook.md"}
+GUIDES = {"overview": "guide.md", "best-practices": "best_practices.md", "cookbook": "cookbook.md",
+          "design": "design.md", "app-architecture": "architecture.md"}
 
 #: More topics for ``guide``: each one is a page of the documentation.
 TOPICS = {
@@ -78,10 +79,16 @@ def version() -> str:
 
 
 def guide(topic: str = "overview", lang: str = "en") -> str:
-    """Returns a guide: the bundled ``"overview"`` (how Pyzed works), ``"best-practices"`` and ``"cookbook"``
-    (runnable recipes), or the documentation page of a topic of ``TOPICS`` (``"games"``, ``"shaders"``...)."""
+    """Returns a guide: the bundled ``"overview"`` (how Pyzed works), ``"best-practices"``, ``"cookbook"``
+    (runnable recipes), ``"design"`` (UI and UX rules) and ``"app-architecture"`` (structuring large apps), or the
+    documentation page of a topic of ``TOPICS`` (``"games"``, ``"shaders"``...). A bundled guide with a Spanish
+    translation (``<name>.es.md``) returns it for ``lang="es"``."""
     if topic in GUIDES:
-        return (HERE / GUIDES[topic]).read_text(encoding="utf-8")
+        path = HERE / GUIDES[topic]
+        translated = path.with_suffix(f".{lang}.md")
+        if lang != "en" and translated.is_file():
+            path = translated
+        return path.read_text(encoding="utf-8")
     if topic in TOPICS:
         return read_docs(TOPICS[topic], lang)
     raise KeyError(f"unknown guide {topic!r}; available: {', '.join([*GUIDES, *TOPICS])}")
@@ -93,7 +100,11 @@ def guides() -> Dict[str, str]:
     out = {"overview": "How Pyzed works: the Elm architecture, the API layers, components, designer and CLI.",
            "best-practices": "Rules for views, state, components, styling, layout, projects and testing.",
            "cookbook": "Runnable recipes: app structure, background work, forms, large data, animation, "
-                       "shaders, games, window frames and anchors."}
+                       "shaders, games, window frames and anchors.",
+           "design": "Professional UI and UX: patterns, hierarchy, spacing, typography, color tokens of Pyzed "
+                     "Dark/Light, states, feedback, forms, accessibility, motion, writing and a review checklist.",
+           "app-architecture": "Scalable code: project layout, layers and ports, state and messages, components, "
+                               "effects and services, errors, settings, testing and anti-patterns."}
     for topic, slug in TOPICS.items():
         page = pages.get(slug)
         out[topic] = (page["title"] + ": " + page["description"]) if page else slug
@@ -428,6 +439,11 @@ _HINTS = {
     "breakpoint": "styles", "stylesheet": "styles", "hover": "styles", "style": "styles", "estilo": "styles",
     "landing": "layout styles", "page": "layout", "pagina": "layout", "card": "components", "context": "components",
     "async": "async", "download": "async", "http": "async", "keyboard": "keyboard", "shortcut": "keyboard",
+    "accessible": "accessibility", "accessibility": "accessibility", "accesible": "accessibility",
+    "accesibilidad": "accessibility", "service": "app-architecture", "worker": "app-architecture",
+    "scalable": "app-architecture", "escalable": "app-architecture", "architecture": "app-architecture",
+    "arquitectura": "app-architecture", "enterprise": "app-architecture", "crm": "app-architecture",
+    "erp": "app-architecture", "inventory": "app-architecture", "inventario": "app-architecture",
 }
 
 
@@ -440,6 +456,10 @@ def _words(text: str) -> List[str]:
 def _score(words: List[str], text: str) -> int:
     hay = text.lower()
     return sum(1 for w in words if w in hay)
+
+
+#: Topics every plan names: how to write, design and structure a Pyzed app.
+_ALWAYS = ("best-practices", "design", "app-architecture", "cookbook")
 
 
 def plan(description: str, limit: int = 6) -> Dict[str, Any]:
@@ -455,18 +475,23 @@ def plan(description: str, limit: int = 6) -> Dict[str, Any]:
     components = best(list_components("ui") + list_components("widget"),
                       lambda c: f"{c['name']} {c.get('summary', '')} {c.get('category', '')}", limit * 2)
     docs = best(list_docs(), lambda d: f"{d['slug']} {d['title']} {d['description']}")
-    topics = sorted({topic for w in words if w in _HINTS for topic in _HINTS[w].split()})
+    topics = sorted({topic for w in words if w in _HINTS for topic in _HINTS[w].split()} - set(_ALWAYS))
     return {
-        "topics": ["best-practices", "cookbook", *topics],
+        "topics": [*_ALWAYS, *topics],
         "examples": [{"name": e["name"], "kind": e.get("kind", "app"), "summary": e["summary"]} for e in examples],
         "components": [{"name": c["name"], "summary": c.get("summary", "")} for c in components],
         "docs": [{"slug": d["slug"], "title": d["title"]} for d in docs],
         "steps": [
-            "Read get_guide('best-practices') and get_guide('cookbook'), then the topics above.",
+            "Read get_guide('best-practices'), get_guide('design'), get_guide('app-architecture') and "
+            "get_guide('cookbook'), then the topics above.",
             "Read the closest example with read_example: start from a block for a whole screen.",
             "project_info: see the project, its entry file and environment; create_project when there is none.",
-            "Plan the screens, the state (plain classes in the package, easy to test) and the slow work "
-            "(background tasks). Look every component up with describe_component before using it.",
+            "Design before coding (get_guide('design')): for each screen write its job in one sentence, its primary "
+            "action, the pattern it follows and its loading, empty, error and ideal states.",
+            "Plan the code (get_guide('app-architecture')): domain models and stores in the package (no pyzed there), "
+            "adapters for databases and APIs behind Protocols, one composition root, views and components in ui/, "
+            "slow work in coroutines, Command.perform or pz.Worker. Look every component up with describe_component "
+            "before using it.",
             "Write it like a web page: every part is a pz.box (display block, flex, grid or stack, gap, "
             "overflow, position='absolute' children), the look goes in a pz.stylesheet of classes with :hover "
             "and transition, '@media' rules or pz.media() adapt it to the window, and reusable parts are "
@@ -475,7 +500,9 @@ def plan(description: str, limit: int = 6) -> Dict[str, Any]:
             "start_live_preview on the entry so the user watches the app as you build it.",
             "write_files in small steps (state, then views or forms, then tests), fixing what each write reports "
             "and reading live_preview_status for runtime errors.",
-            "check_project and run_tests until both are clean; screenshot_project each screen to check the look.",
+            "check_project and run_tests until both are clean.",
+            "Design review: review_design on each view file, then screenshot_project each screen with "
+            "theme='Pyzed Dark' and theme='Pyzed Light' and go through the checklist it returns.",
         ],
     }
 
