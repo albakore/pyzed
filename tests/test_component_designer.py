@@ -226,6 +226,22 @@ def test_component_runs_its_scene(tmp_path):
     assert other._controls()["label1"] is not instance._controls()["label1"]
 
 
+def test_component_follows_the_theme_of_its_form(tmp_path):
+    cls = load_component(make_rating(tmp_path).save())  # designed in the scene's own theme
+    instance = cls.create(value=4)
+    assert instance.ctx.theme.name == pz.theme.current().name  # used in code: the app's theme
+    form = designer.Form(width=300, height=200, theme="Pyzed Light")
+    form.add(components.get("rating").create("rating1", 10, 10))
+    seen = []
+    original = cls._theme
+    cls._theme = lambda self, model: seen.append(original(self, model)) or seen[-1]
+    try:
+        components.get("rating").render(form["rating1"], components.RenderContext(designer.runtime.theme_for(form)))
+    finally:
+        cls._theme = original
+    assert seen and seen[-1].name == "Pyzed Light"
+
+
 def test_nested_components_and_discover(tmp_path):
     make_rating(tmp_path).save()
     card = new_component("Card", tmp_path / "card.pzcomp")

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, Dict, Optional, Tuple
 
 from .. import _core, ui
+from .. import theme as _theme
 from ..component import Component
 from . import components as _components
 from . import layout as _layout
@@ -214,7 +215,13 @@ class SceneComponent(Component):
     def ctx(self) -> SceneContext:  # what ControlProxy.focus() needs
         """A render context for this instance, in the theme of its scene (what ``ControlProxy.focus()``
         needs)."""
-        return SceneContext(self, theme_for(self.scene_model()) if self.scene_model() is not None else None)
+        return SceneContext(self, self._theme(self.scene_model()) if self.scene_model() is not None else None)
+
+    def _theme(self, model: Any) -> Any:
+        """The theme of the form or app this instance is placed in (not the one its ``.pzcomp`` was designed
+        with, so a component follows light and dark themes), plus the scene's own accent, radius and style."""
+        host = self.context("pyzed_host_theme") or _theme.current()
+        return theme_for(model, base=host)
 
     # -- events ------------------------------------------------------------------------
     def _dispatch(self, control: Control, event: str, value: Any = None) -> Any:
@@ -259,7 +266,7 @@ class SceneComponent(Component):
                                    height="fill" if placed else model.height, center=True)
         controls = self._controls()
         self._bind(controls, model)
-        theme = theme_for(model)
+        theme = self._theme(model)
         ctx = SceneContext(self, theme)
         view = dataclasses.replace(model, controls=list(controls.values()))
         ctx.form = view
