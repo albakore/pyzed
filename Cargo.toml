@@ -59,8 +59,11 @@ rtrb = "0.4"
 # development files a checkout may not have, so there they come with the `alsa` feature (CI and
 # the released wheels turn it on); without it the engine renders offline and on the silent clock.
 # A faster allocator for the many small allocations of each view (widget trees, layout nodes, text).
+# `local_dynamic_tls` because Python loads the core with dlopen: with mimalloc's default
+# initial-exec TLS the whole library needs static TLS, which runs out on Linux ARM ("cannot
+# allocate memory in static TLS block").
 [target.'cfg(not(target_os = "android"))'.dependencies]
-mimalloc = { version = "0.1", default-features = false }
+mimalloc = { version = "0.1", default-features = false, features = ["local_dynamic_tls"] }
 # Native file dialogs (Command.pick_files) and images on the clipboard (Command.paste_image).
 rfd = "0.17"
 arboard = { version = "3.7", features = ["wayland-data-control"] }
