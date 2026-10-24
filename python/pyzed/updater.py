@@ -194,10 +194,39 @@ def install_dir() -> Optional[Path]:
     return exe.parent
 
 
+_replaceable: Dict[Path, bool] = {}
+
+
 def can_update_in_place() -> bool:
-    """Whether ``replace_on_exit`` can swap this app: packaged, and its folder is writable."""
+    """Whether ``replace_on_exit`` can swap this app: packaged, and this user may move its files out of its folder.
+
+    Tried once with a small file, since ``os.access`` can't tell on Windows: an app installed for all users (in
+    ``C:\\Program Files``) answers "writable" but every move is "Access is denied" without administrator rights.
+    """
     folder = install_dir()
-    return folder is not None and os.access(folder.parent, os.W_OK)
+    if folder is None:
+        return False
+    if folder not in _replaceable:
+        _replaceable[folder] = _can_move_out(folder)
+    return _replaceable[folder]
+
+
+def _can_move_out(folder: Path) -> bool:
+    """Creates a file in ``folder``, moves it next to the folder and deletes it: what the swap does to the app."""
+    inside = folder / f".pyzed-update-test-{os.getpid()}"
+    outside = folder.with_name(f"{folder.name}.update-test-{os.getpid()}")
+    try:
+        inside.write_bytes(b"")
+        inside.replace(outside)
+        outside.unlink()
+        return True
+    except OSError:
+        for path in (inside, outside):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+        return False
 
 
 # -- downloading and installing ----------------------------------------------------------------
@@ -565,22 +594,24 @@ tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >N
 echo The setup program ended with code %errorlevel%.
 (goto) 2>NUL & del "%~f0"
 """
-#: How the Windows setup program (Inno Setup) runs for an update: with its progress only, for the current user,
-#: closing (through Windows' Restart Manager) the programs that use the app's files, and starting the app again.
-SETUP_ARGS = ("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CURRENTUSER", "/CLOSEAPPLICATIONS",
-              "/FORCECLOSEAPPLICATIONS", "/RELAUNCH=1")
+#: How the Windows setup program (Inno Setup) runs for an update: with its progress only, closing (through Windows'
+#: Restart Manager) the programs that use the app's files, and starting the app again.
+SETUP_ARGS = ("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CLOSEAPPLICATIONS", "/FORCECLOSEAPPLICATIONS",
+              "/RELAUNCH=1")
 
 
-def install_on_exit(setup: Union[str, Path]) -> Path:
-    """Runs the setup program ``setup`` (Windows) once this process exits: the way out when ``replace_on_exit`` could
-    not swap the app folder, since the setup closes what keeps the app's files in use. Its log is the returned
-    path; the setup restarts the app when it ends. Quit right after calling it, like after ``replace_on_exit``."""
+def install_on_exit(setup: Union[str, Path], *, all_users: bool = False) -> Path:
+    """Runs the setup program ``setup`` (Windows) once this process exits: the way out when ``replace_on_exit`` can't
+    swap the app folder, since the setup closes what keeps the app's files in use and, for a copy installed for all
+    users (``all_users``), asks for administrator rights. Its log is the returned path; the setup restarts the app
+    when it ends. Quit right after calling it, like after ``replace_on_exit``."""
     if os.name != "nt":
         raise UpdateError("only Windows updates with a setup program")
     q = lambda p: f'"{p}"'  # noqa: E731
     script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}-setup.cmd"
     log = script.with_suffix(".log")
-    command = " ".join([q(setup), *SETUP_ARGS, q(f"/LOG={log.with_name(log.stem + '-inno.log')}")])
+    scope = "/ALLUSERS" if all_users else "/CURRENTUSER"
+    command = " ".join([q(setup), *SETUP_ARGS, scope, q(f"/LOG={log.with_name(log.stem + '-inno.log')}")])
     script.write_text(_INSTALLER_SCRIPT.format(pid=os.getpid(), setup=command), encoding="utf-8")
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
     global _swap_pid

@@ -92,8 +92,8 @@ Root: HKA; Subkey: "Software\Classes\PyzedDesign.Animation\shell\open\command"; 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 ; The app runs this setup silently with /RELAUNCH=1 when it could not replace its own folder (pyzed.updater
-; install_on_exit): start it again once installed.
-Filename: "{app}\{#AppExe}"; Flags: nowait skipifnotsilent; Check: RelaunchAfterUpdate
+; install_on_exit): start it again once installed, as the user (not as administrator, for an all-users install).
+Filename: "{app}\{#AppExe}"; Flags: nowait skipifnotsilent runasoriginaluser; Check: RelaunchAfterUpdate
 
 [UninstallDelete]
 ; Self-updates replace the folder's files, so remove what the installer did not put there too.

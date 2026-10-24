@@ -13,6 +13,7 @@ from Python (``pip``/``uv``), the tab shows the command that upgrades the packag
 from __future__ import annotations
 
 import asyncio
+import functools
 import shutil
 import sys
 import time
@@ -46,23 +47,30 @@ BLINK = Animation({0: {"opacity": 1.0}, 0.5: {"opacity": 0.55}, 1: {"opacity": 1
                   easing="ease_in_out_sine", repeat="infinite")
 
 
-def installed_with_setup() -> bool:
-    """Whether this copy is the one the Windows setup program installed (its uninstall entry points at this folder),
-    so the setup can also update it."""
+@functools.lru_cache(maxsize=1)
+def setup_scope() -> Optional[str]:
+    """``"user"`` or ``"all"`` (all users, in Program Files) when the Windows setup program installed this copy (its
+    uninstall entry points at this folder), so the setup can also update it; ``None`` otherwise."""
     folder = updater.install_dir()
     if sys.platform != "win32" or folder is None:
-        return False
+        return None
     import winreg  # type: ignore[import-not-found]
 
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINDOWS_UNINSTALL_KEY) as key:
-            location = str(winreg.QueryValueEx(key, "InstallLocation")[0])
-    except OSError:
-        return False
-    try:
-        return Path(location).resolve() == folder.resolve()
-    except OSError:
-        return False
+    for scope, root, view in (("user", winreg.HKEY_CURRENT_USER, 0),
+                              ("all", winreg.HKEY_LOCAL_MACHINE, winreg.KEY_WOW64_64KEY)):
+        try:
+            with winreg.OpenKey(root, WINDOWS_UNINSTALL_KEY, 0, winreg.KEY_READ | view) as key:
+                location = str(winreg.QueryValueEx(key, "InstallLocation")[0])
+            if Path(location).resolve() == folder.resolve():
+                return scope
+        except OSError:
+            continue
+    return None
+
+
+def installed_with_setup() -> bool:
+    """Whether the Windows setup program installed this copy (see ``setup_scope``)."""
+    return setup_scope() is not None
 
 
 def sync_windows_registration(version: str) -> bool:
@@ -110,8 +118,9 @@ class UpdateController:
     # -- state ----------------------------------------------------------------------------
     @property
     def can_install(self) -> bool:
-        """Whether this copy can replace itself (the compiled app in a writable folder)."""
-        return updater.can_update_in_place()
+        """Whether this copy can update itself: the compiled app in a folder it may change, or one the Windows setup
+        installed (for all users too: the setup then asks for administrator rights)."""
+        return updater.can_update_in_place() or (updater.is_frozen() and installed_with_setup())
 
     @property
     def busy(self) -> bool:
@@ -189,8 +198,9 @@ class UpdateController:
 
     @property
     def _setup_fallback(self) -> bool:
-        """Whether the next update goes through the setup program: the swap failed in a copy the setup installed."""
-        return self.swap_failed and installed_with_setup()
+        """Whether the next update goes through the setup program, in a copy the setup installed: the swap failed, or
+        can't work (installed for all users, this user may not change the app folder)."""
+        return (self.swap_failed or not updater.can_update_in_place()) and installed_with_setup()
 
     def _clean_downloads(self) -> None:
         """Deletes the downloads of versions already installed (or older): each one is a whole app, and the old
@@ -256,8 +266,9 @@ class UpdateController:
         """Downloads the new version for this platform and unpacks it next to the download.
 
         A download already finished (the designer was closed before restarting) is checked again
-        and reused. ``quiet`` (the automatic download) only speaks up when it fails. After a swap
-        that failed on Windows, it downloads the setup program instead (``restart`` then runs it).
+        and reused. ``quiet`` (the automatic download) only speaks up when it fails. On Windows, after
+        a swap that failed or when the app folder can't be changed (installed for all users), it
+        downloads the setup program instead (``restart`` then runs it).
         """
         release = self.latest
         if release is None or self.busy:
@@ -303,7 +314,7 @@ class UpdateController:
             return None
         try:
             if self.bundle.suffix.lower() == ".exe":  # the setup program, after a swap that failed
-                log = updater.install_on_exit(self.bundle)
+                log = updater.install_on_exit(self.bundle, all_users=setup_scope() == "all")
             else:
                 log = updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES).with_suffix(".log")
         except (updater.UpdateError, OSError) as err:
