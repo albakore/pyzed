@@ -186,12 +186,45 @@ def test_windows_swap_script_replaces_a_folder_a_program_works_in(tmp_path, monk
     assert (old / "unins000.exe").read_text() == "uninstaller" and not new.exists()
 
 
-def test_windows_swap_script_names_the_programs_in_use():
-    """After a few tries the script writes which programs run from the app folder, another window of the app first."""
+def test_windows_swap_script_frees_the_folder_and_names_what_holds_it():
+    """When the folder is in use the script stops the helpers running from it (never another window of the app),
+    and writes in its log what keeps it in use: another window, or the programs with a file of it open."""
     script = updater._WINDOWS_SCRIPT
-    assert "{list}" in script and 'set "PYZED_APP={app}"' in script
-    assert "Stop-Process" not in updater._LIST_PROGRAMS and "$env:PYZED_EXE" in updater._LIST_PROGRAMS
-    assert 1 < updater.LIST_AFTER < updater.SWAP_TRIES
+    assert "{free}" in script and 'set "PYZED_APP={app}"' in script
+    free = updater._FREE_FOLDER
+    assert "Stop-Process" in free and "$env:PYZED_EXE" in free and "\\s-m\\s" in free  # helpers run with -m
+    assert "RmGetList" in free and "Another " in free and "A file of the app folder is open in " in free
+    assert 0 < updater.FREE_AFTER < updater.FREE_AGAIN < updater.SWAP_TRIES
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
+def test_windows_swap_script_stops_a_helper_left_running_from_the_app(tmp_path, monkeypatch):
+    """A helper the app started from its own folder (the MCP server an agent keeps alive) outlives it and keeps a
+    file open: the swap stops it and the update goes in."""
+    old, new = tmp_path / "app", tmp_path / "new"
+    old.mkdir()
+    (new / "_internal").mkdir(parents=True)
+    (new / "pyzed-design.exe").write_text("new")
+    base = Path(sys.base_prefix)
+    for name in (Path(sys._base_executable).name, *(p.name for p in base.glob("python3*.dll")),
+                 *(p.name for p in base.glob("vcruntime140*.dll"))):
+        shutil.copy2(base / name, old / name)
+    helper = old / "helper.exe"
+    (old / Path(sys._base_executable).name).rename(helper)
+    (old / "data.bin").write_text("old")
+    code = "import sys, time; f = open(sys.argv[1], 'rb'); print('ready', flush=True); time.sleep(120)"
+    busy = subprocess.Popen([str(helper), "-c", code, str(old / "data.bin")], stdout=subprocess.PIPE,
+                            env={**os.environ, "PYTHONHOME": sys.base_prefix}, text=True)
+    try:
+        assert busy.stdout.readline().strip() == "ready"
+        done = _windows_swap(tmp_path, monkeypatch)
+        log = done.stdout
+    finally:
+        busy.kill()
+        busy.wait()
+    assert done.returncode == 0, log + done.stderr
+    assert "Stopped helper.exe" in log and "Could not ask Windows" not in log, log
+    assert (old / "pyzed-design.exe").read_text() == "new" and not (old / "data.bin").exists()
 
 
 def test_installer_removes_the_old_version_first():

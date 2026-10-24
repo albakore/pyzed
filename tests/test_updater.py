@@ -121,8 +121,61 @@ def test_windows_swap_script_opens_no_console_windows(tmp_path, monkeypatch):
     # a hidden console the script's tasklist/find/ping share, instead of one window each (DETACHED_PROCESS)
     [(args, flags)] = started
     assert args == ["cmd", "/c", str(script)] and flags == 0x08000000 | 0x200
-    script.unlink()
-    script.with_suffix(".log").unlink()
+    # the PowerShell that frees the folder sits next to it (with a BOM, so Windows PowerShell reads UTF-8)
+    free = script.with_suffix(".ps1")
+    assert free.read_bytes().startswith(b"\xef\xbb\xbf") and f'-File "{free}"' in script.read_text()
+    for path in (script, script.with_suffix(".log"), free):
+        path.unlink()
+
+
+def test_swap_moves_the_old_app_aside_without_mixing_attempts(tmp_path, monkeypatch):
+    """An earlier failed update can leave ``<app>.old`` behind: it is deleted, or (a file of it still open) the
+    swap uses another name; the next start deletes the leftovers."""
+    app = tmp_path / "Pyzed Design"
+    app.mkdir()
+    (tmp_path / "Pyzed Design.old").mkdir()
+    assert updater._aside(app) == tmp_path / "Pyzed Design.old" and not (tmp_path / "Pyzed Design.old").exists()
+    monkeypatch.setattr(updater.shutil, "rmtree", lambda path, ignore_errors=False: None)  # can't be deleted
+    (tmp_path / "Pyzed Design.old").mkdir()
+    assert updater._aside(app) == tmp_path / f"Pyzed Design.old-{updater.os.getpid()}"
+    monkeypatch.undo()
+    (tmp_path / "Pyzed Design.old-12").mkdir()
+    (tmp_path / "Pyzed Design.other").mkdir()
+    updater.remove_leftovers(app)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["Pyzed Design", "Pyzed Design.other"]
+
+
+def test_child_processes_leave_the_swap_running(monkeypatch):
+    """Before an update the app ends what it started, never the script that swaps it."""
+    from pyzed import _platform
+
+    asked = []
+    monkeypatch.setattr(_platform, "descendants", lambda pid=None, skip=(): asked.append(skip) or [(7, 1)])
+    monkeypatch.setattr(updater, "_swap_pid", 42)
+    assert updater.child_processes() == [(7, 1)] and asked == [(42,)]
+    assert _platform.stop([(7, 1)]) == 0 or updater.os.name == "nt"  # nothing to end off Windows
+
+
+@pytest.mark.skipif(updater.os.name == "nt", reason="fakes Windows on another system")
+def test_windows_setup_runs_after_the_app_exits(tmp_path, monkeypatch):
+    """The way out when the folder can't be swapped: the setup program, run silently once the app is gone, closes
+    what keeps its files open and starts the app again."""
+    started = []
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda args, **kw: started.append(args))
+    monkeypatch.setattr(updater.tempfile, "gettempdir", lambda: str(tmp_path))
+    with pytest.raises(updater.UpdateError):
+        updater.install_on_exit(tmp_path / "setup.exe")
+    fake_os = types.ModuleType("os")
+    fake_os.__dict__.update(vars(updater.os), name="nt")
+    monkeypatch.setattr(updater, "os", fake_os)
+    log = updater.install_on_exit(tmp_path / "setup.exe")
+    [args] = started
+    script = tmp_path / args[2]
+    text = script.read_text()
+    assert args[:2] == ["cmd", "/c"] and log.suffix == ".log" and f"PID eq {updater.os.getpid()}" in text
+    assert f'"{tmp_path / "setup.exe"}" /SILENT' in text
+    assert all(flag in text for flag in ("/CLOSEAPPLICATIONS", "/RELAUNCH=1", "/CURRENTUSER", "/LOG="))
+    assert updater.installer_name("pyzed-design").endswith("-setup.exe")
 
 
 def test_state_and_due():
@@ -265,6 +318,36 @@ def test_designer_tells_when_the_restart_did_not_update(tmp_path, monkeypatch):
     for command in updated.updates.on_start():
         command.close()
     assert updated.updates.error is None
+
+
+def test_designer_updates_with_the_setup_after_a_failed_swap(tmp_path, monkeypatch):
+    """A copy the Windows setup installed falls back on it when the swap failed: the next start looks for the
+    update again, downloads the setup program instead of the zip, and "Restart to update" runs it."""
+    from pyzed.designer import updates as updates_module
+    from pyzed.designer.app import Designer
+
+    release = dict(API_RELEASE, assets=[*API_RELEASE["assets"], {
+        "name": "pyzed-design-linux-x86_64-setup.exe", "browser_download_url": "https://example.com/s.exe",
+        "digest": "sha256:def"}])
+    monkeypatch.setattr(updates_module, "installed_with_setup", lambda: True)
+    monkeypatch.setattr(updater, "can_update_in_place", lambda: True)
+    monkeypatch.setattr(updater, "asset_name", lambda app: "pyzed-design-linux-x86_64.zip")
+    monkeypatch.setattr(updater, "latest", lambda repo, prerelease=False, **kw: updater.Release.from_api(release))
+    monkeypatch.setattr(updater, "download", lambda asset, folder, progress=None: folder / asset.name)
+    monkeypatch.setattr(updater, "extract", lambda archive: 1 / 0)  # the setup is not unpacked
+    ran = []
+    monkeypatch.setattr(updater, "install_on_exit", lambda setup: ran.append(setup) or tmp_path / "setup.log")
+    (tmp_path / "swap.log").write_text("The app folder is still in use: the update was not installed.\n")
+    updater.save_state(pending="0.5.0", pending_log=str(tmp_path / "swap.log"), last_check=updater.time.time())
+
+    app = Designer(language_servers=False)
+    app.updates.current = "0.4.0"
+    app.updates._run = lambda work, done, failed=None: done(work())
+    app.updates.on_start()  # checked again although the daily check is not due
+    assert app.updates.swap_failed and "installer" in app.updates.error
+    assert app.updates.status == "ready" and app.updates.bundle.name.endswith("-setup.exe")
+    assert app.updates.restart() is not None and ran == [app.updates.bundle]
+    assert updater.load_state()["pending_log"] == str(tmp_path / "setup.log")
 
 
 def test_designer_stops_its_processes_before_an_update(monkeypatch):

@@ -46,6 +46,25 @@ BLINK = Animation({0: {"opacity": 1.0}, 0.5: {"opacity": 0.55}, 1: {"opacity": 1
                   easing="ease_in_out_sine", repeat="infinite")
 
 
+def installed_with_setup() -> bool:
+    """Whether this copy is the one the Windows setup program installed (its uninstall entry points at this folder),
+    so the setup can also update it."""
+    folder = updater.install_dir()
+    if sys.platform != "win32" or folder is None:
+        return False
+    import winreg  # type: ignore[import-not-found]
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINDOWS_UNINSTALL_KEY) as key:
+            location = str(winreg.QueryValueEx(key, "InstallLocation")[0])
+    except OSError:
+        return False
+    try:
+        return Path(location).resolve() == folder.resolve()
+    except OSError:
+        return False
+
+
 def sync_windows_registration(version: str) -> bool:
     """Shows ``version`` in Windows' Settings → Apps after a self-update; ``True`` when it changed it.
 
@@ -84,6 +103,9 @@ class UpdateController:
         self.notes_active = False
         #: Set by ``restart``: the process must end right after the window closes so the swap can run.
         self.restart_pending = False
+        #: Set when the last "Restart to update" could not replace the app: on Windows the setup program updates it
+        #: next time (see ``install``).
+        self.swap_failed = False
 
     # -- state ----------------------------------------------------------------------------
     @property
@@ -131,35 +153,51 @@ class UpdateController:
             updater.save_state(last_seen=self.current)
             sync_windows_registration(self.current)
         commands.append(self._run(self._clean_downloads, lambda _: None, lambda _: None))
-        if self.d.prefs.check_updates and updater.due():
-            commands.append(self.check(quiet=True))
         pending, log = state.get("pending"), state.get("pending_log")
         if pending:
             updater.save_state(pending=None, pending_log=None)
             if updater.is_newer(str(pending), self.current):  # restarted to update, but this is still the old app
                 self._swap_failed(str(pending), log)
+        # after a failed update, look again now: the button comes back, ready to try another way
+        if self.d.prefs.check_updates and (updater.due() or self.swap_failed):
+            commands.append(self.check(quiet=True))
         return [c for c in commands if c is not None]
 
     def _swap_failed(self, version: str, log: Any) -> None:
         """Tells that the last "Restart to update" could not replace the app (and where the details are)."""
+        self.swap_failed = True
         detail = ""
         try:
             lines = Path(str(log)).read_text(encoding="utf-8", errors="replace").strip().splitlines()
-            # another window of the app kept the folder in use: say that rather than the generic last line
-            detail = next((line for line in lines if line.startswith("Another ")), lines[-1])
+            # what kept the folder in use (another window of the app, a program with a file open) says more than the
+            # generic last line
+            detail = next((line for prefix in ("Another ", "A file of the app folder is open in ")
+                           for line in lines if line.startswith(prefix)), tr(lines[-1]))
         except (OSError, IndexError, TypeError):
             pass
         self.error = tr("Pyzed Design {version} could not replace this version: {detail}", version=version,
-                        detail=detail or tr("the app folder was in use")) + \
-            "\n" + tr("Restart to update again, or install it with the installer from the Download page.")
+                        detail=detail or tr("the app folder was in use")) + "\n" + (
+            tr("Restart to update again: this time the installer updates it.") if self._setup_fallback else
+            tr("Restart to update again, or install it with the installer from the Download page."))
         if log:
             self.error += "\n" + tr("Details: {path}", path=str(log))
         self.d.notify(tr("The update failed"), self.error, kind="error", seconds=10)
 
+    def _kept_error(self) -> Optional[str]:
+        """The error a new check or download keeps showing: why the last update failed, until it goes in."""
+        return self.error if self.swap_failed else None
+
+    @property
+    def _setup_fallback(self) -> bool:
+        """Whether the next update goes through the setup program: the swap failed in a copy the setup installed."""
+        return self.swap_failed and installed_with_setup()
+
     def _clean_downloads(self) -> None:
-        """Deletes the downloads of versions already installed (or older): each one is a whole app."""
+        """Deletes the downloads of versions already installed (or older): each one is a whole app, and the old
+        app folders an update could not delete."""
         from ..project import config_dir
 
+        updater.remove_leftovers()
         folder = config_dir() / "updates"
         if not folder.is_dir():
             return
@@ -184,7 +222,7 @@ class UpdateController:
         """Asks GitHub for the latest release of the channel; ``quiet`` only speaks up when there is one."""
         if self.busy:
             return None
-        self.status, self.error = "checking", None
+        self.status, self.error = "checking", self._kept_error()
 
         def done(release: updater.Release) -> Any:
             updater.save_state(last_check=time.time())
@@ -218,16 +256,18 @@ class UpdateController:
         """Downloads the new version for this platform and unpacks it next to the download.
 
         A download already finished (the designer was closed before restarting) is checked again
-        and reused. ``quiet`` (the automatic download) only speaks up when it fails.
+        and reused. ``quiet`` (the automatic download) only speaks up when it fails. After a swap
+        that failed on Windows, it downloads the setup program instead (``restart`` then runs it).
         """
         release = self.latest
         if release is None or self.busy:
             return None
-        asset = release.asset_for(updater.asset_name(APP))
+        setup = release.asset_for(updater.installer_name(APP)) if self._setup_fallback else None
+        asset = setup or release.asset_for(updater.asset_name(APP))
         if asset is None:
             self.d.notify(tr("No build for this platform"), updater.asset_name(APP), kind="error", seconds=5)
             return None
-        self.status, self.progress, self.error = "downloading", 0.0, None
+        self.status, self.progress, self.error = "downloading", 0.0, self._kept_error()
 
         def set_progress(value: float) -> None:
             self.progress = value  # read by the view; the subscription redraws it
@@ -237,6 +277,8 @@ class UpdateController:
 
             folder = config_dir() / "updates" / release.version
             archive = updater.download(asset, folder, progress=set_progress)
+            if setup is not None:
+                return archive
             bundle = updater.extract(archive)
             # Like Zed, the restart only swaps in files that are ready: read once now, they are cached and already
             # checked by the antivirus, so the new version opens as fast as this one.
@@ -260,13 +302,16 @@ class UpdateController:
         if self.bundle is None:
             return None
         try:
-            script = updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES)
+            if self.bundle.suffix.lower() == ".exe":  # the setup program, after a swap that failed
+                log = updater.install_on_exit(self.bundle)
+            else:
+                log = updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES).with_suffix(".log")
         except (updater.UpdateError, OSError) as err:
             self.d.notify(tr("The update failed"), str(err), kind="error", seconds=6)
             return None
         # the next launch compares: still this version means the swap failed (see ``on_start``)
         updater.save_state(last_seen=self.current, pending=self.latest.version if self.latest else None,
-                           pending_log=str(script.with_suffix(".log")))
+                           pending_log=str(log))
         self.restart_pending = True
         return _core.Command.exit()
 
