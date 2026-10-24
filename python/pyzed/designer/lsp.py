@@ -18,9 +18,10 @@ import os
 import subprocess
 import sys
 import threading
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 from urllib.parse import quote, unquote, urlparse
 
 Callback = Callable[[Any], None]
@@ -279,6 +280,8 @@ class LanguageServer:
         self._lock = threading.Lock()
         self._queue: List[Tuple[str, Any]] = []  # notifications sent before the server is ready
         self.versions: Dict[str, int] = {}
+        self.texts: Dict[str, str] = {}  # the text the server has of each open document
+        self._batch: Optional[List[bytes]] = None  # messages held by ``batch()``
 
     # -- lifecycle ----------------------------------------------------------
     def start(self) -> None:
@@ -342,6 +345,7 @@ class LanguageServer:
             process.kill()
         self._pending.clear()
         self.versions.clear()
+        self.texts.clear()
         self._set_status("stopped", "")
 
     def restart(self) -> None:
@@ -357,6 +361,12 @@ class LanguageServer:
     def supports(self, capability: str) -> bool:
         """Whether the server announced ``capability`` (a key of its ``capabilities``) when it started."""
         return bool(self.capabilities.get(capability))
+
+    @property
+    def incremental(self) -> bool:
+        """Whether the server takes changes as edited ranges (``textDocumentSync`` kind 2) instead of whole texts."""
+        sync = self.capabilities.get("textDocumentSync")
+        return (sync.get("change") if isinstance(sync, dict) else sync) == 2
 
     # -- messages -----------------------------------------------------------
     def request(self, method: str, params: Any, callback: Callback) -> Optional[int]:
@@ -381,25 +391,33 @@ class LanguageServer:
         elif self.ready:
             self._send({"jsonrpc": "2.0", "method": method, "params": params})
 
-    # -- documents (full sync) ----------------------------------------------
+    # -- documents ----------------------------------------------------------
     def open(self, uri_: str, text: str, language: str = "python") -> None:
         """Opens document ``uri_`` with ``text`` on the server (sends a change if it is already open)."""
         if uri_ in self.versions:
             return self.change(uri_, text)
         self.versions[uri_] = 1
+        self.texts[uri_] = text
         self.notify("textDocument/didOpen",
                     {"textDocument": {"uri": uri_, "languageId": language, "version": 1, "text": text}})
 
     def change(self, uri_: str, text: str) -> None:
-        """Sends the new full ``text`` of document ``uri_`` (opening it if needed) with the next version."""
+        """Sends the new ``text`` of document ``uri_`` (opening it if needed) with the next version: only the
+        edited range when the server takes ranges, since a whole file per keystroke blocks typing."""
         if uri_ not in self.versions:
             return self.open(uri_, text)
+        old = self.texts.get(uri_)
+        if old == text:
+            return
         self.versions[uri_] += 1
+        self.texts[uri_] = text
+        edit = content_change(old, text) if old is not None and self.incremental else {"text": text}
         self.notify("textDocument/didChange", {"textDocument": {"uri": uri_, "version": self.versions[uri_]},
-                                               "contentChanges": [{"text": text}]})
+                                               "contentChanges": [edit]})
 
     def close(self, uri_: str) -> None:
         """Closes document ``uri_`` on the server if it was open."""
+        self.texts.pop(uri_, None)
         if self.versions.pop(uri_, None) is not None:
             self.notify("textDocument/didClose", {"textDocument": {"uri": uri_}})
 
@@ -409,18 +427,46 @@ class LanguageServer:
         if self.on_status is not None:
             self.dispatch(lambda: self.on_status(self))
 
+    @contextmanager
+    def batch(self) -> Iterator[None]:
+        """Holds the messages sent inside the block and writes them at once at its end (one write instead of
+        one per message, for bursts like the references of every code lens)."""
+        if self._batch is not None:
+            yield
+            return
+        self._batch = []
+        try:
+            yield
+        finally:
+            held, self._batch = self._batch, None
+            if held and self.process is not None:
+                try:
+                    self._write_raw(self.process, b"".join(held))
+                except (OSError, ValueError) as err:
+                    self._died(str(err))
+
     def _send(self, message: Dict[str, Any]) -> None:
-        if self.process is not None:
+        if self._batch is not None:
+            self._batch.append(self._frame(message))
+        elif self.process is not None:
             try:
                 self._write(self.process, message)
             except (OSError, ValueError) as err:
                 self._died(str(err))
 
     @staticmethod
-    def _write(process: subprocess.Popen, message: Dict[str, Any]) -> None:
+    def _frame(message: Dict[str, Any]) -> bytes:
         body = json.dumps(message).encode("utf-8")
+        return b"Content-Length: %d\r\n\r\n" % len(body) + body
+
+    @classmethod
+    def _write(cls, process: subprocess.Popen, message: Dict[str, Any]) -> None:
+        cls._write_raw(process, cls._frame(message))
+
+    @staticmethod
+    def _write_raw(process: subprocess.Popen, data: bytes) -> None:
         assert process.stdin is not None
-        process.stdin.write(b"Content-Length: %d\r\n\r\n" % len(body) + body)
+        process.stdin.write(data)
         process.stdin.flush()
 
     def _died(self, reason: str) -> None:
@@ -428,6 +474,7 @@ class LanguageServer:
             self.process = None
             self._pending.clear()
             self.versions.clear()
+            self.texts.clear()
             self._set_status("error", reason or "the server stopped")
 
     def _read(self) -> None:
@@ -488,6 +535,48 @@ class LanguageServer:
         for part in section.split("."):
             value = value.get(part) if isinstance(value, dict) else None
         return value if value is not None else {}
+
+
+def _position(text: str, index: int) -> Dict[str, int]:
+    """The LSP position (line, UTF-16 character) of string index ``index`` in ``text``."""
+    line = text.count("\n", 0, index)
+    start = text.rfind("\n", 0, index) + 1
+    return {"line": line, "character": len(text[start:index].encode("utf-16-le")) // 2}
+
+
+def _common(old: str, new: str, limit: int, step: int, end: bool) -> int:
+    """How many characters ``old`` and ``new`` share at the start (or the ``end``), up to ``limit``: whole blocks
+    first, then halving inside the first block that differs (slice comparisons run in C)."""
+
+    def same(lo: int, hi: int) -> bool:
+        if end:
+            return old[len(old) - hi:len(old) - lo] == new[len(new) - hi:len(new) - lo]
+        return old[lo:hi] == new[lo:hi]
+
+    done = 0
+    while done < limit:
+        block = min(done + step, limit)
+        if same(done, block):
+            done = block
+            continue
+        lo, hi = done, block - 1  # the answer is in [lo, hi]
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            if same(done, mid):
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo
+    return done
+
+
+def content_change(old: str, new: str) -> Dict[str, Any]:
+    """The ``didChange`` content change that turns ``old`` into ``new``: one range around what differs."""
+    limit = min(len(old), len(new))
+    prefix = _common(old, new, limit, 4096, end=False)
+    suffix = _common(old, new, limit - prefix, 4096, end=True)
+    return {"range": {"start": _position(old, prefix), "end": _position(old, len(old) - suffix)},
+            "text": new[prefix:len(new) - suffix]}
 
 
 # ---------------------------------------------------------------------------
