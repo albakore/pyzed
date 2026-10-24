@@ -1,7 +1,7 @@
 # AGENTS.md
 
 This is a desktop app written with Pyzed (a Python UI rendered by Iced in Rust, with themed components that look
-like the Zed editor). Instructions for AI agents (Claude Code, Codex, Cursor, Copilot, Zed...) working on it.
+like the Zed editor). Instructions for the AI coding agents working on it.
 
 - Docs: https://albakore.github.io/pyzed/llms-small.txt (everything: /pyzed/llms-full.txt).
 - If the `pyzed` MCP server is available (`pyzed mcp`), use its tools instead of guessing APIs:

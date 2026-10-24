@@ -1220,7 +1220,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
             '"""Opens the main window: `uv run main.py`."""\n\nfrom pyzed import project\n\n'
             'if __name__ == "__main__":\n    project.run()\n', encoding="utf-8")
     agents = root / "AGENTS.md"
-    if fresh and not agents.exists():  # how AI agents should work on the project (Claude Code, Codex, Cursor...)
+    if fresh and not agents.exists():  # how AI coding agents should work on the project
         template = (Path(__file__).parent / "templates" / "AGENTS.md").read_text(encoding="utf-8")
         backend = f"`src/{module}/`" if package else "The modules next to `pyproject.toml`"
         agents.write_text(template.replace("{backend}", backend), encoding="utf-8")
