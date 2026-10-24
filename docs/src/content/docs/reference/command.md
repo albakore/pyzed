@@ -295,6 +295,19 @@ Reads an image from the clipboard (a screenshot, a copied picture) and calls `th
 | --- | --- |
 | `then` | Callable that receives the PNG bytes or `None`. |
 
+### `capture_window`
+
+```python
+capture_window(then, window=None)
+```
+
+Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when it could not be captured). The app draws the window again into an image, so it works the same on every system, even when other windows cover it.
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Callable that receives the PNG bytes or `None`. |
+| `window` | The window (default: the current one). |
+
 ### `pick_files`
 
 ```python

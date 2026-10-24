@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .. import _core, component as _components_api, ui
 from ..icons import icon as _icon
-from ..theme import Theme, current
+from ..theme import Theme, alpha, current
 from . import roles as _roles
 from .model import Control
 
@@ -364,7 +364,30 @@ def render(control: Control, ctx: RenderContext) -> Any:
     A control whose fields, theme, language and animations are the same as last time gets its
     last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
     Controls made from a ``pz.Component`` keep their own cache (see ``pyzed.component``).
+
+    In the designer a control that fails to draw (a wrong prop value) shows its error in its place,
+    so the rest of the canvas still draws; a running form raises it.
     """
+    if ctx.live:
+        return _render(control, ctx)
+    try:
+        return _render(control, ctx)
+    except Exception as err:  # noqa: BLE001 - shown on the control
+        return _broken(control, err, ctx.theme)
+
+
+def _broken(control: Control, err: Exception, t: Theme) -> Any:
+    """What a control that could not be drawn shows on the canvas: its name and the error."""
+    message = (str(err).strip().splitlines() or [type(err).__name__])[0]
+    return _core.container(
+        _core.column([ui.label(control.name, size="xs", weight="semibold", color="error", wrap=False, theme=t),
+                      _core.text(f"{type(err).__name__}: {message}", size=11, color=t.text_muted, wrap=True)],
+                     spacing=2),
+        width=control.width, height=control.height, padding=6, clip=True, bg=alpha(t.error, 0.08),
+        border_color=alpha(t.error, 0.6), border_width=1, radius=t.radius_sm)
+
+
+def _render(control: Control, ctx: RenderContext) -> Any:
     if control.type in _UNCACHED or control.type not in _REGISTRY or _components_api.find(control.type) is not None:
         return _render_now(control, ctx)
     plain = type(ctx) is RenderContext  # the designer's: inert callbacks, nothing tied to the context

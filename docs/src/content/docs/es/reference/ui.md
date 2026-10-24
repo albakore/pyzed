@@ -2825,6 +2825,7 @@ editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
@@ -2875,6 +2876,7 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `cursor_color` | Color del cursor (por defecto, el color de jugador del tema). |
 | `on_zoom` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
 | `on_action` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…), por ejemplo para contarlas. |
+| `on_paste` | Se llama después de que Ctrl+V (Cmd+V, Mayús+Insert) pegue el texto del portapapeles, si lo tiene: un chat lee una imagen del portapapeles con `Command.paste_image`. |
 | `highlights` | Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |

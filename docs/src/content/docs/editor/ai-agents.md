@@ -169,8 +169,13 @@ The agent can look at pictures: a mock-up to rebuild, a screenshot of a bug, the
 with **+**:
 
 - **Attach images…** opens the system's file dialog (PNG, JPEG, GIF or WebP, up to 5 MB each).
-- **Paste image** takes the picture you copied (a screenshot, an image from the browser).
+- **Paste image** takes the picture you copied (a screenshot, an image from the browser). **Ctrl+V** (**Cmd+V** on
+  macOS) in the message box does the same when the clipboard holds a picture and no text.
 - **Screenshot of the form** renders the open form and attaches it.
+
+The form is drawn off-screen in a process of its own, with the project's packages. If the graphics driver cannot
+draw without a window, the form opens in a window for a moment instead and that window is captured, on Windows,
+macOS and Linux alike. A form whose code fails sends its error to the agent, which can then fix it.
 
 They show as thumbnails above the message and in the thread. Tools can answer with images too: `screenshot_form`
 and the tools of MCP servers that return pictures. The model must take images (Claude, GPT-4.1 and later, Gemini,

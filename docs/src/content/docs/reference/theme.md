@@ -47,7 +47,19 @@ ocean = pz.themes.ONE_DARK.derive(name="Ocean", accent="#4fb3ff", syntax={"keywo
 color(self, name)
 ```
 
-Resolves a token (`"accent"`, `"text_muted"`…) to its color. Hex colors and `"transparent"` pass through unchanged.
+Resolves a token (`"accent"`, `"text_muted"`…) to its color. Hex colors and `"transparent"` pass through unchanged. Short names (`"muted"`, `"primary"`, `"danger"`…), Zed's names (`"text.muted"`) and the terminal colors (`"red"`…) work too; anything else raises `ValueError`.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Token or color. |
+
+### `find_color`
+
+```python
+find_color(self, name)
+```
+
+Like `color`, but returns `None` for a name the theme does not know instead of raising.
 
 | Parameter | Description |
 | --- | --- |

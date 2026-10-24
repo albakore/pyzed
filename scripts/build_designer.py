@@ -49,9 +49,13 @@ ENTRY = '''"""Pyzed Design: the visual designer and project manager of Pyzed."""
 
 import sys
 
-from pyzed.designer import design
-
 if __name__ == "__main__":
+    from pyzed import _frozen
+
+    if _frozen.wants_module():  # sys.executable -m ...: the helpers the designer starts (form screenshots...)
+        sys.exit(_frozen.run_module(sys.argv[2:]))
+    from pyzed.designer import design
+
     design(sys.argv[1] if len(sys.argv) > 1 else None)
 '''
 

@@ -1619,6 +1619,20 @@ class AgentController:
         self.menu = None
         return _core.Command.paste_image(self.on_clipboard_image)
 
+    def on_paste_key(self) -> Any:
+        """Ctrl+V (Cmd+V) in the message box, after the box pasted the clipboard's text: when it held no
+        text, an image on it (a screenshot, a copied picture) is attached instead, like Zed does."""
+        return _core.Command.paste(self._after_paste)
+
+    def _after_paste(self, text: str) -> Any:
+        if text:
+            return None
+        return _core.Command.paste_image(self._paste_key_image)
+
+    def _paste_key_image(self, png: Optional[bytes]) -> None:
+        if png:  # nothing to say when the clipboard is empty: the key simply pasted nothing
+            self.attachments.append(Attachment(tr("Pasted image"), bytes(png)))
+
     def on_clipboard_image(self, png: Optional[bytes]) -> None:
         if not png:
             self.d.notify(tr("The clipboard has no image"), kind="warning", seconds=4)

@@ -295,6 +295,19 @@ Lee una imagen del portapapeles (una captura, una imagen copiada) y llama a `the
 | --- | --- |
 | `then` | Callable que recibe los bytes PNG o `None`. |
 
+### `capture_window`
+
+```python
+capture_window(then, window=None)
+```
+
+Captura lo que muestra la ventana y llama a `then(png)` con sus bytes PNG (`then(None)` si no se pudo capturar). La app vuelve a dibujar la ventana en una imagen, así que funciona igual en todos los sistemas, aunque otras ventanas la tapen.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Callable que recibe los bytes PNG o `None`. |
+| `window` | La ventana (por defecto, la actual). |
+
 ### `pick_files`
 
 ```python

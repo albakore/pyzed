@@ -88,6 +88,13 @@ class Command:
         """Runs several commands."""
         ...
     @staticmethod
+    def capture_window(then: Any, window: Any = ...) -> Any:
+        """Captures what the window shows and calls `then(png)` with its PNG bytes (`then(None)` when
+        it could not be captured). The window is drawn again into an image by the app itself, so it
+        works the same on every system, even when other windows cover it.
+        """
+        ...
+    @staticmethod
     def close_window(window: Any = ...) -> Any:
         """Closes `window` (a `pyzed.Window`), or the window that produced the message."""
         ...
@@ -406,7 +413,7 @@ def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any 
     - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
     """
     ...
-def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ...) -> Any:
+def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., on_paste: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
     Editors are *uncontrolled*: `text` is only the initial value for a given `id`.
@@ -422,6 +429,8 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
       Ctrl+wheel.
     - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
       `"select_next"`…). Ctrl+click reports `"go_to_definition"` after moving the cursor.
+    - `on_paste()`: Called when Ctrl/Cmd+V (or Shift+Insert) is pressed, after the clipboard's text
+      (if it holds any) is pasted: a chat box reads an image from the clipboard with it.
     - `on_hover(info)`: Called when the mouse rests on a word for `hover_delay` milliseconds, with
       its `line`, `column`, `start` and `end` (1-based, byte columns) and where it is drawn (`x`,
       `y`, `height`, relative to the editor); and with `None` when the mouse leaves it.

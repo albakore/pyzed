@@ -154,6 +154,7 @@ def editor(
     cursor_color: Optional[str] = None,
     on_zoom: Any = None,
     on_action: Any = None,
+    on_paste: Any = None,
     highlights: Optional[Sequence[Tuple[int, int, int, int]]] = None,
     match_brackets: bool = True,
     selection_highlight: bool = True,
@@ -253,6 +254,8 @@ a log, a traceback or generated code to look at.
             Ctrl+wheel.
         ``on_action(name)``: Callable that receives the name of each editor action that runs (``"undo"``,
             ``"select_next"``…), e.g. to count them.
+        ``on_paste()``: Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any;
+            a chat box reads an image from the clipboard with ``Command.paste_image``.
         ``on_hover(info)``: Callable that receives the word the mouse rests on (a dict), or ``None``.
     """
     t = _theme(theme)
@@ -300,6 +303,7 @@ a log, a traceback or generated code to look at.
         cursor_color=cursor_color or (t.players[0] if t.players else t.accent),
         on_zoom=on_zoom,
         on_action=on_action,
+        on_paste=on_paste,
         highlights=[tuple(h) for h in highlights or ()],
         highlight_color=t.search_match,
         match_brackets=match_brackets,

@@ -1647,6 +1647,7 @@ code_editor(
     cursor_color=None,
     on_zoom=None,
     on_action=None,
+    on_paste=None,
     highlights=None,
     highlight_color=None,
     match_brackets=True,
@@ -1711,6 +1712,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `cursor_color` | Cursor color. |
 | `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
 | `on_action` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…). |
+| `on_paste` | Called after Ctrl+V (Cmd+V, Shift+Insert) pastes the clipboard's text, if it holds any: a chat box reads an image from the clipboard with `Command.paste_image`. |
 | `highlights` | Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
 | `highlight_color` | Color of `highlights`. |
 | `match_brackets` | Outlines the bracket that matches the one next to the cursor. |
