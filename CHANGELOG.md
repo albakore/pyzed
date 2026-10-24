@@ -16,10 +16,20 @@ stable version.
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-10-24
+
 ### Highlights
 
 - **Self-updates that work on Windows**: a copy installed for all users (in `C:\Program Files`) now updates through the setup program, which asks for administrator rights once, instead of failing with "The app folder is still in use". Before restarting, Pyzed Design also ends the processes it left running (an agent's MCP server), frees its folder and, if the swap still fails, updates with the setup program. Copies installed in Program Files need this version installed by hand once; installing "for me only" (in `%LOCALAPPDATA%\Programs`) updates without asking for anything.
 - **New versions show up sooner**: Pyzed Design looks at every launch and every half hour while it is open (every five minutes while a release waits for its builds), asking GitHub with an ETag so an unchanged release costs almost nothing.
+
+### Fixes
+
+- 🐛 Make Windows self-updates work in Program Files and in a busy folder, and look for updates more often. PR [#223](https://github.com/albakore/pyzed/pull/223) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Illustrate the README with the logo and animations of components, Pyzed Design, the counter and games. PR [#222](https://github.com/albakore/pyzed/pull/222) by [@albakore](https://github.com/albakore).
 
 ## [1.12.0] - 2026-10-24
 
