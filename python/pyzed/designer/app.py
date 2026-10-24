@@ -215,7 +215,7 @@ class Designer(App):
         self.prefs = preferences.load()
         #: The user's and the open project's preferences, and the user's profiles (see ``profiles``).
         self.profile_store = _profiles.use(_profiles.Store())
-        _package_managers.configure(self.prefs.uv())  # the uv of the projects and its defaults
+        _package_managers.load(self.prefs.package_managers, self.prefs.package_manager)
         # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
         self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
@@ -1636,8 +1636,8 @@ class Designer(App):
                 self.scale = changed["ui_scale"]
             if "preview_frame" in changed:
                 self.preview_frame = changed["preview_frame"] or None
-            if any(key.startswith("uv_") for key in changed):  # the uv of the projects and its defaults
-                _package_managers.configure(self.prefs.uv())
+            if "package_managers" in changed or "package_manager" in changed:
+                _package_managers.load(self.prefs.package_managers, self.prefs.package_manager)
             if "window_frame" in changed and notify:
                 self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 

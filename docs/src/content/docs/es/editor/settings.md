@@ -168,16 +168,23 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 
 ## Gestores de paquetes
 
-Los proyectos de Pyzed son proyectos de uv (`pyproject.toml` y `uv.lock`): uv instala Python, los paquetes y las herramientas. Arriba, la página lista cada uv que Pyzed encuentra, con su versión y su ruta, y marca el que está **En uso**:
+**Gestor de paquetes de los proyectos** es el que los crea e instala sus paquetes. Los proyectos de Pyzed son proyectos de uv (`pyproject.toml` y `uv.lock`), así que por ahora es uv; la página se arma a partir de un registro de gestores de paquetes, así que los nuevos aparecen aquí con sus propios ajustes.
 
-- **Incluido con Pyzed**: el uv que trae Pyzed Design. Solo cambia cuando se actualiza el editor.
-- **El de este equipo**: un uv instalado por su cuenta (en el `PATH` o en `~/.local/bin`). **Instalar** lo instala con el instalador oficial de uv y **Actualizar** ejecuta `uv self update`, así se mantiene al día aparte del editor.
-- **Ruta personalizada**: cualquier otro ejecutable de uv.
+Cada gestor de paquetes tiene su grupo. Arriba, el grupo lista cada ejecutable que Pyzed encuentra, con su versión y su ruta, y marca el que está **En uso**:
+
+- **Incluido con Pyzed**: el que trae Pyzed Design. Solo cambia cuando se actualiza el editor.
+- **El de este equipo**: uno instalado por su cuenta (para uv, en el `PATH` o en `~/.local/bin`). **Instalar** lo instala (el instalador oficial de uv) y **Actualizar** lo actualiza (`uv self update`), aparte del editor.
+- **Ruta personalizada**: cualquier otro ejecutable.
 
 | Ajuste | Qué hace |
 | --- | --- |
-| **uv que se usa** | *Automático* usa el uv de este equipo si está instalado; si no, el incluido. Las demás opciones eligen uno; si falta, Pyzed vuelve a *Automático* para que los proyectos sigan funcionando. Solo tus propios ajustes lo eligen. |
-| **Ruta del uv personalizado** | El ejecutable de uv para *Ruta personalizada*. <kbd>Intro</kbd> la guarda. |
+| **Ejecutable que se usa** | *Automático* usa el de este equipo si está instalado; si no, el incluido. Las demás opciones eligen uno; si falta, Pyzed vuelve a *Automático* para que los proyectos sigan funcionando. |
+| **Ruta del ejecutable personalizado** | Aparece con *Ruta personalizada*. <kbd>Intro</kbd> la guarda. |
+
+Los valores por defecto de uv:
+
+| Ajuste | Qué hace |
+| --- | --- |
 | **Python de los proyectos nuevos** | La versión de Python que piden los proyectos nuevos, como `3.13` (`uv init --python`). Vacío: la más reciente que uv encuentre o instale. |
 | **Índice de paquetes** | Otro índice en lugar de PyPI, como el espejo de una empresa (`UV_DEFAULT_INDEX`). |
 | **Más índices de paquetes** | Índices donde buscar también, separados por espacios (`UV_INDEX`). |
@@ -185,7 +192,7 @@ Los proyectos de Pyzed son proyectos de uv (`pyproject.toml` y `uv.lock`): uv in
 | **Sin conexión** | Solo los paquetes ya descargados, sin red (`UV_OFFLINE`). |
 | **Cómo se instalan los paquetes** | Copiar, enlaces duros, enlaces simbólicos o clonar (`UV_LINK_MODE`). Copiar es lo más seguro entre unidades. |
 
-Los valores por defecto van a cada comando de uv que ejecuta el editor: crear un proyecto, la pestaña Dependencias, Ejecutar y la exportación. Un proyecto puede poner los suyos en los [ajustes del proyecto](#ajustes-del-proyecto). La pestaña Dependencias dice qué uv se usa junto a su versión.
+Se aplican a cada comando que ejecuta el editor: crear un proyecto, la pestaña Dependencias, Ejecutar y la exportación. Son tus propios ajustes, nunca los de un proyecto: lo que necesite un proyecto va en su `pyproject.toml` (`[tool.uv]`). La pestaña Dependencias dice qué uv se usa junto a su versión.
 
 ## Logs y errores
 

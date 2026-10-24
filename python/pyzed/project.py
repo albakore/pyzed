@@ -142,7 +142,7 @@ def _installed_uv() -> Optional[str]:
 def find_uv() -> Optional[str]:
     """The ``uv`` executable chosen in ``package_managers`` (by default this computer's, on ``PATH`` or where its
     installer puts it, else the one included with Pyzed Design or its Python)."""
-    return _package_managers.find()
+    return _package_managers.find("uv")
 
 
 #: uv's official installers (they put ``uv`` in ``~/.local/bin``).
@@ -190,7 +190,7 @@ def _clean_env() -> Dict[str, str]:
         # only those Pythons: the ones on PATH may be uv's ``python3.13.exe`` of ``~/.local/bin``, which still
         # goes through the junction of the old folder (and a broken first one on PATH stops uv's search)
         env.setdefault("UV_PYTHON_PREFERENCE", "only-managed")
-    env.update(_package_managers.settings().env())  # the package index, pre-releases... of the settings
+    env.update(_package_managers.environment())  # the package index, pre-releases... of the settings
     return env
 
 
@@ -914,7 +914,7 @@ class Project:
         """Runs ``args`` in the project folder, inside WSL for a WSL project opened from Windows."""
         env = self.environment
         if env.remote:
-            extra = {"UV_NO_PROGRESS": "1", "NO_COLOR": "1", **_package_managers.settings().env()}
+            extra = {"UV_NO_PROGRESS": "1", "NO_COLOR": "1", **_package_managers.environment()}
             return execute(env.command(args, self.root, extra), timeout=timeout)
         return execute(args, self.root, timeout=timeout)
 
@@ -1259,7 +1259,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
     root = Path(path).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     fresh = not (root / PYPROJECT).exists()
-    python = python or _package_managers.settings().python.strip() or None
+    python = python or _package_managers.values("uv")["python"].strip() or None
     if fresh:
         args = ["init", "--name", name or root.name, "--vcs", "git" if git else "none"]
         args.append("--package" if package else "--app")
@@ -1267,7 +1267,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
             args += ["--python", python]
         where = environment(root)
         if where.remote:  # a folder of WSL opened from Windows: the project is made by Linux's uv, like its .venv
-            extra = {"UV_NO_PROGRESS": "1", **_package_managers.settings().env()}
+            extra = {"UV_NO_PROGRESS": "1", **_package_managers.environment()}
             result = execute(where.command(["uv", *args, str(root)], root, extra), timeout=300)
         else:
             result = execute_uv([_uv(), *args, str(root)], root)

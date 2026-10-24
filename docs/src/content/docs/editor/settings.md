@@ -165,16 +165,23 @@ A monospaced font keeps code columns aligned: pick one for **Code font** (its na
 
 ## Package managers
 
-Pyzed's projects are uv projects (`pyproject.toml` and `uv.lock`): uv installs Python, the packages and the tools. The top of the page lists every uv Pyzed finds, with its version and path, and marks the one **In use**:
+**Package manager of the projects** is the one that creates them and installs their packages. Pyzed's projects are uv projects (`pyproject.toml` and `uv.lock`), so it is uv for now; the page is built from a registry of package managers, so new ones show up here with their own settings.
 
-- **Included with Pyzed**: the uv that comes with Pyzed Design. It changes only when the editor updates.
-- **This computer's**: a uv installed on its own (on the `PATH` or in `~/.local/bin`). **Install** sets it up with uv's official installer, and **Update** runs `uv self update`, so it stays up to date apart from the editor.
-- **Custom path**: any other uv executable.
+Each package manager has its own group. The top of the group lists every executable Pyzed finds, with its version and path, and marks the one **In use**:
+
+- **Included with Pyzed**: the one that comes with Pyzed Design. It changes only when the editor updates.
+- **This computer's**: one installed on its own (for uv, on the `PATH` or in `~/.local/bin`). **Install** sets it up (uv's official installer) and **Update** updates it (`uv self update`), apart from the editor.
+- **Custom path**: any other executable.
 
 | Setting | What it does |
 | --- | --- |
-| **uv to use** | *Automatic* uses this computer's uv when it is installed, else the included one. The others pick one; if it is missing, Pyzed falls back to *Automatic* so projects keep working. Only your own settings choose it. |
-| **Path of the custom uv** | The uv executable for *Custom path*. <kbd>Enter</kbd> saves it. |
+| **Executable to use** | *Automatic* uses this computer's when it is installed, else the included one. The others pick one; if it is missing, Pyzed falls back to *Automatic* so projects keep working. |
+| **Path of the custom executable** | Shown with *Custom path*. <kbd>Enter</kbd> saves it. |
+
+uv's own defaults:
+
+| Setting | What it does |
+| --- | --- |
 | **Python of new projects** | The Python version new projects ask for, such as `3.13` (`uv init --python`). Empty: the newest uv finds or installs. |
 | **Package index** | Another index instead of PyPI, such as a company mirror (`UV_DEFAULT_INDEX`). |
 | **More package indexes** | Indexes to look in too, separated by spaces (`UV_INDEX`). |
@@ -182,7 +189,7 @@ Pyzed's projects are uv projects (`pyproject.toml` and `uv.lock`): uv installs P
 | **Offline** | Only the packages already downloaded, without the network (`UV_OFFLINE`). |
 | **How packages are installed** | Copy, hard links, symbolic links or clones (`UV_LINK_MODE`). Copy is the safest across drives. |
 
-The defaults go to every uv command the editor runs: creating a project, the Dependencies tab, Run and the export. A project can set its own in [project settings](#project-settings). The Dependencies tab tells which uv is in use next to its version.
+They go to every command the editor runs: creating a project, the Dependencies tab, Run and the export. They are your own settings, never a project's: what a project needs goes in its `pyproject.toml` (`[tool.uv]`). The Dependencies tab tells which uv is in use next to its version.
 
 ## Logs and errors
 

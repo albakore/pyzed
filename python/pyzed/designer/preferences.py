@@ -75,18 +75,10 @@ class DesignerSettings:
     check_updates: bool = True
     #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).
     update_channel: str = "stable"
-    #: The uv that runs the projects' commands: "auto", "bundled", "system" or "custom" (see ``package_managers``).
-    uv_source: str = "auto"
-    #: The uv executable when ``uv_source`` is "custom".
-    uv_path: str = ""
-    #: uv's defaults ("" or False: uv's own): the Python of new projects, the package index instead of PyPI, more
-    #: indexes (separated by spaces), pre-releases, offline and how packages go into an environment.
-    uv_python: str = ""
-    uv_index: str = ""
-    uv_extra_index: str = ""
-    uv_prerelease: bool = False
-    uv_offline: bool = False
-    uv_link_mode: str = ""
+    #: The package manager of the projects (see ``package_managers.default``).
+    package_manager: str = "uv"
+    #: Each package manager's settings that differ from its defaults: ``{"uv": {"source": "system"}}``.
+    package_managers: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     recent: List[str] = field(default_factory=list)
     #: Panel id -> dock ("left", "right", "bottom", "top"), the center ("main") or a window ("window:1"...).
     docks: Dict[str, str] = field(default_factory=dict)
@@ -130,23 +122,13 @@ class DesignerSettings:
         out.grid = min(max(out.grid, 2), 64)
         if out.outline_eye not in EYE_MODES:
             out.outline_eye = "visible"
-        if out.uv_source not in _package_managers.SOURCES:
-            out.uv_source = "auto"
-        if out.uv_link_mode not in _package_managers.LINK_MODES:
-            out.uv_link_mode = ""
+        out.package_managers = _package_managers.clean(out.package_managers)
         out.ui_scale = min(max(round(out.ui_scale, 2), UI_SCALE[0]), UI_SCALE[1])
         out.docks = {k: v for k, v in out.docks.items() if is_place(v)}
         out.layouts = {str(k): v for k, v in out.layouts.items() if isinstance(v, dict)}
         out.sizes = {k: float(v) for k, v in out.sizes.items() if k in DOCKS and isinstance(v, (int, float))}
         out.recent = [str(p) for p in out.recent][:10]
         return out
-
-    def uv(self) -> _package_managers.UvSettings:
-        """The uv settings of these preferences."""
-        return _package_managers.UvSettings(
-            source=self.uv_source, path=self.uv_path, python=self.uv_python, index_url=self.uv_index,
-            extra_index_url=self.uv_extra_index, prerelease=self.uv_prerelease, offline=self.uv_offline,
-            link_mode=self.uv_link_mode)
 
     def remember(self, path: Path) -> None:
         """Puts ``path`` first in the recent files."""

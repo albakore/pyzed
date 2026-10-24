@@ -32,8 +32,8 @@ DEFAULT_PROFILE = "Default"
 STATE = frozenset({"recent", "docks", "order", "active", "windows", "layouts", "layout_name", "panels", "sizes"})
 
 #: Preferences a project's own settings never change: what keeps a project from running code by itself (such as
-#: the uv executable to run).
-USER_ONLY = frozenset({"restricted_mode", "uv_source", "uv_path"})
+#: the package managers' executables to run).
+USER_ONLY = frozenset({"restricted_mode", "package_manager", "package_managers"})
 
 _CLASSES = {"editor": _settings.EditorSettings, "designer": _preferences.DesignerSettings}
 
