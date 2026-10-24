@@ -45,6 +45,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Union
 
+from . import package_managers as _package_managers
+
 PathLike = Union[str, Path]
 
 PYPROJECT = "pyproject.toml"
@@ -108,6 +110,8 @@ class Tool:
     name: str
     path: Optional[str] = None
     version: Optional[str] = None
+    #: Where the uv in use comes from: "bundled", "system" or "custom" (see ``package_managers``).
+    source: Optional[str] = None
 
     @property
     def available(self) -> bool:
@@ -136,17 +140,9 @@ def _installed_uv() -> Optional[str]:
 
 
 def find_uv() -> Optional[str]:
-    """The ``uv`` executable: on ``PATH``, from the ``uv`` Python package, bundled or installed by its installer."""
-    found = shutil.which("uv")
-    if found:
-        return found
-    try:
-        from uv import find_uv_bin  # type: ignore[import-not-found]
-
-        return find_uv_bin()
-    except Exception:  # noqa: BLE001 - not installed, or installed without its binary
-        pass
-    return _bundled("uv") or _installed_uv()
+    """The ``uv`` executable chosen in ``package_managers`` (by default this computer's, on ``PATH`` or where its
+    installer puts it, else the one included with Pyzed Design or its Python)."""
+    return _package_managers.find()
 
 
 #: uv's official installers (they put ``uv`` in ``~/.local/bin``).
@@ -194,6 +190,7 @@ def _clean_env() -> Dict[str, str]:
         # only those Pythons: the ones on PATH may be uv's ``python3.13.exe`` of ``~/.local/bin``, which still
         # goes through the junction of the old folder (and a broken first one on PATH stops uv's search)
         env.setdefault("UV_PYTHON_PREFERENCE", "only-managed")
+    env.update(_package_managers.settings().env())  # the package index, pre-releases... of the settings
     return env
 
 
@@ -345,7 +342,9 @@ def tools(project: Optional["Project"] = None) -> Dict[str, Tool]:
     found = {"uv": find_uv(), "git": shutil.which("git")}
     for name in DEV_TOOLS:
         found[name] = project.tool_path(name) if project else shutil.which(name)
-    return {name: Tool(name, path, _version(path)) for name, path in found.items()}
+    out = {name: Tool(name, path, _version(path)) for name, path in found.items()}
+    out["uv"].source = _package_managers.source_of(found["uv"])
+    return out
 
 
 def _uv() -> str:
@@ -915,7 +914,8 @@ class Project:
         """Runs ``args`` in the project folder, inside WSL for a WSL project opened from Windows."""
         env = self.environment
         if env.remote:
-            return execute(env.command(args, self.root, {"UV_NO_PROGRESS": "1", "NO_COLOR": "1"}), timeout=timeout)
+            extra = {"UV_NO_PROGRESS": "1", "NO_COLOR": "1", **_package_managers.settings().env()}
+            return execute(env.command(args, self.root, extra), timeout=timeout)
         return execute(args, self.root, timeout=timeout)
 
     def _uv_command(self) -> str:
@@ -1259,6 +1259,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
     root = Path(path).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     fresh = not (root / PYPROJECT).exists()
+    python = python or _package_managers.settings().python.strip() or None
     if fresh:
         args = ["init", "--name", name or root.name, "--vcs", "git" if git else "none"]
         args.append("--package" if package else "--app")
@@ -1266,7 +1267,8 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
             args += ["--python", python]
         where = environment(root)
         if where.remote:  # a folder of WSL opened from Windows: the project is made by Linux's uv, like its .venv
-            result = execute(where.command(["uv", *args, str(root)], root, {"UV_NO_PROGRESS": "1"}), timeout=300)
+            extra = {"UV_NO_PROGRESS": "1", **_package_managers.settings().env()}
+            result = execute(where.command(["uv", *args, str(root)], root, extra), timeout=300)
         else:
             result = execute_uv([_uv(), *args, str(root)], root)
         if not result.ok:

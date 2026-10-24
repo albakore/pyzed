@@ -166,6 +166,27 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 | **Registrar los eventos en la consola** | Escribe cada evento que atiende el formulario en ejecución, con su valor y su manejador. |
 | **Modo restringido** | Pregunta antes de instalar los paquetes de un proyecto que no creaste, importar sus componentes o ejecutarlo ([modo restringido](/pyzed/es/editor/projects/#modo-restringido)). Activado por defecto; solo tus propios ajustes pueden apagarlo. |
 
+## Gestores de paquetes
+
+Los proyectos de Pyzed son proyectos de uv (`pyproject.toml` y `uv.lock`): uv instala Python, los paquetes y las herramientas. Arriba, la página lista cada uv que Pyzed encuentra, con su versión y su ruta, y marca el que está **En uso**:
+
+- **Incluido con Pyzed**: el uv que trae Pyzed Design. Solo cambia cuando se actualiza el editor.
+- **El de este equipo**: un uv instalado por su cuenta (en el `PATH` o en `~/.local/bin`). **Instalar** lo instala con el instalador oficial de uv y **Actualizar** ejecuta `uv self update`, así se mantiene al día aparte del editor.
+- **Ruta personalizada**: cualquier otro ejecutable de uv.
+
+| Ajuste | Qué hace |
+| --- | --- |
+| **uv que se usa** | *Automático* usa el uv de este equipo si está instalado; si no, el incluido. Las demás opciones eligen uno; si falta, Pyzed vuelve a *Automático* para que los proyectos sigan funcionando. Solo tus propios ajustes lo eligen. |
+| **Ruta del uv personalizado** | El ejecutable de uv para *Ruta personalizada*. <kbd>Intro</kbd> la guarda. |
+| **Python de los proyectos nuevos** | La versión de Python que piden los proyectos nuevos, como `3.13` (`uv init --python`). Vacío: la más reciente que uv encuentre o instale. |
+| **Índice de paquetes** | Otro índice en lugar de PyPI, como el espejo de una empresa (`UV_DEFAULT_INDEX`). |
+| **Más índices de paquetes** | Índices donde buscar también, separados por espacios (`UV_INDEX`). |
+| **Permitir versiones preliminares** | Versiones preliminares de todos los paquetes (`UV_PRERELEASE=allow`). |
+| **Sin conexión** | Solo los paquetes ya descargados, sin red (`UV_OFFLINE`). |
+| **Cómo se instalan los paquetes** | Copiar, enlaces duros, enlaces simbólicos o clonar (`UV_LINK_MODE`). Copiar es lo más seguro entre unidades. |
+
+Los valores por defecto van a cada comando de uv que ejecuta el editor: crear un proyecto, la pestaña Dependencias, Ejecutar y la exportación. Un proyecto puede poner los suyos en los [ajustes del proyecto](#ajustes-del-proyecto). La pestaña Dependencias dice qué uv se usa junto a su versión.
+
 ## Logs y errores
 
 | Ajuste | Qué hace |

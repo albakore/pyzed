@@ -28,6 +28,7 @@ from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from .. import brand
+from .. import package_managers as _package_managers
 from . import binding as _binding
 from . import spacing
 from . import code as _code
@@ -214,6 +215,7 @@ class Designer(App):
         self.prefs = preferences.load()
         #: The user's and the open project's preferences, and the user's profiles (see ``profiles``).
         self.profile_store = _profiles.use(_profiles.Store())
+        _package_managers.configure(self.prefs.uv())  # the uv of the projects and its defaults
         # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
         self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
@@ -1634,6 +1636,8 @@ class Designer(App):
                 self.scale = changed["ui_scale"]
             if "preview_frame" in changed:
                 self.preview_frame = changed["preview_frame"] or None
+            if any(key.startswith("uv_") for key in changed):  # the uv of the projects and its defaults
+                _package_managers.configure(self.prefs.uv())
             if "window_frame" in changed and notify:
                 self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 

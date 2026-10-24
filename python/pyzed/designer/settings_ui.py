@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from .. import _core, ui
+from .. import package_managers as _package_managers
 from .. import rendering as _rendering
 from ..icons import icon as _icon
 from ..theme import Theme, themes
@@ -34,7 +35,8 @@ class Setting:
     """One preference: ``section`` ("designer" or "editor") and ``key`` name its field, ``page`` where it shows.
 
     ``kind`` is the control: "switch", "select", "segmented", "number" (``low``, ``high``, ``step``), "font"
-    (``default`` names the default font) or "theme" (the rack of every theme, under the title). ``options`` lists
+    (``default`` names the default font), "text" (saved with Enter; ``default`` is its placeholder) or "theme"
+    (the rack of every theme, under the title). ``options`` lists
     ``(value, label)`` pairs, or returns them.
     ``project`` says whether a project can set its own value.
     """
@@ -87,6 +89,10 @@ _LINE_HEIGHTS = tuple((name, name.capitalize()) for name in _settings.LINE_HEIGH
 _CURSORS = tuple((shape, shape.capitalize()) for shape in _settings.CURSOR_SHAPES)
 _EYES = (("visible", "Hidden when running"), ("editor", "Hidden in the editor only"))
 _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
+_UV_SOURCES = (("auto", "Automatic"), ("bundled", "Included with Pyzed"), ("system", "This computer's"),
+               ("custom", "Custom path"))
+_LINK_MODES = (("", "Automatic"), ("copy", "Copy"), ("hardlink", "Hard link"), ("symlink", "Symbolic link"),
+               ("clone", "Clone"))
 
 #: Every preference the dialog shows, page by page.
 SETTINGS: Tuple[Setting, ...] = (
@@ -135,6 +141,23 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("designer", "restricted_mode", "running", "Restricted mode",
             "Asks before installing the packages of a project you did not create, importing its components or "
             "running it", project=False),
+    # package managers
+    Setting("designer", "uv_source", "packages", "uv to use",
+            "Automatic: this computer's when it is installed, else the one included with Pyzed", kind="select",
+            options=_UV_SOURCES, project=False),
+    Setting("designer", "uv_path", "packages", "Path of the custom uv", "The uv executable; Enter saves it",
+            kind="text", default="/path/to/uv", project=False),
+    Setting("designer", "uv_python", "packages", "Python of new projects",
+            "Such as 3.13; empty: the newest uv finds or installs", kind="text", default="3.13"),
+    Setting("designer", "uv_index", "packages", "Package index", "Instead of PyPI, such as a company mirror",
+            kind="text", default="https://pypi.org/simple"),
+    Setting("designer", "uv_extra_index", "packages", "More package indexes",
+            "Looked in too, separated by spaces", kind="text"),
+    Setting("designer", "uv_prerelease", "packages", "Allow pre-releases", "Of every package, not only the ones "
+            "asked with a pre-release version"),
+    Setting("designer", "uv_offline", "packages", "Offline", "Only the packages already downloaded"),
+    Setting("designer", "uv_link_mode", "packages", "How packages are installed",
+            "Copy is the safest across drives; links save space", kind="select", options=_LINK_MODES),
     # logs
     Setting("designer", "error_dialogs", "logs", "Show a dialog on errors",
             "With buttons to copy the error and go to its line; errors are always in View → Logs"),
@@ -199,6 +222,7 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("fonts", "Fonts and size", "type"),
         ("canvas", "Form canvas", "layout-grid"),
         ("running", "Running", "play"),
+        ("packages", "Package managers", "package"),
         ("logs", "Logs and errors", "scroll-text"),
         ("telemetry", "Telemetry", "chart-no-axes-column"),
     )),
@@ -259,6 +283,10 @@ class SettingsController:
         self._rendering: Optional[Tuple[Path, float, _rendering.Rendering]] = None
         #: The GPU name being typed in the rendering page (saved with Enter).
         self.gpu_draft: Optional[str] = None
+        #: The text being typed in a "text" setting ("section.key" -> text), saved with Enter.
+        self.drafts: Dict[str, str] = {}
+        #: What the Package managers page is doing ("Installing uv"...), ``None`` when idle.
+        self.uv_busy: Optional[str] = None
 
     @property
     def store(self) -> _profiles.Store:
@@ -297,7 +325,43 @@ class SettingsController:
         self.d.change_setting(s.section, s.key, value, scope)
 
     def reset(self, s: Setting) -> None:
+        self.drafts.pop(f"{s.section}.{s.key}", None)
         self.d.reset_setting(s.section, s.key, self.scope if s.project else "user")
+
+    def draft(self, s: Setting) -> str:
+        """The text shown in a "text" setting: what is being typed, else its value."""
+        return self.drafts.get(f"{s.section}.{s.key}", str(self.value(s)))
+
+    def edit(self, s: Setting, text: str) -> None:
+        self.drafts[f"{s.section}.{s.key}"] = text
+
+    def save_text(self, s: Setting) -> None:
+        text = self.drafts.pop(f"{s.section}.{s.key}", None)
+        if text is not None and text.strip() != self.value(s):
+            self.change(s, text.strip())
+
+    # -- package managers -----------------------------------------------------------------------
+    def install_uv(self) -> Any:
+        """Installs uv on this computer (uv's official installer) in the background."""
+        return self._uv_task(tr("Installing uv"), _package_managers.install)
+
+    def update_uv(self) -> Any:
+        """Updates this computer's uv (``uv self update``) in the background."""
+        return self._uv_task(tr("Updating uv"), _package_managers.update)
+
+    def _uv_task(self, label: str, work: Callable[[], Any]) -> Any:
+        if self.uv_busy:
+            return None
+        self.uv_busy = label
+
+        def done(result: Any) -> Any:
+            self.uv_busy = None
+            if result.ok:
+                self.d.notify(label, tr("uv {version} is ready", version=_package_managers.version(
+                    _package_managers.system()) or ""), kind="success", seconds=4)
+            return self.d.projects.load_tools()
+
+        return self.d.projects._task(label, work, done, quiet=True)
 
     def reset_all(self) -> None:
         """Arms Reset all; the second press within five seconds puts every setting of the scope back."""
@@ -385,6 +449,14 @@ def _control(c: SettingsController, s: Setting, t: Theme) -> Any:
         integer = isinstance(_profiles.defaults(s.section)[s.key], int)
         return ui.number_field(float(value), (lambda v: change(int(v))) if integer else change, min=s.low,
                                max=s.high, step=s.step, width=110, theme=t)
+    if s.kind == "text":
+        typing = f"{s.section}.{s.key}" in c.drafts and c.draft(s).strip() != value
+        return _core.row([
+            ui.input(c.draft(s), lambda text: c.edit(s, text), placeholder=s.default,
+                     on_submit=lambda *_: c.save_text(s), mono=True, width=220, theme=t),
+            ui.icon_button("check", lambda: c.save_text(s), size="sm", tooltip=tr("Save"), theme=t)
+            if typing else None,
+        ], spacing=4, align="center")
     if s.kind == "font":
         from .dialogs import font_select
 
@@ -541,12 +613,66 @@ def rendering_page(c: SettingsController, t: Theme) -> List[Any]:
     ]
 
 
+_UV_NAMES = {"bundled": "Included with Pyzed", "system": "This computer's", "custom": "Custom path"}
+
+
+def packages_page(c: SettingsController, t: Theme) -> List[Any]:
+    """The package managers: every uv found (which one is in use, install or update this computer's), which one
+    to use and the defaults uv gets."""
+    in_use = _package_managers.find()
+    found = []
+    for manager in _package_managers.managers():
+        if manager.source == "system":
+            action = ui.button(tr("Update") if manager.available else tr("Install"),
+                               c.update_uv if manager.available else c.install_uv,
+                               icon="refresh-cw" if manager.available else "download", size="sm",
+                               variant="ghost" if manager.available else "solid", disabled=c.uv_busy is not None,
+                               theme=t)
+        else:
+            action = None
+        if manager.available:
+            detail = ui.label(manager.path or "", size="xs", mono=True, color="text_muted", theme=t)
+        elif manager.source == "system":
+            detail = ui.label(tr("Not installed: install it to update it apart from Pyzed"), size="xs",
+                              color="text_muted", theme=t)
+        else:
+            detail = ui.label(tr("Not found"), size="xs", color="text_muted", theme=t)
+        found.append(_core.row([
+            _icon("package", size=16, color=t.icon if manager.available else t.icon_muted),
+            _core.column([
+                _core.row([
+                    ui.label(tr(_UV_NAMES[manager.source]), theme=t),
+                    ui.label(manager.version, size="sm", mono=True, color="text_muted", theme=t)
+                    if manager.version else None,
+                    ui.badge(tr("In use"), tint="success", size="sm", theme=t)
+                    if manager.available and manager.path == in_use else None,
+                ], spacing=8, align="center"),
+                detail,
+            ], spacing=2, width="fill"),
+            action,
+        ], spacing=10, align="center"))
+    if c.uv_busy:
+        found.append(ui.label(f"{c.uv_busy}…", size="sm", color="accent", theme=t))
+    rows = {s.key: s for s in SETTINGS if s.page == "packages"}
+    which = [rows["uv_source"]] + ([rows["uv_path"]] if c.value(rows["uv_source"]) == "custom" else [])
+    return [
+        ui.settings_group("uv", found, theme=t,
+                          description=tr("Pyzed's projects are uv projects (pyproject.toml and uv.lock): uv installs "
+                                         "Python, the packages and the tools. The one on this computer updates "
+                                         "apart from Pyzed")),
+        _group(c, tr("Package manager"), which, t),
+        _group(c, tr("Defaults for uv"), [s for s in rows.values() if s.key not in ("uv_source", "uv_path")], t),
+    ]
+
+
 def page_content(c: SettingsController, page: str, t: Theme) -> List[Any]:
     """The groups of ``page``."""
     from .dialogs import telemetry_group
 
     if page == "project.rendering":
         return rendering_page(c, t)
+    if page == "packages":
+        return packages_page(c, t)
     if page == "telemetry":
         return [telemetry_group(c.d, t)]
     title = tr(page_titles().get(page, (page, ""))[0])
