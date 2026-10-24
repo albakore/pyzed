@@ -14,11 +14,11 @@
       "duration": 9.0,
       "recorded": "off-screen",
       "mp4": "media/snake.mp4",
-      "mp4_bytes": 60866,
+      "mp4_bytes": 83032,
       "webm": "media/snake.webm",
-      "webm_bytes": 57937,
+      "webm_bytes": 54629,
       "poster": "media/snake.poster.webp",
-      "poster_bytes": 13882
+      "poster_bytes": 14296
     },
     {
       "name": "breakout",
@@ -33,11 +33,11 @@
       "duration": 8.0,
       "recorded": "off-screen",
       "mp4": "media/breakout.mp4",
-      "mp4_bytes": 196989,
+      "mp4_bytes": 195258,
       "webm": "media/breakout.webm",
-      "webm_bytes": 232609,
+      "webm_bytes": 226392,
       "poster": "media/breakout.poster.webp",
-      "poster_bytes": 21878
+      "poster_bytes": 22260
     },
     {
       "name": "neon-invaders",
@@ -52,11 +52,11 @@
       "duration": 9.0,
       "recorded": "off-screen",
       "mp4": "media/neon-invaders.mp4",
-      "mp4_bytes": 333462,
+      "mp4_bytes": 332049,
       "webm": "media/neon-invaders.webm",
-      "webm_bytes": 342830,
+      "webm_bytes": 342992,
       "poster": "media/neon-invaders.poster.webp",
-      "poster_bytes": 32142
+      "poster_bytes": 32114
     },
     {
       "name": "game-of-life",
@@ -71,11 +71,11 @@
       "duration": 7.0,
       "recorded": "off-screen",
       "mp4": "media/game-of-life.mp4",
-      "mp4_bytes": 260809,
+      "mp4_bytes": 262507,
       "webm": "media/game-of-life.webm",
-      "webm_bytes": 372481,
+      "webm_bytes": 304065,
       "poster": "media/game-of-life.poster.webp",
-      "poster_bytes": 32162
+      "poster_bytes": 29336
     },
     {
       "name": "game-first",
@@ -91,9 +91,9 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/game-first.webp",
-      "webp_bytes": 127480,
+      "webp_bytes": 127984,
       "poster": "media/game-first.poster.webp",
-      "poster_bytes": 5278
+      "poster_bytes": 5768
     },
     {
       "name": "game-sprites",
@@ -109,9 +109,9 @@
       "recorded": "off-screen",
       "quality": 58,
       "webp": "media/game-sprites.webp",
-      "webp_bytes": 195232,
+      "webp_bytes": 194772,
       "poster": "media/game-sprites.poster.webp",
-      "poster_bytes": 6710
+      "poster_bytes": 6946
     },
     {
       "name": "game-jump-arc",
@@ -127,9 +127,9 @@
       "recorded": "off-screen",
       "quality": 52,
       "webp": "media/game-jump-arc.webp",
-      "webp_bytes": 206840,
+      "webp_bytes": 207298,
       "poster": "media/game-jump-arc.poster.webp",
-      "poster_bytes": 6750
+      "poster_bytes": 7010
     },
     {
       "name": "game-platformer",
@@ -145,9 +145,9 @@
       "recorded": "off-screen",
       "quality": 52,
       "webp": "media/game-platformer.webp",
-      "webp_bytes": 267862,
+      "webp_bytes": 274626,
       "poster": "media/game-platformer.poster.webp",
-      "poster_bytes": 6332
+      "poster_bytes": 6620
     },
     {
       "name": "game-asteroids",
@@ -163,9 +163,9 @@
       "recorded": "off-screen",
       "quality": 52,
       "webp": "media/game-asteroids.webp",
-      "webp_bytes": 239742,
+      "webp_bytes": 236656,
       "poster": "media/game-asteroids.poster.webp",
-      "poster_bytes": 6560
+      "poster_bytes": 6720
     },
     {
       "name": "game-2048",
@@ -181,9 +181,9 @@
       "recorded": "off-screen",
       "quality": 76,
       "webp": "media/game-2048.webp",
-      "webp_bytes": 186490,
+      "webp_bytes": 183278,
       "poster": "media/game-2048.poster.webp",
-      "poster_bytes": 12228
+      "poster_bytes": 12678
     },
     {
       "name": "game-menus",
@@ -199,9 +199,9 @@
       "recorded": "off-screen",
       "quality": 52,
       "webp": "media/game-menus.webp",
-      "webp_bytes": 261150,
+      "webp_bytes": 258418,
       "poster": "media/game-menus.poster.webp",
-      "poster_bytes": 5718
+      "poster_bytes": 5800
     },
     {
       "name": "game-high-scores",
@@ -217,9 +217,9 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/game-high-scores.webp",
-      "webp_bytes": 146902,
+      "webp_bytes": 146416,
       "poster": "media/game-high-scores.poster.webp",
-      "poster_bytes": 11278
+      "poster_bytes": 11386
     },
     {
       "name": "concept-particles",
@@ -253,7 +253,7 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/concept-collisions.webp",
-      "webp_bytes": 57748,
+      "webp_bytes": 57330,
       "poster": "media/concept-collisions.poster.webp",
       "poster_bytes": 2840
     },
@@ -271,7 +271,7 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/concept-easing.webp",
-      "webp_bytes": 79196,
+      "webp_bytes": 79160,
       "poster": "media/concept-easing.poster.webp",
       "poster_bytes": 4086
     },
@@ -289,7 +289,7 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/concept-juice.webp",
-      "webp_bytes": 48580,
+      "webp_bytes": 48502,
       "poster": "media/concept-juice.poster.webp",
       "poster_bytes": 1870
     },
@@ -307,11 +307,11 @@
       "duration": 8.0,
       "recorded": "off-screen",
       "mp4": "media/shaders.mp4",
-      "mp4_bytes": 329969,
+      "mp4_bytes": 327545,
       "webm": "media/shaders.webm",
-      "webm_bytes": 392414,
+      "webm_bytes": 392247,
       "poster": "media/shaders.poster.webp",
-      "poster_bytes": 41088
+      "poster_bytes": 40992
     },
     {
       "name": "themes",
@@ -327,13 +327,13 @@
       "duration": 7.5,
       "recorded": "off-screen",
       "mp4": "media/themes.mp4",
-      "mp4_bytes": 245279,
+      "mp4_bytes": 261159,
       "webm": "media/themes.webm",
-      "webm_bytes": 216145,
+      "webm_bytes": 235179,
       "poster": "media/themes.poster.webp",
-      "poster_bytes": 43206,
+      "poster_bytes": 46268,
       "webp": "media/themes.webp",
-      "webp_bytes": 197442
+      "webp_bytes": 206550
     },
     {
       "name": "designer-themes",
@@ -350,9 +350,9 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/designer-themes.webp",
-      "webp_bytes": 170698,
+      "webp_bytes": 180898,
       "poster": "media/designer-themes.poster.webp",
-      "poster_bytes": 30986
+      "poster_bytes": 34342
     },
     {
       "name": "form-validation",
@@ -368,11 +368,11 @@
       "duration": 10.25,
       "recorded": "off-screen",
       "mp4": "media/form-validation.mp4",
-      "mp4_bytes": 47140,
+      "mp4_bytes": 46404,
       "webm": "media/form-validation.webm",
-      "webm_bytes": 63586,
+      "webm_bytes": 66264,
       "poster": "media/form-validation.poster.webp",
-      "poster_bytes": 15212
+      "poster_bytes": 15738
     },
     {
       "name": "designer-place-controls",
@@ -386,11 +386,11 @@
       "fps": 24,
       "duration": 7.92,
       "recorded": "off-screen",
-      "quality": 70,
+      "quality": 58,
       "webp": "media/designer-place-controls.webp",
-      "webp_bytes": 196580,
+      "webp_bytes": 195348,
       "poster": "media/designer-place-controls.poster.webp",
-      "poster_bytes": 34830
+      "poster_bytes": 41280
     },
     {
       "name": "designer-tabs-anywhere",
@@ -404,11 +404,11 @@
       "fps": 24,
       "duration": 11.67,
       "recorded": "off-screen",
-      "quality": 64,
+      "quality": 52,
       "webp": "media/designer-tabs-anywhere.webp",
-      "webp_bytes": 196824,
+      "webp_bytes": 200248,
       "poster": "media/designer-tabs-anywhere.poster.webp",
-      "poster_bytes": 23668
+      "poster_bytes": 24898
     },
     {
       "name": "designer-timer-outline",
@@ -424,9 +424,9 @@
       "recorded": "off-screen",
       "quality": 82,
       "webp": "media/designer-timer-outline.webp",
-      "webp_bytes": 123338,
+      "webp_bytes": 137374,
       "poster": "media/designer-timer-outline.poster.webp",
-      "poster_bytes": 24762
+      "poster_bytes": 28204
     },
     {
       "name": "shader-graph",
@@ -442,11 +442,11 @@
       "duration": 9.58,
       "recorded": "off-screen",
       "mp4": "media/shader-graph.mp4",
-      "mp4_bytes": 259328,
+      "mp4_bytes": 267289,
       "webm": "media/shader-graph.webm",
-      "webm_bytes": 335717,
+      "webm_bytes": 346259,
       "poster": "media/shader-graph.poster.webp",
-      "poster_bytes": 54400
+      "poster_bytes": 57558
     },
     {
       "name": "shader-preview",
@@ -462,11 +462,11 @@
       "duration": 6.0,
       "recorded": "off-screen",
       "mp4": "media/shader-preview.mp4",
-      "mp4_bytes": 50723,
+      "mp4_bytes": 53514,
       "webm": "media/shader-preview.webm",
-      "webm_bytes": 90015,
+      "webm_bytes": 96235,
       "poster": "media/shader-preview.poster.webp",
-      "poster_bytes": 34984
+      "poster_bytes": 37804
     },
     {
       "name": "hover",
@@ -478,14 +478,14 @@
       "width": 1280,
       "height": 720,
       "fps": 30,
-      "duration": 11.43,
+      "duration": 11.47,
       "recorded": "live (Xvfb)",
       "mp4": "media/hover.mp4",
-      "mp4_bytes": 57303,
+      "mp4_bytes": 60237,
       "webm": "media/hover.webm",
-      "webm_bytes": 81513,
+      "webm_bytes": 86134,
       "poster": "media/hover.poster.webp",
-      "poster_bytes": 12420
+      "poster_bytes": 13218
     }
   ]
 }
