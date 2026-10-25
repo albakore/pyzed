@@ -503,3 +503,26 @@ def test_editor_folding_minimap_and_cursor_options(tmp_path):
     assert png_size(out) == (500, 240)
     with pytest.raises(ValueError, match="cursor_shape"):
         ui.editor("bad", "", cursor_shape="triangle")
+
+
+def test_markdown_is_readable_on_a_light_theme_and_shows_italics(tmp_path):
+    # Its text took the light text of a dark palette, whatever the theme or `color`; and with no italic face
+    # bundled, *emphasis* showed upright.
+    from PIL import Image
+
+    def shot(source, **kwargs):
+        class Page(pz.App):
+            theme = pz.theme.PYZED_LIGHT
+
+            def view(self):
+                return pz.container(ui.markdown(source, **kwargs), padding=8, width="fill", height="fill",
+                                    bg=self.resolved_theme().background)
+
+        path = tmp_path / f"{len(list(tmp_path.iterdir()))}.png"
+        pz.screenshot(Page(), path, size=(200, 40), scale=1)
+        return Image.open(path).convert("L")
+
+    plain = shot("Plain words")
+    assert min(plain.getdata()) < 90  # dark text on the light background
+    assert min(shot("Plain words", selectable=True).getdata()) < 90
+    assert shot("*Plain words*").tobytes() != plain.tobytes()

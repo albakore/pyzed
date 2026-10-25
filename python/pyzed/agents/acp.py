@@ -331,8 +331,10 @@ class ACPAgent:
         hidden = mcp_client.get_secrets(f"acp.{self.config.name}", self._store)
         try:
             # under WSL its sign-in page opens in Windows' browser, like Pyzed's own
+            # Claude Code gives each MCP server 30 seconds to start, less than uvx takes to download Pyzed's
+            wait = {} if "MCP_TIMEOUT" in os.environ else {"MCP_TIMEOUT": "120000"}
             self._rpc = mcp_client.JsonRpcProcess(self.config.command, self.config.args,
-                                                  env={**_platform.browser_env(), **self.config.env, **hidden},
+                                                  env={**wait, **_platform.browser_env(), **self.config.env, **hidden},
                                                   cwd=str(self.root), on_request=self._on_request,
                                                   on_notify=self._on_notify)
         except mcp_client.MCPError as err:

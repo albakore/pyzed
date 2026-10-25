@@ -364,6 +364,28 @@ def status(client: Client) -> str:
     return "installed" if isinstance(servers, dict) and SERVER in servers else "missing"
 
 
+def configured_program(client: Client) -> Optional[str]:
+    """The program ``client``'s ``pyzed`` entry starts (``None`` when it has none or it cannot be read)."""
+    try:
+        if client.format == "toml":
+            table = _TOML_TABLE.search((client.path.read_text(encoding="utf-8") if client.path.exists() else "") + "\n")
+            found = table and re.search(r'^command\s*=\s*("(?:[^"\\]|\\.)*")', table.group(0), re.M)
+            return json.loads(found.group(1)) if found else None
+        servers = _read_json(client.path).get(client.key)
+    except (OSError, ValueError):
+        return None
+    entry = servers.get(SERVER) if isinstance(servers, dict) else None
+    program = entry.get("command") if isinstance(entry, dict) else None
+    return program if isinstance(program, str) else None
+
+
+def broken(client: Client) -> bool:
+    """Whether ``client``'s ``pyzed`` entry starts a program that is no longer there (a copy of uv inside an
+    older Pyzed Design, a Python that moved...): the agent lists the server and never connects to it."""
+    program = configured_program(client)
+    return bool(program) and Path(program).is_absolute() and not Path(program).exists()
+
+
 def install(client: Client, command: Optional[List[str]] = None) -> None:
     """Adds Pyzed's MCP server to ``client``'s settings. Raises ``OSError`` or ``ValueError`` when it cannot."""
     command = command or server_command()
@@ -426,12 +448,14 @@ def _claude_cli(args: List[str]) -> bool:
 
 def install_missing(skip: List[str], home: Optional[Path] = None) -> "tuple[List[Client], Dict[str, str]]":
     """Adds the server to every installed agent that does not have it and is not in ``skip`` (agents already
-    done, or that the user took it out of). Returns the agents it was added to, and why others failed."""
+    done, or that the user took it out of), and mends the entries that start a program that is gone (``broken``),
+    skipped or not. Returns the agents it was added to, and why others failed."""
     added: List[Client] = []
     failed: Dict[str, str] = {}
     command = None
     for client in detected(home):
-        if client.id in skip or status(client) != "missing":
+        state = status(client)
+        if not (state == "missing" and client.id not in skip or state == "installed" and broken(client)):
             continue
         command = command or server_command()
         if not command:
@@ -444,3 +468,18 @@ def install_missing(skip: List[str], home: Optional[Path] = None) -> "tuple[List
             continue
         added.append(client)
     return added, failed
+
+
+def warm_up(command: Optional[List[str]] = None, timeout: float = 600) -> bool:
+    """Starts the server once and lets it end, so ``uvx`` downloads and installs the package now: the first time
+    an agent starts it, that takes longer than agents wait for a server (30 seconds for Claude Code), and the
+    agent says it did not connect. Returns whether it ran."""
+    command = command or server_command()
+    if not command:
+        return False
+    try:
+        done = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, timeout=timeout,
+                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return done.returncode == 0
