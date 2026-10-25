@@ -508,7 +508,7 @@ def test_editor_folding_minimap_and_cursor_options(tmp_path):
 def test_markdown_is_readable_on_a_light_theme_and_shows_italics(tmp_path):
     # Its text took the light text of a dark palette, whatever the theme or `color`; and with no italic face
     # bundled, *emphasis* showed upright.
-    from PIL import Image
+    Image = pytest.importorskip("PIL.Image")
 
     def shot(source, **kwargs):
         class Page(pz.App):
