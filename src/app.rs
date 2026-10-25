@@ -483,7 +483,7 @@ fn quiet(message: &mut dyn std::any::Any) -> bool {
     };
     if !matches!(
         inner,
-        Message::Py(_) | Message::Point(..) | Message::Event(..)
+        Message::Py(_) | Message::Point(..) | Message::Event(..) | Message::Scrolled(..)
     ) {
         return false;
     }
@@ -508,6 +508,9 @@ fn quiet(message: &mut dyn std::any::Any) -> bool {
             Message::Py(msg) => dispatch(target, msg.0.bind(py)),
             Message::Point(cb, x, y) => callback(target, cb.0.bind(py), (*x, *y)),
             Message::Event(cb, data) => deliver_event(target, cb.0.bind(py), data, origin),
+            Message::Scrolled(cb, viewport) => {
+                callback(target, cb.0.bind(py), (viewport_info(py, viewport),))
+            }
             _ => return false,
         };
         match result {
@@ -1757,6 +1760,24 @@ fn editor_outcome(
     editor_outcome_with(py, state, target, outcome, on_change, on_cursor, None)
 }
 
+/// What `on_scroll` gets: the offsets and sizes of a scrollable.
+fn viewport_info<'py>(py: Python<'py>, viewport: &scrollable::Viewport) -> Bound<'py, PyDict> {
+    let info = PyDict::new(py);
+    let offset = viewport.absolute_offset();
+    let relative = viewport.relative_offset();
+    let bounds = viewport.bounds();
+    let content = viewport.content_bounds();
+    let _ = info.set_item("x", offset.x);
+    let _ = info.set_item("y", offset.y);
+    let _ = info.set_item("relative_x", relative.x);
+    let _ = info.set_item("relative_y", relative.y);
+    let _ = info.set_item("width", bounds.width);
+    let _ = info.set_item("height", bounds.height);
+    let _ = info.set_item("content_width", content.width);
+    let _ = info.set_item("content_height", content.height);
+    info
+}
+
 fn editor_outcome_with(
     py: Python<'_>,
     state: &mut State,
@@ -2071,20 +2092,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 None => callback(&target, cb.0.bind(py), (py.None(),)),
             },
             Message::Scrolled(cb, viewport) => {
-                let info = PyDict::new(py);
-                let offset = viewport.absolute_offset();
-                let relative = viewport.relative_offset();
-                let bounds = viewport.bounds();
-                let content = viewport.content_bounds();
-                let _ = info.set_item("x", offset.x);
-                let _ = info.set_item("y", offset.y);
-                let _ = info.set_item("relative_x", relative.x);
-                let _ = info.set_item("relative_y", relative.y);
-                let _ = info.set_item("width", bounds.width);
-                let _ = info.set_item("height", bounds.height);
-                let _ = info.set_item("content_width", content.width);
-                let _ = info.set_item("content_height", content.height);
-                callback(&target, cb.0.bind(py), (info,))
+                callback(&target, cb.0.bind(py), (viewport_info(py, &viewport),))
             }
             Message::WindowOpened(id) => {
                 let obj = state.window(id).bind(py).clone();

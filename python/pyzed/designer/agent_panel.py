@@ -25,6 +25,7 @@ from ..agents import mcp_client as _mcp
 from ..agents import providers as _providers
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
+from . import agent_thread as _thread
 from . import agent_tools, file_scan
 from . import logs as _logs
 from .locale import tr
@@ -173,6 +174,10 @@ AGENT_LOGIN_EVERY = 3.0
 NODE_URL = "https://nodejs.org/en/download"
 #: Model answers per message: enough to build, run and fix a whole app on its own.
 MAX_TURNS = 150
+#: How many times a second the streamed answer is drawn (each one draws the whole designer again).
+STREAM_FPS = 15
+#: The worker's events that only add streamed text.
+STREAMED = frozenset({"text", "thinking", "tool_input"})
 
 #: Slash commands: (name, icon, description, prompt to send or None for an action).
 SLASH_COMMANDS = (
@@ -236,6 +241,9 @@ class AgentController:
         self.thread = self._fresh_thread(self.settings.model)
         self.input = ""
         self.running = False
+        self._shown_stopwatch = -1
+        self._stream_pending = False
+        self._stream_drawn = 0.0
         self.error = ""
         self.view = "thread"  # "history" or "settings" (the agent settings, inside the panel like Zed's)
         self.live_text = ""
@@ -500,8 +508,26 @@ class AgentController:
     # -- the UI thread's side ------------------------------------------------------------------------
     def poll(self) -> Any:
         """Applies what the worker sent: streamed text, tool calls to run, confirmations, the end. While
-        signing in by copying a key, it also reads the clipboard about once a second."""
-        self._drain()
+        signing in by copying a key, it also reads the clipboard about once a second.
+
+        Returns ``pz.UNCHANGED`` when nothing shown changed, so the designer is not drawn again 30 times a
+        second while the agent works: nothing arrived (the spinner turns by itself), or only streamed text
+        while the Agent panel is hidden. Streamed text is drawn at most ``STREAM_FPS`` times a second."""
+        drained = self._drain()
+        waiting = self.raise_window or self.claude_login is not None or self.capture is not None \
+            or bool(self.agent_auth is not None and self.agent_auth.until)
+        if drained == "stream":
+            self._stream_pending = True
+            drained = ""
+        if self._stream_pending and self.d.layout.is_showing("agent", self.d):
+            now = time.monotonic()
+            if now - self._stream_drawn >= 1 / STREAM_FPS:
+                drained = "stream"
+        if not drained and not waiting and self._stopwatch() == self._shown_stopwatch:
+            return _core.UNCHANGED
+        self._stream_pending = False
+        self._stream_drawn = time.monotonic()
+        self._shown_stopwatch = self._stopwatch()
         if self.raise_window:
             self.raise_window = False
             return _core.Command.focus_window()
@@ -522,13 +548,25 @@ class AgentController:
         capture.next_check = now + 1.0
         return _core.Command.paste(self.on_clipboard)
 
-    def _drain(self) -> None:
+    def _stopwatch(self) -> int:
+        """The seconds the thread's stopwatch shows (it appears once the agent works for a while), or -1."""
+        if not self.running or not self.started:
+            return -1
+        elapsed = time.monotonic() - self.started
+        return int(elapsed) if elapsed >= _thread.STOPWATCH_SECONDS else -1
+
+    def _drain(self) -> str:
+        """Applies what the worker sent: ``""`` when nothing came, ``"stream"`` when only streamed text did
+        (the answer, the thinking, a tool's input), else ``"other"``."""
+        got = ""
         for _ in range(500):
             try:
                 item = self._queue.get_nowait()
             except queue.Empty:
-                return
+                return got
             kind = item[0]
+            streamed = kind == "event" and item[1].kind in STREAMED
+            got = "other" if got == "other" or not streamed else "stream"
             if kind == "event":
                 self._on_event(item[1])
             elif kind == "call":
@@ -608,6 +646,7 @@ class AgentController:
                 if names and not own.project:
                     own.project = names[0]
                     self.save_settings()
+        return got
 
     def _remember_documents(self) -> None:
         doc = self.d.doc

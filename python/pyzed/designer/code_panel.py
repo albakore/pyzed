@@ -337,10 +337,14 @@ class CodeAssist:
             self.open_completion()
         return None
 
-    def scrolled(self, info: Dict[str, float]) -> None:
+    def scrolled(self, info: Dict[str, float]) -> Any:
         """The editor scrolled; stores its ``x``/``y`` offsets in pixels (used to place the completion
-        list)."""
+        list and the other popups). Without a popup open nothing else changes: the designer is not drawn
+        again for every step of the wheel."""
         self.scroll = (float(info.get("x", 0.0)), float(info.get("y", 0.0)))
+        if self.completion is None and self.hover is None and self.rename is None and self.actions is None:
+            return _core.UNCHANGED
+        return None
 
     def _line(self, line: int) -> str:
         lines = self._text.split("\n")

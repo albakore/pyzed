@@ -503,8 +503,12 @@ class TimelineEditor:
         near_calls = [(abs(d), i) for d, i in near_calls if -HIT <= d <= 60]
         return ("call", min(near_calls)[1]) if near_calls else None
 
-    def pointer_move(self, x: float, y: float) -> None:
-        """The pointer moved over the lanes: scrubs, drags a key or a call, or updates what is hovered."""
+    def pointer_move(self, x: float, y: float) -> Any:
+        """The pointer moved over the lanes: scrubs, drags a key or a call, or updates what is hovered.
+
+        Returns ``pz.UNCHANGED`` when that changed nothing on screen (the pointer moved within the same
+        hundredth of a second, or over nothing new), so the designer is not drawn again for it."""
+        before = (self.hover, self.time, self.clip)
         self.pointer = (x, y)
         self.pointer_x = x - ORIGIN
         if self.scrubbing:
@@ -515,6 +519,8 @@ class TimelineEditor:
             self.drag_call_to(self.pointer_x - self.grab_dx)
         else:
             self.hover = self.hit(x, y)
+        after = (self.hover, self.time, self.clip)
+        return _core.UNCHANGED if all(a is b or a == b for a, b in zip(before, after)) else None
 
     def pointer_press(self) -> None:
         """A press on the lanes: on the ruler it scrubs, on a key it starts dragging it, on a call it drags

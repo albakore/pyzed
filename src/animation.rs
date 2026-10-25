@@ -40,6 +40,10 @@ use crate::widget::PyMsg;
 // Global switches
 // ---------------------------------------------------------------------------
 
+/// The frame interval of an animation that only loops forever (a pulse, a blink, a float):
+/// it asks for no more frames than this even where nothing waits for vsync (software rendering).
+const LOOP_FRAME: std::time::Duration = std::time::Duration::from_micros(16_667);
+
 /// Animations jump to their resting state (`pz.set_reduced_motion(True)`).
 static REDUCED_MOTION: AtomicBool = AtomicBool::new(false);
 /// Off-screen screenshots draw the resting state, so they don't depend on timing.
@@ -1758,8 +1762,13 @@ impl<'a, Renderer> Animated<'a, Renderer> {
     }
 
     /// Advances the timelines to `now`; publishes start and end events. Returns whether
-    /// anything still moves.
-    fn tick(&self, state: &mut State, now: Instant, shell: &mut Shell<'_, Message>) -> bool {
+    /// anything still moves, and whether only endless loops do.
+    fn tick(
+        &self,
+        state: &mut State,
+        now: Instant,
+        shell: &mut Shell<'_, Message>,
+    ) -> (bool, bool) {
         let dt = state
             .last
             .map(|last| now.saturating_duration_since(last).as_secs_f32())
@@ -1768,6 +1777,7 @@ impl<'a, Renderer> Animated<'a, Renderer> {
         state.last = Some(now);
         state.now = Some(now);
         let mut moving = false;
+        let mut looping = false;
         for i in 0..state.runs.len() {
             let Some(anim) = self.spec.anims.get(i) else {
                 break;
@@ -1799,7 +1809,9 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                         && run.start.is_some_and(|s| {
                             now.saturating_duration_since(s).as_secs_f32() >= anim.total()
                         });
-                    moving |= run.weight != target || (on && !finished);
+                    moving |=
+                        run.weight != target || (on && !finished && anim.iterations.is_finite());
+                    looping |= on && anim.iterations.is_infinite();
                 } else {
                     if on && !run.was_on {
                         if let Some(msg) = &anim.on_start {
@@ -1850,7 +1862,9 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 }
             }
             let (_, done) = anim.at_time(elapsed);
-            if done {
+            if !done && anim.iterations.is_infinite() && elapsed >= anim.delay {
+                looping = true;
+            } else if done {
                 if !run.ended {
                     run.ended = true;
                     if let Some(msg) = &anim.on_end {
@@ -1867,7 +1881,8 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 s.start = Some(now);
             }
         }
-        moving || state.transitions_running()
+        let moving = moving || state.transitions_running();
+        (moving || looping, looping && !moving)
     }
 }
 
@@ -2025,8 +2040,10 @@ where
                 }
             }
             Event::Window(window::Event::RedrawRequested(now)) => {
-                let moving = self.tick(state, *now, shell);
-                if moving {
+                let (moving, looping) = self.tick(state, *now, shell);
+                if looping {
+                    shell.request_redraw_at(*now + LOOP_FRAME);
+                } else if moving {
                     shell.request_redraw();
                 } else {
                     state.last = None;

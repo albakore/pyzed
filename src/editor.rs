@@ -673,6 +673,13 @@ impl Measure {
             .or_insert_with(|| paragraph(line, font, size, lh, None).min_bounds().width)
     }
 
+    /// Whether every character of `font` is as wide (narrow and wide letters measure the same).
+    fn monospaced(&mut self, font: Font, size: f32, lh: f32) -> bool {
+        let narrow = self.width("iiiiiiiiii", font, size, lh);
+        let wide = self.width("MMMMMMMMMM", font, size, lh);
+        (narrow - wide).abs() < 0.01
+    }
+
     fn rows(&mut self, line: &str, font: Font, size: f32, lh: f32, width: f32) -> u32 {
         if line.is_empty() {
             return 1;
@@ -1349,38 +1356,6 @@ fn key_name(key: keyboard::key::Named) -> Option<&'static str> {
     })
 }
 
-fn numbers<'a>(
-    starts: &[u32],
-    reals: &[usize],
-    range: std::ops::Range<usize>,
-    color: Color,
-    props: &EditorProps,
-) -> Element<'a, Message> {
-    let lh = props.line_height;
-    let mut content = String::new();
-    for n in range.clone() {
-        if n > range.start {
-            content.push('\n');
-        }
-        content.push_str(&(reals[n] + 1).to_string());
-        let rows = starts[n + 1] - starts[n];
-        for _ in 1..rows {
-            content.push('\n');
-        }
-    }
-    let rows = starts[range.end] - starts[range.start];
-    text(content)
-        .font(props.font)
-        .size(props.size)
-        .line_height(LineHeight::Absolute(Pixels(lh)))
-        .color(color)
-        .width(Length::Fill)
-        .height(Length::Fixed(rows as f32 * lh))
-        .align_x(iced::alignment::Horizontal::Right)
-        .wrapping(Wrapping::None)
-        .into()
-}
-
 /// A column of fold chevrons for `lines` (visible lines), each on the first row of its line.
 fn chevrons<'a>(
     lines: &[(usize, bool)],
@@ -1731,10 +1706,21 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             lh.to_bits(),
             wrap_width.map(f32::to_bits),
         )));
+        // In a monospaced font the widest line of plain ASCII is the one with the most
+        // characters: only that one is measured (a long file has thousands).
+        let mono = wrap_width.is_none() && measure.monospaced(props.font, props.size, lh);
+        let mut widest: Option<(usize, usize)> = None;
         let mut total = 0u32;
         for line in state.content.lines() {
             let rows = match wrap_width {
                 Some(width) => measure.rows(&line.text, props.font, props.size, lh, width),
+                None if mono && line.text.is_ascii() && !line.text.contains('\t') => {
+                    let chars = line.text.len();
+                    if widest.is_none_or(|(_, most)| chars > most) {
+                        widest = Some((lines.len(), chars));
+                    }
+                    1
+                }
                 None => {
                     max_width =
                         max_width.max(measure.width(&line.text, props.font, props.size, lh));
@@ -1744,6 +1730,9 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             total += rows;
             starts.push(total);
             lines.push(line.text.into_owned());
+        }
+        if let Some((index, _)) = widest {
+            max_width = max_width.max(measure.width(&lines[index], props.font, props.size, lh));
         }
         while starts.len() < line_count + 1 {
             total += 1;
@@ -2320,33 +2309,25 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         } else {
             gutter_width
         };
-        let mut gutter = column![]
-            .width(Length::Fixed(numbers_width))
-            .padding(Padding {
-                top: PAD_Y,
-                bottom: PAD_Y,
-                left: 0.0,
-                right: if folding { 4.0 } else { 14.0 },
-            });
-        if cursor_line > 0 {
-            gutter = gutter.push(numbers(&starts, &reals, 0..cursor_line, dim, props));
-        }
-        gutter = gutter.push(numbers(
-            &starts,
-            &reals,
-            cursor_line..cursor_line + 1,
+        let padding = Padding {
+            top: PAD_Y,
+            bottom: PAD_Y,
+            left: 0.0,
+            right: if folding { 4.0 } else { 14.0 },
+        };
+        let gutter: Element<'a, Message> = crate::editor_widgets::LineNumbers {
+            starts: starts.clone(),
+            reals: reals.clone(),
+            cursor: cursor_line,
+            width: numbers_width,
+            padding,
+            line_height: lh,
+            font: props.font,
+            size: props.size,
+            color: dim,
             active,
-            props,
-        ));
-        if cursor_line + 1 < line_count {
-            gutter = gutter.push(numbers(
-                &starts,
-                &reals,
-                cursor_line + 1..line_count,
-                dim,
-                props,
-            ));
         }
+        .into();
 
         // Git-style change markers drawn as thin bars on the left edge of the gutter.
         let mut markers: Vec<(usize, Color)> = props

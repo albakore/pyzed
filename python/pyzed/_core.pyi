@@ -421,7 +421,7 @@ def button(content: Any, on_press: Any = ..., *, padding: Any = ..., width: Any 
     - `on_press()`: Message or callable sent on press. `None` disables the control.
     """
     ...
-def canvas(shapes: Any = ..., *, width: Any = ..., height: Any = ..., id: Any = ..., on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_move: Any = ..., on_scroll: Any = ..., cursor: Any = ...) -> Any:
+def canvas(shapes: Any = ..., *, width: Any = ..., height: Any = ..., id: Any = ..., on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_move: Any = ..., on_scroll: Any = ..., cursor: Any = ..., spin: Any = ...) -> Any:
     """A drawing surface. `shapes` is a list built with `pyzed.draw` (rect, circle, line,
     path, text, transforms...). Pointer callbacks receive canvas-relative coordinates.
 
@@ -434,6 +434,9 @@ def canvas(shapes: Any = ..., *, width: Any = ..., height: Any = ..., id: Any = 
     - `on_right_press(x, y)`: Callable that receives `(x, y)` on right click.
     - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
     - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
+
+    `spin` (turns per second) rotates the drawing around its center on its own, frame after
+    frame, without calling `view()` again: a loading spinner.
     """
     ...
 def cell(content: Any, *, column: Any = ..., row: Any = ..., column_span: Any = ..., row_span: Any = ..., align_x: Any = ..., align_y: Any = ...) -> Any:

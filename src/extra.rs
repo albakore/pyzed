@@ -725,6 +725,9 @@ pub struct CanvasProps {
     on_move: Option<PyMsg>,
     on_scroll: Option<PyMsg>,
     cursor: Option<mouse::Interaction>,
+    /// Turns per second: the drawing rotates around its center by itself (a spinner), redrawn
+    /// without calling `view()`.
+    spin: Option<f32>,
 }
 
 fn get<'py>(d: &Bound<'py, PyDict>, key: &str) -> PyResult<Option<Bound<'py, PyAny>>> {
@@ -939,9 +942,12 @@ pub fn parse_cursor(value: Option<&str>) -> PyResult<Option<mouse::Interaction>>
 /// - `on_right_press(x, y)`: Callable that receives `(x, y)` on right click.
 /// - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
 /// - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
+///
+/// `spin` (turns per second) rotates the drawing around its center on its own, frame after
+/// frame, without calling `view()` again: a loading spinner.
 #[pyfunction]
 #[pyo3(signature = (shapes=None, *, width=None, height=None, id=None, on_press=None,
-    on_release=None, on_right_press=None, on_move=None, on_scroll=None, cursor=None))]
+    on_release=None, on_right_press=None, on_move=None, on_scroll=None, cursor=None, spin=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn canvas(
     py: Python<'_>,
@@ -955,6 +961,7 @@ pub fn canvas(
     on_move: Any<'_>,
     on_scroll: Any<'_>,
     cursor: Option<&str>,
+    spin: Option<f32>,
 ) -> PyResult<Py<Widget>> {
     let mut parsed = Vec::new();
     if let Some(shapes) = &shapes {
@@ -984,8 +991,22 @@ pub fn canvas(
             on_move: PyMsg::maybe(&on_move),
             on_scroll: PyMsg::maybe(&on_scroll),
             cursor: cursor_kind(cursor)?,
+            spin: spin.filter(|s| s.is_finite() && *s != 0.0),
         })),
     )
+}
+
+/// How often a spinning canvas is drawn again.
+const SPIN_FRAME: std::time::Duration = std::time::Duration::from_millis(33);
+
+/// The angle of a canvas spinning `turns` per second, from a clock shared by every spinner.
+fn spin_angle(turns: f32) -> f32 {
+    static START: std::sync::LazyLock<std::time::Instant> =
+        std::sync::LazyLock::new(std::time::Instant::now);
+    let seconds = crate::recorder::now()
+        .saturating_duration_since(*START)
+        .as_secs_f64();
+    ((seconds * turns as f64).fract() * std::f64::consts::TAU) as f32
 }
 
 /// Geometry cache for a canvas with an `id`.
@@ -1131,6 +1152,11 @@ impl cv::Program<Message> for Drawing<'_> {
         cursor: mouse::Cursor,
     ) -> Option<cv::Action<Message>> {
         let props = &self.props;
+        if props.spin.is_some()
+            && let cv::Event::Window(iced::window::Event::RedrawRequested(now)) = event
+        {
+            return Some(cv::Action::request_redraw_at(*now + SPIN_FRAME));
+        }
         let position = cursor.position_in(bounds);
         let point = |cb: &Option<PyMsg>| -> Option<cv::Action<Message>> {
             let (cb, p) = (cb.as_ref()?, position?);
@@ -1171,6 +1197,15 @@ impl cv::Program<Message> for Drawing<'_> {
         bounds: Rectangle,
         _cursor: mouse::Cursor,
     ) -> Vec<cv::Geometry> {
+        if let Some(turns) = self.props.spin {
+            let mut frame = Frame::new(renderer, bounds.size());
+            let center = Vector::new(bounds.width / 2.0, bounds.height / 2.0);
+            frame.translate(center);
+            frame.rotate(Radians(spin_angle(turns)));
+            frame.translate(-center);
+            draw_shapes(&mut frame, &self.props.shapes);
+            return vec![frame.into_geometry()];
+        }
         match self.cache {
             Some(cache) => vec![cache.cache.draw(renderer, bounds.size(), |frame| {
                 draw_shapes(frame, &self.props.shapes)
