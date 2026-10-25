@@ -123,7 +123,7 @@ Vista de diferencias no tiene eventos propios: muestra lo que le das. Como todo 
 ### `ui.diff_view`
 
 ```python
-diff_view(diff, *, theme=None, max_lines=120)
+diff_view(diff, *, theme=None, max_lines=120, height=360)
 ```
 
 Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las líneas cambiadas (en verde las añadidas, en rojo las quitadas) con unas pocas líneas alrededor.
@@ -133,6 +133,7 @@ Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las línea
 | `diff` | *obligatorio* | Un dict con `path`, `old` y `new` (los textos antes y después). |
 | `theme` | `None` | Tema. |
 | `max_lines` | `120` | Líneas que se muestran antes de `… N líneas más`. |
+| `height` | `360` | Lo más que crece, en píxeles; las demás líneas se desplazan dentro (las largas, de lado). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#diff_view)
 

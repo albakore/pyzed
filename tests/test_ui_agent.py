@@ -80,3 +80,41 @@ def test_plan_edits_bar_sign_in_rows_and_catalog():
     assert [i["id"] for i in catalog.visible()] == ["gemini"]
     catalog.render()
     assert got == ["ui/main.py", "browser"]
+
+
+def test_a_long_diff_unfolds_from_its_more_lines_button_and_scrolls(monkeypatch):
+    from ui_tree import install
+
+    install(monkeypatch)
+    old = "".join(f"line {i}\n" for i in range(60))
+    new = "".join(f"line {i} changed a lot, so much that it is wider than the panel\n" for i in range(60))
+    card = ui.ToolCall.create(title="Write", detail="README.md", kind="edit", status="done",
+                              diffs=[{"path": "README.md", "old": old, "new": new}])
+    tree = card.render()
+    more = next(text for text in tree.texts() if "more lines" in text)
+    tree.button_with(more).args[1]()  # it was a label that could not be pressed
+    assert card.expanded
+    tree = card.render()
+    assert not any("more lines" in text for text in tree.texts())
+    scroll = tree.find("scrollable")  # long lines scroll sideways, many lines scroll down
+    assert scroll.props["height"] <= agent.DIFF_HEIGHT
+    assert tree.find("scrollable", lambda n: n.props.get("direction") == "horizontal")
+    tree.button_with("Show less").args[1]()
+    assert not card.expanded
+
+
+def test_a_long_command_is_cut_in_its_header_and_shown_whole_when_unfolded(monkeypatch):
+    from ui_tree import install
+
+    install(monkeypatch)
+    command = 'cd "/c/Users/me/Pyzed Projects/discord-clone" && ' + "printf 'x' " * 40
+    card = ui.ToolCall.create(title="Run", detail=command, kind="execute", status="done",
+                              input={"command": command}, output="\n".join(f"out {i}" for i in range(40)))
+    tree = card.render()
+    header = tree.find("container", lambda n: n.props.get("clip") and command in n.texts())
+    assert header.props["width"] == "fill"  # the header cuts it at the card's edge
+    card.toggle()
+    tree = card.render()
+    whole = tree.find("text", lambda n: n.args[0] == "$ " + command)
+    assert whole.props.get("selectable")  # it wraps and can be selected and copied
+    assert tree.find("scrollable").props["height"] <= agent.OUTPUT_HEIGHT

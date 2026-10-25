@@ -413,6 +413,9 @@ def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any 
     - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
     """
     ...
+def clear_selection(group: Any) -> Any:
+    """Clears the selection of `group`."""
+    ...
 def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., on_paste: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ..., hard_tabs: Any = ..., backspace_unindent: Any = ..., repeat_delay: Any = ..., repeat_rate: Any = ..., on_hover: Any = ..., hover_delay: Any = ..., sticky_scroll: Any = ..., indent_guides: Any = ..., indent_guides_active: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
@@ -710,6 +713,15 @@ def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any
     - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
     - `on_start()`: A drag begins.
     - `on_end()`: The button is released after a drag.
+    """
+    ...
+def select_all(group: Any) -> Any:
+    """Selects all the text of `group` (as Ctrl+A over it does)."""
+    ...
+def selected_text(group: Any) -> Any:
+    """The text selected in `group`, or `None` when nothing is selected there.
+
+    For context menus: a right click keeps the selection, and the menu's Copy reads it here.
     """
     ...
 def set_crash_file(path: Any = ...) -> Any:

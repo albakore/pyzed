@@ -92,6 +92,71 @@ pub fn next_index(group: &Rc<str>) -> usize {
     index
 }
 
+/// The end of the last block of `group`.
+fn end_of(group: &str) -> Pos {
+    let last = count(group).saturating_sub(1);
+    lines_of(group, last).map_or(
+        Pos {
+            block: last,
+            line: 0,
+            index: 0,
+        },
+        |(lines, _)| {
+            let line = lines.len().saturating_sub(1);
+            Pos {
+                block: last,
+                line,
+                index: lines.get(line).map_or(0, String::len),
+            }
+        },
+    )
+}
+
+/// The text selected in `group`, or `None` when nothing is selected there.
+///
+/// For context menus: a right click keeps the selection, and the menu's Copy reads it here.
+#[pyo3::pyfunction]
+pub fn selected_text(group: &str) -> Option<String> {
+    ACTIVE.with_borrow(|active| {
+        let a = active.as_ref().filter(|a| &*a.group == group)?;
+        let (s, e) = if a.anchor <= a.focus {
+            (a.anchor, a.focus)
+        } else {
+            (a.focus, a.anchor)
+        };
+        (s != e).then(|| text_between(group, s, e))
+    })
+}
+
+/// Selects all the text of `group` (as Ctrl+A over it does).
+#[pyo3::pyfunction]
+pub fn select_all(group: &str) {
+    if count(group) == 0 {
+        return;
+    }
+    ACTIVE.set(Some(Active {
+        group: Rc::from(group),
+        anchor: Pos {
+            block: 0,
+            line: 0,
+            index: 0,
+        },
+        focus: end_of(group),
+        dragging: false,
+        since: Instant::now(),
+    }));
+}
+
+/// Clears the selection of `group`.
+#[pyo3::pyfunction]
+pub fn clear_selection(group: &str) {
+    ACTIVE.with_borrow_mut(|active| {
+        if active.as_ref().is_some_and(|a| &*a.group == group) {
+            *active = None;
+        }
+    });
+}
+
 /// A group of its own, for a text that is selectable alone.
 pub fn own_group() -> Rc<str> {
     let n = next_index(&group("\u{0}own"));
@@ -217,7 +282,8 @@ where
             width: Length::Shrink,
             height: Length::Shrink,
             font: None,
-            wrapping: Wrapping::default(),
+            // a long word (a path, a URL) breaks instead of running out of its parent
+            wrapping: Wrapping::WordOrGlyph,
             color: None,
             highlight: Color::from_rgba(0.45, 0.68, 0.91, 0.3),
             on_link: None,
@@ -698,6 +764,9 @@ where
                         if start != end && self.index == start.block {
                             clipboard
                                 .write(clipboard::Kind::Standard, text_between(&group, start, end));
+                            // the app's own Ctrl+C (copying the selected controls) must not
+                            // overwrite what was just copied
+                            crate::app::claim_key(key);
                             shell.capture_event();
                         }
                     }
@@ -705,22 +774,7 @@ where
                         if modifiers.command() && c.eq_ignore_ascii_case("a") =>
                     {
                         if self.index == 0 {
-                            let last = count(&group).saturating_sub(1);
-                            let end = lines_of(&group, last).map_or(
-                                Pos {
-                                    block: last,
-                                    line: 0,
-                                    index: 0,
-                                },
-                                |(lines, _)| {
-                                    let line = lines.len().saturating_sub(1);
-                                    Pos {
-                                        block: last,
-                                        line,
-                                        index: lines.get(line).map_or(0, String::len),
-                                    }
-                                },
-                            );
+                            let end = end_of(&group);
                             ACTIVE.with_borrow_mut(|active| {
                                 if let Some(a) = active.as_mut() {
                                     a.anchor = Pos {
@@ -731,6 +785,7 @@ where
                                     a.focus = end;
                                 }
                             });
+                            crate::app::claim_key(key);
                             shell.capture_event();
                             shell.request_redraw();
                         }

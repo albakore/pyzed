@@ -171,3 +171,35 @@ def test_rename_and_the_activity_bar_toggles(tmp_path, monkeypatch):
     c.toggle_flag("plan_expanded")
     assert c.plan_expanded
     assert c.agent_label() == "Pyzed Agent" and not c.is_external
+
+
+def test_the_thread_has_a_right_click_menu_to_copy(tmp_path, monkeypatch):
+    from pyzed import _core
+    from pyzed.designer import agent_thread
+    from pyzed.theme import current
+
+    d, c = _designer(tmp_path, monkeypatch, None)
+    c.thread.messages = [{"role": "user", "content": [{"type": "text", "text": "hi"}]},
+                         {"role": "assistant", "content": [{"type": "text", "text": "Hello there"}]}]
+    d.window_pointer = (120, 80)
+    c.open_thread_menu("Hello there")
+    assert c.thread_menu == ("Hello there", 120, 80)
+    monkeypatch.setattr(_core, "selected_text", lambda group: "there" if group == "agent-thread" else None)
+    menu, x, y = agent_thread.thread_menu_at(c, current())
+    assert menu is not None and x >= 4 and y >= 4
+    copied = c.copy_selection()
+    assert copied is not None and c.thread_menu is None
+    c.open_thread_menu()
+    c.select_all_text()  # nothing drawn yet: selects nothing, closes the menu
+    assert c.thread_menu is None
+    c.open_thread_menu()
+    d.on_key("escape")
+    assert c.thread_menu is None
+
+
+def test_composer_chips_stay_short():
+    from pyzed.designer.agent_panel import chip_text
+
+    assert chip_text("Bypass permissions") == "Bypass permissions"
+    assert chip_text("Default (recommended)") == "Default"
+    assert chip_text("A very long model name without notes") == "A very long model n…"

@@ -3774,7 +3774,7 @@ Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.
 ### `diff_view`
 
 ```python
-diff_view(diff, *, theme=None, max_lines=120)
+diff_view(diff, *, theme=None, max_lines=120, height=360)
 ```
 
 Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las líneas cambiadas (en verde las añadidas, en rojo las quitadas) con unas pocas líneas alrededor.
@@ -3784,6 +3784,7 @@ Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las línea
 | `diff` | Un dict con `path`, `old` y `new` (los textos antes y después). |
 | `theme` | Tema. |
 | `max_lines` | Líneas que se muestran antes de `… N líneas más`. |
+| `height` | Lo más que crece, en píxeles; las demás líneas se desplazan dentro (las largas, de lado). |
 
 ```python
 ui.diff_view({"path": "main.py", "old": "x = 1\n", "new": "x = 2\n"})

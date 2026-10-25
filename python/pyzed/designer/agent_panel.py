@@ -291,6 +291,8 @@ class AgentController:
         self._editor_server: Optional[Any] = None
         # composer
         self.menu: Optional[str] = None  # "mode" | "model" | "effort" while its menu is open
+        #: the thread's right-click menu: (the answer clicked, or "", x, y in the window)
+        self.thread_menu: Optional[Tuple[str, float, float]] = None
         self.mentions: List[Mention] = []
         self.picked = 0  # highlighted row of the @ / slash popup
         self.attachments: List[Attachment] = []
@@ -2361,8 +2363,34 @@ class AgentController:
         self.d.notify(tr("Copied to the clipboard"), kind="success", seconds=2, log=False)
         return _core.Command.copy(text)
 
+    # -- the thread's right-click menu --------------------------------------------------------------
+    def open_thread_menu(self, answer: str = "") -> None:
+        """Right-click on the thread (``answer``: the text of the agent's answer clicked): opens its menu at
+        the pointer. The selection is kept, for Copy."""
+        self.menu = None
+        self.thread_menu = (answer, *self.d.window_pointer)
+
+    def close_thread_menu(self) -> None:
+        self.thread_menu = None
+
+    def selected_text(self) -> str:
+        """The text selected with the mouse in the thread, or ``""``."""
+        return _core.selected_text(SELECTION) or ""
+
+    def copy_selection(self) -> Any:
+        """Copies the text selected in the thread."""
+        self.thread_menu = None
+        text = self.selected_text()
+        return self.copy_text(text) if text else None
+
+    def select_all_text(self) -> None:
+        """Selects all the text of the thread (Ctrl+A over it does the same)."""
+        self.thread_menu = None
+        _core.select_all(SELECTION)
+
     def copy_markdown(self) -> Any:
         self.menu = None
+        self.thread_menu = None
         self.d.notify(tr("Thread copied as Markdown"), kind="success", seconds=3)
         return _core.Command.copy(self.thread_markdown())
 
@@ -2758,12 +2786,24 @@ def _thread_agent(c: AgentController, model: str) -> str:
     return model_label(model) if model else ""
 
 
+#: The longest value a chip of the composer shows (the whole one is in its tooltip).
+CHIP_CHARS = 20
+
+
+def chip_text(label: str) -> str:
+    """``label`` short enough for a chip: without a note in parentheses (``"Default (recommended)"`` ->
+    ``"Default"``), then cut with "…"."""
+    if len(label) > CHIP_CHARS and "(" in label:
+        label = label[:label.index("(")].rstrip() or label
+    return label if len(label) <= CHIP_CHARS else label[:CHIP_CHARS - 1].rstrip() + "…"
+
+
 def _chip(label: str, on_press: Any, t: Theme, *, icon: Optional[str] = None, selected: bool = False,
           menu: bool = True, tooltip: Optional[str] = None, disabled: bool = False) -> Any:
     """A small text button of the composer's bottom row (a menu opener when ``menu``)."""
     color = t.text_placeholder if disabled else t.text if selected else t.text_muted
     parts = [_icon(icon, size=12, color=t.text_accent if selected else color) if icon else None,
-             ui.label(label, size="xs", color=color, theme=t),
+             ui.label(chip_text(label), size="xs", color=color, wrap=False, theme=t),
              _icon("chevron-down", size=10, color=t.text_placeholder) if menu else None]
     button = _core.button(_core.row(parts, spacing=3, align="center"), None if disabled else on_press,
                           padding=(3, 5), bg=alpha(t.accent, 0.12) if selected else None, hover_bg=t.element_hover,
@@ -2866,9 +2906,11 @@ def _option_menu(c: AgentController, t: Theme, option_id: str) -> Any:
 def _option_chip(c: AgentController, option: Dict[str, Any], t: Theme) -> Any:
     choice = next((ch for ch in option["choices"] if ch["value"] == option["current"]), None)
     key = f"option:{option['id']}"
-    return _chip(choice["name"] if choice else option["current"], lambda: c.toggle_menu(key), t,
-                 icon=OPTION_ICONS.get(option["category"], "sliders-horizontal") or None, selected=c.menu == key,
-                 tooltip=(choice or {}).get("description") or option["name"])
+    value = choice["name"] if choice else str(option["current"])
+    description = (choice or {}).get("description")
+    tip = f"{option['name']}: {value}" + (f"\n{description}" if description else "")
+    return _chip(value, lambda: c.toggle_menu(key), t, icon=OPTION_ICONS.get(option["category"], "sliders-horizontal")
+                 or None, selected=c.menu == key, tooltip=tip)
 
 
 def _effort_menu(c: AgentController, t: Theme) -> Any:

@@ -61,6 +61,7 @@ _i18n.add("en", {"pyzed": {"agent": {
                "older": "Older"},
     "allow": "Allow", "allow_always": "Always allow", "deny": "Reject", "failed": "Failed", "rejected": "Rejected", "canceled": "Canceled",
     "waiting": "Waiting for your answer", "input": "Input", "output": "Output", "more_lines": "… {count} more lines",
+    "show_less": "Show less",
     "plan": "Plan", "files_changed": {"one": "{count} file changed", "other": "{count} files changed"},
     "keep_all": "Keep all", "reject_all": "Reject all", "keep": "Keep", "reject": "Reject", "open": "Open",
     "waiting_browser": "Waiting for the browser…", "open_again": "Open the page again", "copy": "Copy",
@@ -76,7 +77,7 @@ _i18n.add("es", {"pyzed": {"agent": {
     "groups": {"today": "Hoy", "yesterday": "Ayer", "week": "Esta semana", "month": "Este mes", "older": "Antes"},
     "allow": "Permitir", "allow_always": "Permitir siempre", "deny": "Rechazar", "failed": "Falló", "canceled": "Cancelado",
     "rejected": "Rechazado", "waiting": "Esperando tu respuesta", "input": "Entrada", "output": "Salida",
-    "more_lines": "… {count} líneas más",
+    "more_lines": "… {count} líneas más", "show_less": "Mostrar menos",
     "plan": "Plan", "files_changed": {"one": "{count} archivo cambiado", "other": "{count} archivos cambiados"},
     "keep_all": "Conservar todo", "reject_all": "Rechazar todo", "keep": "Conservar", "reject": "Rechazar",
     "open": "Abrir", "waiting_browser": "Esperando al navegador…", "open_again": "Abrir la página otra vez",
@@ -298,11 +299,12 @@ class ToolCall(Component):
         failed = self.status in ("failed", "rejected", "canceled")
         detail = _core.container(label(self.detail, size="xs", mono=True, color="text_muted", wrap=False, theme=t),
                                  padding=(0, 4), bg=alpha(t.text, 0.06), radius=3) if self.detail else None
+        # the title and what it acts on (a long command, a path) are cut at the card's edge
+        what = _core.container(_core.row([label(self.title, size="sm", color="text_muted", wrap=False, theme=t),
+                                          detail], spacing=6, align="center"), width="fill", clip=True)
         return _core.row([
             self._lead(t),
-            label(self.title, size="sm", color="text_muted", wrap=False, theme=t),
-            detail,
-            _core.space(width="fill"),
+            what,
             tooltip_text(_icon("x", size=13, color=t.error if self.status == "failed" else t.text_placeholder),
                          _t(f"pyzed.agent.{self.status}"), theme=t) if failed else None,
             _icon("chevron-up" if self.expanded else "chevron-down", size=12, color=t.text_placeholder)
@@ -325,14 +327,13 @@ class ToolCall(Component):
         rows: List[Any] = [header]
         live = self.status in ("running", "waiting", "pending")
         if self.diffs and (self.expanded or live or self.status == "done"):
-            limit = 12 if not self.expanded else 120
-            rows.append(_core.container(_core.column([diff_view(d, theme=t, max_lines=limit) for d in self.diffs],
-                                                     spacing=6, width="fill"), padding=(6, 8), width="fill"))
-        elif self.kind == "execute" and (self.progress or self.output) and (self.expanded or live):
-            text = (self.progress if live else str(self.output or "")).rstrip()
-            lines = text.splitlines()[-(200 if self.expanded else 8):]
-            rows.append(_core.container(label("\n".join(lines), size="xs", mono=True, color="text_muted", theme=t),
+            limit = DIFF_LINES if not self.expanded else DIFF_LINES_OPEN
+            rows.append(_core.container(_core.column([_diff_view(d, theme=t, max_lines=limit, on_more=self.toggle,
+                                                                 on_less=self.toggle if self.expanded else None)
+                                                      for d in self.diffs], spacing=6, width="fill"),
                                         padding=(6, 8), width="fill"))
+        elif self.kind == "execute" and (self.progress or self.output or self.expanded) and (self.expanded or live):
+            rows.append(_core.container(self._terminal(t, live), padding=(6, 8), width="fill"))
         elif self.expanded and has_body:
             rows.append(_core.container(self._raw(t), padding=(6, 8), width="fill"))
         if self.status == "waiting":
@@ -351,6 +352,33 @@ class ToolCall(Component):
                                t.border_variant if failed else t.border, border_width=1, radius=t.radius + 2,
                                clip=True)
 
+    def _command(self) -> str:
+        """The command a call runs (``input["command"]``), or ``""``."""
+        value = self.input.get("command") if isinstance(self.input, Mapping) else None
+        if isinstance(value, (list, tuple)):
+            value = " ".join(str(v) for v in value)
+        return str(value or "")
+
+    def _terminal(self, t: Theme, live: bool) -> Any:
+        """A command's card body: the whole command (the header cuts it), then its output, the last lines
+        while folded and all of it, scrolling, when unfolded. Both can be selected and copied."""
+        parts: List[Any] = []
+        command = self._command()
+        if self.expanded and command:
+            parts.append(label("$ " + command, size="xs", mono=True, selectable=True, theme=t))
+        text = (self.progress if live else str(self.output or "")).rstrip()
+        if text:
+            lines = text.splitlines()
+            shown = lines[-(OUTPUT_LINES_OPEN if self.expanded else OUTPUT_LINES):]
+            out = label("\n".join(shown), size="xs", mono=True, color="text_muted", selectable=True, width="fill",
+                        theme=t)
+            if self.expanded and len(shown) > OUTPUT_LINES:
+                out = _core.scrollable(_core.container(out, padding=(0, 8, 0, 0), width="fill"), width="fill",
+                                       height=min(OUTPUT_HEIGHT, len(shown) * 16 + 4), scrollbar_width=4,
+                                       anchor_bottom=live)
+            parts.append(out)
+        return _core.column(parts, spacing=6, width="fill")
+
     def _raw(self, t: Theme) -> Any:
         """What it got (``Raw Input``) and what it answered (``Output``), like Zed's unfolded tool call."""
         parts: List[Any] = []
@@ -359,35 +387,74 @@ class ToolCall(Component):
                 continue
             text = value if isinstance(value, str) else json.dumps(value, indent=1, ensure_ascii=False)
             parts.append(label(_t(f"pyzed.agent.{name}"), size="xs", mono=True, color="text_placeholder", theme=t))
-            parts.append(label(text[:4000], size="xs", mono=True, color="text_muted", theme=t))
+            parts.append(label(text[:4000], size="xs", mono=True, color="text_muted", selectable=True, theme=t))
         pictures = [_core.image(data, height=160, content_fit="contain", radius=4) for data in self.images or [] if data]
         if pictures:
             parts.append(_core.row(pictures, spacing=6, wrap=True))
         return _core.column(parts, spacing=4, width="fill")
 
 
-def diff_view(diff: Mapping[str, Any], *, theme: Optional[Theme] = None, max_lines: int = 120) -> _core.Widget:
+#: Diff lines a folded edit shows, the most an unfolded one shows, and the height it scrolls past.
+DIFF_LINES = 12
+DIFF_LINES_OPEN = 5000
+DIFF_HEIGHT = 360
+#: Output lines a folded command shows, the most an unfolded one keeps, and the height it scrolls past.
+OUTPUT_LINES = 8
+OUTPUT_LINES_OPEN = 2000
+OUTPUT_HEIGHT = 320
+#: The height of a diff line (11 px mono, line height 1.4).
+_DIFF_LINE = 11 * 1.4
+
+
+def diff_view(diff: Mapping[str, Any], *, theme: Optional[Theme] = None, max_lines: int = 120,
+              height: float = DIFF_HEIGHT) -> _core.Widget:
     """An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red
-    removed) with a few lines around them. ``diff`` has ``path``, ``old`` and ``new`` (texts)."""
+    removed) with a few lines around them. ``diff`` has ``path``, ``old`` and ``new`` (texts).
+
+    Long lines scroll sideways and more lines than fit in ``height`` scroll down."""
+    return _diff_view(diff, theme=theme, max_lines=max_lines, height=height)
+
+
+def _diff_view(diff: Mapping[str, Any], *, theme: Optional[Theme] = None, max_lines: int = 120,
+               on_more: Any = None, on_less: Any = None, height: float = DIFF_HEIGHT) -> _core.Widget:
+    """``diff_view`` where "… N more lines" (past ``max_lines``) calls ``on_more`` and ``on_less`` adds "Show
+    less" at the end (a ``ToolCall`` unfolds and folds with them)."""
     import difflib
 
     t = _th(theme)
     old, new = str(diff.get("old") or "").splitlines(), str(diff.get("new") or "").splitlines()
     lines = [line for line in difflib.unified_diff(old, new, lineterm="", n=2)][2:]  # without the file headers
-    rows: List[Any] = [label(str(diff.get("path") or ""), size="xs", mono=True, color="text_muted", theme=t)]
+    # the colored bands span the card under the text, which scrolls sideways on its own (a band as wide as
+    # its text would stop short); both scroll down together
+    rows: List[Any] = []
+    bands: List[Any] = []
     for line in lines[:max_lines]:
         if line.startswith("@@"):
-            rows.append(_core.text("⋯", size=11, color=t.text_placeholder, font="mono"))
+            rows.append(_core.text("⋯", size=11, color=t.text_placeholder, font="mono", line_height=1.4))
+            bands.append(_core.space(height=_DIFF_LINE))
             continue
         sign = line[:1]
         bg = alpha(t.success, 0.14) if sign == "+" else alpha(t.error, 0.14) if sign == "-" else None
         color = t.success if sign == "+" else t.error if sign == "-" else t.text_muted
-        rows.append(_core.container(_core.text(line or " ", size=11, color=color, font="mono", wrap=False),
-                                    padding=(0, 4), width="fill", bg=bg))
-    if len(lines) > max_lines:
-        rows.append(label(_t("pyzed.agent.more_lines", count=len(lines) - max_lines), size="xs",
-                          color="text_placeholder", theme=t))
-    return _core.column(rows, spacing=0, width="fill")
+        rows.append(_core.container(_core.text(line or " ", size=11, color=color, font="mono", wrap=False,
+                                               line_height=1.4), padding=(0, 4)))
+        bands.append(_core.container(None, width="fill", height=_DIFF_LINE, bg=bg) if bg else
+                     _core.space(height=_DIFF_LINE))
+    text = _core.scrollable(_core.column(rows, spacing=0, padding=(0, 0, 6, 0)), direction="horizontal", width="fill",
+                            scrollbar_width=4)  # the padding keeps its scrollbar under the last line
+    body = _core.scrollable(_core.stack([_core.column(bands, spacing=0, width="fill"), text], width="fill"),
+                            width="fill", height=min(height, len(rows) * _DIFF_LINE + 8), scrollbar_width=4)
+    parts: List[Any] = [label(str(diff.get("path") or ""), size="xs", mono=True, color="text_muted", theme=t), body]
+    more = len(lines) - max_lines
+    if more > 0:
+        text = _t("pyzed.agent.more_lines", count=more)
+        parts.append(_core.button(label(text, size="xs", color="text_placeholder", theme=t), on_more, padding=(2, 4),
+                                  bg=None, hover_bg=t.element_hover, radius=t.radius) if on_more is not None else
+                     label(text, size="xs", color="text_placeholder", theme=t))
+    elif on_less is not None and len(lines) > DIFF_LINES:
+        parts.append(_core.button(label(_t("pyzed.agent.show_less"), size="xs", color="text_placeholder", theme=t),
+                                  on_less, padding=(2, 4), bg=None, hover_bg=t.element_hover, radius=t.radius))
+    return _core.column(parts, spacing=2, width="fill")
 
 
 # -- the plan ----------------------------------------------------------------------------------------
