@@ -302,6 +302,35 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
         mcp_install.install(found["zed"])  # broken: left alone
 
 
+def test_a_pyzed_mcp_entry_whose_program_is_gone_is_mended(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
+    monkeypatch.setenv("APPDATA", str(home / "AppData"))
+    monkeypatch.setattr(mcp_install._platform, "which", lambda name: None)
+    uvx = tmp_path / "uvx"
+    uvx.write_text("")
+    monkeypatch.setattr(mcp_install, "server_command", lambda: [str(uvx), "pyzed", "mcp"])
+    found = {c.id: c for c in mcp_install.clients(home)}
+    gone = str(tmp_path / "old-app" / "uv")
+    for cid in ("cursor", "codex"):
+        found[cid].marker.mkdir(parents=True)
+    found["cursor"].path.write_text(json.dumps({"mcpServers": {"pyzed": {"command": gone, "args": []}}}))
+    found["codex"].path.write_text(f'[mcp_servers.pyzed]\ncommand = {json.dumps(gone)}\nargs = []\n')
+    assert mcp_install.configured_program(found["codex"]) == gone
+    assert mcp_install.broken(found["cursor"]) and mcp_install.broken(found["codex"])
+
+    # mended even when the user already decided on them (skip): the entry is theirs, the program is not there
+    added, failed = mcp_install.install_missing(["cursor", "codex"], home)
+    assert sorted(c.id for c in added) == ["codex", "cursor"] and failed == {}
+    assert mcp_install.configured_program(found["cursor"]) == str(uvx) and not mcp_install.broken(found["codex"])
+    assert mcp_install.install_missing([], home) == ([], {})  # nothing left to do
+
+    found["cursor"].path.write_text(json.dumps({"mcpServers": {"pyzed": {"command": "uvx", "args": []}}}))
+    assert not mcp_install.broken(found["cursor"])  # a name looked up on PATH: left to the agent
+    assert mcp_install.warm_up([sys.executable, "-c", "import sys; sys.stdin.read()"])
+    assert not mcp_install.warm_up([sys.executable, "-c", "raise SystemExit(1)"])
+
+
 def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monkeypatch):
     from pyzed.designer import agent_thread
 
@@ -309,6 +338,8 @@ def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monk
     cursor = mcp_install.Client("cursor", "Cursor", "json", tmp_path / "mcp.json", tmp_path)
     monkeypatch.setattr(mcp_install, "detected", lambda home=None: [cursor])
     monkeypatch.setattr(mcp_install, "server_command", lambda: ["uvx", "pyzed"])
+    warmed = []
+    monkeypatch.setattr(mcp_install, "warm_up", lambda: warmed.append(True))
     c.on_start()
     for _ in range(500):
         c.poll()
@@ -316,6 +347,11 @@ def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monk
             break
         time.sleep(0.01)
     assert c.mcp_added == ["Cursor"] and c.settings.pyzed_mcp_done == ["cursor"]
+    for _ in range(100):  # and its package is downloaded now, not when an agent first starts it
+        if warmed:
+            break
+        time.sleep(0.01)
+    assert warmed
     assert agent_thread.thread_view(c, d.theme) is not None
     c.restart_agents()
     assert c.mcp_added == []
