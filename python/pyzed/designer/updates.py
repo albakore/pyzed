@@ -50,8 +50,11 @@ LAUNCH_GAP = 5 * 60
 #: How often it looks while a new release is published but its builds are not attached yet (a few minutes).
 BUILDING_RECHECK = 5 * 60
 #: The update button's subtle blink: a slow fade and back, never a flash.
+# Three blinks when it shows up, then it stays still: a blink that never ends draws the window
+# again 30 times a second while nothing else happens.
 BLINK = Animation({0: {"opacity": 1.0}, 0.5: {"opacity": 0.55}, 1: {"opacity": 1.0}}, duration=2000,
-                  easing="ease_in_out_sine", repeat="infinite")
+                  easing="ease_in_out_sine", repeat=3)
+BLINK_FOR = 6.0
 
 
 @functools.lru_cache(maxsize=1)
@@ -111,6 +114,8 @@ class UpdateController:
         self.status = "idle"
         self.latest: Optional[updater.Release] = None
         self.progress = 0.0
+        #: The button it blinks and when it started (rebuilt views would start it again).
+        self._blinked: tuple = (None, 0.0)
         self.error: Optional[str] = None
         self.bundle: Optional[Path] = None
         #: The release shown in the What's new tab (``None`` when the tab is closed) and whether it is active.
@@ -395,7 +400,7 @@ class UpdateController:
     def title_items(self, t: Theme) -> List[Any]:
         """The button announcing an update, at the top right of the title bar (none while up to date).
 
-        It blinks softly while it waits for a click: "Update to X" (downloads it, or shows how to
+        It blinks softly three times when it shows up: "Update to X" (downloads it, or shows how to
         upgrade the package) and "Restart to update"; the download shows its progress instead.
         """
         latest = self.latest
@@ -414,6 +419,11 @@ class UpdateController:
                                self.install if self.can_install else self.show_notes, icon="circle-arrow-up",
                                variant="tinted", tint="accent", size="sm",
                                tooltip=self.error or tr("What's new in {version}", version=latest.version), theme=t)
+        key = (self.status, latest.version)
+        if self._blinked[0] != key:
+            self._blinked = (key, time.monotonic())
+        if time.monotonic() - self._blinked[1] > BLINK_FOR:
+            return [button]
         return [button.animate(BLINK)]
 
     def _actions(self, release: updater.Release, t: Theme) -> List[Any]:
