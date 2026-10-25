@@ -182,6 +182,30 @@ def test_startup_file(tmp_path):
         app.set_startup("notes.txt")
 
 
+def test_an_app_written_in_code_starts_from_main_py(tmp_path, monkeypatch):
+    root = _make(tmp_path, "chat")
+    (root / "ui" / "main.pzform").write_text("{}")
+    (root / "main.py").write_text("import pyzed as pz\n")
+    app = project.Project.open(root)
+    assert app.script is None and app.startup == root / "ui" / "main.pzform"
+    (root / "ui" / "main.pzform").unlink()  # the agent wrote the app in code and took the example form out
+    assert app.script == root / "main.py" and app.startup == root / "main.py"
+
+    from pyzed import cli
+
+    opened = []
+    monkeypatch.setattr("pyzed.designer.design", lambda path=None, **_: opened.append(path))
+    monkeypatch.chdir(root)
+    cli.design()
+    (root / "main.py").unlink()
+    monkeypatch.chdir(tmp_path)
+    cli.design(str(root))
+    assert opened == [root / "main.py", None]  # never a new, empty ui/main.pzform
+    assert pathlib.Path.cwd() == root and not (root / "ui" / "main.pzform").exists()
+    with pytest.raises(FileNotFoundError, match="main.pzform does not exist"):
+        project.run()
+
+
 def test_startup_file_in_the_tree(tmp_path):
     root = _make(tmp_path, "shop")
     (root / "run.py").write_text("print('hi')\n")

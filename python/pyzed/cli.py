@@ -200,15 +200,19 @@ def icons(pattern: str = "") -> int:
 def design(path=None) -> int:
     """``pyzed design``: opens the form designer on ``path``.
 
-    With no path, or a project folder, it opens the Pyzed project's main form.
+    With no path, or a project folder, it opens the Pyzed project's main form, or the script it starts from
+    when it has no main form (an app written in code); the project alone when it has neither.
     """
     from .designer import design as open_designer
     from .project import activate_for
 
-    # With no form (or a project folder), open the project's main form.
+    # With no form (or a project folder), open the file the project starts from.
     project = activate_for(path or ".")
     if project is not None and project.is_pyzed and (path is None or Path(path).is_dir()):
-        path = project.main_form
+        path = project.startup
+        if not path.is_file():  # a main form that is gone is not made again, empty: open the project alone
+            os.chdir(project.root)
+            path = None
     open_designer(path)
     return 0
 

@@ -11,7 +11,8 @@ like the Zed editor). Instructions for the AI coding agents working on it.
 
 ## Commands
 
-- Run: `uv run pyzed run` (the main form) or `uv run pyzed dev main.py` (a script, with hot reload)
+- Run: `uv run pyzed run` (the startup file: the main form, or `script` in `[tool.pyzed]`) or
+  `uv run pyzed dev main.py` (a script, with hot reload)
 - Edit forms visually: `uv run pyzed design`
 - Check (ruff + ty): `uv run pyzed check`
 - Tests: `uv run pytest -q`
@@ -49,6 +50,12 @@ like the Zed editor). Instructions for the AI coding agents working on it.
 - Every list and request has loading, empty (`ui.empty_state`) and error (`ui.callout(tint="error")`) states.
 - Every input has a visible label (`ui.field`), every icon button a tooltip, every shortcut `keys=`.
 - Sentence case; buttons say what they do ("Save changes", never "OK"); errors say how to fix them.
+
+## Files that are not yours
+
+- Do not delete the example form (`ui/main.pzform` and `ui/main.py`) or any file you did not create without
+  asking: it may be open in Pyzed Design. An app written in code sets `script = "main.py"` in `[tool.pyzed]`
+  so `uv run pyzed run` and Pyzed Design start from it.
 
 ## Before you finish
 

@@ -80,7 +80,11 @@ of the package in tests/.
 its window. Read the errors and the picture, fix what is wrong and run it again until it starts cleanly \
 and looks right. Finish with a short summary of what you built and how to run it.
 - Apps written in code (pz.App) are fine too: write them with write_file, check them with validate_code \
-and look at them with screenshot.
+and look at them with screenshot. The project then starts from that script: set script = "main.py" in \
+[tool.pyzed] so Run, run_app (run_app(form="main.py")) and `uv run pyzed run` start it.
+- Never delete files you did not create, such as the project's example form (ui/main.pzform and its \
+ui/main.py) or the user's own forms, without asking first: the user may have them open or want them. If one is \
+in the way, leave it, or ask; and when you do remove one, say so in your summary.
 - For what is not below, Pyzed's own documentation and examples are at hand: get_guide, \
 describe_component, read_docs, list_examples and read_example (the Pyzed MCP server).
 """
@@ -520,7 +524,8 @@ def designer_tools(d: "Designer") -> List[Tool]:
 returns what it printed (errors and tracebacks included) and a picture of its window. It runs the files \
 on disk, so save_document first. Run it after building or changing an app, fix what it shows, run again.
 
-        form: a .pzform path relative to the project folder (default: the project's main form, else the open form).
+        form: a .pzform, or a .py script that opens the app, relative to the project folder (default: the \
+file the project starts from, its main form or its script, else the open form).
         """
         target, project, note = d.agent.on_ui(lambda: _run_target(d, form))
         result = run_form_check(target, project)
@@ -633,12 +638,13 @@ def _run_target(d: "Designer", form: str) -> Tuple[Path, Any, str]:
             raise PermissionError(f"{form} is outside the project folder")
         if not target.is_file():
             raise FileNotFoundError(form)
-    elif project is not None and project.main_form.is_file():
-        target = project.main_form.resolve()
+    elif project is not None and project.startup.is_file():
+        target = project.startup.resolve()
     elif d.doc.path is not None and not getattr(d.doc, "is_scene", False):
         target = d.doc.path.resolve()
     else:
-        raise ValueError("there is no saved form to run: save the open form (save_document) or create a project")
+        raise ValueError("there is no saved form or script to run: save the open form (save_document), give the "
+                         "script that opens the app (form=\"main.py\") or create a project")
     unsaved = [x.display_name for x in d.panes.all_docs() if getattr(x, "dirty", False)]
     note = f"Not saved (not included): {', '.join(unsaved)}; save_document saves the open one." if unsaved else ""
     return target, project, note
@@ -646,23 +652,29 @@ def _run_target(d: "Designer", form: str) -> Tuple[Path, Any, str]:
 
 def run_form_check(path: Path, project: Any = None, *, timeout: float = 240.0) -> Any:
     """Runs the form at ``path`` off-screen in its own process, like ``uv run pyzed run`` would (in the
-    project's environment when the designer lacks its dependencies), and returns its output and picture."""
+    project's environment when the designer lacks its dependencies), and returns its output and picture. A
+    ``.py`` path is a script that opens the app (``pz.run``), run like ``uv run main.py``."""
     from ..mcp import preview as _preview
     from .model import Form
 
-    form = Form.from_json(path.read_text(encoding="utf-8"))
-    size = (int(form.width) or 480, int(form.height) or 320)
+    size: Optional[Tuple[int, int]] = None
+    if path.suffix != ".py":
+        form = Form.from_json(path.read_text(encoding="utf-8"))
+        size = (int(form.width) or 480, int(form.height) or 320)
     with tempfile.TemporaryDirectory(prefix="pyzed-run-") as tmp:
         script, out = Path(tmp) / "run_app.py", Path(tmp) / "window.png"
-        script.write_text("import pyzed as pz\nfrom pyzed.designer.runtime import open_form\n"
-                          f"pz.run(open_form({str(path)!r}))\n", encoding="utf-8")
+        if size is None:
+            script = path
+        else:
+            script.write_text("import pyzed as pz\nfrom pyzed.designer.runtime import open_form\n"
+                              f"pz.run(open_form({str(path)!r}))\n", encoding="utf-8")
         python, env = _preview_python(project)
         cwd = project.root if python is not None else path.parent
         if python is None or env is None:  # the designer has what the form needs: run it with this same pyzed
             python, env = _preview.this_python()
         env.update(PYZED_RELOAD="0", PYTHONUNBUFFERED="1")
         env.pop("PYZED_DESIGNER_RUN", None)
-        rest = [str(script), str(out), str(size[0]), str(size[1])]
+        rest = [str(script), str(out), *((str(size[0]), str(size[1])) if size else ())]
         # off-screen first; when the renderer fails (not the form), in a window for a moment
         for window in (False, True):
             cmd = [*python, "-m", "pyzed.mcp.preview", *(["--window"] if window else []), *rest]
@@ -681,8 +693,8 @@ def run_form_check(path: Path, project: Any = None, *, timeout: float = 240.0) -
             output = output or (log.read_text(encoding="utf-8", errors="replace")[-6000:] if log.is_file() else "")
             if window or _form_error(output):
                 return {"ok": False, "output": output or f"{path.name} did not start"}
-        text = f"{path.name} started ({size[0]}x{size[1]})." + (f" Its output:\n{output}" if output else
-                                                               " It printed nothing.")
+        shown = f" ({size[0]}x{size[1]})" if size else ""
+        text = f"{path.name} started{shown}." + (f" Its output:\n{output}" if output else " It printed nothing.")
         return [text, Image(out.read_bytes(), "image/png")]
 
 
