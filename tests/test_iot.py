@@ -21,9 +21,15 @@ posix_only = pytest.mark.skipif(not hasattr(os, "openpty"), reason="virtual seri
 
 
 @pytest.fixture(autouse=True)
-def watchdog():
+def watchdog(request):
     """A test that hangs (a device that never answers) prints every thread's stack and ends the run."""
-    faulthandler.dump_traceback_later(60, exit=True)
+    try:  # pytest's own copy of stderr: the captured one is lost when the worker ends
+        from _pytest.faulthandler import fault_handler_stderr_fd_key
+
+        out = request.config.stash[fault_handler_stderr_fd_key]
+    except (ImportError, KeyError):
+        out = sys.__stderr__
+    faulthandler.dump_traceback_later(60, exit=True, file=out)
     yield
     faulthandler.cancel_dump_traceback_later()
 
