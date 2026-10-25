@@ -308,7 +308,11 @@ def test_tray_icon_reports_why_it_cannot_show(tray):
 # -- the designer's non-visual components ------------------------------------------------------------------------------
 NON_VISUAL = ("timer", "shortcut", "file_watcher", "process", "worker", "http_request", "clipboard", "settings",
               "file_dialog", "notification", "tray_icon", "system_info", "launcher", "network_monitor",
-              "power_monitor")
+              "power_monitor", "serial_port", "serial_watcher", "mqtt_client", "websocket", "udp_socket", "tcp_client",
+              "modbus_client", "device_discovery", "bluetooth_scanner", "bluetooth_device")
+#: The ones that talk to devices have a category of their own.
+IOT = ("serial_port", "serial_watcher", "mqtt_client", "websocket", "udp_socket", "tcp_client", "modbus_client",
+       "device_discovery", "bluetooth_scanner", "bluetooth_device")
 #: The ones that reach the operating system share the System category with the file picker and the drop zone.
 SYSTEM = ("shortcut", "file_watcher", "process", "clipboard", "file_dialog", "notification", "tray_icon", "system_info",
           "launcher", "network_monitor", "power_monitor")
@@ -318,7 +322,8 @@ def test_every_non_visual_component_has_a_service():
     for type_ in NON_VISUAL:
         spec = components.get(type_)
         assert not spec.visual
-        assert spec.category == (components.SYSTEM if type_ in SYSTEM else components.NON_VISUAL)
+        assert spec.category == (components.SYSTEM if type_ in SYSTEM else components.IOT if type_ in IOT
+                                 else components.NON_VISUAL)
         assert type_ in nonvisual.FACTORIES
         service = nonvisual.FACTORIES[type_](spec.create(type_ + "1", 0, 0, 10, 10))
         for prop in spec.props:  # each property is the service's attribute or read when the form opens

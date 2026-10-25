@@ -179,6 +179,18 @@ add `timer.subscriptions()` to the app's `subscriptions` and call `shortcut.hand
 input under Forms (`input`, `select`, `number`...) and Date & time (`date_picker`, `date_range`,
 `time_picker`, `calendar`); System holds `file_input`, `drop_zone` and the services of the operating system.
 
+IoT components (category IoT, also non-visual): `serial_port`, `serial_watcher`, `mqtt_client`, `websocket`,
+`udp_socket`, `tcp_client`, `modbus_client`, `device_discovery`, `bluetooth_scanner`, `bluetooth_device`. Their
+`running` property ("Connect on load") connects them when the form opens; their main events are `line` (serial,
+TCP), `message` (MQTT: `event.value.topic`, `.value`; WebSocket; UDP), `update` (Modbus `poll` values as a dict),
+`found`/`lost` (discovery and Bluetooth scans) and `notification` (Bluetooth). Handlers call
+`form.mqtt_client1.publish(topic, payload)`, `form.serial_port1.send_line(text)`,
+`form.modbus_client1.write_coil(address, on)`. In plain code they are `pz.SerialPort`, `pz.SerialWatcher`,
+`pz.MqttClient`, `pz.WebSocket`, `pz.UdpSocket`, `pz.TcpClient`, `pz.ModbusClient`, `pz.DeviceDiscovery`,
+`pz.BluetoothScanner` and `pz.BluetoothDevice` (`connect()`/`disconnect()`, `reconnect` in ms); Bluetooth needs
+`pyzed-ui[bluetooth]`. `pyzed.iot.testing` has an MQTT broker, a WebSocket server, a Modbus server, a fake network
+and `serial_pair()` to try apps without hardware.
+
 ## Projects and the CLI
 
 - `pyzed new my_app` creates a uv project (ruff, ty, git) with the UI in `ui/`;
