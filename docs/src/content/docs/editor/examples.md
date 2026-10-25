@@ -35,6 +35,7 @@ filters them by title and description. **All** shows every category under its ow
 | **AI** | Pyzed agent (an agent that calls tools, with a demo model that needs no key), AI chat. |
 | **Designer** | Forms made in Pyzed Design: Login form, Task runner (the non-visual components), Project explorer (tree, breadcrumbs, tabs, sortable table and other toolbox controls), Mini IDE (a Dock with panels on every side), Component cards, Bound sign-up form, Form over a shader. |
 | **Integrations** | SQLModel heroes, SQLModel inventory, Pydantic sign-up, PyPI with httpx, Downloads with httpx, SQLAlchemy contacts, SQLAlchemy quick start, Async SQLite journal, FastAPI heroes. |
+| **IoT** | MQTT dashboard, Serial monitor, Modbus energy meter, Network scanner: each one runs with simulated devices when there is no hardware (see [IoT and devices](/pyzed/guides/iot/)). |
 
 ![The Audio category of the gallery: the synthesizer, the drum machine, the modular rack, the visualizer, the MIDI controller and the webcam](../../../assets/editor/welcome-audio.png)
 

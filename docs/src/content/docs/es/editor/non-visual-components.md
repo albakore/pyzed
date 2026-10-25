@@ -14,7 +14,9 @@ ejecutar: solo aparecen en la bandeja y en el **Outline**, donde pertenecen al f
 
 ## Añadir uno
 
-1. Búscalo en la caja de herramientas, en **Componentes** o **Sistema** (o escribe su nombre en **Buscar componentes…**).
+1. Búscalo en la caja de herramientas, en **Componentes**, **Sistema** o **IoT** (o escribe su nombre en **Buscar componentes…**).
+   Los de IoT hablan con dispositivos: puertos serie, MQTT, WebSockets, Modbus, Bluetooth LE y la red local
+   (mira [IoT y dispositivos](/pyzed/es/guides/iot/)).
 2. **Haz clic**: va directo a la bandeja, seleccionado y con sus propiedades a la derecha. Arrastrarlo al
    formulario hace lo mismo; nunca queda dentro de un contenedor.
 3. Ajusta sus propiedades en el panel **Propiedades** y haz **doble clic** en su ficha para escribir el handler de
