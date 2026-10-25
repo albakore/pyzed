@@ -659,6 +659,17 @@ def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
     assert "run_app" in prompt and "update_plan" in prompt
 
 
+def test_run_app_runs_an_app_written_in_code(tmp_path):
+    from pyzed.designer import agent_tools
+
+    script = tmp_path / "main.py"
+    script.write_text("import pyzed as pz\n\nclass Chat(pz.App):\n    def view(self):\n        return pz.text('hi')\n\n"
+                      "if __name__ == '__main__':\n    print('starting')\n    pz.run(Chat())\n")
+    result = agent_tools.run_form_check(script)
+    assert isinstance(result, list), result
+    assert result[0].startswith("main.py started.") and "starting" in result[0]
+
+
 def test_run_app_reports_errors_and_plans_are_checked(tmp_path):
     from pyzed.designer import agent_tools
     from pyzed.designer.model import Form

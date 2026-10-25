@@ -35,6 +35,7 @@ los filtra por título y descripción. **Todos** muestra cada categoría bajo su
 | **IA** | Agente de Pyzed (un agente que usa herramientas, con un modelo de demostración que no necesita clave), Chat de IA. |
 | **Diseñador** | Formularios hechos en Pyzed Design: Inicio de sesión, Lanzador de tareas (los componentes no visuales), Explorador de proyecto (árbol, ruta de navegación, pestañas, tabla ordenable y otros controles de la caja de herramientas), Mini IDE (un Dock con paneles en cada lado), Tarjetas de componentes, Registro con datos enlazados, Formulario sobre un shader. |
 | **Integraciones** | Héroes con SQLModel, Inventario con SQLModel, Registro con Pydantic, PyPI con httpx, Descargas con httpx, Contactos con SQLAlchemy, Inicio rápido de SQLAlchemy, Diario con SQLite asíncrono, Héroes con FastAPI. |
+| **IoT** | Panel MQTT, Monitor serie, Medidor de energía Modbus, Escáner de red: cada uno funciona con dispositivos simulados si no hay hardware (mira [IoT y dispositivos](/pyzed/es/guides/iot/)). |
 
 ![La categoría Audio de la galería: el sintetizador, la caja de ritmos, el rack modular, el visualizador, el controlador MIDI y la webcam](../../../../assets/editor/welcome-audio.png)
 

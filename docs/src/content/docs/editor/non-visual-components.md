@@ -14,7 +14,9 @@ in the tray and in the **Outline**, where they belong to the form.
 
 ## Adding one
 
-1. Find it in the toolbox, under **Components** or **System** (or type its name in **Search components…**).
+1. Find it in the toolbox, under **Components**, **System** or **IoT** (or type its name in **Search components…**).
+   The IoT ones talk to devices: serial ports, MQTT, WebSockets, Modbus, Bluetooth LE and the local network
+   (see [IoT and devices](/pyzed/guides/iot/)).
 2. **Click it**: it goes straight to the tray, selected, with its properties on the right. Dragging it onto the
    form does the same; it never lands inside a container.
 3. Set its properties in the **Properties** panel, and **double-click** its chip to write the handler of its main

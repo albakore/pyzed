@@ -23,6 +23,7 @@ mod render;
 mod scrub;
 mod select;
 mod selectable;
+mod serial;
 mod shader;
 mod sticky;
 mod style;
@@ -56,6 +57,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     frame::register(m)?;
     focus::register(m)?;
     audio::register(m)?;
+    serial::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;

@@ -645,9 +645,13 @@ class Project:
 
     @property
     def script(self) -> Optional[Path]:
-        """The script Run starts when no form is open (``script`` in ``[tool.pyzed]``), if the project has one."""
+        """The script Run starts when no form is open (``script`` in ``[tool.pyzed]``), if the project has one.
+        Without it, a project whose main form is gone (an app written in code) starts from its ``main.py``."""
         script = self.config.get("script")
-        return self.root / str(script) if script else None
+        if script:
+            return self.root / str(script)
+        main = self.root / "main.py"
+        return main if main.is_file() and not self.main_form.exists() else None
 
     @property
     def startup(self) -> Path:
@@ -1320,7 +1324,11 @@ def run(form: Optional[PathLike] = None, *, reload: Optional[bool] = None) -> No
     if project is None:
         raise FileNotFoundError("not inside a Pyzed project (no pyproject.toml found)")
     project.activate()
-    designer.run(Path(form) if form else project.main_form, reload=reload)
+    path = Path(form) if form else project.main_form
+    if not path.exists():
+        raise FileNotFoundError(f"{path} does not exist: open the app from its own code (pz.run) or make a form "
+                                "the project's startup file")
+    designer.run(path, reload=reload)
 
 
 def clone(url: str, target: PathLike) -> Result:

@@ -346,6 +346,10 @@ class AgentController:
         if not added:
             return
         _logs.event("agent", "Added Pyzed's MCP server to %s", ", ".join(c.name for c in added))
+        from ..agents import mcp_install
+
+        # uvx downloads it the first time, which takes longer than an agent waits for a server: done now instead
+        threading.Thread(target=mcp_install.warm_up, daemon=True, name="pyzed-mcp-warm-up").start()
         self.settings.pyzed_mcp_done += [c.id for c in added if c.id not in self.settings.pyzed_mcp_done]
         self.save_settings()
         self.mcp_added = [c.name for c in added]

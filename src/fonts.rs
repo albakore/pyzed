@@ -1,4 +1,6 @@
-//! Bundled fonts: IBM Plex Sans/Mono (UI and code, like Zed) and Lucide (icons).
+//! Bundled fonts: IBM Plex Sans/Mono (UI and code, like Zed) and Lucide (icons). The italic faces
+//! are there for emphasis (Markdown's `*text*`, a theme's italic code): without them it showed upright,
+//! or in another family.
 
 use std::borrow::Cow;
 use std::sync::Once;
@@ -11,8 +13,11 @@ const BUNDLED: &[&[u8]] = &[
     include_bytes!("../assets/fonts/IBMPlexSans-Medium.ttf"),
     include_bytes!("../assets/fonts/IBMPlexSans-SemiBold.ttf"),
     include_bytes!("../assets/fonts/IBMPlexSans-Bold.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSans-Italic.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSans-BoldItalic.ttf"),
     include_bytes!("../assets/fonts/IBMPlexMono-Regular.ttf"),
     include_bytes!("../assets/fonts/IBMPlexMono-Medium.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexMono-Italic.ttf"),
     include_bytes!("../assets/fonts/lucide.ttf"),
 ];
 
