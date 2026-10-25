@@ -1356,58 +1356,6 @@ fn key_name(key: keyboard::key::Named) -> Option<&'static str> {
     })
 }
 
-/// A column of fold chevrons for `lines` (visible lines), each on the first row of its line.
-fn chevrons<'a>(
-    lines: &[(usize, bool)],
-    starts: &[u32],
-    props: &Arc<EditorProps>,
-    color: Color,
-    hover: Color,
-) -> Element<'a, Message> {
-    let lh = props.line_height;
-    let mut col = column![].width(Length::Fixed(FOLD_WIDTH)).padding(Padding {
-        top: PAD_Y,
-        ..Padding::ZERO
-    });
-    let mut row_at = 0u32;
-    for &(line, folded) in lines {
-        let gap = starts[line] - row_at;
-        if gap > 0 {
-            col = col.push(Space::new().height(Length::Fixed(gap as f32 * lh)));
-        }
-        let glyph = if folded { CHEVRON_RIGHT } else { CHEVRON_DOWN };
-        let message = Message::EditorFold {
-            id: props.id.clone(),
-            op: FoldOp::Toggle(line),
-            on_cursor: props.on_cursor.clone(),
-        };
-        col = col.push(
-            widget::button(
-                text(glyph.to_string())
-                    .font(ICONS)
-                    .size(props.size * 0.8)
-                    .line_height(LineHeight::Absolute(Pixels(lh)))
-                    .width(Length::Fill)
-                    .align_x(iced::alignment::Horizontal::Center),
-            )
-            .on_press(message)
-            .padding(0)
-            .width(Length::Fixed(FOLD_WIDTH))
-            .height(Length::Fixed(lh))
-            .style(move |_, status| widget::button::Style {
-                text_color: if matches!(status, widget::button::Status::Hovered) {
-                    hover
-                } else {
-                    color
-                },
-                ..Default::default()
-            }),
-        );
-        row_at = starts[line] + 1;
-    }
-    col.into()
-}
-
 /// Where a cursor at `position` is drawn, relative to the text area, as
 /// `(x, y, glyph under it)`.
 fn caret_position(
@@ -2369,8 +2317,6 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         }
         let gutter: Element<'a, Message> = if folding {
             // Folded lines always show their chevron; the others only while hovering the gutter.
-            let mut folded = Vec::new();
-            let mut foldable = Vec::new();
             let indents: Vec<Option<usize>> = lines.iter().map(|l| indent_of(l)).collect();
             let mut next_indent: Option<usize> = None;
             let mut can_fold = vec![false; line_count];
@@ -2382,22 +2328,34 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                     next_indent = indents[i];
                 }
             }
+            let mut marks = Vec::new();
             for (i, foldable_line) in can_fold.into_iter().enumerate() {
                 if state.is_folded(i) {
-                    folded.push((i, true));
+                    marks.push((i, true));
                 } else if foldable_line {
-                    foldable.push((i, false));
+                    marks.push((i, false));
                 }
             }
-            let hover = active;
-            let left_part = MARKER_WIDTH + numbers_width;
-            widget::hover(
-                row![bars, gutter, chevrons(&folded, &starts, props, dim, hover)],
-                row![
-                    Space::new().width(Length::Fixed(left_part)),
-                    chevrons(&foldable, &starts, props, dim, hover)
-                ],
-            )
+            let (id, on_cursor) = (props.id.clone(), props.on_cursor.clone());
+            let marks = crate::editor_widgets::FoldMarks {
+                starts: starts.clone(),
+                marks,
+                on_toggle: Box::new(move |line| Message::EditorFold {
+                    id: id.clone(),
+                    op: FoldOp::Toggle(line),
+                    on_cursor: on_cursor.clone(),
+                }),
+                width: FOLD_WIDTH,
+                reach: MARKER_WIDTH + numbers_width,
+                top: PAD_Y,
+                line_height: lh,
+                font: ICONS,
+                glyphs: (CHEVRON_DOWN, CHEVRON_RIGHT),
+                size: props.size * 0.8,
+                color: dim,
+                hover: active,
+            };
+            row![bars, gutter, marks].into()
         } else {
             row![bars, gutter].into()
         };
