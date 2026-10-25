@@ -16,6 +16,35 @@ stable version.
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-25
+
+### Highlights
+
+- **IoT components**: serial ports, MQTT, WebSocket, UDP/TCP, Modbus, network discovery and Bluetooth LE in `pyzed.iot` and in a new IoT category of Pyzed Design's toolbox, with simulators to try apps without hardware.
+- **A much lighter Pyzed Design**: the code editor at rest goes from 100% to about 2% CPU, scrolling and selecting stay smooth in long files, files open in about 0.2 s instead of 1.4 s, and the Animation tab and the agent's streaming no longer slow everything down.
+- **A better Agent panel**: copying the agent's text works, a right-click menu, long diffs and commands that unfold and scroll, and a tidier composer.
+
+### Features
+
+- ✨ `pyzed.iot`: `SerialPort` and `SerialWatcher`, `MqttClient`, `WebSocket`, `UdpSocket` and `TcpClient`, `ModbusClient` (TCP and RTU), `DeviceDiscovery` (mDNS and SSDP) and `BluetoothScanner`/`BluetoothDevice` (with `pyzed-ui[bluetooth]`), all sharing `connect()`, `reconnect` and the `connected`/`disconnected`/`failed` events. PR [#226](https://github.com/albakore/pyzed/pull/226) by [@albakore](https://github.com/albakore).
+- ✨ The IoT category in Pyzed Design's toolbox, `pyzed.iot.testing` (an MQTT broker, a WebSocket server, a Modbus server, a fake network and virtual serial cables) and four examples: MQTT dashboard, serial monitor, Modbus energy meter and network scanner. PR [#226](https://github.com/albakore/pyzed/pull/226) by [@albakore](https://github.com/albakore).
+- ✨ Agent panel: a right-click menu on the thread (Copy, Select all, Copy This Agent Response, Copy Thread as Markdown, Scroll to Top), and edits whose "N more lines" unfold the whole diff. PR [#227](https://github.com/albakore/pyzed/pull/227) by [@albakore](https://github.com/albakore).
+- ✨ IBM Plex Sans Italic, Bold Italic and IBM Plex Mono Italic are bundled, so `*emphasis*` and italic code themes show in italics. PR [#225](https://github.com/albakore/pyzed/pull/225) by [@albakore](https://github.com/albakore).
+- ⚡️ The software renderer draws only what is visible, endless animations draw at 60 fps at most, spinners turn by themselves (`pz.canvas(spin=...)`), and editor scrolls, timeline hovers and the agent's streaming no longer rebuild the designer. PR [#229](https://github.com/albakore/pyzed/pull/229) by [@albakore](https://github.com/albakore).
+- ⚡️ Opening a file in the code editor is about 7x faster: line numbers draw only on screen and a monospaced file measures only its widest line. PR [#229](https://github.com/albakore/pyzed/pull/229) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Ctrl+C on text selected in the Agent panel copies it (the designer's own Copy replaced it), long commands and lines stay inside their cards, selectable text breaks long paths and URLs, and Send stays in the bottom right corner. PR [#227](https://github.com/albakore/pyzed/pull/227) by [@albakore](https://github.com/albakore).
+- 🐛 Markdown is readable on light themes: its text takes `color` or the color of the text around it. PR [#225](https://github.com/albakore/pyzed/pull/225) by [@albakore](https://github.com/albakore).
+- 🐛 The `pyzed` MCP server connects in external agents: entries that start a program that is gone are written again, and the first start has time to download the package. PR [#225](https://github.com/albakore/pyzed/pull/225) by [@albakore](https://github.com/albakore).
+- 🐛 Projects without a main form run `main.py` (Run, `pyzed run`, the agent's `run_app`), and `pyzed design` opens the project instead of a new empty form. PR [#225](https://github.com/albakore/pyzed/pull/225) by [@albakore](https://github.com/albakore).
+- 🐛 Serial ports no longer hang on macOS: writes hand the bytes to the system without waiting for the device to take them. PR [#228](https://github.com/albakore/pyzed/pull/228) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 New "IoT and devices" guide and `pyzed.iot` reference (en/es) with animated clips, and the Agent panel pages updated. PR [#226](https://github.com/albakore/pyzed/pull/226) by [@albakore](https://github.com/albakore). PR [#227](https://github.com/albakore/pyzed/pull/227) by [@albakore](https://github.com/albakore).
+
 ## [1.12.1] - 2026-10-24
 
 ### Highlights

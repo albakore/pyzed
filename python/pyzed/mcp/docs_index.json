@@ -4067,7 +4067,8 @@
      "on_release": "Callable that receives `(x, y)` on release.",
      "on_right_press": "Callable that receives `(x, y)` on right click.",
      "on_scroll": "Callable that receives `(dx, dy)` in lines when the wheel is used.",
-     "cursor": "Mouse cursor (`\"crosshair\"`, `\"pointer\"`…)."
+     "cursor": "Mouse cursor (`\"crosshair\"`, `\"pointer\"`…).",
+     "spin": "Turns per second: the drawing rotates around its center by itself, without calling `view()` again (a spinner)."
     }
    },
    "pyzed.button": {
@@ -4426,7 +4427,7 @@
      "size": "`\"xs\"`, `\"sm\"`, `\"md\"` or `\"lg\"`.",
      "full_width": "Fills the full width.",
      "style": "Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…).",
-     "loading": "Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins).",
+     "loading": "Shows a spinner in place of the icon and ignores presses (it spins by itself).",
      "tooltip": "Text shown on hover."
     }
    },
@@ -4973,7 +4974,7 @@
     }
    },
    "pyzed.ui.spinner": {
-    "desc": "A spinning arc for loading states. Its angle comes from the clock, so keep a `pz.every(1/30, ...)` subscription active while it is shown.",
+    "desc": "A spinning arc for loading states. It turns by itself (`speed` turns per second): no subscription is needed.",
     "params": {
      "speed": "Turns per second."
     }
@@ -5730,7 +5731,8 @@
     "params": {
      "diff": "A dict with `path`, `old` and `new` (the texts before and after).",
      "theme": "Theme.",
-     "max_lines": "Lines shown before `… N more lines`."
+     "max_lines": "Lines shown before `… N more lines`.",
+     "height": "The most it grows to, in pixels; more lines scroll inside it (long lines scroll sideways)."
     },
     "example": "ui.diff_view({\"path\": \"main.py\", \"old\": \"x = 1\\n\", \"new\": \"x = 2\\n\"})"
    },
