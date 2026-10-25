@@ -25,6 +25,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
+import select
 import socket
 import struct
 import threading
@@ -437,9 +438,15 @@ def modbus_rtu_device(fd: int, memory: Optional[_ModbusMemory] = None, unit: int
     def run() -> None:
         buffer = b""
         while True:
+            # Waits with select, never in a blocking read: on macOS, closing a pseudo-terminal that a
+            # thread is reading blocks until that read ends.
             try:
+                if not select.select([fd], [], [], 0.05)[0]:
+                    continue
                 chunk = os.read(fd, 256)
-            except OSError:
+            except (OSError, ValueError):
+                return
+            if not chunk:
                 return
             buffer += chunk
             while len(buffer) >= 8:
