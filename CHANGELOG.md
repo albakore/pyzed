@@ -21,7 +21,7 @@ stable version.
 ### Highlights
 
 - **IoT components**: serial ports, MQTT, WebSocket, UDP/TCP, Modbus, network discovery and Bluetooth LE in `pyzed.iot` and in a new IoT category of Pyzed Design's toolbox, with simulators to try apps without hardware.
-- **A much lighter Pyzed Design**: the code editor at rest goes from 100% to about 2% CPU, scrolling and selecting stay smooth in long files, files open in about 0.2 s instead of 1.4 s, and the Animation tab and the agent's streaming no longer slow everything down.
+- **A much lighter Pyzed Design**: it uses no CPU at all while nothing changes (it drew the window 60 times a second while "Update to X" was shown), the code editor at rest goes from 100% to about 2% CPU, scrolling and selecting stay smooth in long files, files open in about 0.2 s instead of 1.4 s, and hovers, the Animation tab and the agent's streaming no longer slow everything down.
 - **A better Agent panel**: copying the agent's text works, a right-click menu, long diffs and commands that unfold and scroll, and a tidier composer.
 
 ### Features
@@ -32,6 +32,8 @@ stable version.
 - ✨ IBM Plex Sans Italic, Bold Italic and IBM Plex Mono Italic are bundled, so `*emphasis*` and italic code themes show in italics. PR [#225](https://github.com/albakore/pyzed/pull/225) by [@albakore](https://github.com/albakore).
 - ⚡️ The software renderer draws only what is visible, endless animations draw at 60 fps at most, spinners turn by themselves (`pz.canvas(spin=...)`), and editor scrolls, timeline hovers and the agent's streaming no longer rebuild the designer. PR [#229](https://github.com/albakore/pyzed/pull/229) by [@albakore](https://github.com/albakore).
 - ⚡️ Opening a file in the code editor is about 7x faster: line numbers draw only on screen and a monospaced file measures only its widest line. PR [#229](https://github.com/albakore/pyzed/pull/229) by [@albakore](https://github.com/albakore).
+- ⚡️ Pyzed Design stops drawing when nothing changes: hovers and tooltips repaint only what they touch, unchanged canvases and editors are not repainted, animations follow the monitor's refresh rate, endless loops draw at 30 fps and "Update to X" blinks three times and then stays still. PR [#231](https://github.com/albakore/pyzed/pull/231) by [@albakore](https://github.com/albakore).
+- ⚡️ The code editor's gutter draws only the fold chevrons on screen (it had a button per foldable line) and the minimap keeps the lines on screen between frames. PR [#231](https://github.com/albakore/pyzed/pull/231) by [@albakore](https://github.com/albakore).
 
 ### Fixes
 
