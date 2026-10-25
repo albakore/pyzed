@@ -26,7 +26,7 @@ EXAMPLES = ROOT / "examples"
 SIZE = (800, 500)
 SCALE = 1.0
 #: Arguments some examples need to show something without hardware (the webcam's test pattern).
-ARGS = {"webcam": ["test"]}
+ARGS = {"webcam": ["test"], "iot_serial_monitor": ["--demo"], "iot_network_scanner": ["--demo"]}
 #: Frames (at 60 per second) a game plays before the capture, so its first frame is not empty.
 FRAMES = {"menus": 120, "asteroids": 120, "dodge": 120}
 
