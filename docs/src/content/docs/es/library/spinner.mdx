@@ -17,7 +17,7 @@ import Variant from '../../../../components/library/Variant.astro';
 Un círculo que gira y dice “espera, estoy en ello”.
 :::
 
-Un arco que gira. Su ángulo sale del reloj de la app, así que mantén una suscripción como `pz.every(1 / 30, ...)` mientras se muestra o no se moverá.
+Un arco que gira. Gira solo (`speed` vueltas por segundo) sin volver a llamar a `view()`, así que no necesita ninguna suscripción.
 
 `ui.spinner` · Categoría: [Estado y avisos](/pyzed/es/library/#estado-y-avisos) · [Referencia completa →](/pyzed/es/reference/ui/#spinner)
 
@@ -52,9 +52,6 @@ from pyzed import ui
 class Loader(pz.App):
     def __init__(self):
         self.loading = True
-
-    def subscription(self):
-        return pz.every(1 / 30, lambda: None) if self.loading else None
 
     def view(self):
         return ui.spinner() if self.loading else ui.label("Done")
@@ -156,7 +153,7 @@ Spinner no tiene eventos propios: muestra lo que le das. Como todo widget, tambi
 spinner(*, size=16, tint='accent', speed=1.0, theme=None)
 ```
 
-Un arco que gira para estados de carga. Su ángulo sale del reloj, así que mantén una suscripción `pz.every(1/30, ...)` activa mientras se muestra.
+Un arco que gira para estados de carga. Gira solo (`speed` vueltas por segundo): no necesita suscripción.
 
 | Propiedad | Por defecto | Descripción |
 | --- | --- | --- |

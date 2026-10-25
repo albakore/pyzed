@@ -225,6 +225,7 @@ canvas(
     on_move=None,
     on_scroll=None,
     cursor=None,
+    spin=None,
 )
 ```
 
@@ -237,6 +238,7 @@ Una superficie de dibujo 2D. `shapes` es una lista creada con [`pyzed.draw`](/py
 | `height` | `None` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `id` | `None` | Activa la caché de geometría. |
 | `cursor` | `None` | Cursor del ratón (`"crosshair"`, `"pointer"`…). |
+| `spin` | `None` | Vueltas por segundo: el dibujo gira solo alrededor de su centro, sin volver a llamar a `view()` (un spinner). |
 
 Eventos: `on_press`, `on_release`, `on_right_press`, `on_move`, `on_scroll` ([eventos](#eventos)).
 

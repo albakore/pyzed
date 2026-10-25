@@ -115,7 +115,7 @@ A themed button with variants, sizes, an icon and a shortcut.
 | `disabled` | Disables it (ignores clicks). |
 | `full_width` | Fills the full width. |
 | `keys` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
-| `loading` | Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins). |
+| `loading` | Shows a spinner in place of the icon and ignores presses (it spins by itself). |
 | `tooltip` | Text shown on hover. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 | `style` | Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…). |
@@ -1710,7 +1710,7 @@ A donut chart; `label` is drawn in the center.
 spinner(*, size=16, tint='accent', speed=1.0, theme=None)
 ```
 
-A spinning arc for loading states. Its angle comes from the clock, so keep a `pz.every(1/30, ...)` subscription active while it is shown.
+A spinning arc for loading states. It turns by itself (`speed` turns per second): no subscription is needed.
 
 | Parameter | Description |
 | --- | --- |

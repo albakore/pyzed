@@ -1107,6 +1107,7 @@ canvas(
     on_move=None,
     on_scroll=None,
     cursor=None,
+    spin=None,
 )
 ```
 
@@ -1124,6 +1125,7 @@ A 2D drawing surface. `shapes` is a list created with [`pyzed.draw`](/pyzed/refe
 | `on_move` | Called with `(x, y)` when the mouse moves. |
 | `on_scroll` | Callable that receives `(dx, dy)` in lines when the wheel is used. |
 | `cursor` | Mouse cursor (`"crosshair"`, `"pointer"`…). |
+| `spin` | Turns per second: the drawing rotates around its center by itself, without calling `view()` again (a spinner). |
 
 ## Interaction
 

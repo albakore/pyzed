@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, List, Optional, Sequence, Union
 
@@ -482,21 +481,21 @@ def donut(
 def spinner(*, size: float = 16, tint: str = "accent", speed: float = 1.0, theme: Optional[Theme] = None) -> _core.Widget:
     """A spinning arc for "loading" states.
 
-    Its angle comes from the clock, so it moves whenever the view is redrawn: keep a
-    ``pz.every(1/30, ...)`` subscription active while it is on screen.
+    It turns by itself (``speed`` turns per second), redrawn without calling ``view()`` again:
+    no subscription is needed to keep it moving.
     """
     t = _theme(theme)
-    angle = (time.monotonic() * 360 * speed) % 360
     c = size / 2
     w = max(1.5, size / 8)
     r = c - w
     return _core.canvas(
         [
             draw.circle(c, c, r, stroke=alpha(t.color(tint), 0.2), width=w),
-            draw.arc(c, c, r, angle, angle + 100, stroke=t.color(tint), width=w, cap="round"),
+            draw.arc(c, c, r, 0, 100, stroke=t.color(tint), width=w, cap="round"),
         ],
         width=size,
         height=size,
+        spin=speed,
     )
 
 

@@ -17,7 +17,7 @@ import Variant from '../../../components/library/Variant.astro';
 A spinning circle that says “wait, I'm working on it”.
 :::
 
-A spinning arc. Its angle comes from the app clock, so keep a subscription such as `pz.every(1 / 30, ...)` active while it is shown or it will not move.
+A spinning arc. It turns by itself (`speed` turns per second) without calling `view()` again, so it needs no subscription.
 
 `ui.spinner` · Category: [Feedback](/pyzed/library/#feedback) · [Full reference →](/pyzed/reference/ui/#spinner)
 
@@ -52,9 +52,6 @@ from pyzed import ui
 class Loader(pz.App):
     def __init__(self):
         self.loading = True
-
-    def subscription(self):
-        return pz.every(1 / 30, lambda: None) if self.loading else None
 
     def view(self):
         return ui.spinner() if self.loading else ui.label("Done")
@@ -156,7 +153,7 @@ Spinner has no events of its own: it shows what you give it. Like every widget i
 spinner(*, size=16, tint='accent', speed=1.0, theme=None)
 ```
 
-A spinning arc for loading states. Its angle comes from the clock, so keep a `pz.every(1/30, ...)` subscription active while it is shown.
+A spinning arc for loading states. It turns by itself (`speed` turns per second): no subscription is needed.
 
 | Property | Default | Description |
 | --- | --- | --- |

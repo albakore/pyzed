@@ -1409,10 +1409,10 @@ add(
     api=["pyzed.ui.spinner"],
     blurb=T("A spinning arc for loading states.", "Un arco que gira para los estados de carga."),
     desc=T(
-        "A spinning arc. Its angle comes from the app clock, so keep a subscription such as "
-        "`pz.every(1 / 30, ...)` active while it is shown or it will not move.",
-        "Un arco que gira. Su ángulo sale del reloj de la app, así que mantén una suscripción como "
-        "`pz.every(1 / 30, ...)` mientras se muestra o no se moverá.",
+        "A spinning arc. It turns by itself (`speed` turns per second) without calling `view()` "
+        "again, so it needs no subscription.",
+        "Un arco que gira. Gira solo (`speed` vueltas por segundo) sin volver a llamar a `view()`, "
+        "así que no necesita ninguna suscripción.",
     ),
     when=T(
         ["For short waits with an unknown duration: connecting, searching, loading a file.",
@@ -1428,9 +1428,6 @@ add(
     usage="""class Loader(pz.App):
     def __init__(self):
         self.loading = True
-
-    def subscription(self):
-        return pz.every(1 / 30, lambda: None) if self.loading else None
 
     def view(self):
         return ui.spinner() if self.loading else ui.label("Done")""",

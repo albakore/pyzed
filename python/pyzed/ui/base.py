@@ -208,8 +208,7 @@ def button(
     variant: "filled" | "ghost" | "subtle" | "outline" | "solid" | "tinted" | "accent" | "error" | ...
     size:    "xs" | "sm" | "md" | "lg"
     keys:    optional key binding shown at the end, e.g. ``"ctrl-s"``.
-    loading: shows a spinner in place of the icon and ignores presses (keep a
-             ``pz.every(1/30, ...)`` subscription while it spins).
+    loading: shows a spinner in place of the icon and ignores presses (it spins by itself).
     tooltip: text shown on hover (with ``keys`` in it too).
 
     Events:

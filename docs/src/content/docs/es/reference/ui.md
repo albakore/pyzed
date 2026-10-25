@@ -115,7 +115,7 @@ Un botón con tema, con variantes, tamaños, un icono y un atajo.
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `full_width` | Ocupa todo el ancho. |
 | `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
-| `loading` | Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira). |
+| `loading` | Muestra un spinner en lugar del icono e ignora las pulsaciones (gira solo). |
 | `tooltip` | Texto que aparece al pasar el ratón. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `style` | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
@@ -1736,7 +1736,7 @@ Un gráfico de anillo; `label` se dibuja en el centro.
 spinner(*, size=16, tint='accent', speed=1.0, theme=None)
 ```
 
-Un arco que gira para estados de carga. Su ángulo sale del reloj, así que mantén una suscripción `pz.every(1/30, ...)` activa mientras se muestra.
+Un arco que gira para estados de carga. Gira solo (`speed` vueltas por segundo): no necesita suscripción.
 
 | Parámetro | Descripción |
 | --- | --- |

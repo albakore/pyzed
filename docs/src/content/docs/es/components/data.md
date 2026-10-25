@@ -32,8 +32,7 @@ pz.row([
 `tint` acepta `"info"`, `"success"`, `"warning"`, `"error"` o cualquier token o color del tema.
 
 :::note
-`ui.spinner()` se anima con el reloj de la app: necesita redibujarse. Mientras se muestre,
-devuelve una suscripción como `pz.every(1 / 30, lambda: None)` (ver [Async](/pyzed/es/guides/async/)).
+`ui.spinner()` gira solo, sin volver a llamar a `view()`: no necesita ninguna suscripción.
 :::
 
 ## Tablas

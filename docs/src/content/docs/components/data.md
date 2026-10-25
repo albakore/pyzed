@@ -32,8 +32,7 @@ pz.row([
 `tint` accepts `"info"`, `"success"`, `"warning"`, `"error"` or any theme token or color.
 
 :::note
-`ui.spinner()` is animated by the app clock, so it needs redraws. While it is shown,
-return a subscription such as `pz.every(1 / 30, lambda: None)` (see [Async](/pyzed/guides/async/)).
+`ui.spinner()` turns by itself, without calling `view()` again: it needs no subscription.
 :::
 
 ## Tables

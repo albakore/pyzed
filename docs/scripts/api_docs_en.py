@@ -1566,6 +1566,7 @@ _section("widgets", "Images and content", {
             "on_right_press": "Callable that receives `(x, y)` on right click.",
             "on_scroll": "Callable that receives `(dx, dy)` in lines when the wheel is used.",
             "cursor": "Mouse cursor (`\"crosshair\"`, `\"pointer\"`…).",
+            "spin": "Turns per second: the drawing rotates around its center by itself, without calling `view()` again (a spinner).",
         },
     },
 }, before="Interaction")
@@ -1678,7 +1679,7 @@ _section("ui", "Data and feedback", {
         "params": {"values": "Values.", "colors": "Colors (defaults to the theme's).", "thickness": "Ring thickness.", "label": "Center text."},
     },
     "pyzed.ui.spinner": {
-        "desc": "A spinning arc for loading states. Its angle comes from the clock, so keep a `pz.every(1/30, ...)` subscription active while it is shown.",
+        "desc": "A spinning arc for loading states. It turns by itself (`speed` turns per second): no subscription is needed.",
         "params": {"speed": "Turns per second."},
     },
     "pyzed.ui.count_badge": {
@@ -2766,7 +2767,7 @@ def _params(name, **params):
 
 
 # States and events of buttons, avatars, lists, trees, menus, tabs and breadcrumbs.
-_params("pyzed.ui.button", loading="Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins).",
+_params("pyzed.ui.button", loading="Shows a spinner in place of the icon and ignores presses (it spins by itself).",
         tooltip="Text shown on hover.")
 _params("pyzed.ui.icon_button", keys="Key binding shown in the tooltip.", tint='Colors it (`"error"`, `"accent"`…).',
         loading="Swaps the icon for a spinner and ignores presses.", indicator="Adds a small dot in this color at the top right (unread, changes…).")

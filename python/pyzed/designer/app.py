@@ -398,9 +398,7 @@ class Designer(App):
 
     def subscriptions(self):
         subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
-        if self.projects.busy:  # keeps the spinner of a running uv command moving
-            subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
-        elif self.projects.loading:  # shows the files and branch of a WSL project once they are read
+        if self.projects.loading:  # shows the files and branch of a WSL project once they are read
             subs.append(_core.every(0.2, lambda: None, key="designer-loading"))
         elif self.projects.project is not None and self.layout.is_showing("dependencies", self):
             # notices packages added, removed or upgraded outside the editor (a terminal, the agent)

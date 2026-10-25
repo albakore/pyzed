@@ -1566,6 +1566,7 @@ _section("widgets", "Imágenes y contenido", {
             "on_right_press": "Callable que recibe `(x, y)` con clic derecho.",
             "on_scroll": "Callable que recibe `(dx, dy)` en líneas al usar la rueda.",
             "cursor": "Cursor del ratón (`\"crosshair\"`, `\"pointer\"`…).",
+            "spin": "Vueltas por segundo: el dibujo gira solo alrededor de su centro, sin volver a llamar a `view()` (un spinner).",
         },
     },
 }, before="Interacción")
@@ -1678,7 +1679,7 @@ _section("ui", "Datos y feedback", {
         "params": {"values": "Valores.", "colors": "Colores (por defecto, los del tema).", "thickness": "Grosor del anillo.", "label": "Texto central."},
     },
     "pyzed.ui.spinner": {
-        "desc": "Un arco que gira para estados de carga. Su ángulo sale del reloj, así que mantén una suscripción `pz.every(1/30, ...)` activa mientras se muestra.",
+        "desc": "Un arco que gira para estados de carga. Gira solo (`speed` vueltas por segundo): no necesita suscripción.",
         "params": {"speed": "Vueltas por segundo."},
     },
     "pyzed.ui.count_badge": {
@@ -3536,7 +3537,7 @@ def _params(name, **params):
 
 
 # Estados y eventos de botones, avatares, listas, árboles, menús, pestañas y migas de pan.
-_params("pyzed.ui.button", loading="Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira).",
+_params("pyzed.ui.button", loading="Muestra un spinner en lugar del icono e ignora las pulsaciones (gira solo).",
         tooltip="Texto que aparece al pasar el ratón.")
 _params("pyzed.ui.icon_button", keys="Atajo que se muestra en el tooltip.", tint='Lo colorea (`"error"`, `"accent"`…).',
         loading="Cambia el icono por un spinner e ignora las pulsaciones.", indicator="Añade un punto de este color arriba a la derecha (sin leer, cambios…).")
