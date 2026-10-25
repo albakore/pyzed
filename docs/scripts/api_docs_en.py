@@ -2654,6 +2654,54 @@ _page("command")["sections"][0][1]["pyzed.Command.save_file"] = {
                "directory": "The folder it opens in.", "file_name": "The name it suggests."},
 }
 
+# -- IoT -------------------------------------------------------------------------------------
+PAGES.append({
+    "slug": "iot",
+    "title": "IoT and devices (pyzed.iot)",
+    "description": "API reference for pyzed.iot: serial and USB serial ports, MQTT, WebSocket, UDP and TCP sockets, Modbus TCP and RTU, mDNS/SSDP network discovery and Bluetooth LE for Python desktop apps.",
+    "order": 10.6,
+    "intro": """
+        Services that talk to devices: boards on a serial port, MQTT brokers, WebSockets, UDP and TCP
+        sockets, Modbus PLCs and meters, Bluetooth LE gadgets and what answers on the local network.
+        They work like the [services](/pyzed/reference/services/): handlers go in `on_<event>=`, the
+        connection runs in a thread of its own and events reach the handlers on the app's thread. In
+        Pyzed Design they are the components of the IoT category. See the
+        [IoT guide](/pyzed/guides/iot/).
+
+        ```python
+        board = pz.SerialPort(match="arduino", baud_rate=115200, on_line=self.reading)
+        board.connect()
+
+        mqtt = pz.MqttClient("broker.local", subscribe="home/#", on_message=self.received)
+        mqtt.connect()
+        mqtt.publish("home/lamp/set", "on")
+        ```
+
+        Every connection has `connect()`, `disconnect()`, `connected`, `running` and the events
+        `connected`, `disconnected` and `failed`; with `reconnect` (milliseconds) it comes back by itself.
+    """,
+    "sections": [
+        ("Serial ports", {
+            "pyzed.SerialPort": {**_V, "desc": 'A serial or USB serial port (Arduino, ESP32, Pico, GPS...): `port` names it (`"COM3"`, `"/dev/ttyUSB0"`) or, empty, the first one `match` names (`"arduino"`, `"2341:0043"`; empty: the first USB port). Raises `data` (bytes) and `line` (text); `write()`, `send_line()`, `reset()` (DTR), `set_baud_rate()`. `SerialPort.ports(match)` lists the ports. Opens the device again when it comes back (`reconnect`, 1000 ms by default).'},
+            "pyzed.SerialWatcher": {**_V, "desc": "Notices serial devices being plugged in and unplugged, every `interval` milliseconds: `plugged` and `unplugged` with a `PortInfo` (`name`, `kind`, `vid`, `pid`, `usb_id`, `manufacturer`, `product`, `description`), `change` with the list; `ports` is the last list."},
+        }),
+        ("Messages and sockets", {
+            "pyzed.MqttClient": {**_V, "desc": 'An MQTT 3.1.1 client (Mosquitto, Home Assistant, EMQX...): `publish(topic, payload, qos, retain)`, `subscribe(topic)`, `unsubscribe()` and `on_topic(pattern, handler)` with the wildcards `+` and `#`. Each message raises `message` with an `MqttMessage` (`topic`, `payload`, `text`, `value`, `json()`); `last` keeps the last one of each topic. TLS, logins, QoS 0, 1 and 2, a last will, and the subscriptions kept after every reconnection (2000 ms by default).'},
+            "pyzed.WebSocket": {**_V, "desc": "A WebSocket client (`ws://`, `wss://`): `send()` text, bytes or JSON; each message raises `message` (text, bytes or, with `json=True`, the parsed data). `headers`, `protocols`, a ping every `ping_interval` milliseconds."},
+            "pyzed.UdpSocket": {**_V, "desc": "Sends and receives UDP datagrams: `start()` listens on `port`, each one raises `message` with a `UdpMessage` (`data`, `text`, `json()`, `host`, `port`); `send(data, host, port)`, `reply(message, data)`, `broadcast` and `multicast_group`."},
+            "pyzed.TcpClient": {**_V, "desc": "A TCP connection (optionally TLS) to a device or server: raises `data` and `line`; `write()` and `send_line()`."},
+        }),
+        ("Industrial", {
+            "pyzed.ModbusClient": {**_V, "desc": 'A Modbus client over TCP (`host`) or RTU (`serial_port`, RS-485): `read_coils`, `read_discrete_inputs`, `read_holding_registers`, `read_input_registers`, `read(table, address, format)` (`"float32"`, `"int32"`...), `write_coil`, `write_register`, `write_coils`, `write_registers` and `write(address, value, format)`. `poll` lines (`name table address [format] [count]`) are read every `interval` milliseconds and raise `update` with a dict. Raises `ModbusError` when the device refuses or does not answer.'},
+        }),
+        ("Discovery and Bluetooth", {
+            "pyzed.DeviceDiscovery": {**_V, "desc": 'Finds the devices of the local network with mDNS/Bonjour (`service`: `"_http._tcp"`, `"_esphomelib._tcp"`...; empty: all) and SSDP/UPnP: `scan()`, `start()`; raises `found` and `lost` with a `Device` (`name`, `host`, `port`, `address`, `kind`, `service`, `hostname`, `properties`, `url`), `change` and `done`. `pyzed.iot.resolve_local("esp32.local")` finds one address.'},
+            "pyzed.BluetoothScanner": {**_V, "desc": "Finds Bluetooth LE devices nearby for `timeout` milliseconds, filtered by `match` (name or address) and `services`: `scan()`, `start()`, `devices` (nearest first); raises `found` with a `BleDevice` (`address`, `name`, `rssi`, `uuids`, `manufacturer_data`), `change`, `done` and `failed`. Needs `pip install \"pyzed-ui[bluetooth]\"` (bleak)."},
+            "pyzed.BluetoothDevice": {**_V, "desc": 'A connection to one Bluetooth LE device by `address` or `name`: `read(uuid)`, `write(uuid, data, response)`, `subscribe(uuid)`, `services()`; the characteristics in `notify` raise `notification` with a `BleNotification` (`uuid`, `data`, `text`, `value`). UUIDs can be short (`"2a37"`) or names (`"heart_rate_measurement"`, `"battery_level"`, `"nordic_uart_tx"`).'},
+        }),
+    ],
+})
+
 # -- Shader graphs ---------------------------------------------------------------------------
 _S = {"docstring": True, "members": False}
 _SM = {"docstring": True, "members": False}

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
+from .. import iot as _iot
 from .. import services as _services
 from .. import system as _system
 from . import components as _components
@@ -38,10 +39,21 @@ FACTORIES: Dict[str, Callable[[Control], _services.Service]] = {
     "launcher": lambda c: _system.Launcher(),
     "network_monitor": lambda c: _system.NetworkMonitor(),
     "power_monitor": lambda c: _system.PowerMonitor(),
+    "serial_port": lambda c: _iot.SerialPort(),
+    "serial_watcher": lambda c: _iot.SerialWatcher(),
+    "mqtt_client": lambda c: _iot.MqttClient(),
+    "websocket": lambda c: _iot.WebSocket(),
+    "udp_socket": lambda c: _iot.UdpSocket(),
+    "tcp_client": lambda c: _iot.TcpClient(),
+    "modbus_client": lambda c: _iot.ModbusClient(),
+    "device_discovery": lambda c: _iot.DeviceDiscovery(),
+    "bluetooth_scanner": lambda c: _iot.BluetoothScanner(),
+    "bluetooth_device": lambda c: _iot.BluetoothDevice(),
 }
 
 #: Properties whose service attribute has another name (``(type, property)`` -> attribute).
-ALIASES: Dict[tuple, str] = {("settings", "file"): "name"}
+ALIASES: Dict[tuple, str] = {("settings", "file"): "name", ("mqtt_client", "subscribe"): "subscribe_to",
+                             ("bluetooth_device", "device_name"): "name"}
 
 #: Properties applied when the form opens rather than when it is built (they start something).
 ON_LOAD = frozenset({"running"})

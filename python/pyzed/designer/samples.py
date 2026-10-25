@@ -25,7 +25,7 @@ from ..project import prebuilt
 
 #: Categories in the order the gallery shows them.
 CATEGORIES = ("Apps", "Tutorial", "Audio", "Games", "Animation", "Styling", "Shading", "Showcase", "Blocks",
-              "Patterns", "AI", "Designer", "Integrations")
+              "Patterns", "AI", "Designer", "Integrations", "IoT")
 THUMBNAILS = "thumbnails"
 #: Where releases keep their sources (the examples come from the tag of this version).
 ARCHIVE_URL = "https://github.com/albakore/pyzed/archive/refs/tags/v{version}.zip"
@@ -271,6 +271,15 @@ CATALOG: Tuple[Sample, ...] = (
            "Integrations", "integrations/aiosqlite_journal", entry="main.py"),
     Sample("fastapi_heroes", "FastAPI heroes", "FastAPI's SQL tutorial and a desktop client for it, in one process.",
            "Integrations", "integrations/fastapi_heroes", entry="in_process.py"),
+    # -- IoT --
+    Sample("iot_mqtt_dashboard", "MQTT dashboard", "Live sensor tiles and a lamp switch over MQTT, with a local "
+           "broker and fake sensors.", "IoT", "iot/mqtt_dashboard.py"),
+    Sample("iot_serial_monitor", "Serial monitor", "Read and talk to an Arduino or ESP32; --demo plays a board.", "IoT",
+           "iot/serial_monitor.py"),
+    Sample("iot_modbus_meter", "Modbus energy meter", "Voltage, current and power over Modbus, and a relay to "
+           "switch.", "IoT", "iot/modbus_meter.py"),
+    Sample("iot_network_scanner", "Network scanner", "The devices on your network, found with mDNS and UPnP.", "IoT",
+           "iot/network_scanner.py"),
 )
 
 BY_ID: Dict[str, Sample] = {s.id: s for s in CATALOG}

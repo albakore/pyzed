@@ -41,6 +41,8 @@ designer = ["ty", "ruff"]
 mcp = ["mcp>=1.2"]
 # AI agents (`pyzed.agents` and the designer's Agent panel): Claude's SDK and the system keychain.
 agents = ["anthropic>=1.0", "keyring>=25"]
+# Bluetooth LE devices (`pyzed.iot.BluetoothScanner`, `BluetoothDevice`).
+bluetooth = ["bleak>=0.22"]
 
 [dependency-groups]
 dev = [

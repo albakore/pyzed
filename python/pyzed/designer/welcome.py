@@ -31,7 +31,7 @@ THUMB_HEIGHT = 128
 ICONS = {ALL: "layout-grid", "Apps": "app-window", "Tutorial": "graduation-cap", "Audio": "audio-lines",
          "Games": "gamepad-2", "Animation": "sparkles", "Styling": "palette", "Shading": "wand-sparkles",
          "Showcase": "gem", "Blocks": "blocks", "Patterns": "puzzle", "AI": "bot", "Designer": "layout-template",
-         "Integrations": "plug"}
+         "Integrations": "plug", "IoT": "radio-tower"}
 
 
 class Welcome:
