@@ -1,6 +1,8 @@
 """IoT services: serial ports, MQTT, WebSocket, UDP/TCP, Modbus, network discovery and Bluetooth LE."""
 
+import faulthandler
 import os
+import select
 import socket
 import struct
 import sys
@@ -16,6 +18,22 @@ from pyzed.iot import bluetooth, discovery, modbus, mqtt
 from pyzed.iot.testing import ModbusServer, MqttBroker, WebSocketServer, modbus_rtu_device, serial_pair
 
 posix_only = pytest.mark.skipif(not hasattr(os, "openpty"), reason="virtual serial ports need a pseudo-terminal")
+
+
+@pytest.fixture(autouse=True)
+def watchdog():
+    """A test that hangs (a device that never answers) prints every thread's stack and ends the run."""
+    faulthandler.dump_traceback_later(60, exit=True)
+    yield
+    faulthandler.cancel_dump_traceback_later()
+
+
+def read_device(fd, size, timeout=5.0):
+    """Up to ``size`` bytes from the device end of ``serial_pair()``, waiting at most ``timeout`` seconds."""
+    data, end = b"", time.monotonic() + timeout
+    while len(data) < size and select.select([fd], [], [], max(0.0, end - time.monotonic()))[0]:
+        data += os.read(fd, size - len(data))
+    return data
 
 
 def until(check, timeout=5.0):
@@ -69,7 +87,7 @@ def test_serial_port_reads_lines_and_writes():
     assert until(lambda: lines == ["temp=21.5", "hum=40"])
     assert b"".join(chunks) == b"temp=21.5\r\nhum=40\n"
     assert port.send_line("LED ON")
-    assert until(lambda: os.read(device, 100) == b"LED ON\n")
+    assert read_device(device, 7) == b"LED ON\n"
     port.disconnect()
     assert events == ["connected", "disconnected"] and not port.connected and not port.write("x")
     os.close(device)
