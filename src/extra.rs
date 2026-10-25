@@ -1456,6 +1456,10 @@ pub fn render_markdown<'a>(props: &MarkdownProps, items: &'a [md::Item]) -> Elem
     let code_color = props.code_color;
     let code_bg = props.code_bg;
     let mut style = md::Style::from_palette(iced::theme::Palette::DARK);
+    // The palette's text is light: with it, Markdown was hard to read on a light theme. Its text takes
+    // `color` instead, or else the color of the text around it (the window's theme).
+    style.text_color = props.text_color;
+    style.strong_color = props.text_color;
     style.font = Font::with_name(style::sans());
     style.inline_code_font = Font::with_name(style::mono());
     style.code_block_font = Font::with_name(style::mono());
