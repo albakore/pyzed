@@ -21,6 +21,12 @@ mod imp {
         PyOSError::new_err(err.to_string())
     }
 
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    fn is_not_a_tty(err: &serialport::Error) -> bool {
+        let text = err.description.to_ascii_lowercase();
+        text.contains("not a typewriter") || text.contains("inappropriate ioctl")
+    }
+
     /// The serial ports of this computer, one dict each: `name` (`COM3`, `/dev/ttyUSB0`...),
     /// `kind` (`usb`, `pci`, `bluetooth` or `unknown`) and, for USB, `vid`, `pid`,
     /// `serial_number`, `manufacturer` and `product`.
@@ -125,13 +131,11 @@ mod imp {
                         .open()
                 };
                 let port = open(baud_rate);
-                // macOS sets the speed with an ioctl that pseudo-terminals refuse (ENOTTY): they
-                // have no speed, so open those without one.
+                // macOS sets the speed with an ioctl that pseudo-terminals refuse (ENOTTY, "Not a
+                // typewriter"): they have no speed, so open those without one.
                 #[cfg(any(target_os = "macos", target_os = "ios"))]
                 let port = match port {
-                    Err(e) if baud_rate > 0 && e.description.contains("Inappropriate ioctl") => {
-                        open(0)
-                    }
+                    Err(e) if baud_rate > 0 && is_not_a_tty(&e) => open(0),
                     port => port,
                 };
                 let port = port?;
