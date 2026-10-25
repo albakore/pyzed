@@ -231,6 +231,102 @@ impl<'a> From<Caret<'a>> for Element<'a, Message> {
 }
 
 // ---------------------------------------------------------------------------
+// Line numbers
+// ---------------------------------------------------------------------------
+
+/// The gutter's line numbers. Only the ones on screen are drawn: a long file has thousands, and
+/// one text with all of them was laid out again on every edit that adds or removes a line.
+pub struct LineNumbers {
+    /// The first row of each visible line, and one past the last (folds and wrapped lines).
+    pub starts: Vec<u32>,
+    /// The line (from 0) each visible line shows.
+    pub reals: Vec<usize>,
+    /// The visible line with the cursor, drawn in `active`.
+    pub cursor: usize,
+    pub width: f32,
+    pub padding: iced::Padding,
+    pub line_height: f32,
+    pub font: Font,
+    pub size: f32,
+    pub color: Color,
+    pub active: Color,
+}
+
+impl LineNumbers {
+    fn height(&self) -> f32 {
+        let rows = self.starts.last().copied().unwrap_or(0);
+        rows as f32 * self.line_height + self.padding.top + self.padding.bottom
+    }
+}
+
+impl Widget<Message, Theme, Renderer> for LineNumbers {
+    fn size(&self) -> Size<Length> {
+        Size::new(Length::Fixed(self.width), Length::Fixed(self.height()))
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(Size::new(self.width, self.height()))
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        _theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        _cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        let bounds = layout.bounds();
+        let lh = self.line_height.max(1.0);
+        let Some(visible) = bounds.intersection(viewport) else {
+            return;
+        };
+        let top = bounds.y + self.padding.top;
+        let first = ((visible.y - top) / lh).floor().max(0.0) as u32;
+        let last = ((visible.y + visible.height - top) / lh).ceil().max(0.0) as u32;
+        let right = bounds.x + bounds.width - self.padding.right;
+        let width = (bounds.width - self.padding.left - self.padding.right).max(0.0);
+        let lines = self.reals.len().min(self.starts.len().saturating_sub(1));
+        let from = self.starts[..lines].partition_point(|start| *start <= first);
+        for n in from.saturating_sub(1)..lines {
+            let row = self.starts[n];
+            if row >= last {
+                break;
+            }
+            renderer.fill_text(
+                core_text::Text {
+                    content: (self.reals[n] + 1).to_string(),
+                    bounds: Size::new(width, lh),
+                    size: Pixels(self.size),
+                    line_height: LineHeight::Absolute(Pixels(lh)),
+                    font: self.font,
+                    align_x: core_text::Alignment::Right,
+                    align_y: iced::alignment::Vertical::Top,
+                    shaping: core_text::Shaping::Basic,
+                    wrapping: core_text::Wrapping::None,
+                    letter_spacing: iced::Em::ZERO,
+                },
+                Point::new(right, top + row as f32 * lh),
+                if n == self.cursor {
+                    self.active
+                } else {
+                    self.color
+                },
+                bounds,
+            );
+        }
+    }
+}
+
+impl<'a> From<LineNumbers> for Element<'a, Message> {
+    fn from(numbers: LineNumbers) -> Self {
+        Element::new(numbers)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Boxes
 // ---------------------------------------------------------------------------
 
