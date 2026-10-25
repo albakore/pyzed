@@ -115,13 +115,26 @@ mod imp {
             };
             let timeout = Duration::from_secs_f64(timeout.clamp(0.001, 60.0));
             let opened = py.detach(|| {
-                let port = serialport::new(&path, baud_rate)
-                    .data_bits(data_bits)
-                    .parity(parity)
-                    .stop_bits(stop_bits)
-                    .flow_control(flow_control)
-                    .timeout(timeout)
-                    .open()?;
+                let open = |baud_rate| {
+                    serialport::new(&path, baud_rate)
+                        .data_bits(data_bits)
+                        .parity(parity)
+                        .stop_bits(stop_bits)
+                        .flow_control(flow_control)
+                        .timeout(timeout)
+                        .open()
+                };
+                let port = open(baud_rate);
+                // macOS sets the speed with an ioctl that pseudo-terminals refuse (ENOTTY): they
+                // have no speed, so open those without one.
+                #[cfg(any(target_os = "macos", target_os = "ios"))]
+                let port = match port {
+                    Err(e) if baud_rate > 0 && e.description.contains("Inappropriate ioctl") => {
+                        open(0)
+                    }
+                    port => port,
+                };
+                let port = port?;
                 let writer = port.try_clone()?;
                 Ok::<_, serialport::Error>((port, writer))
             });

@@ -59,11 +59,11 @@ def test_serial_ports_lists_and_filters(monkeypatch):
 @posix_only
 def test_serial_port_reads_lines_and_writes():
     device, path = serial_pair()
-    lines, chunks, events = [], [], []
+    lines, chunks, events, failures = [], [], [], []
     port = pz.SerialPort(path, 115200, on_line=lines.append, on_data=chunks.append,
                          on_connected=lambda: events.append("connected"),
-                         on_disconnected=lambda: events.append("disconnected"))
-    assert port.connect() and port.wait_connected() and port.path == path
+                         on_disconnected=lambda: events.append("disconnected"), on_failed=failures.append)
+    assert port.connect() and port.wait_connected() and port.path == path, failures
     os.write(device, b"temp=21.5\r\nhum")
     os.write(device, b"=40\n")
     assert until(lambda: lines == ["temp=21.5", "hum=40"])
@@ -324,9 +324,10 @@ def test_modbus_rtu_over_a_serial_port():
     device, path = serial_pair()
     memory = modbus_rtu_device(device, unit=3)
     memory.set_registers(0, [11, 22])
-    client = pz.ModbusClient(serial_port=path, baud_rate=19200, unit=3, timeout=500)
+    failures = []
+    client = pz.ModbusClient(serial_port=path, baud_rate=19200, unit=3, timeout=500, on_failed=failures.append)
     client.connect()
-    assert client.wait_connected() and client.rtu
+    assert client.wait_connected() and client.rtu, failures
     assert client.read_holding_registers(0, 2) == [11, 22]
     client.write_registers(4, [5, 6])
     assert memory.holding[4] == 5 and memory.holding[5] == 6
