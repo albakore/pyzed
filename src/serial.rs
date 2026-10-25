@@ -188,8 +188,9 @@ mod imp {
                 let port = guard.as_mut().ok_or_else(|| {
                     std::io::Error::new(std::io::ErrorKind::NotConnected, "the port is closed")
                 })?;
+                // No flush: it waits until the device has taken every byte (tcdrain), which never
+                // ends on a pseudo-terminal nobody reads yet (macOS) or with flow control held.
                 port.write_all(&data)?;
-                port.flush()?;
                 Ok::<_, std::io::Error>(data.len())
             })
             .map_err(error)
