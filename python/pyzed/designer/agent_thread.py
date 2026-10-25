@@ -214,7 +214,9 @@ def _assistant(c: "AgentController", entry: _entries.AssistantMessage, t: Theme)
             rows.append(ui.markdown(text, size=TEXT_SIZE, selectable=SELECTION, theme=t))
         elif c.settings.show_thinking:
             rows.append(thinking(c, f"think:{entry.index}:{n}", text, t))
-    return _core.column(rows, spacing=12, width="fill", padding=(6, SIDE))
+    # a right click on an answer opens the thread's menu with "Copy This Agent Response" too
+    return _core.mouse_area(_core.column(rows, spacing=12, width="fill", padding=(6, SIDE)),
+                            on_right_press=lambda: c.open_thread_menu(entry.text))
 
 
 def _tool_call(c: "AgentController", entry: _entries.ToolCall, t: Theme) -> Any:
@@ -596,9 +598,11 @@ def message_editor(c: "AgentController", t: Theme, *, fill: bool = False) -> Any
     else:
         send = ui.icon_button("arrow-up", c.send, size="sm", variant="solid", tooltip=tr("Send Message"),
                               keys="enter", disabled=not (c.input.strip() or c.attachments), theme=t)
-    bottom = _core.row([_core.row(left, spacing=2, align="center", wrap=True), _core.space(width="fill"),
-                        _core.row([*right, send], spacing=2, align="center", wrap=True)],
-                       spacing=4, align="center")
+    # the toggles on the left, the pickers next (wrapping into more lines in a narrow panel: an external agent
+    # may have many options, so they start right after the toggles) and Send always in the bottom right corner
+    pickers = _core.container(_core.row(right, spacing=2, align="center", wrap=True), width="fill",
+                              align_x="start" if external else "end")
+    bottom = _core.row([_core.row(left, spacing=2, align="center"), pickers, send], spacing=4, align="end")
     column = _core.column([_mentions_row(c, t), text, bottom], spacing=8, width="fill",
                           height="fill" if fill else None)
     return _core.container(column, padding=(8, 8, 8, 10), width="fill", height="fill" if fill else None,
@@ -660,6 +664,7 @@ def thread_view(c: "AgentController", t: Theme) -> Any:
         rows.append(_core.container(error, padding=(4, 12), width="fill"))
     thread = _core.scrollable(_core.column(rows, spacing=0, width="fill", padding=(4, 0, 12, 0)), height="fill",
                               id=SCROLL_ID, anchor_bottom=True, scrollbar_width=4)
+    thread = _core.mouse_area(thread, on_right_press=c.open_thread_menu)
     popup = _popup(c, t)
     thread = _with_menu(c, t, thread, popup=popup)
     bottom = [_core.container(_core.column(above, spacing=6, width="fill"), padding=(6, 8), width="fill")
@@ -667,6 +672,44 @@ def thread_view(c: "AgentController", t: Theme) -> Any:
               _core.rule(thickness=1, color=t.border) if activity_bar(c, t) is None else None,
               message_editor(c, t)]
     return _core.column([thread, *bottom], width="fill", height="fill")
+
+
+#: The width of the thread's right-click menu.
+THREAD_MENU_WIDTH = 240
+
+
+def thread_menu_at(c: "AgentController", t: Theme) -> Any:
+    """The thread's right-click menu and where it goes in the window (at the pointer, kept inside it): copy
+    the selected text, select all of it, copy the answer clicked or the whole thread."""
+    assert c.thread_menu is not None
+    answer, x, y = c.thread_menu
+    selected = bool(c.selected_text())
+    items: List[Any] = [
+        ui.MenuItem(tr("Copy"), c.copy_selection, icon="copy", keys="ctrl-c", disabled=not selected),
+        ui.MenuItem(tr("Select all"), c.select_all_text, icon="text-select", keys="ctrl-a",
+                    disabled=not c.thread.messages),
+        ui.SEPARATOR,
+    ]
+    if answer:
+        items.append(ui.MenuItem(tr("Copy This Agent Response"), lambda: _close_then(c, c.copy_text(answer)),
+                                 icon="message-square-text"))
+    items.append(ui.MenuItem(tr("Copy Thread as Markdown"), c.copy_markdown, icon="file-text",
+                             disabled=not c.thread.messages))
+    if c.thread.messages:
+        items.append(ui.MenuItem(tr("Scroll to Top"), lambda: _close_then(c, c.scroll_to_top()), icon="arrow-up"))
+    width, height = c.d.panes.window_size()
+    separators = sum(1 for i in items if i == ui.SEPARATOR)
+    tall = (len(items) - separators) * 28 + separators * 10 + 12
+    if x + THREAD_MENU_WIDTH > width - 4:
+        x = max(x - THREAD_MENU_WIDTH, 4)
+    if y + tall > height - 4:
+        y = max(height - tall - 4, 4)
+    return ui.menu(items, width=THREAD_MENU_WIDTH, theme=t), x, y
+
+
+def _close_then(c: "AgentController", result: Any) -> Any:
+    c.thread_menu = None
+    return result
 
 
 def _with_menu(c: "AgentController", t: Theme, base: Any, *, popup: Any = None, bottom_gap: float = 0) -> Any:

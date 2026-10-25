@@ -3748,7 +3748,7 @@ A short token count: `950`, `4.5k`, `48k`, `1.25M`.
 ### `diff_view`
 
 ```python
-diff_view(diff, *, theme=None, max_lines=120)
+diff_view(diff, *, theme=None, max_lines=120, height=360)
 ```
 
 An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red removed) with a few lines around them.
@@ -3758,6 +3758,7 @@ An edit as Zed shows it in a thread: the file's name, then the changed lines (gr
 | `diff` | A dict with `path`, `old` and `new` (the texts before and after). |
 | `theme` | Theme. |
 | `max_lines` | Lines shown before `… N more lines`. |
+| `height` | The most it grows to, in pixels; more lines scroll inside it (long lines scroll sideways). |
 
 ```python
 ui.diff_view({"path": "main.py", "old": "x = 1\n", "new": "x = 2\n"})

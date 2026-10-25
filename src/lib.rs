@@ -64,6 +64,9 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::listen, m)?)?;
     m.add_function(wrap_pyfunction!(app::frames, m)?)?;
     m.add_function(wrap_pyfunction!(app::pressed_keys, m)?)?;
+    m.add_function(wrap_pyfunction!(selectable::selected_text, m)?)?;
+    m.add_function(wrap_pyfunction!(selectable::select_all, m)?)?;
+    m.add_function(wrap_pyfunction!(selectable::clear_selection, m)?)?;
     m.add_function(wrap_pyfunction!(app::run, m)?)?;
     m.add_function(wrap_pyfunction!(imaging::image_size, m)?)?;
     m.add_function(wrap_pyfunction!(imaging::resize_image, m)?)?;

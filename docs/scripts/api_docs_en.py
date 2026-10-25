@@ -2295,7 +2295,8 @@ _section("ui", "Agent", {
     "pyzed.ui.format_tokens": {"desc": "A short token count: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
     "pyzed.ui.diff_view": {"desc": "An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red removed) with a few lines around them.",
                            "params": {"diff": "A dict with `path`, `old` and `new` (the texts before and after).", "theme": "Theme.",
-                                      "max_lines": "Lines shown before `… N more lines`."},
+                                      "max_lines": "Lines shown before `… N more lines`.",
+                                      "height": "The most it grows to, in pixels; more lines scroll inside it (long lines scroll sideways)."},
                            "example": 'ui.diff_view({"path": "main.py", "old": "x = 1\\n", "new": "x = 2\\n"})'},
 })
 

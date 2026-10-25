@@ -36,6 +36,7 @@ from . import spacing
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, file_scan, geometry, panels, preferences, project_panel, surface
+from . import agent_thread
 from . import profiles as _profiles
 from . import settings_ui
 from . import commands as _commands
@@ -2755,6 +2756,8 @@ class Designer(App):
                 return self.close_menu()
             if self.logs.menu:
                 return self.logs.close_menu()
+            if self.agent.thread_menu:
+                return self.agent.close_thread_menu()
             if self.drag:
                 return self.cancel_drag()
             if self.tab_editor.active:
@@ -2969,6 +2972,9 @@ class Designer(App):
         if here and self.menu is not None:
             menu, mx, my = self.context_menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        if here and self.agent.thread_menu is not None:  # the right-click menu of the Agent panel's thread
+            menu, mx, my = agent_thread.thread_menu_at(self.agent, t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.agent.close_thread_menu)
         if here and self.logs.menu is not None:  # the line menu of the Console and Logs panels
             menu, mx, my = self.logs.menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.logs.close_menu)
