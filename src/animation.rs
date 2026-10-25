@@ -41,8 +41,9 @@ use crate::widget::PyMsg;
 // ---------------------------------------------------------------------------
 
 /// The frame interval of an animation that only loops forever (a pulse, a blink, a float):
-/// it asks for no more frames than this even where nothing waits for vsync (software rendering).
-const LOOP_FRAME: std::time::Duration = std::time::Duration::from_micros(16_667);
+/// 30 fps, like spinners. These run while nothing else happens, and every frame draws the
+/// whole window again; at 30 fps a soft loop looks the same for half the work.
+const LOOP_FRAME: std::time::Duration = std::time::Duration::from_micros(33_333);
 
 /// Animations jump to their resting state (`pz.set_reduced_motion(True)`).
 static REDUCED_MOTION: AtomicBool = AtomicBool::new(false);

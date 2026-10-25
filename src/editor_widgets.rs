@@ -327,6 +327,212 @@ impl<'a> From<LineNumbers> for Element<'a, Message> {
 }
 
 // ---------------------------------------------------------------------------
+// FoldMarks
+// ---------------------------------------------------------------------------
+
+/// The fold chevrons of the gutter. Folded lines always show theirs; the other foldable lines
+/// only while the mouse is over the gutter (`reach` is how far it goes to the left). Only the
+/// chevrons on screen are drawn: a widget per chevron made long files slow to draw and hover.
+pub struct FoldMarks {
+    /// The first row of each visible line, and one past the last.
+    pub starts: Vec<u32>,
+    /// `(visible line, folded)`, sorted by line.
+    pub marks: Vec<(usize, bool)>,
+    /// The message of a click on the chevron of a visible line.
+    pub on_toggle: Box<dyn Fn(usize) -> Message>,
+    pub width: f32,
+    pub reach: f32,
+    pub top: f32,
+    pub line_height: f32,
+    pub font: Font,
+    pub glyphs: (char, char),
+    pub size: f32,
+    pub color: Color,
+    pub hover: Color,
+}
+
+#[derive(Default, Clone, Copy, PartialEq)]
+struct FoldState {
+    /// The mouse is over the gutter.
+    gutter: bool,
+    /// The visible line whose chevron is under the mouse.
+    hovered: Option<usize>,
+}
+
+impl FoldMarks {
+    fn height(&self) -> f32 {
+        let rows = self.starts.last().copied().unwrap_or(0);
+        rows as f32 * self.line_height + self.top * 2.0
+    }
+
+    fn row_bounds(&self, bounds: Rectangle, line: usize) -> Rectangle {
+        let y = bounds.y + self.top + self.starts[line] as f32 * self.line_height;
+        Rectangle::new(
+            Point::new(bounds.x, y),
+            Size::new(bounds.width, self.line_height),
+        )
+    }
+
+    fn state_at(&self, bounds: Rectangle, cursor: mouse::Cursor) -> FoldState {
+        let Some(p) = cursor.position() else {
+            return FoldState::default();
+        };
+        let gutter = Rectangle {
+            x: bounds.x - self.reach,
+            width: bounds.width + self.reach,
+            ..bounds
+        };
+        if !gutter.contains(p) {
+            return FoldState::default();
+        }
+        let lh = self.line_height.max(1.0);
+        let row = ((p.y - bounds.y - self.top) / lh).floor();
+        let hovered = (row >= 0.0 && bounds.contains(p))
+            .then(|| {
+                let row = row as u32;
+                let at = self
+                    .marks
+                    .partition_point(|(line, _)| self.starts[*line] < row);
+                self.marks
+                    .get(at)
+                    .filter(|(line, _)| self.starts[*line] == row)
+                    .map(|(line, _)| *line)
+            })
+            .flatten();
+        FoldState {
+            gutter: true,
+            hovered,
+        }
+    }
+}
+
+impl Widget<Message, Theme, Renderer> for FoldMarks {
+    fn tag(&self) -> tree::Tag {
+        tree::Tag::of::<FoldState>()
+    }
+
+    fn state(&self) -> tree::State {
+        tree::State::new(FoldState::default())
+    }
+
+    fn size(&self) -> Size<Length> {
+        Size::new(Length::Fixed(self.width), Length::Fixed(self.height()))
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(Size::new(self.width, self.height()))
+    }
+
+    fn update(
+        &mut self,
+        tree: &mut Tree,
+        event: &Event,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        _renderer: &Renderer,
+        _clipboard: &mut dyn Clipboard,
+        shell: &mut Shell<'_, Message>,
+        _viewport: &Rectangle,
+    ) {
+        let bounds = layout.bounds();
+        match event {
+            Event::Mouse(mouse::Event::CursorMoved { .. } | mouse::Event::CursorLeft) => {
+                let now = self.state_at(bounds, cursor);
+                let state = tree.state.downcast_mut::<FoldState>();
+                if now != *state {
+                    *state = now;
+                    shell.request_redraw();
+                }
+            }
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
+                let now = self.state_at(bounds, cursor);
+                if let Some(line) = now.hovered {
+                    shell.publish((self.on_toggle)(line));
+                    shell.capture_event();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn mouse_interaction(
+        &self,
+        _tree: &Tree,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        _viewport: &Rectangle,
+        _renderer: &Renderer,
+    ) -> mouse::Interaction {
+        if self.state_at(layout.bounds(), cursor).hovered.is_some() {
+            mouse::Interaction::Pointer
+        } else {
+            mouse::Interaction::default()
+        }
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        _theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        let bounds = layout.bounds();
+        let Some(visible) = bounds.intersection(viewport) else {
+            return;
+        };
+        let lh = self.line_height.max(1.0);
+        let state = self.state_at(bounds, cursor);
+        let first = ((visible.y - bounds.y - self.top) / lh).floor().max(0.0) as u32;
+        let last = ((visible.y + visible.height - bounds.y - self.top) / lh)
+            .ceil()
+            .max(0.0) as u32;
+        let from = self
+            .marks
+            .partition_point(|(line, _)| self.starts[*line] < first);
+        for &(line, folded) in &self.marks[from..] {
+            if self.starts[line] >= last {
+                break;
+            }
+            if !folded && !state.gutter {
+                continue;
+            }
+            let row = self.row_bounds(bounds, line);
+            renderer.fill_text(
+                core_text::Text {
+                    content: if folded { self.glyphs.1 } else { self.glyphs.0 }.to_string(),
+                    bounds: row.size(),
+                    size: Pixels(self.size),
+                    line_height: LineHeight::Absolute(Pixels(lh)),
+                    font: self.font,
+                    align_x: core_text::Alignment::Center,
+                    align_y: iced::alignment::Vertical::Top,
+                    shaping: core_text::Shaping::Basic,
+                    wrapping: core_text::Wrapping::None,
+                    letter_spacing: iced::Em::ZERO,
+                },
+                Point::new(row.center_x(), row.y),
+                if state.hovered == Some(line) {
+                    self.hover
+                } else {
+                    self.color
+                },
+                bounds,
+            );
+        }
+    }
+}
+
+impl<'a> From<FoldMarks> for Element<'a, Message> {
+    fn from(marks: FoldMarks) -> Self {
+        Element::new(marks)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Boxes
 // ---------------------------------------------------------------------------
 
@@ -671,7 +877,12 @@ fn minimap_runs(
 struct MinimapState {
     /// While dragging the thumb: where it was grabbed, from its top.
     grab: Option<f32>,
+    /// The runs of the lines on screen, by line, with what they were made from (the line's
+    /// spans, a hash of its text and the default color): drawing them again reuses them.
+    runs: std::cell::RefCell<std::collections::HashMap<usize, MiniRuns>>,
 }
+
+type MiniRuns = ((usize, u64, u32), Vec<(u16, u16, Color)>);
 
 /// Scroll geometry shared by drawing and input.
 struct Geometry {
@@ -858,7 +1069,10 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                 .saturating_sub(1);
             let left = bounds.x + 4.0;
             let count = metrics.starts.len().saturating_sub(1);
+            let mut cache = state.runs.borrow_mut();
+            let mut last = first;
             for line in first..count {
+                last = line;
                 let row = metrics.starts[line];
                 let y = bounds.y + row as f32 * MINI_LINE - g.offset;
                 if y > bounds.y + bounds.height {
@@ -871,7 +1085,32 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                 let Some(text) = self.state.content.line(line) else {
                     break;
                 };
-                for (column, len, color) in minimap_runs(&text.text, spans, self.text_color) {
+                let key = (
+                    std::sync::Arc::as_ptr(spans) as *const () as usize,
+                    {
+                        use std::hash::{Hash, Hasher};
+                        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                        text.text.hash(&mut hasher);
+                        hasher.finish()
+                    },
+                    u32::from_le_bytes(self.text_color.into_rgba8()),
+                );
+                let runs = match cache.entry(line) {
+                    std::collections::hash_map::Entry::Occupied(entry) if entry.get().0 == key => {
+                        entry.into_mut()
+                    }
+                    entry => {
+                        let runs = (key, minimap_runs(&text.text, spans, self.text_color));
+                        match entry {
+                            std::collections::hash_map::Entry::Occupied(mut e) => {
+                                e.insert(runs);
+                                e.into_mut()
+                            }
+                            std::collections::hash_map::Entry::Vacant(e) => e.insert(runs),
+                        }
+                    }
+                };
+                for &(column, len, color) in &runs.1 {
                     let x = left + column as f32 * MINI_COLUMN;
                     if x >= bounds.x + bounds.width {
                         break;
@@ -889,6 +1128,8 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
                     );
                 }
             }
+            cache.retain(|line, _| (first..=last).contains(line));
+            drop(cache);
             let base = self
                 .thumb
                 .unwrap_or(theme.extended_palette().background.strong.color);
