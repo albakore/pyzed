@@ -296,6 +296,39 @@ class Command:
 EASINGS: Any
 ICED_VERSION: Any
 
+class SerialConnection:
+    """An open serial port. Made by `SerialConnection(path, baud_rate, ...)`."""
+    def __init__(self, path: Any, baud_rate: Any = ..., data_bits: Any = ..., parity: Any = ..., stop_bits: Any = ..., flow_control: Any = ..., timeout: Any = ...) -> None: ...
+    def clear(self) -> Any:
+        """Drops what is waiting to be read and to be sent."""
+        ...
+    def close(self) -> Any:
+        """Closes the port (a read that is waiting ends within the timeout)."""
+        ...
+    is_open: Any
+    path: Any
+    def read(self, size: Any = ...) -> Any:
+        """Up to `size` bytes, waiting at most the port's timeout: `b""` when nothing came.
+        Raises `OSError` when the device is gone (unplugged).
+        """
+        ...
+    def set_baud_rate(self, baud_rate: Any) -> Any:
+        """Changes the speed of an open port."""
+        ...
+    def set_dtr(self, level: Any) -> Any:
+        """Sets the DTR line (many boards reset when it drops)."""
+        ...
+    def set_rts(self, level: Any) -> Any:
+        """Sets the RTS line."""
+        ...
+    def waiting(self) -> Any:
+        """How many received bytes wait to be read."""
+        ...
+    def write(self, data: Any) -> Any:
+        """Sends `data` and returns how many bytes went out."""
+        ...
+
+
 class Span:
     """A styled fragment of `rich_text`. Create it with `pyzed.span`."""
     ...
@@ -710,6 +743,12 @@ def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any
     - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
     - `on_start()`: A drag begins.
     - `on_end()`: The button is released after a drag.
+    """
+    ...
+def serial_ports() -> Any:
+    """The serial ports of this computer, one dict each: `name` (`COM3`, `/dev/ttyUSB0`...),
+    `kind` (`usb`, `pci`, `bluetooth` or `unknown`) and, for USB, `vid`, `pid`,
+    `serial_number`, `manufacturer` and `product`.
     """
     ...
 def set_crash_file(path: Any = ...) -> Any:
