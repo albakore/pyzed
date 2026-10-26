@@ -1,0 +1,75 @@
+---
+title: Droppable
+description: Drop targets in Pyzed — accept types, decide with can_drop, highlight while dragging, show where the item lands and get drop coordinates for canvases.
+sidebar:
+  order: 3
+---
+
+![A trash can lighting up when a card is dragged over it and taking it on drop](/pyzed/media/dnd/droppable.webp)
+
+`pz.droppable(content, id)` makes `content` a place where dragged items can be dropped:
+a trash can, a folder, an upload area, a canvas, an input port.
+
+```python
+pz.droppable(
+    ui.card(pz.row([pz.icon("trash-2"), ui.label("Drop to delete")])),
+    "trash",
+    accepts="file",                      # only draggables of this type
+    on_drop=lambda e: self.delete(e.data),
+)
+```
+
+## Who it takes
+
+- `accepts` lists the `type`s (or sortable `group`s) it takes. `None` (the default) or
+  `"*"` takes everything.
+- `can_drop(event)` adds any rule of yours. It is asked once per drag, the first time the drag reaches the target, with
+  `event.data` the dragged item, and returns `True` or `False`.
+- `disabled=True` refuses everything.
+
+A refused drag shows a "not allowed" cursor while it is over the target. More in
+[conditions](/pyzed/dnd/guides/conditions/).
+
+## How it looks
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `over_style` | the theme's | While a drag it takes is over it. |
+| `active_style` | `False` | While a drag it takes is in progress anywhere: show the user where they can drop. |
+| `placeholder` | `"none"` | `"shadow"` (a box where the item will land) or `"ghost"` (a translucent copy). |
+| `placeholder_style` | the theme's | The look of the shadow. |
+| `ghost_opacity` | `0.4` | The opacity of the ghost. |
+
+Styles are `True` (the theme's accent look), a color, a dict with `background`,
+`border_color`, `border_width` and `radius`, or `False`:
+
+```python
+pz.droppable(area, "upload", over_style={"background": "#5c78e220", "border_color": "#5c78e2",
+                                          "border_width": 2, "radius": 12})
+```
+
+## Where it lands
+
+The drop event says where the item lands inside the target: `event.x`, `event.y` (the pointer)
+and `event.item_x`, `event.item_y` (the item's top-left corner). That is all a free canvas
+needs:
+
+```python
+def drop(self, e):
+    self.shapes[e.source].update(x=e.item_x, y=e.item_y)
+```
+
+`snap=10` rounds that place to a grid and `guides=True` aligns it with the other items, with
+pink guides like Figma's. See [free canvas](/pyzed/dnd/guides/free-canvas/).
+
+## Events
+
+| Event | When |
+| --- | --- |
+| `on_drop(event)` | An item was dropped on it. |
+| `on_enter(event)` | A drag it takes came over it. |
+| `on_over(event)` | The landing place changed (`event.item_x`, `event.x`...). |
+| `on_leave(event)` | The drag left it, or was cancelled. |
+
+Targets can be nested: the deepest one under the pointer that takes the drag wins (a column
+inside a page inside a canvas).

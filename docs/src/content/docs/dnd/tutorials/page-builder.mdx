@@ -1,0 +1,71 @@
+---
+title: Page builder
+description: Build a website builder in Python with Pyzed — blocks dropped from a library, nested columns, reordering anywhere, a trash can and desktop and phone widths.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Blocks dropped from a library onto a page and moved between two columns](/pyzed/media/dnd/page-builder.webp)
+
+A page builder like Webflow's, Wix's or Elementor's:
+[`examples/dnd/page_builder.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/page_builder.py).
+
+```bash
+python examples/dnd/page_builder.py
+```
+
+<Aside type="note" title="What you will learn">
+Lists inside lists, finding a list by its id, rules that keep blocks out of some places, and a
+library in a wrapping grid.
+</Aside>
+
+<Steps>
+
+1. **Blocks hold blocks.** A page is a list of blocks; a "Two columns" block has two lists of
+   its own:
+
+   ```python
+   def block(kind):
+       b = {"id": f"block-{next(_ids)}", "kind": kind}
+       if kind == "columns":
+           b["left"], b["right"] = [], []
+       return b
+   ```
+
+2. **Every list has an id.** The page is `"page"` and each column is `"<block id>:left"` or
+   `":right"`. A function finds them all, so one handler serves every list:
+
+   ```python
+   def lists(self):
+       found = {"page": self.page}
+       for b in self.page:
+           if b["kind"] == "columns":
+               found[b["id"] + ":left"], found[b["id"] + ":right"] = b["left"], b["right"]
+       return found
+
+   def drop(self, event):
+       if event.from_list == "library":
+           self.lists()[event.target].insert(event.index, block(event.data))
+       else:
+           pz.dnd.move(self.lists(), event)
+   ```
+
+3. **Sortables inside sortables.** A columns block draws two sortables, with the same group as
+   the page. The deepest list under the pointer takes the drop; a block being dragged never
+   takes itself.
+
+   ```python
+   pz.sortable(items=b[side], item=self.render, id=f"{b['id']}:{side}", group="blocks",
+               handle=True, padding=8, width="fill", on_reorder=self.drop,
+               can_drop=lambda e: not is_columns(e.data))      # no columns in columns
+   ```
+
+4. **The library is a grid that copies.** `direction="wrap"` lays it out in rows,
+   `pull="clone"` and `sort=False` make it a palette.
+
+5. **Phone width.** A segmented control changes the page width, and the columns stack. The
+   sortables animate to their new places.
+
+</Steps>

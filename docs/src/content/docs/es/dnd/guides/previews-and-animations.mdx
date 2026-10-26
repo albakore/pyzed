@@ -1,0 +1,72 @@
+---
+title: Vistas previas y animaciones
+description: Cómo se ve el arrastrar y soltar en Pyzed — vistas previas levantadas con sombra, fantasmas y marcadores, vistas previas propias, los vuelos al soltar y al cancelar, y las animaciones de las listas.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![La misma lista con un marcador de sombra, un marcador fantasma y una vista previa propia](/pyzed/media/dnd/previews.webp)
+
+Todo lo que ves durante un arrastre se dibuja de forma nativa, a la frecuencia de la pantalla,
+sin llamar a Python.
+
+## La vista previa
+
+La vista previa es lo que sigue al puntero. Por defecto es una copia del elemento,
+**levantada**: un poco más grande (`lift=1.03`) y con una `shadow` suave. Conserva el punto
+por donde la agarraste, así que no salta bajo el puntero.
+
+```python
+pz.draggable(tarjeta, "t1", lift=1.06, shadow="#00000080", opacity=0.9)
+pz.draggable(tarjeta, "t1", lift=1.0, shadow=False)            # plana, como en una herramienta de diseño
+pz.draggable(tarjeta, "t1", preview=ui.badge("1 archivo"))      # cualquier otra cosa
+pz.draggable(punto, "salida", preview="wire")                   # un cable (editores de nodos)
+pz.sortable(..., preview="none")                                # los elementos se mueven, sin vista previa
+```
+
+## El original
+
+El elemento original, mientras su vista previa se mueve:
+
+| `source=` | Efecto | Para |
+| --- | --- | --- |
+| `"ghost"` | Atenuado a `source_opacity` (0.35). | Draggables, por defecto. |
+| `"hide"` | Oculto: parece que se mueve el propio elemento. | Sortables, por defecto; lienzos. |
+| `"keep"` | Como estaba. | Paletas, cables. |
+
+En un sortable los demás elementos cierran el hueco del arrastrado, así que `source="ghost"` muestra su
+copia atenuada en el sitio de destino (igual que `placeholder="ghost"`).
+
+## El marcador
+
+Dónde caerá el elemento: `placeholder="shadow"` (una caja teñida), `"ghost"` (una copia
+translúcida con `ghost_opacity`) o `"none"`. Los sortables muestran una sombra por defecto y los
+droppables nada. `placeholder_style` cambia el aspecto de la sombra:
+
+```python
+pz.sortable(..., placeholder="shadow",
+            placeholder_style={"background": "#98c37922", "border_color": "#98c379", "radius": 10})
+```
+
+## Resaltados
+
+Los destinos se iluminan mientras un arrastre que aceptan está encima (`over_style`) o en
+cualquier sitio (`active_style`). Mira [droppable](/pyzed/es/dnd/basics/droppable/#cómo-se-ve).
+
+## Animaciones
+
+- **Hacer sitio**: en un sortable, los demás elementos se apartan con suavidad para abrir un hueco.
+- **Reordenar**: cuando cambia el orden de un sortable, por una suelta o desde tu código
+  (ordenar por nombre, un elemento nuevo), los elementos se deslizan a su sitio nuevo en
+  `animation` milisegundos (200; `0` lo desactiva).
+- **Soltar**: la vista previa vuela a su sitio en `drop_animation` milisegundos (180) y entonces
+  aparece allí el elemento.
+- **Cancelar**: <kbd>Esc</kbd>, o soltar fuera de cualquier destino, hace volver la vista previa
+  a casa.
+
+<Aside type="tip" title="Menos movimiento">
+`drop_animation=0` y `animation=0` quitan los vuelos y los deslizamientos: útil para la opción
+de "reducir movimiento" de tu app.
+</Aside>

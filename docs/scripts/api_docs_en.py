@@ -2802,3 +2802,38 @@ _params("pyzed.ui.modal", width='Pixels or `"sm"` (360), `"md"` (480), `"lg"` (6
 _params("pyzed.ui.toast", progress="0 to 1: a thin bar at the bottom (time left, a download).", on_press="Makes the card clickable.")
 _params("pyzed.ui.empty_state", size='`"sm"`, `"md"` or `"lg"`.', height='`"fill"` (default), pixels or `"shrink"`.')
 _params("pyzed.ui.count_badge", show_zero="With `False`, a count of 0 draws nothing.")
+
+# -- Drag and drop -------------------------------------------------------------------------------
+_D = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "dnd",
+    "title": "Drag and drop (pyzed.dnd)",
+    "description": "API reference for pyzed.dnd: draggable, droppable and sortable widgets, drag handles, the DragEvent and the move and reorder helpers for drag and drop in Python desktop apps.",
+    "order": 10.7,
+    "intro": """
+        Pick things up, move them and drop them somewhere else: Kanban boards, sortable lists and
+        grids, form and page builders, Figma-style canvases and node wires. The movement, the
+        previews, the gaps and the animations run natively; Python hears about the drop. See the
+        [drag and drop guide](/pyzed/dnd/).
+
+        ```python
+        pz.sortable(items=self.tasks, item=self.task_row, id="tasks",
+                    on_reorder=lambda e: pz.dnd.move(self.tasks, e))
+        ```
+    """,
+    "sections": [
+        ("Widgets", {
+            "pyzed.sortable": {**_D, "example": 'pz.sortable(items=self.cards["todo"], item=self.card, id="todo", group="cards",\n            on_reorder=lambda e: pz.dnd.move(self.cards, e))'},
+            "pyzed.draggable": {**_D, "example": 'pz.draggable(ui.card(ui.label("Report.pdf")), "file-7", data=file, type="file")'},
+            "pyzed.droppable": {**_D, "example": 'pz.droppable(trash, "trash", accepts="file", on_drop=lambda e: self.delete(e.data))'},
+            "pyzed.drag_handle": {"desc": 'The part of an item that starts the drag when the draggable or sortable has `handle=True` (the grip of a row, the title of a node). Shows `cursor` (`"grab"` by default) when hovered.', "params": {"content": "What the handle looks like.", "cursor": 'The cursor shown over it: `"grab"`, `"move"`, `"pointer"`...'}},
+        }),
+        ("Events and helpers", {
+            "pyzed.DragEvent": {**_D},
+            "pyzed.dnd.move": {**_D, "example": "pz.dnd.move({\"todo\": self.todo, \"done\": self.done}, event)"},
+            "pyzed.dnd.reorder": {**_D},
+            "pyzed.dnd.current": {**_D},
+            "pyzed.dnd.cancel": {**_D},
+        }),
+    ],
+})

@@ -37,6 +37,8 @@ like the Zed editor). Instructions for the AI coding agents working on it.
   results come back as messages and only the UI thread changes state.
 - Prefer `pyzed.ui` components; look parameters up instead of inventing them. Icons are Lucide names.
 - Lambdas in loops capture the variable: `lambda item=item: self.open(item)`.
+- Drag and drop uses `pz.sortable` (lists, boards, grids), `pz.draggable` / `pz.droppable` and
+  `pz.drag_handle`; the handler applies the drop with `pz.dnd.move(lists, event)`. Never rebuild it from mouse events.
 - Settings in `pz.Settings`, secrets in the keychain or environment variables, user-facing text through `pz.t`,
   `logging` instead of `print`.
 

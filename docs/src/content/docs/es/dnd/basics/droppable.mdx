@@ -1,0 +1,76 @@
+---
+title: Droppable
+description: Destinos de soltar en Pyzed — acepta tipos, decide con can_drop, resalta al arrastrar, muestra dónde cae el elemento y obtén las coordenadas de la suelta para lienzos.
+sidebar:
+  order: 3
+---
+
+![Una papelera que se ilumina cuando una tarjeta pasa por encima y la recibe al soltarla](/pyzed/media/dnd/droppable.webp)
+
+`pz.droppable(content, id)` convierte `content` en un sitio donde soltar elementos arrastrados:
+una papelera, una carpeta, una zona de subida, un lienzo, un puerto de entrada.
+
+```python
+pz.droppable(
+    ui.card(pz.row([pz.icon("trash-2"), ui.label("Suelta para borrar")])),
+    "papelera",
+    accepts="archivo",                   # solo draggables de este tipo
+    on_drop=lambda e: self.borrar(e.data),
+)
+```
+
+## Qué acepta
+
+- `accepts` lista los `type` (o `group` de sortables) que acepta. `None` (por defecto) o `"*"`
+  acepta todo.
+- `can_drop(event)` añade cualquier regla tuya. Se pregunta una vez por arrastre, la primera vez
+  que el arrastre llega al destino, con `event.data` el elemento arrastrado, y devuelve `True` o
+  `False`.
+- `disabled=True` lo rechaza todo.
+
+Un arrastre rechazado muestra un cursor de "no permitido" mientras está encima del destino.
+Más en [condiciones](/pyzed/es/dnd/guides/conditions/).
+
+## Cómo se ve
+
+| Opción | Por defecto | Efecto |
+| --- | --- | --- |
+| `over_style` | el del tema | Mientras un arrastre que acepta está encima. |
+| `active_style` | `False` | Mientras hay en curso, en cualquier sitio, un arrastre que acepta: le muestra al usuario dónde puede soltar. |
+| `placeholder` | `"none"` | `"shadow"` (una caja donde caerá el elemento) o `"ghost"` (una copia translúcida). |
+| `placeholder_style` | el del tema | El aspecto de la sombra. |
+| `ghost_opacity` | `0.4` | La opacidad del fantasma. |
+
+Los estilos son `True` (el aspecto de acento del tema), un color, un dict con `background`,
+`border_color`, `border_width` y `radius`, o `False`:
+
+```python
+pz.droppable(zona, "subir", over_style={"background": "#5c78e220", "border_color": "#5c78e2",
+                                        "border_width": 2, "radius": 12})
+```
+
+## Dónde cae
+
+El evento de la suelta dice dónde cae el elemento dentro del destino: `event.x`, `event.y` (el
+puntero) y `event.item_x`, `event.item_y` (la esquina superior izquierda del elemento). Es todo
+lo que necesita un lienzo libre:
+
+```python
+def soltar(self, e):
+    self.formas[e.source].update(x=e.item_x, y=e.item_y)
+```
+
+`snap=10` redondea ese sitio a una cuadrícula y `guides=True` lo alinea con los demás elementos,
+con guías rosas como las de Figma. Mira [lienzo libre](/pyzed/es/dnd/guides/free-canvas/).
+
+## Eventos
+
+| Evento | Cuándo |
+| --- | --- |
+| `on_drop(event)` | Se soltó un elemento encima. |
+| `on_enter(event)` | Entró un arrastre que acepta. |
+| `on_over(event)` | Cambió el sitio de destino (`event.item_x`, `event.x`...). |
+| `on_leave(event)` | El arrastre salió, o se canceló. |
+
+Los destinos se pueden anidar: gana el más profundo bajo el puntero que acepta el arrastre (una
+columna dentro de una página dentro de un lienzo).

@@ -1,0 +1,44 @@
+---
+title: Teclado y pantallas táctiles
+description: Arrastrar y soltar accesible en Pyzed — reordena listas con el teclado, pulsación larga para pantallas táctiles y cancelar con Escape.
+sidebar:
+  order: 6
+---
+
+## Teclado
+
+`keyboard=True` hace que cada elemento de un sortable pueda recibir el foco (<kbd>Tab</kbd> llega
+a él) y moverse sin ratón:
+
+- <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> mueven el elemento con foco un puesto
+  (<kbd>←</kbd> / <kbd>→</kbd> en una lista horizontal).
+- <kbd>Espacio</kbd> levanta el elemento; luego las flechas lo mueven y <kbd>Espacio</kbd> otra
+  vez (o <kbd>Esc</kbd>) lo deja.
+
+Cada movimiento llama a `on_reorder` con el mismo evento que un arrastre, así que sirve la misma
+función:
+
+```python
+pz.sortable(items=self.tareas, item=self.tarea, key=str, id="tareas", keyboard=True,
+            on_reorder=lambda e: pz.dnd.move(self.tareas, e))
+```
+
+Durante cualquier arrastre, <kbd>Esc</kbd> lo cancela y el elemento vuelve a casa volando.
+
+## Pantallas táctiles y listas que se desplazan
+
+En una pantalla táctil, deslizar el dedo debería desplazar la lista, no arrastrar un elemento.
+`delay=` pide una pulsación larga (en milisegundos) antes de empezar un arrastre:
+
+```python
+pz.sortable(..., delay=250)
+pz.draggable(foto, f.id, delay=300)
+```
+
+Un `threshold` más alto (en píxeles) también ayuda con pulsos temblorosos o lápices.
+
+## Desplazarse mientras arrastras
+
+Las listas dentro de un [`pz.scrollable`](/pyzed/es/reference/widgets/) se desplazan solas cuando
+arrastras un elemento cerca de su borde superior o inferior (izquierdo o derecho), más rápido
+cuanto más te acercas, para que puedas llevar un elemento a un sitio que no está en pantalla.

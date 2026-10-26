@@ -1,0 +1,137 @@
+---
+title: Sortable lists
+description: Sortable lists, rows and wrapping grids in Python with Pyzed — reorder by dragging, move items between lists, copy from a palette, with animated gaps and drop shadows.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A list, a row of tabs, a grid of photos and a list of files being reordered by dragging](/pyzed/media/dnd/sortables.webp)
+
+`pz.sortable` is a list whose items you reorder by dragging. It is the block behind to-do
+lists, Kanban columns, playlists, tabs, photo grids, layer panels and the palettes of form
+builders. It plays the role of SortableJS or react-beautiful-dnd.
+
+<Aside type="note" title="In plain words">
+You keep the list in Python. The sortable shows it, lets the user drag the items around and
+tells you where an item went. You change your list and the view follows.
+</Aside>
+
+## A list in three lines
+
+```python
+pz.sortable(
+    items=self.tasks,                        # your list
+    item=lambda task: ui.card(ui.label(task)),  # how one item looks
+    key=str,                                 # a stable name per item
+    id="tasks",
+    on_reorder=lambda e: pz.dnd.move(self.tasks, e),
+)
+```
+
+- `items` is your list and `item(x)` draws one entry.
+- `key(x)` names each entry. Keys must be unique and stay the same when the order changes:
+  they are how the sortable knows which item moved, and they keep each item's animation. By
+  default the key is the item's `id` (a dict's `"id"` or an `id` attribute), or the item itself.
+- `on_reorder(event)` is called on drop. `event.from_index` is where the item was and
+  `event.index` where it goes, both counted in the final list, so
+  [`pz.dnd.reorder(items, e.from_index, e.index)`](/pyzed/dnd/basics/events/#applying-a-drop)
+  or `pz.dnd.move(items, e)` applies it.
+
+You can also pass ready-made widgets with their keys:
+
+```python
+pz.sortable([row(t) for t in self.tasks], "tasks", keys=[t.id for t in self.tasks],
+            data=self.tasks, on_reorder=self.reorder)
+```
+
+`data` is what the handlers get as `event.data` for each item (with `items=`, the item itself).
+
+## While dragging
+
+The dragged item lifts with a shadow and follows the pointer (`source="hide"`: the item itself
+seems to move). The others slide aside to open a gap, and a **placeholder** shows the landing
+place:
+
+| `placeholder=` | What it shows |
+| --- | --- |
+| `"shadow"` (default) | A tinted box of the item's size, in the accent color. |
+| `"ghost"` | A translucent copy of the item (`ghost_opacity`). |
+| `"none"` | Only the gap. |
+
+When the order changes, from a drop or from your code, the items glide to their new places in
+`animation` milliseconds (200 by default; `0` turns it off). Lists that only need that glide,
+not dragging, use `draggable=False`.
+
+## Directions and layout
+
+```python
+pz.sortable(..., direction="horizontal", spacing=4)   # a row: tabs, a toolbar
+pz.sortable(..., direction="wrap", spacing=8)         # rows that wrap: a grid of cards
+```
+
+`direction` is `"vertical"` (the default), `"horizontal"` or `"wrap"`. The list takes
+`spacing` between items (and `line_spacing` between the rows of a wrap), `width`, `height`,
+`padding` and `align` (`"start"`, `"center"` or `"end"` across the list), as a
+[`pz.column`](/pyzed/reference/widgets/) would.
+
+## Between lists
+
+Lists with the same `group` exchange items. The event tells you both ends:
+
+```python
+def move(self, e):
+    # e.from_list / e.from_index: where it was · e.target / e.index: where it goes
+    pz.dnd.move(self.columns, e)   # self.columns = {"todo": [...], "doing": [...], "done": [...]}
+
+pz.row([pz.sortable(items=self.columns[name], item=self.card, id=name, group="cards",
+                    on_reorder=self.move) for name in self.columns])
+```
+
+The list that receives the item calls its `on_reorder`. See the
+[Kanban tutorial](/pyzed/dnd/tutorials/kanban/) for a complete board.
+
+| Option | Effect |
+| --- | --- |
+| `pull=False` | Items can't leave the list. |
+| `pull="clone"` | Items are copied out and stay (a palette); `event.copy` is `True`. |
+| `put=False` | Takes nothing from other lists. |
+| `sort=False` | Doesn't reorder inside (a palette, a fixed menu). |
+| `max_items=5` | Takes nothing more once it holds 5. |
+| `locked=["inbox"]` | These keys can't be dragged (they can still move aside). |
+| `accepts="tool"` | Also takes [`pz.draggable`](/pyzed/dnd/basics/draggable/)s of this type. |
+| `can_drop=fn` | Your own rule. See [conditions](/pyzed/dnd/guides/conditions/). |
+
+## Items
+
+The sortable makes each child draggable with the same options as
+[`pz.draggable`](/pyzed/dnd/basics/draggable/): `handle=True` (drag only by a
+[`pz.drag_handle`](/pyzed/dnd/basics/handles/)), `lock_axis=True` (stay on the list's axis and
+inside it, like browser tabs), `source`, `preview`, `lift`, `shadow`, `opacity`, `radius`,
+`threshold`, `delay` and `drop_animation`.
+
+`combine=True` lets an item be dropped **onto** another one (the middle of it): files onto a
+folder, a task onto another to group them. See [nesting and combining](/pyzed/dnd/guides/nesting-and-combining/).
+
+`keyboard=True` lets the focused item move with <kbd>Alt</kbd>+arrows. See
+[keyboard and touch](/pyzed/dnd/guides/keyboard-and-touch/).
+
+## Events
+
+| Event | When |
+| --- | --- |
+| `on_reorder(event)` | An item was dropped in the list (`on_drop` is a synonym). |
+| `on_enter(event)` | A drag the list takes came over it. |
+| `on_over(event)` | The landing index changed (`event.index`, `event.combine`). |
+| `on_leave(event)` | The drag left the list. |
+| `on_drag_start(event)` | One of its items started moving. |
+| `on_drag_end(event)` | One of its items was dropped (anywhere) or the drag was cancelled. |
+
+The [events page](/pyzed/dnd/basics/events/) lists every field of the event.
+
+## Full example
+
+[`examples/dnd/sortables.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/sortables.py)
+has a keyboard-reorderable list, tabs locked to their axis, a wrapping grid and files you
+group by dropping them onto a folder.

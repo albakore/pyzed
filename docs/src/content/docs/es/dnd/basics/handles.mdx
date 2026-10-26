@@ -1,0 +1,43 @@
+---
+title: Asas
+description: Asas de arrastre en Pyzed — empieza un arrastre solo desde el agarre de una fila o el título de un nodo, para que el resto del elemento conserve sus clics, campos y selección de texto.
+sidebar:
+  order: 4
+---
+
+![Filas que se arrastran solo desde su agarre, mientras el resto de cada fila sigue siendo clicable](/pyzed/media/dnd/handles.webp)
+
+Un asa es la parte de un elemento que empieza el arrastre: los seis puntos de una fila, la barra
+de título de una ventana o de un nodo. El resto del elemento funciona como siempre: botones,
+campos, enlaces y selección de texto.
+
+```python
+def fila(self, campo):
+    return pz.row([
+        pz.drag_handle(pz.icon("grip-vertical")),   # se arrastra desde aquí
+        ui.input(campo["etiqueta"], lambda v: self.renombrar(campo, v)),
+        ui.button("Borrar", lambda: self.quitar(campo)),
+    ], spacing=8)
+
+pz.sortable(items=self.campos, item=self.fila, id="formulario", handle=True, on_reorder=self.reordenar)
+```
+
+- `handle=True` en un [`pz.draggable`](/pyzed/es/dnd/basics/draggable/) o un
+  [`pz.sortable`](/pyzed/es/dnd/basics/sortable/) hace que empiece solo desde un `pz.drag_handle`
+  dentro de cada elemento.
+- `pz.drag_handle(content, cursor="grab")` muestra el `cursor` al pasar por encima (`"grab"`,
+  `"move"`, `"pointer"`...).
+
+Sin asas, las pulsaciones en botones y campos de un elemento son suyas y no empiezan un
+arrastre. `from_children=True` lo cambia.
+
+## Otros límites
+
+Las opciones del draggable limitan cómo se mueve un elemento:
+
+```python
+pz.draggable(tirador, "tirador", axis="x", bounds="parent")   # el tirador de un deslizador
+pz.draggable(clip, clip.id, axis="x", grid=24)                 # un clip de una línea de tiempo, a saltos
+pz.sortable(..., direction="horizontal", lock_axis=True)        # pestañas: solo a los lados, dentro de la barra
+pz.sortable(..., delay=250)                                      # pulsación larga: la lista aún se desplaza con el dedo
+```

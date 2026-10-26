@@ -1,0 +1,59 @@
+---
+title: Editor de nodos
+description: Crea un editor de nodos en Python con Pyzed — nodos que se mueven por su título, puertos con tipo, cables arrastrados de salidas a entradas y enlaces dibujados como curvas.
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Nodos movidos por su título y un cable conectado desde una salida a una entrada del mismo color](/pyzed/media/dnd/node-editor.webp)
+
+Un editor de nodos como el [grafo de shaders](/pyzed/es/shading/shader-designer/) o el de
+Blender:
+[`examples/dnd/node_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/node_editor.py).
+
+```bash
+python examples/dnd/node_editor.py
+```
+
+<Aside type="note" title="Qué vas a aprender">
+Dos tipos de arrastre en una vista (nodos y cables), puertos con tipo mediante `accepts`, reglas
+con `can_drop` y dibujar enlaces a partir de tus datos.
+</Aside>
+
+<Steps>
+
+1. **Los nodos son draggables en un lienzo** y se mueven por su título (`handle=True` y un
+   `pz.drag_handle` alrededor del título). El lienzo es un droppable que acepta `"node"`, con una
+   cuadrícula de 10 píxeles:
+
+   ```python
+   title = pz.drag_handle(pz.container(ui.label(n["title"], weight="bold"), padding=(6, 10)))
+   node = pz.draggable(body, key, type="node", handle=True, source="hide", lift=1.0, drop_animation=0)
+   graph = pz.droppable(pz.stack([self.wires(), *nodes]), "graph", accepts="node", snap=10,
+                        on_drop=self.move_node)
+   ```
+
+2. **Las salidas arrastran cables.** Un puerto de salida es un draggable con `preview="wire"`,
+   con el tipo de lo que lleva:
+
+   ```python
+   pz.draggable(self.dot(kind), f"out/{node}/{name}", data=(node, name), type=f"port:{kind}",
+                preview="wire", wire_color=TYPE_COLORS[kind])
+   ```
+
+3. **Las entradas aceptan cables compatibles.** Una entrada acepta su propio tipo y `can_drop`
+   prohíbe cables desde el mismo nodo:
+
+   ```python
+   pz.droppable(self.dot(kind), f"in/{node}/{name}", accepts=f"port:{kind}",
+                can_drop=lambda e, n=node: e.data[0] != n, on_drop=self.connect)
+   ```
+
+4. **Los enlaces son datos.** `connect` guarda el enlace (uno por entrada) y `wires()` dibuja
+   cada enlace como una curva con `pz.canvas`, a partir de las posiciones de los puertos.
+
+</Steps>
+
+Un clic derecho en una entrada la desconecta.

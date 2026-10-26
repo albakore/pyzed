@@ -46,6 +46,9 @@ What to do for each kind of request:
 - "Animate it": one widget uses .animate() / .transition() (cookbook); several widgets or app state on one
   timeline (intros, cutscenes, HUD reactions) use pz.Clip + pz.AnimationPlayer (get_guide("timeline")), saved as
   .pzanim libraries with new_animation / check_animation.
+- "Drag and drop" (Kanban, reorderable lists, builders, canvases, node wires): pz.sortable, pz.draggable,
+  pz.droppable and pz.drag_handle with pz.dnd.move / pz.dnd.reorder in the handler (get_guide("dnd"), cookbook
+  "Drag and drop"); never build it from mouse_area events.
 - "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
 
 Knowledge: get_guide("overview"), "best-practices", "design" (UI/UX), "app-architecture" and "cookbook"

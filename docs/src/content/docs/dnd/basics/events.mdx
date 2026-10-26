@@ -1,0 +1,64 @@
+---
+title: Events
+description: The DragEvent of Pyzed drag and drop — every field (source, data, target, index, combine, coordinates, modifiers) and the move and reorder helpers that apply a drop.
+sidebar:
+  order: 5
+---
+
+Every drag and drop handler receives a `pz.DragEvent` (or nothing, if the function takes no
+argument). Handlers run when something important happens (start, enter, a new landing place,
+leave, drop, end), never every frame.
+
+## The event
+
+| Field | What it is |
+| --- | --- |
+| `type` | `"start"`, `"move"`, `"enter"`, `"over"`, `"leave"`, `"drop"`, `"end"` or `"cancel"` (`"check"` in `can_drop`). |
+| `source` | The id of the dragged item (a sortable item's key). |
+| `data` | Its `data` (`event.item` is the same). |
+| `types` | Its types (a sortable item's are the list's `group`). |
+| `from_list`, `from_index` | The sortable it came from and its index there (`None` for a lone draggable). |
+| `copy` | `True` when it is a copy: the list copies (`pull="clone"`) or <kbd>Alt</kbd> is held. |
+| `target` | The id of the target under it (`None`: none). |
+| `index` | The landing index in a sortable (counted in the final list). |
+| `combine` | The key of the item it was dropped onto (`combine=True`), or `None`. |
+| `x`, `y` | The pointer, relative to the target (`event.position`). |
+| `item_x`, `item_y` | Where the item's top-left lands in the target, snapped (`event.item_position`). |
+| `window_x`, `window_y` | The pointer in the window. |
+| `dx`, `dy` | How far it moved since the drag started. |
+| `width`, `height` | The item's size. |
+| `shift`, `ctrl`, `alt`, `logo` | The modifier keys held. |
+| `dropped` | In `on_drag_end`: whether a target took it (the type is then `"end"`; `"cancel"` otherwise). |
+| `within` | `True` when it stays in its own list. |
+
+## Applying a drop
+
+Python keeps your data; the event says what changed. Two helpers apply it:
+
+```python
+pz.dnd.reorder(items, e.from_index, e.index)   # within one list
+pz.dnd.move(lists, e)                          # between lists, by id
+```
+
+`pz.dnd.move(lists, event, make=None)` takes a dict that maps each sortable's id to its list
+(or the one list of a single sortable). The item leaves `lists[event.from_list]` and goes into
+`lists[event.target]` at `event.index`. Copies (`pull="clone"`) and lone draggables are made
+with `make(event.data)` when given, otherwise a deep copy. It returns the item that landed.
+
+```python
+def on_reorder(self, e):
+    if e.from_list == "palette":
+        self.fields.insert(e.index, new_field(e.data))   # a template becomes a new field
+    else:
+        pz.dnd.move({"form": self.fields}, e)
+```
+
+Drops with `event.combine` are not moved by `pz.dnd.move` (it returns `None`): decide what
+merging means for your app.
+
+## The drag in progress
+
+```python
+pz.dnd.current()   # the drag right now, as an event, or None
+pz.dnd.cancel()    # cancel it, as Esc does
+```

@@ -1,0 +1,58 @@
+---
+title: Node editor
+description: Build a node editor in Python with Pyzed — nodes moved by their title, typed ports, wires dragged from outputs to inputs and links drawn as curves.
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Nodes moved by their title and a wire connected from an output to an input of the same color](/pyzed/media/dnd/node-editor.webp)
+
+A node editor like the [shader graph](/pyzed/shading/shader-designer/) or Blender's:
+[`examples/dnd/node_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/node_editor.py).
+
+```bash
+python examples/dnd/node_editor.py
+```
+
+<Aside type="note" title="What you will learn">
+Two kinds of drag in one view (nodes and wires), typed ports with `accepts`, rules with
+`can_drop`, and drawing links from your data.
+</Aside>
+
+<Steps>
+
+1. **Nodes are draggables on a canvas,** moved by their title (`handle=True` and a
+   `pz.drag_handle` around the title). The canvas is a droppable that accepts `"node"`, with a
+   10-pixel grid:
+
+   ```python
+   title = pz.drag_handle(pz.container(ui.label(n["title"], weight="bold"), padding=(6, 10)))
+   node = pz.draggable(body, key, type="node", handle=True, source="hide", lift=1.0, drop_animation=0)
+   graph = pz.droppable(pz.stack([self.wires(), *nodes]), "graph", accepts="node", snap=10,
+                        on_drop=self.move_node)
+   ```
+
+2. **Outputs drag wires.** An output port is a draggable with `preview="wire"`, typed by what it
+   carries:
+
+   ```python
+   pz.draggable(self.dot(kind), f"out/{node}/{name}", data=(node, name), type=f"port:{kind}",
+                preview="wire", wire_color=TYPE_COLORS[kind])
+   ```
+
+3. **Inputs take matching wires.** An input accepts its own type, and `can_drop` forbids wires
+   from the same node:
+
+   ```python
+   pz.droppable(self.dot(kind), f"in/{node}/{name}", accepts=f"port:{kind}",
+                can_drop=lambda e, n=node: e.data[0] != n, on_drop=self.connect)
+   ```
+
+4. **Links are data.** `connect` stores the link (one per input) and `wires()` draws every link
+   as a curve with `pz.canvas`, from the port positions.
+
+</Steps>
+
+Right-clicking an input unplugs it.

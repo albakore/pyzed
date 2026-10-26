@@ -1,0 +1,71 @@
+---
+title: Previews and animations
+description: How drag and drop looks in Pyzed — lifted previews with shadows, ghosts and placeholders, custom previews, the drop and cancel flights and the list animations.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![The same list with a shadow placeholder, a ghost placeholder and a custom preview](/pyzed/media/dnd/previews.webp)
+
+Everything you see during a drag is drawn natively, at the screen's frame rate, without
+calling Python.
+
+## The preview
+
+The preview is what follows the pointer. By default it is a copy of the item, **lifted**: a bit
+bigger (`lift=1.03`) with a soft `shadow`. It keeps the place where you grabbed it, so it
+doesn't jump under the pointer.
+
+```python
+pz.draggable(card, "c1", lift=1.06, shadow="#00000080", opacity=0.9)
+pz.draggable(card, "c1", lift=1.0, shadow=False)              # flat, like a design tool
+pz.draggable(card, "c1", preview=ui.badge("1 file"))           # anything else
+pz.draggable(dot, "out", preview="wire")                       # a cable (node editors)
+pz.sortable(..., preview="none")                               # the items move, no preview
+```
+
+## The source
+
+The original item, while its preview moves:
+
+| `source=` | Effect | Used for |
+| --- | --- | --- |
+| `"ghost"` | Faded to `source_opacity` (0.35). | Draggables, by default. |
+| `"hide"` | Hidden: the item itself seems to move. | Sortables, by default; canvases. |
+| `"keep"` | As it was. | Palettes, wires. |
+
+In a sortable the other items close the slot of the dragged one, so `source="ghost"` shows its faded
+copy at the landing place instead (the same as `placeholder="ghost"`).
+
+## The placeholder
+
+Where the item will land: `placeholder="shadow"` (a tinted box), `"ghost"` (a translucent copy
+at `ghost_opacity`) or `"none"`. Sortables show a shadow by default and droppables nothing.
+`placeholder_style` changes the look of the shadow:
+
+```python
+pz.sortable(..., placeholder="shadow",
+            placeholder_style={"background": "#98c37922", "border_color": "#98c379", "radius": 10})
+```
+
+## Highlights
+
+Targets light up while a drag they take is over them (`over_style`) or anywhere
+(`active_style`). See [droppable](/pyzed/dnd/basics/droppable/#how-it-looks).
+
+## Animations
+
+- **Making room**: in a sortable, the other items slide aside to open a gap, smoothly.
+- **Reordering**: when the order of a sortable changes, from a drop or from your code
+  (sorting by name, a new item), the items glide to their new places in `animation`
+  milliseconds (200; `0` turns it off).
+- **Dropping**: the preview flies to its landing place in `drop_animation` milliseconds (180),
+  then the item appears there.
+- **Cancelling**: <kbd>Esc</kbd>, or a drop outside any target, flies the preview back home.
+
+<Aside type="tip" title="Reduced motion">
+`drop_animation=0` and `animation=0` turn off the flights and the glides: useful for the
+"reduce motion" setting of your app.
+</Aside>

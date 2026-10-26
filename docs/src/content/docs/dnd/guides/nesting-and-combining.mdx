@@ -1,0 +1,53 @@
+---
+title: Nesting and combining
+description: Nested sortable lists in Pyzed (columns inside a page, groups inside groups) and combining items by dropping one onto another, like files onto a folder.
+sidebar:
+  order: 4
+---
+
+![A file dropped onto a folder: the folder lights up and the file goes into it](/pyzed/media/dnd/combine.webp)
+
+## Lists inside lists
+
+Sortables can contain sortables: a page with sections, a section with columns, a column with
+blocks. Give every list a unique `id` and the same `group`. The deepest list under the pointer
+takes the drop:
+
+```python
+def lists(self):
+    found = {"page": self.page}
+    for block in self.page:
+        if block["kind"] == "columns":
+            found[block["id"] + ":left"] = block["left"]
+            found[block["id"] + ":right"] = block["right"]
+    return found
+
+def drop(self, e):
+    pz.dnd.move(self.lists(), e)
+```
+
+While an item is dragged, the lists inside it don't take drops: a block can't be dropped into
+itself. Add a `can_drop` for other rules ("columns don't go into columns"). The
+[page builder tutorial](/pyzed/dnd/tutorials/page-builder/) shows it all.
+
+## Combining items
+
+`combine=True` lets an item be dropped **onto** another one. Each item gets a middle band: over
+it, the target item lights up and the gap stays where it was. The drop event's `combine` is
+the key of that item (otherwise `None`):
+
+```python
+def drop(self, e):
+    if e.combine is None:
+        pz.dnd.move(self.files, e)                 # a normal reorder
+        return
+    folder = next(f for f in self.files if f["id"] == e.combine)
+    if "children" in folder:
+        folder["children"].append(self.files.pop(e.from_index))
+
+pz.sortable(items=self.files, item=self.file_row, id="files", combine=True, on_reorder=self.drop)
+```
+
+That covers files into folders, merging two cards, grouping layers or stacking apps on a home
+screen. [`examples/dnd/sortables.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/sortables.py)
+has the folder list.

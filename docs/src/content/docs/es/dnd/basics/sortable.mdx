@@ -1,0 +1,140 @@
+---
+title: Listas ordenables
+description: Listas, filas y cuadrículas ordenables en Python con Pyzed — reordena arrastrando, mueve elementos entre listas y copia desde una paleta, con huecos animados y sombras de destino.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Una lista, una fila de pestañas, una cuadrícula de fotos y una lista de archivos reordenándose al arrastrar](/pyzed/media/dnd/sortables.webp)
+
+`pz.sortable` es una lista cuyos elementos reordenas arrastrando. Es el bloque detrás de las
+listas de tareas, las columnas de un Kanban, las listas de reproducción, las pestañas, las
+galerías de fotos, los paneles de capas y las paletas de los creadores de formularios. Cumple
+el papel de SortableJS o react-beautiful-dnd.
+
+<Aside type="note" title="En pocas palabras">
+Tú guardas la lista en Python. El sortable la muestra, deja que el usuario arrastre los
+elementos y te dice adónde fue cada uno. Cambias tu lista y la vista la sigue.
+</Aside>
+
+## Una lista en tres líneas
+
+```python
+pz.sortable(
+    items=self.tareas,                          # tu lista
+    item=lambda tarea: ui.card(ui.label(tarea)),  # cómo se ve un elemento
+    key=str,                                    # un nombre estable por elemento
+    id="tareas",
+    on_reorder=lambda e: pz.dnd.move(self.tareas, e),
+)
+```
+
+- `items` es tu lista e `item(x)` dibuja una entrada.
+- `key(x)` da nombre a cada entrada. Las claves deben ser únicas y no cambiar cuando cambia el
+  orden: así sabe el sortable qué elemento se movió y conserva la animación de cada uno. Por
+  defecto la clave es el `id` del elemento (el `"id"` de un dict o un atributo `id`), o el
+  propio elemento.
+- `on_reorder(event)` se llama al soltar. `event.from_index` es dónde estaba el elemento y
+  `event.index` adónde va, los dos contados en la lista final, así que
+  [`pz.dnd.reorder(items, e.from_index, e.index)`](/pyzed/es/dnd/basics/events/#aplicar-una-suelta)
+  o `pz.dnd.move(items, e)` lo aplican.
+
+También puedes pasar widgets ya hechos con sus claves:
+
+```python
+pz.sortable([fila(t) for t in self.tareas], "tareas", keys=[t.id for t in self.tareas],
+            data=self.tareas, on_reorder=self.reordenar)
+```
+
+`data` es lo que las funciones reciben como `event.data` para cada elemento (con `items=`, el
+propio elemento).
+
+## Mientras arrastras
+
+El elemento arrastrado se levanta con una sombra y sigue al puntero (`source="hide"`: parece que
+se mueve el propio elemento). Los demás se apartan para abrir un hueco y un **marcador** muestra
+dónde caerá:
+
+| `placeholder=` | Qué muestra |
+| --- | --- |
+| `"shadow"` (por defecto) | Una caja teñida del tamaño del elemento, en el color de acento. |
+| `"ghost"` | Una copia translúcida del elemento (`ghost_opacity`). |
+| `"none"` | Solo el hueco. |
+
+Cuando cambia el orden, por una suelta o desde tu código, los elementos se deslizan a su sitio
+nuevo en `animation` milisegundos (200 por defecto; `0` lo desactiva). Las listas que solo
+quieren ese deslizamiento, sin arrastrar, usan `draggable=False`.
+
+## Direcciones y diseño
+
+```python
+pz.sortable(..., direction="horizontal", spacing=4)   # una fila: pestañas, una barra
+pz.sortable(..., direction="wrap", spacing=8)         # filas que saltan: una cuadrícula de tarjetas
+```
+
+`direction` es `"vertical"` (por defecto), `"horizontal"` o `"wrap"`. La lista acepta `spacing`
+entre elementos (y `line_spacing` entre las filas de un wrap), `width`, `height`, `padding` y
+`align` (`"start"`, `"center"` o `"end"` a lo ancho de la lista), como un
+[`pz.column`](/pyzed/es/reference/widgets/).
+
+## Entre listas
+
+Las listas con el mismo `group` intercambian elementos. El evento te dice los dos extremos:
+
+```python
+def mover(self, e):
+    # e.from_list / e.from_index: de dónde viene · e.target / e.index: adónde va
+    pz.dnd.move(self.columnas, e)   # self.columnas = {"pendiente": [...], "haciendo": [...], "hecho": [...]}
+
+pz.row([pz.sortable(items=self.columnas[nombre], item=self.tarjeta, id=nombre, group="tarjetas",
+                    on_reorder=self.mover) for nombre in self.columnas])
+```
+
+La lista que recibe el elemento llama a su `on_reorder`. Mira el
+[tutorial del Kanban](/pyzed/es/dnd/tutorials/kanban/) para un tablero completo.
+
+| Opción | Efecto |
+| --- | --- |
+| `pull=False` | Los elementos no pueden salir de la lista. |
+| `pull="clone"` | Los elementos se copian y se quedan (una paleta); `event.copy` es `True`. |
+| `put=False` | No recibe nada de otras listas. |
+| `sort=False` | No se reordena por dentro (una paleta, un menú fijo). |
+| `max_items=5` | No recibe más cuando tiene 5. |
+| `locked=["entrada"]` | Esas claves no se pueden arrastrar (sí se apartan). |
+| `accepts="herramienta"` | Recibe también [`pz.draggable`](/pyzed/es/dnd/basics/draggable/)s de ese tipo. |
+| `can_drop=fn` | Tu propia regla. Mira [condiciones](/pyzed/es/dnd/guides/conditions/). |
+
+## Elementos
+
+El sortable hace arrastrable a cada hijo con las mismas opciones que
+[`pz.draggable`](/pyzed/es/dnd/basics/draggable/): `handle=True` (arrastrar solo desde un
+[`pz.drag_handle`](/pyzed/es/dnd/basics/handles/)), `lock_axis=True` (quedarse en el eje de la
+lista y dentro de ella, como las pestañas de un navegador), `source`, `preview`, `lift`,
+`shadow`, `opacity`, `radius`, `threshold`, `delay` y `drop_animation`.
+
+`combine=True` deja soltar un elemento **sobre** otro (en su centro): archivos sobre una carpeta,
+una tarea sobre otra para agruparlas. Mira [anidar y combinar](/pyzed/es/dnd/guides/nesting-and-combining/).
+
+`keyboard=True` deja mover el elemento con foco con <kbd>Alt</kbd>+flechas. Mira
+[teclado y pantallas táctiles](/pyzed/es/dnd/guides/keyboard-and-touch/).
+
+## Eventos
+
+| Evento | Cuándo |
+| --- | --- |
+| `on_reorder(event)` | Se soltó un elemento en la lista (`on_drop` es un sinónimo). |
+| `on_enter(event)` | Un arrastre que la lista acepta entró en ella. |
+| `on_over(event)` | Cambió el índice de destino (`event.index`, `event.combine`). |
+| `on_leave(event)` | El arrastre salió de la lista. |
+| `on_drag_start(event)` | Uno de sus elementos empezó a moverse. |
+| `on_drag_end(event)` | Uno de sus elementos se soltó (en cualquier sitio) o se canceló el arrastre. |
+
+La [página de eventos](/pyzed/es/dnd/basics/events/) lista todos los campos del evento.
+
+## Ejemplo completo
+
+[`examples/dnd/sortables.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/sortables.py)
+tiene una lista que se reordena con el teclado, pestañas fijas a su eje, una cuadrícula que
+salta de fila y archivos que agrupas soltándolos sobre una carpeta.

@@ -1,0 +1,45 @@
+---
+title: Wires
+description: Connect nodes with wires in Pyzed — drag a curve from an output port to a compatible input, with typed ports, rules and the links drawn on a canvas.
+sidebar:
+  order: 5
+---
+
+![A wire dragged from a node's output to the input of another node](/pyzed/media/dnd/wires.webp)
+
+`preview="wire"` turns a draggable into the end of a cable: dragging it draws a curve from
+where it started to the pointer, like the shader graph, Blender's nodes or Unreal Blueprints.
+The ports are a draggable (outputs) and droppables (inputs) with the same type:
+
+```python
+out = pz.draggable(dot("float"), "out/noise/value", data=("noise", "value"), type="port:float",
+                   preview="wire", wire_color="#e5c07b", wire_width=2.5)
+
+inp = pz.droppable(dot("float"), "in/ramp/t", accepts="port:float",
+                   can_drop=lambda e: e.data[0] != "ramp",    # not from the same node
+                   on_drop=self.connect)
+```
+
+- The **type** of the port (`"port:float"`, `"port:color"`) decides what connects: a color
+  output can't go into a number input.
+- `can_drop` adds rules: no loops, one wire per input, compatible units.
+- The draggable keeps its look (`source="keep"` is the default for wires).
+
+## Drawing the links
+
+The wire only exists while dragging. The links you keep are your data, drawn with a
+[`pz.canvas`](/pyzed/reference/draw/) under the nodes:
+
+```python
+def wires(self):
+    shapes = []
+    for a, b in self.links:
+        (x1, y1), (x2, y2) = self.port_position(a), self.port_position(b)
+        bend = max(abs(x2 - x1) / 2, 40)
+        shapes.append(draw.path([("M", x1, y1), ("C", x1 + bend, y1, x2 - bend, y2, x2, y2)],
+                                stroke="#e5c07b", width=2.5))
+    return pz.canvas(shapes, width="fill", height="fill")
+```
+
+The [node editor tutorial](/pyzed/dnd/tutorials/node-editor/) puts it together with movable
+nodes. Audio apps have a ready-made one: the [rack and its cables](/pyzed/audio/rack/cables/).

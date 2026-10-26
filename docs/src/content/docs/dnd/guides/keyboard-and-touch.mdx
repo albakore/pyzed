@@ -1,0 +1,43 @@
+---
+title: Keyboard and touch
+description: Accessible drag and drop in Pyzed — reorder sortable lists with the keyboard, long press for touch screens, and cancelling with Escape.
+sidebar:
+  order: 6
+---
+
+## Keyboard
+
+`keyboard=True` makes each item of a sortable focusable (<kbd>Tab</kbd> reaches it) and lets it
+move without a mouse:
+
+- <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> move the focused item one place
+  (<kbd>←</kbd> / <kbd>→</kbd> in a horizontal list).
+- <kbd>Space</kbd> picks the item up; then the arrows move it, and <kbd>Space</kbd> again (or
+  <kbd>Esc</kbd>) puts it down.
+
+Every move calls `on_reorder` with the same event as a drag, so the same handler works:
+
+```python
+pz.sortable(items=self.tasks, item=self.task, key=str, id="tasks", keyboard=True,
+            on_reorder=lambda e: pz.dnd.move(self.tasks, e))
+```
+
+During any drag, <kbd>Esc</kbd> cancels it and the item flies back home.
+
+## Touch screens and lists that scroll
+
+On touch screens a swipe should scroll the list, not drag an item. `delay=` asks for a long
+press (in milliseconds) before a drag starts:
+
+```python
+pz.sortable(..., delay=250)
+pz.draggable(photo, p.id, delay=300)
+```
+
+A higher `threshold` (in pixels) also helps with shaky hands or pens.
+
+## Scrolling while dragging
+
+Lists inside a [`pz.scrollable`](/pyzed/reference/widgets/) scroll by themselves when you drag an
+item near their top or bottom (left or right) edge, faster the closer you get, so you can move
+an item to a place that is not on screen.

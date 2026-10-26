@@ -1,0 +1,75 @@
+---
+title: Form builder
+description: Build a form builder in Python with Pyzed — drag fields from a palette into a form, reorder them by a handle, edit the selected one and see the form live.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Fields dragged from a palette into a form, reordered by their handle, with the form previewed live](/pyzed/media/dnd/form-builder.webp)
+
+A form builder like Typeform's or Google Forms':
+[`examples/dnd/form_builder.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/form_builder.py).
+
+```bash
+python examples/dnd/form_builder.py
+```
+
+<Aside type="note" title="What you will learn">
+Palettes that copy their items (`pull="clone"`), turning a template into a new item on drop,
+handles, and a trash can that only takes some items.
+</Aside>
+
+<Steps>
+
+1. **The palette copies.** Its items are the kinds of field. `pull="clone"` leaves them in the
+   palette when dragged out and `sort=False` keeps its order fixed:
+
+   ```python
+   palette = pz.sortable(items=list(KINDS), item=self.palette_item, key=lambda k: f"palette-{k}",
+                         id="palette", group="fields", pull="clone", sort=False, placeholder="none")
+   ```
+
+2. **The form takes them.** Same `group`, so palette items can be dropped in it. `handle=True`
+   drags its fields only by their grip, so clicking a field selects it:
+
+   ```python
+   form = pz.sortable(items=self.fields, item=self.editor_item, id="form", group="fields",
+                      handle=True, spacing=8, padding=12, height="fill", on_reorder=self.drop)
+   ```
+
+3. **A template becomes a field.** A drop from the palette carries the kind of field
+   (`event.data`, `"email"`); the handler makes a new field at `event.index`. A drop from the
+   form itself is a reorder:
+
+   ```python
+   def drop(self, event):
+       if event.from_list == "palette":
+           field = new_field(event.data)
+           self.fields.insert(event.index, field)
+           self.selected = field["id"]
+       else:
+           pz.dnd.move(self.fields, event)
+   ```
+
+   `pz.dnd.move(self.fields, event, make=new_field)` would do both in one line.
+
+4. **Only form fields go to the trash.** The trash accepts the group and rules out palette
+   items:
+
+   ```python
+   trash = pz.droppable(bin_, "trash", accepts="fields", can_drop=lambda e: e.from_list == "form",
+                        on_drop=self.remove)
+   ```
+
+5. **Edit and preview.** Clicking a field selects it; the inspector edits its label, hint and
+   whether it is required, and the preview draws the real form from the same list.
+
+</Steps>
+
+## Ideas to go further
+
+- Sections: a field of kind `"section"` with a list of its own (see
+  [nesting](/pyzed/dnd/guides/nesting-and-combining/)).
+- Save `self.fields` as JSON and draw the same form in another app with `preview_field`.

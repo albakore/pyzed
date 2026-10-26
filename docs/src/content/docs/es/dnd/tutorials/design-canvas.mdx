@@ -1,0 +1,66 @@
+---
+title: Lienzo de diseño
+description: Crea un lienzo de diseño al estilo de Figma en Python con Pyzed — formas que se mueven libremente con cuadrícula y guías inteligentes, formas nuevas desde una barra y un panel de capas.
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Formas alineadas con guías rosas en un lienzo, una forma nueva soltada desde la barra y una capa reordenada](/pyzed/media/dnd/design-canvas.webp)
+
+Un lienzo como el de Figma o Canva:
+[`examples/dnd/design_canvas.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/design_canvas.py).
+
+```bash
+python examples/dnd/design_canvas.py
+```
+
+<Aside type="note" title="Qué vas a aprender">
+Posiciones libres, imán y guías de alineación, crear elementos donde se sueltan y una lista de
+capas que es el orden de dibujo.
+</Aside>
+
+<Steps>
+
+1. **Formas con posición.** Cada forma es un dict con `x`, `y`, `w` y `h`. La lista de capas es
+   también el orden de dibujo: la primera queda encima.
+
+2. **El lienzo es un droppable.** Una pila de draggables colocados con `pz.pin`, dentro de un
+   droppable que ajusta y dibuja guías:
+
+   ```python
+   canvas = pz.droppable(
+       pz.stack([pz.space(width="fill", height="fill"), *[self.placed(s) for s in reversed(self.layers)]]),
+       "canvas", accepts="shape", snap=self.grid or None, guides=self.guides, over_style=False,
+       on_drop=self.drop)
+   ```
+
+3. **Las formas se mueven solas.** `source="hide"` oculta el original y `lift=1.0`,
+   `shadow=False` y `drop_animation=0` hacen que la vista previa parezca la propia forma:
+
+   ```python
+   piece = pz.draggable(self.body(s), s["id"], type="shape", source="hide", lift=1.0, shadow=False,
+                        drop_animation=0)
+   return pz.pin(piece, x=s["x"], y=s["y"])
+   ```
+
+4. **Soltar donde cae.** El `item_x` y el `item_y` del evento ya vienen ajustados y alineados:
+
+   ```python
+   def drop(self, event):
+       if event.source.startswith("new-"):
+           item = shape(event.data, event.item_x, event.item_y)   # desde la barra
+           self.layers.insert(0, item)
+       else:
+           item = next(s for s in self.layers if s["id"] == event.source)
+           item["x"], item["y"] = event.item_x, event.item_y
+   ```
+
+5. **La barra.** Cada herramienta es un draggable que se queda (`source="keep"`) y lleva el tipo
+   de forma en `data`.
+
+6. **Capas.** Un sortable de la misma lista con `lock_axis=True`: reordenar una capa cambia lo
+   que se dibuja encima.
+
+</Steps>

@@ -1,0 +1,43 @@
+---
+title: Handles
+description: Drag handles in Pyzed — start a drag only from the grip of a row or the title of a node, so the rest of the item keeps its clicks, inputs and text selection.
+sidebar:
+  order: 4
+---
+
+![Rows dragged only by their grip, while the rest of each row stays clickable](/pyzed/media/dnd/handles.webp)
+
+A handle is the part of an item that starts the drag: the six dots of a row, the title bar of
+a window or of a node. The rest of the item keeps working as usual: buttons, inputs, links and
+text selection.
+
+```python
+def row(self, field):
+    return pz.row([
+        pz.drag_handle(pz.icon("grip-vertical")),   # drag from here
+        ui.input(field["label"], lambda v: self.rename(field, v)),
+        ui.button("Delete", lambda: self.remove(field)),
+    ], spacing=8)
+
+pz.sortable(items=self.fields, item=self.row, id="form", handle=True, on_reorder=self.reorder)
+```
+
+- `handle=True` on a [`pz.draggable`](/pyzed/dnd/basics/draggable/) or a
+  [`pz.sortable`](/pyzed/dnd/basics/sortable/) makes it start only from a `pz.drag_handle`
+  inside each item.
+- `pz.drag_handle(content, cursor="grab")` shows the `cursor` when hovered (`"grab"`,
+  `"move"`, `"pointer"`...).
+
+Without handles, presses on buttons and inputs inside an item are theirs and don't start a
+drag. `from_children=True` changes that.
+
+## Other limits
+
+The draggable options limit how an item moves:
+
+```python
+pz.draggable(thumb, "thumb", axis="x", bounds="parent")   # a slider's thumb
+pz.draggable(clip, clip.id, axis="x", grid=24)             # a timeline clip, in steps
+pz.sortable(..., direction="horizontal", lock_axis=True)    # tabs: sideways only, inside the bar
+pz.sortable(..., delay=250)                                  # long press: the list can still scroll by touch
+```

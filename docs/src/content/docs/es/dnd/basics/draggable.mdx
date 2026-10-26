@@ -1,0 +1,78 @@
+---
+title: Draggable
+description: Haz arrastrable cualquier widget de Pyzed — datos, tipos, vistas previas, elevación y sombra, ejes fijos, límites, cuadrículas, pulsación larga y eventos de arrastre en Python.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Una forma arrastrada desde una barra de herramientas a un lienzo y una tarjeta soltada en una papelera](/pyzed/media/dnd/draggable.webp)
+
+`pz.draggable(content, id)` deja que el puntero agarre `content` y lo suelte en un
+[`pz.droppable`](/pyzed/es/dnd/basics/droppable/) o un [`pz.sortable`](/pyzed/es/dnd/basics/sortable/)
+que lo acepte.
+
+```python
+pz.draggable(
+    ui.card(ui.label("Informe.pdf")),
+    "archivo-7",              # único en la ventana
+    data={"id": 7, "nombre": "Informe.pdf"},
+    type="archivo",           # lo que los destinos comparan con accepts=
+)
+```
+
+- `id` le da nombre. Los destinos lo reciben como `event.source`.
+- `data` es lo que quieras que el destino reciba como `event.data`: un id, un dict, un objeto.
+- `type` (un nombre o una lista de nombres) es lo que los destinos aceptan. Los elementos de un
+  sortable llevan como tipo el `group` de la lista.
+
+<Aside type="note" title="En pocas palabras">
+Una pulsación que se mueve más de `threshold` píxeles (4) se convierte en arrastre. Una más
+corta es un clic normal, así que una tarjeta arrastrable puede tener `.on(click=...)`.
+</Aside>
+
+## Cómo se ve al arrastrarlo
+
+| Opción | Por defecto | Efecto |
+| --- | --- | --- |
+| `preview` | una copia | Lo que sigue al puntero: otro widget, `"wire"` (una curva desde donde empezó, para [editores de nodos](/pyzed/es/dnd/guides/wires/)) o `"none"`. |
+| `lift` | `1.03` | Cuánto crece la vista previa, como si se levantara de la página. |
+| `shadow` | `True` | La sombra bajo la vista previa: `True`, un color o `False`. |
+| `opacity` | `1.0` | La opacidad de la vista previa. |
+| `radius` | `6` | El radio de las esquinas de su sombra. |
+| `source` | `"ghost"` | El original mientras tanto: `"ghost"` (atenuado a `source_opacity`), `"hide"` (parece que se mueve) o `"keep"`. |
+| `drop_animation` | `180` | Milisegundos que tarda la vista previa en volar a su sitio (o a casa si se cancela). |
+| `cursor` | `True` | Cursores de agarrar y de "no permitido" mientras arrastras. |
+
+Mira [vistas previas y animaciones](/pyzed/es/dnd/guides/previews-and-animations/) para ejemplos.
+
+## Límites
+
+| Opción | Efecto |
+| --- | --- |
+| `handle=True` | Empieza solo desde un [`pz.drag_handle`](/pyzed/es/dnd/basics/handles/) de dentro. |
+| `axis="x"` / `"y"` | Se mueve solo a los lados / arriba y abajo (deslizadores, líneas de tiempo). |
+| `bounds="parent"` | Se queda dentro del destino más cercano que lo rodea; `"window"` dentro de la ventana. |
+| `grid=10` / `(16, 8)` | Se mueve a saltos. |
+| `threshold=4` | Píxeles que se mueve el puntero antes de que una pulsación sea un arrastre. |
+| `delay=300` | Pide una pulsación larga de esos milisegundos (pantallas táctiles, listas que se desplazan). |
+| `from_children=True` | Empieza también desde botones y campos de dentro (por defecto se quedan sus pulsaciones). |
+| `disabled=True` | No se puede arrastrar. |
+
+## Eventos
+
+| Evento | Cuándo |
+| --- | --- |
+| `on_drag_start(event)` | Empezó el arrastre. |
+| `on_drag_move(event)` | El puntero se movió: `event.window_x`, `event.window_y`, `event.dx`, `event.dy`. |
+| `on_drag_end(event)` | Terminó: `event.dropped` dice si un destino lo aceptó y `event.target` cuál. |
+
+El movimiento en sí se dibuja de forma nativa: `on_drag_move` solo hace falta en apps que lo
+siguen en Python (una regla, una lectura en vivo). Las funciones pueden recibir el
+[evento](/pyzed/es/dnd/basics/events/) o nada.
+
+## Leer el arrastre desde cualquier sitio
+
+`pz.dnd.current()` devuelve el arrastre en curso como un evento (o `None`) y `pz.dnd.cancel()`
+lo cancela, como <kbd>Esc</kbd>.
