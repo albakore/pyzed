@@ -186,6 +186,12 @@ pub struct EditorState {
     pub(crate) sticky_height: Cell<f32>,
     /// The cursor was placed before the editor was laid out: scroll to it once it is.
     pub(crate) reveal: Cell<bool>,
+    /// A scroll for `EditorInput` to apply to the editor's scrollable on its next event (the
+    /// minimap's drag and a selection drag scroll without a message, so the app is not rebuilt).
+    pub(crate) scroll: Cell<Option<scrollable::AbsoluteOffset<Option<f32>>>>,
+    /// A selection drag moved the cursor in `EditorInput` without telling the app, which hears
+    /// of it when the mouse button goes up.
+    pub(crate) dragged: Cell<bool>,
 }
 
 impl EditorState {
@@ -209,6 +215,8 @@ impl EditorState {
             held: Cell::new(None),
             sticky_height: Cell::new(0.0),
             reveal: Cell::new(false),
+            scroll: Cell::new(None),
+            dragged: Cell::new(false),
         }
     }
 
@@ -1078,6 +1086,20 @@ impl EditorState {
         }
     }
 
+    /// The cursor where a selection drag left it, for `on_cursor`.
+    pub fn dragged(&self) -> Outcome {
+        let after = self.real_position(self.content.cursor().position);
+        Outcome {
+            edited: false,
+            cursor_moved: true,
+            cursor: (after.line, after.column),
+            text: String::new(),
+            scroll: Task::none(),
+            action: None,
+            clipboard: None,
+        }
+    }
+
     /// Scrolls the cursor's line to the middle of the view (a jump from elsewhere: go to definition).
     pub fn center_cursor(&self, id: &str) -> Task<Message> {
         let metrics = self.metrics.borrow();
@@ -1106,12 +1128,18 @@ impl EditorState {
 
     /// Scrolls just enough to reveal the cursor (like Zed's autoscroll).
     fn autoscroll(&self, id: &str) -> Task<Message> {
+        match self.autoscroll_offset() {
+            Some(offset) => iced::widget::operation::scroll_to(scroll_id(id), offset),
+            None => Task::none(),
+        }
+    }
+
+    /// The offset [`autoscroll`](Self::autoscroll) scrolls to, if the cursor is out of view.
+    pub(crate) fn autoscroll_offset(&self) -> Option<scrollable::AbsoluteOffset<Option<f32>>> {
         let metrics = self.metrics.borrow();
-        let Some(viewport) = self.viewport.get() else {
-            return Task::none();
-        };
+        let viewport = self.viewport.get()?;
         if !metrics.ready {
-            return Task::none();
+            return None;
         }
         let position = self.content.cursor().position;
         let lh = metrics.line_height;
@@ -1167,7 +1195,7 @@ impl EditorState {
             None
         };
         if x.is_none() && y.is_none() {
-            return Task::none();
+            return None;
         }
         let mut moved = viewport;
         if let Some(x) = x {
@@ -1177,7 +1205,7 @@ impl EditorState {
             moved.y = y;
         }
         self.viewport.set(Some(moved));
-        iced::widget::operation::scroll_to(scroll_id(id), scrollable::AbsoluteOffset { x, y })
+        Some(scrollable::AbsoluteOffset { x, y })
     }
 }
 
@@ -1606,7 +1634,6 @@ fn bracket_boxes(
 fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Element<'a, Message> {
     let lh = props.line_height;
     let line_count = state.content.line_count().max(1);
-    let cursor_line = state.content.cursor().position.line.min(line_count - 1);
     // The minimap sits left of the vertical scrollbar, so it reserves the bar's width too.
     let bar_width = if props.scrollbar { SCROLLBAR } else { 0.0 };
     let minimap_width = props.minimap.map_or(0.0, |m| m.width + bar_width);
@@ -2000,23 +2027,17 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     // The active line is highlighted with a band drawn underneath the text. The band is there (and
     // transparent) without `active_line` too: a stack takes the size of its first child, so it gives
     // the editor its size; without it the stack would shrink to nothing and the text would not show.
-    {
-        let band_color = props.active_line;
-        let top = PAD_Y + starts[cursor_line] as f32 * lh;
-        let rows = starts[cursor_line + 1] - starts[cursor_line];
-        let band = column![
-            Space::new().height(Length::Fixed(top)),
-            container(Space::new())
-                .width(Length::Fixed(editor_width))
-                .height(Length::Fixed(rows as f32 * lh))
-                .style(move |_| container::Style {
-                    background: band_color.map(Background::Color),
-                    ..Default::default()
-                }),
-        ]
-        .height(Length::Fixed(total_height));
-        layers.push(band.into());
-    }
+    // It follows the cursor when drawn: a selection drag moves it without building the editor again.
+    layers.push(
+        editor_widgets::ActiveLine {
+            state,
+            starts: starts.clone(),
+            line_height: lh,
+            size: Size::new(editor_width, total_height),
+            color: props.active_line,
+        }
+        .into(),
+    );
     let right = editor_width - PAD_RIGHT;
     {
         let mut measure = state.measure.borrow_mut();
@@ -2030,7 +2051,13 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             right,
         );
         // Always there, even empty, so the editor's widget state (its focus) keeps its place.
-        layers.push(Boxes { rects }.into());
+        layers.push(
+            Boxes {
+                rects,
+                unless_selecting: None,
+            }
+            .into(),
+        );
         if !props.indent_guides.is_empty() {
             layers.push(
                 editor_widgets::IndentGuides {
@@ -2197,7 +2224,13 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     if props.match_brackets {
         let rects = bracket_boxes(state, props, &lines, &starts, wrap_width, &mut measure);
         if !rects.is_empty() {
-            layers.push(Boxes { rects }.into());
+            layers.push(
+                Boxes {
+                    rects,
+                    unless_selecting: Some(state),
+                }
+                .into(),
+            );
         }
     }
 
@@ -2208,14 +2241,15 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         .or(props.text_color)
         .unwrap_or(Color::WHITE);
     let primary = state.content.cursor();
-    let mut carets = vec![(primary.position, primary.selection.is_some())];
-    carets.extend(
-        state
-            .extra
-            .iter()
-            .map(|c| (c.position, c.selection.is_some_and(|s| s != c.position))),
-    );
-    for (position, selecting) in carets {
+    let mut carets = vec![(primary.position, primary.selection.is_some(), true)];
+    carets.extend(state.extra.iter().map(|c| {
+        (
+            c.position,
+            c.selection.is_some_and(|s| s != c.position),
+            false,
+        )
+    }));
+    for (position, selecting, primary) in carets {
         let (cx, cy, under) = caret_position(state, props, &lines, &starts, wrap_width, position);
         let char_width = under
             .filter(|c| !c.is_whitespace())
@@ -2237,6 +2271,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 font: props.font,
                 size: props.size,
                 selecting,
+                primary,
             }
             .into(),
         );
@@ -2266,7 +2301,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         let gutter: Element<'a, Message> = crate::editor_widgets::LineNumbers {
             starts: starts.clone(),
             reals: reals.clone(),
-            cursor: cursor_line,
+            state,
             width: numbers_width,
             padding,
             line_height: lh,
@@ -2436,7 +2471,6 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         let height = (size.height - bar).max(0.0);
         let minimap = Minimap {
             state,
-            id: props.id.clone(),
             width: minimap.width,
             height,
             line_height: lh,
