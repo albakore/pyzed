@@ -24,7 +24,7 @@ from .. import __version__
 from ..project import prebuilt
 
 #: Categories in the order the gallery shows them.
-CATEGORIES = ("Apps", "Tutorial", "Audio", "Games", "Animation", "Styling", "Shading", "Showcase", "Blocks",
+CATEGORIES = ("Apps", "Tutorial", "Audio", "Drag and drop", "Games", "Animation", "Styling", "Shading", "Showcase", "Blocks",
               "Patterns", "AI", "Designer", "Integrations", "IoT")
 THUMBNAILS = "thumbnails"
 #: Where releases keep their sources (the examples come from the tag of this version).
@@ -130,6 +130,19 @@ CATALOG: Tuple[Sample, ...] = (
            "MIDI.", "Audio", "audio/midi_controller.py"),
     Sample("webcam", "Webcam", "The camera's live picture, a snapshot button and its frame rate.", "Audio",
            "audio/webcam.py"),
+    # -- drag and drop --
+    Sample("dnd_kanban", "Drag and drop board", "Cards dragged between columns like Trello, columns reordered by their "
+           "header and a trash can.", "Drag and drop", "dnd/kanban.py"),
+    Sample("dnd_form_builder", "Form builder", "Fields dragged from a palette into a form, reordered by a handle "
+           "and previewed live.", "Drag and drop", "dnd/form_builder.py"),
+    Sample("dnd_page_builder", "Page builder", "Blocks dropped from a library onto a page, with nested columns.",
+           "Drag and drop", "dnd/page_builder.py"),
+    Sample("dnd_design_canvas", "Design canvas", "Shapes moved freely with a grid and alignment guides, like "
+           "Figma, and a layers panel.", "Drag and drop", "dnd/design_canvas.py"),
+    Sample("dnd_node_editor", "Node editor", "Nodes moved by their title and wires dragged between typed ports.",
+           "Drag and drop", "dnd/node_editor.py"),
+    Sample("dnd_sortables", "Sortable lists", "A list reordered by mouse or keyboard, tabs, a photo grid and "
+           "files grouped into folders.", "Drag and drop", "dnd/sortables.py"),
     # -- games --
     Sample("snake", "Snake", "The classic in about 150 lines: a fixed-rate game loop, keys and a canvas.", "Games",
            "games/snake.py"),
