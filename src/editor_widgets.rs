@@ -11,6 +11,7 @@ use iced::advanced::text::{self as core_text, Renderer as _};
 use iced::advanced::widget::{self, Tree, Widget, tree};
 use iced::advanced::{Clipboard, Shell, input_method, mouse, overlay};
 use iced::widget::text::LineHeight;
+use iced::widget::text_editor;
 use iced::{
     Background, Border, Color, Element, Event, Font, Length, Pixels, Point, Rectangle, Size, Theme,
     Vector, keyboard, window,
@@ -64,6 +65,9 @@ pub struct Caret<'a> {
     pub size: f32,
     /// The cursor has a selection (it is hidden then, like iced's own).
     pub selecting: bool,
+    /// The text editor's own cursor: hidden as soon as it selects, since a selection drag moves
+    /// it without building the editor again.
+    pub primary: bool,
 }
 
 #[derive(Default)]
@@ -78,6 +82,7 @@ impl Caret<'_> {
         if !self.state.focused.get()
             || !state.window_focused.get()
             || self.selecting
+            || (self.primary && self.state.content.cursor().selection.is_some())
             || self.state.composing.get()
         {
             return false;
@@ -236,13 +241,14 @@ impl<'a> From<Caret<'a>> for Element<'a, Message> {
 
 /// The gutter's line numbers. Only the ones on screen are drawn: a long file has thousands, and
 /// one text with all of them was laid out again on every edit that adds or removes a line.
-pub struct LineNumbers {
+pub struct LineNumbers<'a> {
     /// The first row of each visible line, and one past the last (folds and wrapped lines).
     pub starts: Vec<u32>,
     /// The line (from 0) each visible line shows.
     pub reals: Vec<usize>,
-    /// The visible line with the cursor, drawn in `active`.
-    pub cursor: usize,
+    /// The number of the cursor's line is drawn in `active` (read when drawing: a selection
+    /// drag moves the cursor without building the editor again).
+    pub state: &'a EditorState,
     pub width: f32,
     pub padding: iced::Padding,
     pub line_height: f32,
@@ -252,14 +258,14 @@ pub struct LineNumbers {
     pub active: Color,
 }
 
-impl LineNumbers {
+impl LineNumbers<'_> {
     fn height(&self) -> f32 {
         let rows = self.starts.last().copied().unwrap_or(0);
         rows as f32 * self.line_height + self.padding.top + self.padding.bottom
     }
 }
 
-impl Widget<Message, Theme, Renderer> for LineNumbers {
+impl Widget<Message, Theme, Renderer> for LineNumbers<'_> {
     fn size(&self) -> Size<Length> {
         Size::new(Length::Fixed(self.width), Length::Fixed(self.height()))
     }
@@ -290,6 +296,7 @@ impl Widget<Message, Theme, Renderer> for LineNumbers {
         let width = (bounds.width - self.padding.left - self.padding.right).max(0.0);
         let lines = self.reals.len().min(self.starts.len().saturating_sub(1));
         let from = self.starts[..lines].partition_point(|start| *start <= first);
+        let cursor = self.state.content.cursor().position.line;
         for n in from.saturating_sub(1)..lines {
             let row = self.starts[n];
             if row >= last {
@@ -309,20 +316,81 @@ impl Widget<Message, Theme, Renderer> for LineNumbers {
                     letter_spacing: iced::Em::ZERO,
                 },
                 Point::new(right, top + row as f32 * lh),
-                if n == self.cursor {
-                    self.active
-                } else {
-                    self.color
-                },
+                if n == cursor { self.active } else { self.color },
                 bounds,
             );
         }
     }
 }
 
-impl<'a> From<LineNumbers> for Element<'a, Message> {
-    fn from(numbers: LineNumbers) -> Self {
+impl<'a> From<LineNumbers<'a>> for Element<'a, Message> {
+    fn from(numbers: LineNumbers<'a>) -> Self {
         Element::new(numbers)
+    }
+}
+
+/// The band behind the cursor's line, placed when drawn: a selection drag moves the cursor
+/// without building the editor again. Always there, transparent without a `color`: it gives the
+/// text layers their size.
+pub struct ActiveLine<'a> {
+    pub state: &'a EditorState,
+    /// The first row of each visible line, and one past the last (folds and wrapped lines).
+    pub starts: Vec<u32>,
+    pub line_height: f32,
+    pub size: Size,
+    pub color: Option<Color>,
+}
+
+impl Widget<Message, Theme, Renderer> for ActiveLine<'_> {
+    fn size(&self) -> Size<Length> {
+        Size::new(
+            Length::Fixed(self.size.width),
+            Length::Fixed(self.size.height),
+        )
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(self.size)
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        _theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        _cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        use iced::advanced::Renderer as _;
+        let (Some(color), Some(last)) = (self.color, self.starts.len().checked_sub(2)) else {
+            return;
+        };
+        let line = self.state.content.cursor().position.line.min(last);
+        let (first, next) = (self.starts[line], self.starts[line + 1]);
+        let bounds = layout.bounds();
+        let band = Rectangle {
+            x: bounds.x,
+            y: bounds.y + PAD_Y + first as f32 * self.line_height,
+            width: bounds.width,
+            height: (next - first) as f32 * self.line_height,
+        };
+        if band.intersects(viewport) {
+            renderer.fill_quad(
+                Quad {
+                    bounds: band,
+                    ..Quad::default()
+                },
+                Background::Color(color),
+            );
+        }
+    }
+}
+
+impl<'a> From<ActiveLine<'a>> for Element<'a, Message> {
+    fn from(band: ActiveLine<'a>) -> Self {
+        Element::new(band)
     }
 }
 
@@ -740,11 +808,13 @@ impl<'a> From<IndentGuides<'a>> for Element<'a, Message> {
 
 /// Rectangles behind or around the text: the selections of the other cursors, search results,
 /// the other occurrences of the selection and the matching brackets.
-pub struct Boxes {
+pub struct Boxes<'a> {
     pub rects: Vec<BoxRect>,
+    /// Hidden while this editor has a selection (the brackets next to the cursor).
+    pub unless_selecting: Option<&'a EditorState>,
 }
 
-impl Widget<Message, Theme, Renderer> for Boxes {
+impl Widget<Message, Theme, Renderer> for Boxes<'_> {
     fn size(&self) -> Size<Length> {
         Size::new(Length::Shrink, Length::Shrink)
     }
@@ -764,6 +834,12 @@ impl Widget<Message, Theme, Renderer> for Boxes {
         viewport: &Rectangle,
     ) {
         use iced::advanced::Renderer as _;
+        if self
+            .unless_selecting
+            .is_some_and(|state| state.content.cursor().selection.is_some())
+        {
+            return;
+        }
         let origin = layout.bounds().position();
         let selection = theme.extended_palette().primary.weak.color;
         for rect in &self.rects {
@@ -792,8 +868,8 @@ impl Widget<Message, Theme, Renderer> for Boxes {
     }
 }
 
-impl<'a> From<Boxes> for Element<'a, Message> {
-    fn from(boxes: Boxes) -> Self {
+impl<'a> From<Boxes<'a>> for Element<'a, Message> {
+    fn from(boxes: Boxes<'a>) -> Self {
         Element::new(boxes)
     }
 }
@@ -812,7 +888,6 @@ const MINI_COLUMN: f32 = 1.2;
 /// text is taller than the minimap, the minimap scrolls with the editor.
 pub struct Minimap<'a> {
     pub state: &'a EditorState,
-    pub id: std::sync::Arc<str>,
     pub width: f32,
     pub height: f32,
     /// Height of an editor line.
@@ -925,13 +1000,18 @@ impl Minimap<'_> {
         })
     }
 
+    /// Scrolls the editor on the next frame, through `EditorInput`: no message, so dragging the
+    /// thumb does not build the app again (like scrolling with the wheel).
     fn scroll_to(&self, y: f32, g: &Geometry, shell: &mut Shell<'_, Message>) {
         let y = y.clamp(0.0, g.max_scroll);
         if (y - g.scroll).abs() >= 0.5 {
-            shell.publish(Message::EditorScroll {
-                id: scroll_id(&self.id),
-                y,
-            });
+            self.state
+                .scroll
+                .set(Some(iced::widget::scrollable::AbsoluteOffset {
+                    x: None,
+                    y: Some(y),
+                }));
+            shell.request_redraw();
         }
     }
 
@@ -1335,6 +1415,27 @@ impl EditorInput<'_> {
     }
 }
 
+impl EditorInput<'_> {
+    /// Applies the scroll the minimap or a selection drag left in the editor's state.
+    fn apply_scroll(
+        &mut self,
+        tree: &mut Tree,
+        layout: Layout<'_>,
+        renderer: &Renderer,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        let Some(offset) = self.state.scroll.take() else {
+            return;
+        };
+        let mut scroll =
+            widget::operation::scrollable::scroll_to(widget::Id::from(scroll_id(&self.id)), offset);
+        self.content
+            .as_widget_mut()
+            .operate(&mut tree.children[0], layout, renderer, &mut scroll);
+        shell.request_redraw();
+    }
+}
+
 impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<ZoomState>()
@@ -1390,6 +1491,7 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
+        self.apply_scroll(tree, layout, renderer, shell);
         let state = tree.state.downcast_mut::<ZoomState>();
         self.track_hover(state, event, layout, cursor, shell);
         // A few milliseconds a frame until every line is highlighted.
@@ -1473,6 +1575,11 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
         if state.modifiers.command() || state.link.is_some() {
             self.track_link(state, layout, cursor, shell);
         }
+        // A selection drag moves the cursor right here instead of sending the app a message per
+        // mouse move: the app would build its whole view again each time (scrolling doesn't
+        // either). It hears of the new cursor once, when the button goes up.
+        let mut messages = Vec::new();
+        let mut inner = Shell::new(&mut messages);
         self.content.as_widget_mut().update(
             &mut tree.children[0],
             event,
@@ -1480,9 +1587,35 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
             cursor,
             renderer,
             clipboard,
-            shell,
+            &mut inner,
             viewport,
         );
+        let dragged = Cell::new(false);
+        shell.merge(inner, |message| match message {
+            Message::Editor {
+                id,
+                action: action @ text_editor::Action::Drag(_),
+                ..
+            } if id == self.id => {
+                self.state.content.perform_ref(action);
+                dragged.set(true);
+                None
+            }
+            message => Some(message),
+        });
+        if dragged.get() {
+            self.state.dragged.set(true);
+            if let Some(offset) = self.state.autoscroll_offset() {
+                self.state.scroll.set(Some(offset));
+            }
+            self.apply_scroll(tree, layout, renderer, shell);
+            shell.request_redraw();
+        }
+        if let Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) = event
+            && self.state.dragged.take()
+        {
+            shell.publish(Message::EditorDragged(self.id.clone()));
+        }
     }
 
     fn mouse_interaction(

@@ -127,6 +127,11 @@ impl Caches {
     }
 
     /// The action context of the editor's last render (`None` if it was never rendered).
+    /// What `on_cursor` hears after a selection drag (see [`Message::EditorDragged`]).
+    pub fn editor_dragged(&self, id: &str) -> Option<Outcome> {
+        Some(self.editors.get(id)?.dragged())
+    }
+
     pub fn editor_context(&self, id: &str) -> Option<std::sync::Arc<crate::editor::ActionContext>> {
         self.editors.get(id)?.context.borrow().clone()
     }

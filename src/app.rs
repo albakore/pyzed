@@ -108,11 +108,8 @@ pub enum Message {
         id: Arc<str>,
         edits: Arc<Vec<crate::editor::RangeEdit>>,
     },
-    /// Scrolls the editor's scrollable (with this id) to `y` (from the minimap).
-    EditorScroll {
-        id: String,
-        y: f32,
-    },
+    /// A selection drag in this editor ended: its cursor moved without the app hearing of it.
+    EditorDragged(Arc<str>),
     Scrolled(PyMsg, scrollable::Viewport),
     /// The mouse rests on a word of a code editor (`None`: it left the word).
     Hover(PyMsg, Option<crate::editor::Hit>),
@@ -2043,14 +2040,15 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 return editor_outcome(py, state, &target, outcome, ctx.on_change, ctx.on_cursor);
             }
             Message::EditorReveal(id) => return state.caches.center_editor(&id),
-            Message::EditorScroll { id, y } => {
-                return iced::widget::operation::scroll_to(
-                    id,
-                    scrollable::AbsoluteOffset {
-                        x: None,
-                        y: Some(y),
-                    },
-                );
+            Message::EditorDragged(id) => {
+                let Some(outcome) = state.caches.editor_dragged(&id) else {
+                    return Task::none();
+                };
+                let on_cursor = state
+                    .caches
+                    .editor_context(&id)
+                    .and_then(|ctx| ctx.on_cursor.clone());
+                return editor_outcome(py, state, &target, outcome, None, on_cursor);
             }
             Message::EditorPage {
                 id,
