@@ -16,7 +16,9 @@ stable version.
 
 ## [Unreleased]
 
-## [1.13.0] - 2026-10-25
+## [1.13.1] - 2026-10-25
+
+> 1.13.0 was tagged but never published: its build stopped on a test that needs Pillow. 1.13.1 ships everything it had.
 
 ### Highlights
 
