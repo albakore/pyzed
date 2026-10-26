@@ -365,6 +365,8 @@ def box(
     else:
         content = _core.stack(flow)
     if layers:
+        if not flow:  # only absolute children: the layers get the whole box (an empty flow has no size)
+            content = _core.space(width="fill", height="fill")
         content = _core.stack([content, *[w for _z, _i, w in sorted(layers, key=lambda l: (l[0], l[1]))]])
     if overflow.startswith("scroll"):
         if overflow == "scroll":

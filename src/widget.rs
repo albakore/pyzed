@@ -433,6 +433,24 @@ pub enum Kind {
         child: Py<Widget>,
         props: Box<crate::focus::FocusProps>,
     },
+    /// Something the pointer can pick up (`pz.draggable`, see `dnd.rs`).
+    Draggable {
+        child: Py<Widget>,
+        preview: Option<Py<Widget>>,
+        props: Arc<crate::dnd::DragProps>,
+    },
+    /// The part of a draggable that starts the drag (`pz.drag_handle`).
+    DragHandle {
+        child: Py<Widget>,
+        cursor: Option<iced::mouse::Interaction>,
+    },
+    /// A place that takes dropped items (`pz.droppable`).
+    Droppable {
+        child: Py<Widget>,
+        props: Arc<crate::dnd::DropProps>,
+    },
+    /// A list whose items reorder by dragging (`pz.sortable`).
+    Sortable(Arc<crate::dnd::SortProps>),
 }
 
 pub enum SvgSource {
@@ -495,6 +513,19 @@ impl Widget {
             Kind::Resizable(_) => "resizable",
             Kind::WindowEdges { .. } => "window_edges",
             Kind::Focus { .. } => "focusable",
+            Kind::Draggable { child, props, .. } => {
+                let inner = Python::attach(|py| child.bind(py).get().__repr__());
+                return format!("<Widget draggable {:?} {inner}>", &*props.id);
+            }
+            Kind::DragHandle { .. } => "drag_handle",
+            Kind::Droppable { props, .. } => return format!("<Widget droppable {:?}>", &*props.id),
+            Kind::Sortable(props) => {
+                return format!(
+                    "<Widget sortable {:?} [{}]>",
+                    &*props.target.id,
+                    props.children.len()
+                );
+            }
             Kind::Presence(_) => "presence",
             Kind::Animated { child, spec } => {
                 let inner = Python::attach(|py| child.bind(py).get().__repr__());
@@ -578,9 +609,13 @@ impl Widget {
             },
             Kind::Events { child, .. }
             | Kind::Animated { child, .. }
-            | Kind::Focus { child, .. } => {
+            | Kind::Focus { child, .. }
+            | Kind::Draggable { child, .. }
+            | Kind::DragHandle { child, .. }
+            | Kind::Droppable { child, .. } => {
                 return Widget::_length(child.bind(py), axis);
             }
+            Kind::Sortable(props) => pick(Some(props.width), Some(props.height)),
             _ => None,
         };
         length

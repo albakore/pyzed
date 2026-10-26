@@ -6,6 +6,7 @@ mod animation;
 mod app;
 mod audio;
 mod crash;
+mod dnd;
 mod editor;
 mod editor_widgets;
 mod events;
@@ -56,6 +57,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     layout::register(m)?;
     frame::register(m)?;
     focus::register(m)?;
+    dnd::register(m)?;
     audio::register(m)?;
     serial::register(m)?;
     m.add_class::<app::Command>()?;
