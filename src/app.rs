@@ -72,6 +72,8 @@ pub enum Message {
     Point(PyMsg, f32, f32),
     /// A common event (click, drag, focus...) from a widget wrapped with `.on(...)`.
     Event(PyMsg, Box<crate::events::EventData>),
+    /// A drag and drop event (`pyzed.dnd.DragEvent`) for a handler adapted by `pyzed.dnd`.
+    Dnd(PyMsg, PyMsg),
     Editor {
         id: Arc<str>,
         action: text_editor::Action,
@@ -480,7 +482,11 @@ fn quiet(message: &mut dyn std::any::Any) -> bool {
     };
     if !matches!(
         inner,
-        Message::Py(_) | Message::Point(..) | Message::Event(..) | Message::Scrolled(..)
+        Message::Py(_)
+            | Message::Point(..)
+            | Message::Event(..)
+            | Message::Scrolled(..)
+            | Message::Dnd(..)
     ) {
         return false;
     }
@@ -505,6 +511,7 @@ fn quiet(message: &mut dyn std::any::Any) -> bool {
             Message::Py(msg) => dispatch(target, msg.0.bind(py)),
             Message::Point(cb, x, y) => callback(target, cb.0.bind(py), (*x, *y)),
             Message::Event(cb, data) => deliver_event(target, cb.0.bind(py), data, origin),
+            Message::Dnd(cb, value) => callback(target, cb.0.bind(py), (value.0.bind(py),)),
             Message::Scrolled(cb, viewport) => {
                 callback(target, cb.0.bind(py), (viewport_info(py, viewport),))
             }
@@ -1862,6 +1869,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             Message::Slide(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Point(cb, x, y) => callback(&target, cb.0.bind(py), (x, y)),
             Message::Call(cb, value) => callback(&target, cb.0.bind(py), (value.0.bind(py),)),
+            Message::Dnd(cb, value) => callback(&target, cb.0.bind(py), (value.0.bind(py),)),
             Message::Event(cb, data) => {
                 let origin = state
                     .target()
@@ -2329,8 +2337,12 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
         match view_root(py, id, obj) {
             Ok(root) => {
                 crate::selectable::begin_frame();
-                crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches)))
-                    .into()
+                crate::dnd::begin_view();
+                crate::dnd::Root::new(
+                    id,
+                    crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches))),
+                )
+                .into()
             }
             Err(err) => {
                 let reload_failed = err

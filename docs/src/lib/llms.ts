@@ -38,6 +38,7 @@ const SECTIONS: [string, string, string, string][] = [
 	['showcase', 'Showcase', 'Showcase', 'Demos of effects, shaders and game-style interfaces, with their code.'],
 	['games', 'Games', 'Videojuegos', 'Real-time games step by step: Snake, Breakout and Neon Invaders.'],
 	['audio', 'Audio', 'Audio', 'Music apps: the modular audio engine (pyzed.audio), knobs, faders, waveforms, spectrum, a VCV Rack-style rack and demos.'],
+	['dnd', 'Drag and drop', 'Arrastrar y soltar', 'Drag and drop: draggable, droppable and sortable lists, Kanban boards, form and page builders, Figma-style canvases and node wires.'],
 	['integrations', 'Integrations', 'Integraciones', 'Pyzed as the desktop frontend of FastAPI, Django, SQLAlchemy and more.'],
 	['ai', 'AI agents', 'Agentes de IA', 'Building with AI agents: MCP server, llms.txt, the Agent panel and pyzed.agents.'],
 	['components', 'Components by category', 'Componentes por categoría', 'Older category pages of the pyzed.ui components.'],

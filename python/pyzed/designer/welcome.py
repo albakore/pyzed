@@ -29,6 +29,7 @@ COLUMNS = 3
 THUMB_HEIGHT = 128
 #: The icon of each category on its filter and its heading.
 ICONS = {ALL: "layout-grid", "Apps": "app-window", "Tutorial": "graduation-cap", "Audio": "audio-lines",
+         "Drag and drop": "move",
          "Games": "gamepad-2", "Animation": "sparkles", "Styling": "palette", "Shading": "wand-sparkles",
          "Showcase": "gem", "Blocks": "blocks", "Patterns": "puzzle", "AI": "bot", "Designer": "layout-template",
          "Integrations": "plug", "IoT": "radio-tower"}

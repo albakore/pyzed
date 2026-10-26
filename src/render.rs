@@ -1428,6 +1428,34 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
         Kind::Focus { child, props } => {
             crate::focus::KeyFocus::new(build(py, child, ctx), props).into()
         }
+        Kind::Draggable {
+            child,
+            preview,
+            props,
+        } => crate::dnd::Draggable::new(
+            build(py, child, ctx),
+            preview.as_ref().map(|p| build(py, p, ctx)),
+            props.clone(),
+        )
+        .into(),
+        Kind::DragHandle { child, cursor } => {
+            crate::dnd::Handle::new(build(py, child, ctx), *cursor).into()
+        }
+        Kind::Droppable { child, props } => {
+            crate::dnd::Droppable::new(build(py, child, ctx), props.clone()).into()
+        }
+        Kind::Sortable(props) => {
+            let items = props
+                .children
+                .iter()
+                .enumerate()
+                .map(|(i, c)| {
+                    let item = std::sync::Arc::new(crate::dnd::Sortable::item_props(props, i));
+                    crate::dnd::Draggable::new(build(py, c, ctx), None, item).into()
+                })
+                .collect();
+            crate::dnd::Sortable::new(items, props.clone()).into()
+        }
         Kind::WindowEdges { child, border } => {
             crate::frame::WindowEdges::new(build(py, child, ctx), *border).into()
         }

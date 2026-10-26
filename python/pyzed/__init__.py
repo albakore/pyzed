@@ -103,10 +103,12 @@ from .animation import Animation, Trigger, define_animation, presence, set_reduc
 from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
 from .events import Event, on
+from .dnd import DragEvent, drag_handle, draggable, droppable, sortable
 from .forms import validation_errors
 from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
+from . import dnd  # noqa: E402
 from . import accessibility, animation, animation_player, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
 from . import brand
 
@@ -373,6 +375,12 @@ __all__ = [
     "pick_list",
     "pin",
     "focusable",
+    "dnd",
+    "DragEvent",
+    "drag_handle",
+    "draggable",
+    "droppable",
+    "sortable",
     "popup",
     "post",
     "presence",

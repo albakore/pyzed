@@ -42,6 +42,7 @@ TOPICS = {
     "data-binding": "editor/data-binding", "editor-shortcuts": "editor/keyboard-shortcuts",
     "blocks": "blocks/index", "stability": "guides/stability",
     "shading": "shading/index", "shader-graphs": "shading/shader-graphs", "tutorials": "tutorials/index",
+    "dnd": "dnd/index", "sortable": "dnd/basics/sortable", "dnd-canvas": "dnd/guides/free-canvas",
 }
 
 #: The section of each top-level widget in ``list_components``.
@@ -62,6 +63,7 @@ WIDGET_CATEGORIES = {
     "Performance": ("virtual_column", "memo"),
     "Window": ("window_edges",),
     "Game loop": ("frames", "pressed", "is_pressed"),
+    "Drag and drop": ("draggable", "droppable", "sortable", "drag_handle"),
 }
 
 #: ``pz.ui`` modules and the section they appear under.
@@ -100,7 +102,7 @@ def guides() -> Dict[str, str]:
     out = {"overview": "How Pyzed works: the Elm architecture, the API layers, components, designer and CLI.",
            "best-practices": "Rules for views, state, components, styling, layout, projects and testing.",
            "cookbook": "Runnable recipes: app structure, background work, forms, large data, animation, "
-                       "shaders, games, window frames and anchors.",
+                       "shaders, games, drag and drop, window frames and anchors.",
            "design": "Professional UI and UX: patterns, hierarchy, spacing, typography, color tokens of Pyzed "
                      "Dark/Light, states, feedback, forms, accessibility, motion, writing and a review checklist.",
            "app-architecture": "Scalable code: project layout, layers and ports, state and messages, components, "
@@ -444,6 +446,9 @@ _HINTS = {
     "scalable": "app-architecture", "escalable": "app-architecture", "architecture": "app-architecture",
     "arquitectura": "app-architecture", "enterprise": "app-architecture", "crm": "app-architecture",
     "erp": "app-architecture", "inventory": "app-architecture", "inventario": "app-architecture",
+    "drag": "dnd", "drop": "dnd", "dnd": "dnd", "arrastrar": "dnd", "soltar": "dnd", "kanban": "dnd sortable",
+    "trello": "dnd sortable", "sortable": "sortable", "reorder": "sortable", "ordenar": "sortable",
+    "figma": "dnd-canvas", "builder": "dnd", "constructor": "dnd", "palette": "dnd", "wire": "dnd",
 }
 
 

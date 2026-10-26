@@ -1,0 +1,72 @@
+---
+title: Creador de páginas
+description: Crea un creador de páginas web en Python con Pyzed — bloques soltados desde una biblioteca, columnas anidadas, reordenar en cualquier sitio, una papelera y anchos de escritorio y móvil.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Bloques soltados desde una biblioteca en una página y movidos entre dos columnas](/pyzed/media/dnd/page-builder.webp)
+
+Un creador de páginas como el de Webflow, Wix o Elementor:
+[`examples/dnd/page_builder.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/page_builder.py).
+
+```bash
+python examples/dnd/page_builder.py
+```
+
+<Aside type="note" title="Qué vas a aprender">
+Listas dentro de listas, encontrar una lista por su id, reglas que dejan bloques fuera de
+algunos sitios y una biblioteca en una cuadrícula que salta de fila.
+</Aside>
+
+<Steps>
+
+1. **Bloques que contienen bloques.** Una página es una lista de bloques; un bloque "Dos
+   columnas" tiene dos listas propias:
+
+   ```python
+   def block(kind):
+       b = {"id": f"block-{next(_ids)}", "kind": kind}
+       if kind == "columns":
+           b["left"], b["right"] = [], []
+       return b
+   ```
+
+2. **Cada lista tiene un id.** La página es `"page"` y cada columna es `"<id del bloque>:left"`
+   o `":right"`. Una función las encuentra todas, así que una sola función atiende a todas las
+   listas:
+
+   ```python
+   def lists(self):
+       found = {"page": self.page}
+       for b in self.page:
+           if b["kind"] == "columns":
+               found[b["id"] + ":left"], found[b["id"] + ":right"] = b["left"], b["right"]
+       return found
+
+   def drop(self, event):
+       if event.from_list == "library":
+           self.lists()[event.target].insert(event.index, block(event.data))
+       else:
+           pz.dnd.move(self.lists(), event)
+   ```
+
+3. **Sortables dentro de sortables.** Un bloque de columnas dibuja dos sortables con el mismo
+   grupo que la página. La lista más profunda bajo el puntero recibe la suelta; un bloque que
+   se arrastra nunca se recibe a sí mismo.
+
+   ```python
+   pz.sortable(items=b[side], item=self.render, id=f"{b['id']}:{side}", group="blocks",
+               handle=True, padding=8, width="fill", on_reorder=self.drop,
+               can_drop=lambda e: not is_columns(e.data))      # sin columnas dentro de columnas
+   ```
+
+4. **La biblioteca es una cuadrícula que copia.** `direction="wrap"` la coloca en filas;
+   `pull="clone"` y `sort=False` la convierten en una paleta.
+
+5. **Ancho de móvil.** Un control segmentado cambia el ancho de la página y las columnas se
+   apilan. Los sortables se animan hasta su sitio nuevo.
+
+</Steps>

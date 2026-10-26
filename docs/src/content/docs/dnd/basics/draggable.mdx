@@ -1,0 +1,78 @@
+---
+title: Draggable
+description: Make any Pyzed widget draggable — data, types, previews, lift and shadow, axis locks, bounds, grids, long press, and drag events in Python.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A shape dragged from a toolbar onto a canvas, and a card dropped into a trash can](/pyzed/media/dnd/draggable.webp)
+
+`pz.draggable(content, id)` lets the pointer pick `content` up and drop it on a
+[`pz.droppable`](/pyzed/dnd/basics/droppable/) or a [`pz.sortable`](/pyzed/dnd/basics/sortable/)
+that takes it.
+
+```python
+pz.draggable(
+    ui.card(ui.label("Report.pdf")),
+    "file-7",                 # unique in the window
+    data={"id": 7, "name": "Report.pdf"},
+    type="file",              # what targets match with accepts=
+)
+```
+
+- `id` names it. Targets receive it as `event.source`.
+- `data` is anything you want the target to get as `event.data`: an id, a dict, an object.
+- `type` (a name or a list of names) is what targets accept. A sortable's items take the
+  list's `group` as their type.
+
+<Aside type="note" title="In plain words">
+A press that moves more than `threshold` pixels (4) becomes a drag. A shorter press is a normal
+click, so a draggable card can still have `.on(click=...)`.
+</Aside>
+
+## How it looks while dragged
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `preview` | a copy | What follows the pointer: another widget, `"wire"` (a curve from where it started, for [node editors](/pyzed/dnd/guides/wires/)) or `"none"`. |
+| `lift` | `1.03` | How much the preview grows, as if lifted from the page. |
+| `shadow` | `True` | The shadow under the preview: `True`, a color or `False`. |
+| `opacity` | `1.0` | The preview's opacity. |
+| `radius` | `6` | The corner radius of its shadow. |
+| `source` | `"ghost"` | The original meanwhile: `"ghost"` (faded to `source_opacity`), `"hide"` (it seems to move) or `"keep"`. |
+| `drop_animation` | `180` | Milliseconds the preview takes to fly to its landing place (or home when cancelled). |
+| `cursor` | `True` | Grabbing and "not allowed" cursors while dragging. |
+
+See [previews and animations](/pyzed/dnd/guides/previews-and-animations/) for examples.
+
+## Limits
+
+| Option | Effect |
+| --- | --- |
+| `handle=True` | Starts only from a [`pz.drag_handle`](/pyzed/dnd/basics/handles/) inside. |
+| `axis="x"` / `"y"` | Moves only sideways / up and down (sliders, timelines). |
+| `bounds="parent"` | Stays inside the closest target around it; `"window"` inside the window. |
+| `grid=10` / `(16, 8)` | Moves in steps. |
+| `threshold=4` | Pixels the pointer moves before a press becomes a drag. |
+| `delay=300` | Needs a long press of this many milliseconds (touch screens, lists that scroll). |
+| `from_children=True` | Also starts from buttons and inputs inside (by default they keep their presses). |
+| `disabled=True` | Can't be dragged. |
+
+## Events
+
+| Event | When |
+| --- | --- |
+| `on_drag_start(event)` | The drag began. |
+| `on_drag_move(event)` | The pointer moved: `event.window_x`, `event.window_y`, `event.dx`, `event.dy`. |
+| `on_drag_end(event)` | It ended: `event.dropped` says whether a target took it, `event.target` which one. |
+
+The movement itself is drawn natively: `on_drag_move` is only for apps that need to follow
+it in Python (a ruler, a live readout). Handlers can take the [event](/pyzed/dnd/basics/events/)
+or nothing.
+
+## Reading the drag from anywhere
+
+`pz.dnd.current()` returns the drag in progress as an event (or `None`), and
+`pz.dnd.cancel()` cancels it, as <kbd>Esc</kbd> does.

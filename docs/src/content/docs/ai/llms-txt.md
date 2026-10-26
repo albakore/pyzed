@@ -74,6 +74,8 @@ If the `pyzed` MCP server is available, use its tools instead of guessing APIs.
   `pz.container(bg=...)` takes real colors; use `.style(background="panel")` for tokens.
 - Icons are Lucide names (`pyzed icons` lists them).
 - Lambdas in loops capture the variable: `lambda item=item: self.open(item)`.
+- Drag and drop: `pz.sortable` (lists, boards, grids), `pz.draggable` / `pz.droppable` and
+  `pz.drag_handle`; apply the drop with `pz.dnd.move(lists, event)`.
 - Don't name app attributes after window options (`title`, `size`, `position`, `theme`, `style`...)
   unless you mean them.
 - Reusable pieces with their own state: `pz.Component` with typed props, `pz.state()` and `events`.

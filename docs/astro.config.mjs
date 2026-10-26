@@ -192,6 +192,18 @@ const topics = [
 		],
 	},
 	{
+		id: 'dnd',
+		label: { en: 'Drag & drop', es: 'Arrastrar y soltar' },
+		link: '/dnd/',
+		icon: 'puzzle',
+		items: [
+			{ slug: 'dnd' },
+			group('Building blocks', 'Bloques básicos', 'dnd/basics'),
+			group('Guides', 'Guías', 'dnd/guides'),
+			group('Tutorials', 'Tutoriales', 'dnd/tutorials'),
+		],
+	},
+	{
 		id: 'integrations',
 		label: { en: 'Integrations', es: 'Integraciones' },
 		link: '/integrations/overview/',

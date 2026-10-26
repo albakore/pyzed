@@ -1,0 +1,62 @@
+---
+title: Lienzo libre
+description: Un lienzo al estilo de Figma en Pyzed — suelta elementos en cualquier posición, ajústalos a una cuadrícula, alinéalos con guías inteligentes, mantenlos dentro de unos límites y suelta formas nuevas desde una barra.
+sidebar:
+  order: 3
+---
+
+![Formas movidas en un lienzo con guías de alineación rosas y una forma nueva soltada desde la barra](/pyzed/media/dnd/canvas.webp)
+
+Un lienzo es un [`pz.droppable`](/pyzed/es/dnd/basics/droppable/) alrededor de un
+[`pz.stack`](/pyzed/es/reference/widgets/) de draggables colocados con
+[`pz.pin`](/pyzed/es/reference/widgets/). El `item_x` y el `item_y` del evento de la suelta dicen
+dónde cae el elemento: guárdalos y el elemento se dibuja allí.
+
+```python
+class Lienzo(pz.App):
+    def __init__(self):
+        self.formas = {"a": {"x": 40, "y": 40}, "b": {"x": 220, "y": 120}}
+
+    def soltar(self, e):
+        self.formas[e.source].update(x=e.item_x, y=e.item_y)
+
+    def view(self):
+        piezas = [pz.pin(pz.draggable(caja(), clave, source="hide", lift=1.0, shadow=False), x=f["x"], y=f["y"])
+                  for clave, f in self.formas.items()]
+        return pz.droppable(pz.stack([pz.space(width="fill", height="fill"), *piezas]), "lienzo",
+                            snap=8, guides=True, over_style=False, on_drop=self.soltar)
+```
+
+- `source="hide"`, `lift=1.0` y `shadow=False` hacen que se mueva la propia forma, como en una
+  herramienta de diseño.
+- `snap=8` (o `(x, y)`) redondea el sitio de destino a una cuadrícula.
+- `guides=True` alinea los bordes y el centro del elemento con los otros draggables del destino
+  (y con los bordes y el centro del propio destino) cuando están a pocos píxeles, y dibuja las
+  guías en `guide_color` (rosa, como en Figma).
+- Con `snap` o `guides`, la propia vista previa salta al sitio ajustado (`snap_preview=False`
+  la deja bajo el puntero).
+
+## Elementos nuevos desde una barra
+
+Un botón de la barra es un draggable con `source="keep"` y el tipo de elemento en `data`. La
+suelta lo crea donde cae:
+
+```python
+herramienta = pz.draggable(ui.icon_button("square"), "nuevo-rect", data="rect", type="forma", source="keep")
+
+def soltar(self, e):
+    if e.source.startswith("nuevo-"):
+        self.formas[id_nuevo()] = {"tipo": e.data, "x": e.item_x, "y": e.item_y}
+    else:
+        self.formas[e.source].update(x=e.item_x, y=e.item_y)
+```
+
+## Límites
+
+- `bounds="parent"` en los draggables los mantiene dentro del lienzo.
+- `axis="x"` mueve en un solo eje (una línea de tiempo) y `grid=` en el draggable mueve la propia
+  vista previa a saltos.
+- `on_drag_move` sigue el arrastre en Python, para reglas o coordenadas en una barra de estado.
+
+El [tutorial del lienzo de diseño](/pyzed/es/dnd/tutorials/design-canvas/) crea uno completo con
+panel de capas.

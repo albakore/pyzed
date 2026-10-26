@@ -1,0 +1,62 @@
+---
+title: Free canvas
+description: A Figma-style canvas in Pyzed — drop items at any position, snap to a grid, align with smart guides, keep them inside bounds and drop new shapes from a toolbar.
+sidebar:
+  order: 3
+---
+
+![Shapes moved on a canvas with pink alignment guides, and a new shape dropped from the toolbar](/pyzed/media/dnd/canvas.webp)
+
+A canvas is a [`pz.droppable`](/pyzed/dnd/basics/droppable/) around a
+[`pz.stack`](/pyzed/reference/widgets/) of [`pz.pin`](/pyzed/reference/widgets/)ned
+draggables. The drop event's `item_x` and `item_y` say where the item lands: save them and the
+item is drawn there.
+
+```python
+class Canvas(pz.App):
+    def __init__(self):
+        self.shapes = {"a": {"x": 40, "y": 40}, "b": {"x": 220, "y": 120}}
+
+    def drop(self, e):
+        self.shapes[e.source].update(x=e.item_x, y=e.item_y)
+
+    def view(self):
+        pieces = [pz.pin(pz.draggable(box(), key, source="hide", lift=1.0, shadow=False), x=s["x"], y=s["y"])
+                  for key, s in self.shapes.items()]
+        return pz.droppable(pz.stack([pz.space(width="fill", height="fill"), *pieces]), "canvas",
+                            snap=8, guides=True, over_style=False, on_drop=self.drop)
+```
+
+- `source="hide"`, `lift=1.0` and `shadow=False` make the shape itself move, as in a design
+  tool.
+- `snap=8` (or `(x, y)`) rounds the landing place to a grid.
+- `guides=True` aligns the item's edges and center with the other draggables inside the
+  target (and the target's own edges and center) when they are within a few pixels, and draws
+  the guides in `guide_color` (pink, like Figma).
+- With `snap` or `guides`, the preview itself jumps to the snapped place (`snap_preview=False`
+  keeps it under the pointer).
+
+## New items from a toolbar
+
+A toolbar button is a draggable with `source="keep"` and the kind of item in `data`. The drop
+creates it where it lands:
+
+```python
+tool = pz.draggable(ui.icon_button("square"), "new-rect", data="rect", type="shape", source="keep")
+
+def drop(self, e):
+    if e.source.startswith("new-"):
+        self.shapes[new_id()] = {"kind": e.data, "x": e.item_x, "y": e.item_y}
+    else:
+        self.shapes[e.source].update(x=e.item_x, y=e.item_y)
+```
+
+## Limits
+
+- `bounds="parent"` on the draggables keeps them inside the canvas.
+- `axis="x"` moves along one axis only (a timeline), and `grid=` on the draggable moves the
+  preview itself in steps.
+- `on_drag_move` follows the drag in Python, for rulers or coordinates in a status bar.
+
+The [design canvas tutorial](/pyzed/dnd/tutorials/design-canvas/) builds a complete one with a
+layers panel.

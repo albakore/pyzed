@@ -725,6 +725,38 @@ def _list_box(c: Control, ctx: RenderContext) -> Any:
                            border_width=1, radius=t.radius_sm)
 
 
+def _sortable_list(c: Control, ctx: RenderContext) -> Any:
+    from .. import dnd
+
+    t = ctx.theme
+    p = c.props
+    items = _lines(p["items"])
+    keys, seen = [], {}
+    for item in items:  # repeated texts still get keys of their own
+        seen[item] = seen.get(item, 0) + 1
+        keys.append(item if seen[item] == 1 else f"{item}#{seen[item]}")
+    on_reorder = ctx.on(c, "reorder", "items")
+
+    def reorder(event: Any) -> None:
+        if event.from_index is not None and event.index is not None:
+            on_reorder("\n".join(dnd.reorder(list(items), event.from_index, event.index)))
+
+    def row(item: str) -> Any:
+        grip = dnd.drag_handle(_icon("grip-vertical", size=14, color=t.text_muted)) if p["handle"] else None
+        label = ui.label(item, theme=t)
+        body = _core.row([grip, label], spacing=6, align="center") if grip else label
+        width = None if p["direction"] != "vertical" else "fill"
+        return _core.container(body, padding=(6, 10), width=width, bg=t.elevated, border_color=t.border,
+                               border_width=1, radius=t.radius_sm)
+
+    live = ctx.live and c.enabled
+    body = dnd.sortable([row(i) for i in items], ctx.key(c), keys=keys, data=items, direction=p["direction"],
+                        spacing=_num(p["spacing"], 6), padding=6, width="fill", handle=bool(p["handle"]),
+                        placeholder=p["placeholder"], draggable=live, keyboard=live, on_reorder=reorder, theme=t)
+    return _core.container(_core.scrollable(body), width="fill", height="fill", bg=t.editor,
+                           border_color=t.border_variant, border_width=1, radius=t.radius_sm)
+
+
 def _markdown(c: Control, ctx: RenderContext) -> Any:
     # a link opens in the browser unless the form handles it in its link event
     on_link = ctx.on(c, "link") if c.events.get("link") else (_open_url if ctx.live else None)
@@ -1350,6 +1382,13 @@ for _component in (
               (Prop("items", "list", "First\nSecond\nThird", group="Data"),
                Prop("selected", "text", "", group="Data")),
               ("change", "open"), "A scrollable list of items."),
+    Component("sortable_list", "Sortable list", "list-ordered", "Forms", _sortable_list, (200, 160),
+              (Prop("items", "list", "First\nSecond\nThird", group="Data"),
+               Prop("direction", "choice", "vertical", choices=("vertical", "horizontal", "wrap")),
+               Prop("spacing", "number", 6, min=0),
+               Prop("placeholder", "choice", "shadow", choices=("shadow", "ghost", "none")),
+               Prop("handle", "bool", False, label="Drag by a handle", group="Behavior")),
+              ("reorder",), "A list whose items the user reorders by dragging (or Alt+arrows)."),
     # -- dates and times
     Component("date_picker", "Date picker", "calendar-days", "Date & time", _date_picker, (180, 30),
               (Prop("value", "text", "", label="Date (YYYY-MM-DD)", group="Data"),

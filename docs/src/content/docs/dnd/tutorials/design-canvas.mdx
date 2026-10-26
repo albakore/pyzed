@@ -1,0 +1,66 @@
+---
+title: Design canvas
+description: Build a Figma-style design canvas in Python with Pyzed — shapes moved freely with a grid and smart guides, new shapes dropped from a toolbar and a layers panel.
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Shapes aligned with pink guides on a canvas, a new shape dropped from the toolbar and a layer reordered](/pyzed/media/dnd/design-canvas.webp)
+
+A canvas like Figma's or Canva's:
+[`examples/dnd/design_canvas.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/design_canvas.py).
+
+```bash
+python examples/dnd/design_canvas.py
+```
+
+<Aside type="note" title="What you will learn">
+Free positions, snapping and alignment guides, creating items where they are dropped, and a
+layers list that is the drawing order.
+</Aside>
+
+<Steps>
+
+1. **Shapes with positions.** Each shape is a dict with `x`, `y`, `w`, `h`. The layers list is
+   also the drawing order: the first one is on top.
+
+2. **The canvas is a droppable.** A stack of pinned draggables, inside a droppable that snaps
+   and draws guides:
+
+   ```python
+   canvas = pz.droppable(
+       pz.stack([pz.space(width="fill", height="fill"), *[self.placed(s) for s in reversed(self.layers)]]),
+       "canvas", accepts="shape", snap=self.grid or None, guides=self.guides, over_style=False,
+       on_drop=self.drop)
+   ```
+
+3. **Shapes move themselves.** `source="hide"` hides the original and `lift=1.0`,
+   `shadow=False`, `drop_animation=0` make the preview look like the shape itself:
+
+   ```python
+   piece = pz.draggable(self.body(s), s["id"], type="shape", source="hide", lift=1.0, shadow=False,
+                        drop_animation=0)
+   return pz.pin(piece, x=s["x"], y=s["y"])
+   ```
+
+4. **Drop where it lands.** The event's `item_x` and `item_y` are already snapped and aligned:
+
+   ```python
+   def drop(self, event):
+       if event.source.startswith("new-"):
+           item = shape(event.data, event.item_x, event.item_y)   # from the toolbar
+           self.layers.insert(0, item)
+       else:
+           item = next(s for s in self.layers if s["id"] == event.source)
+           item["x"], item["y"] = event.item_x, event.item_y
+   ```
+
+5. **The toolbar.** Each tool is a draggable that stays (`source="keep"`) and carries the kind
+   of shape in `data`.
+
+6. **Layers.** A sortable of the same list with `lock_axis=True`: reordering a layer changes
+   what is drawn on top.
+
+</Steps>

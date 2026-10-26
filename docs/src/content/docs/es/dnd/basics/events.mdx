@@ -1,0 +1,64 @@
+---
+title: Eventos
+description: El DragEvent del arrastrar y soltar de Pyzed — todos sus campos (origen, datos, destino, índice, combinar, coordenadas, modificadores) y las ayudas move y reorder que aplican una suelta.
+sidebar:
+  order: 5
+---
+
+Todas las funciones de arrastrar y soltar reciben un `pz.DragEvent` (o nada, si la función no
+tiene parámetros). Se llaman cuando pasa algo importante (empezar, entrar, un sitio de destino
+nuevo, salir, soltar, terminar), nunca en cada fotograma.
+
+## El evento
+
+| Campo | Qué es |
+| --- | --- |
+| `type` | `"start"`, `"move"`, `"enter"`, `"over"`, `"leave"`, `"drop"`, `"end"` o `"cancel"` (`"check"` en `can_drop`). |
+| `source` | El id del elemento arrastrado (la clave de un elemento de sortable). |
+| `data` | Su `data` (`event.item` es lo mismo). |
+| `types` | Sus tipos (los de un elemento de sortable son el `group` de la lista). |
+| `from_list`, `from_index` | El sortable del que viene y su índice allí (`None` para un draggable suelto). |
+| `copy` | `True` cuando es una copia: la lista copia (`pull="clone"`) o se mantiene <kbd>Alt</kbd>. |
+| `target` | El id del destino de debajo (`None`: ninguno). |
+| `index` | El índice de destino en un sortable (contado en la lista final). |
+| `combine` | La clave del elemento sobre el que se soltó (`combine=True`), o `None`. |
+| `x`, `y` | El puntero, relativo al destino (`event.position`). |
+| `item_x`, `item_y` | Dónde cae la esquina superior izquierda del elemento en el destino, con imán (`event.item_position`). |
+| `window_x`, `window_y` | El puntero en la ventana. |
+| `dx`, `dy` | Cuánto se movió desde que empezó el arrastre. |
+| `width`, `height` | El tamaño del elemento. |
+| `shift`, `ctrl`, `alt`, `logo` | Las teclas modificadoras pulsadas. |
+| `dropped` | En `on_drag_end`: si un destino lo aceptó (el tipo es entonces `"end"`; si no, `"cancel"`). |
+| `within` | `True` cuando se queda en su propia lista. |
+
+## Aplicar una suelta
+
+Python guarda tus datos; el evento dice qué cambió. Dos ayudas lo aplican:
+
+```python
+pz.dnd.reorder(items, e.from_index, e.index)   # dentro de una lista
+pz.dnd.move(listas, e)                         # entre listas, por id
+```
+
+`pz.dnd.move(lists, event, make=None)` recibe un dict que asocia el id de cada sortable con su
+lista (o la única lista de un sortable). El elemento sale de `lists[event.from_list]` y entra en
+`lists[event.target]` en `event.index`. Las copias (`pull="clone"`) y los draggables sueltos se
+crean con `make(event.data)` si lo das, o con una copia profunda. Devuelve el elemento que cayó.
+
+```python
+def on_reorder(self, e):
+    if e.from_list == "paleta":
+        self.campos.insert(e.index, campo_nuevo(e.data))   # una plantilla se vuelve un campo nuevo
+    else:
+        pz.dnd.move({"formulario": self.campos}, e)
+```
+
+`pz.dnd.move` no mueve las sueltas con `event.combine` (devuelve `None`): decide tú qué
+significa combinar en tu app.
+
+## El arrastre en curso
+
+```python
+pz.dnd.current()   # el arrastre de ahora, como evento, o None
+pz.dnd.cancel()    # lo cancela, como Esc
+```

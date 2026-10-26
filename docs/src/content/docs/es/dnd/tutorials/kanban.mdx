@@ -1,0 +1,94 @@
+---
+title: Tablero Kanban
+description: Crea un tablero Kanban al estilo de Trello en Python con Pyzed — tarjetas que pasan entre columnas, columnas que se reordenan por su cabecera y una papelera que aparece al arrastrar.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Un tablero Kanban: una tarjeta pasa a otra columna, una columna se arrastra por su cabecera y una tarjeta se suelta en la papelera](/pyzed/media/dnd/kanban.webp)
+
+Un tablero como el de Trello en unas 100 líneas:
+[`examples/dnd/kanban.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/kanban.py).
+
+```bash
+python examples/dnd/kanban.py
+```
+
+<Aside type="note" title="Qué vas a aprender">
+Listas que comparten elementos (`group`), listas dentro de una lista (las columnas también se
+ordenan), asas y un destino que solo aparece mientras arrastras.
+</Aside>
+
+<Steps>
+
+1. **Los datos.** El tablero es Python normal: las columnas en orden y las tarjetas de cada una
+   por id de columna. Cada tarjeta tiene un `id`, que el sortable usa como clave.
+
+   ```python
+   def card(title, tag=None):
+       return {"id": f"card-{next(_ids)}", "title": title, "tag": tag}
+
+   self.columns = [{"id": "todo", "title": "To do"}, {"id": "doing", "title": "In progress"},
+                   {"id": "done", "title": "Done"}]
+   self.cards = {"todo": [card("Design the login screen", "feature"), ...], "doing": [...], "done": [...]}
+   ```
+
+2. **Una columna es un sortable.** Su `id` es el de la columna y todas las columnas tienen el
+   mismo `group`, así que las tarjetas pueden viajar entre ellas:
+
+   ```python
+   cards = pz.sortable(items=self.cards[cid], item=self.card_view, id=cid, group="cards",
+                       spacing=8, height="fill", on_reorder=self.move_card)
+   ```
+
+   `self.cards` ya asocia ids de lista con listas, que es lo que recibe `pz.dnd.move`, así que
+   la función ocupa una línea:
+
+   ```python
+   def move_card(self, event):
+       pz.dnd.move(self.cards, event)
+   ```
+
+3. **Las columnas también son un sortable.** Un sortable horizontal de columnas, con otro
+   `group` para que tarjetas y columnas no se mezclen. `handle=True` arrastra una columna solo
+   por el agarre de su cabecera: el resto de la columna es de sus tarjetas.
+
+   ```python
+   header = pz.row([pz.drag_handle(pz.icon("grip-vertical")), ui.label(column["title"], weight="bold"),
+                    ui.count_badge(len(self.cards[cid]))], spacing=6)
+
+   board = pz.sortable(items=self.columns, item=self.column_view, id="board", group="columns",
+                       direction="horizontal", spacing=14, handle=True, on_reorder=self.move_column)
+
+   def move_column(self, event):
+       pz.dnd.reorder(self.columns, event.from_index, event.index)
+   ```
+
+4. **Una papelera que aparece al arrastrar.** El `on_drag_start` y el `on_drag_end` de la
+   columna activan una marca, y la vista muestra un droppable que acepta tarjetas mientras está
+   activa:
+
+   ```python
+   cards = pz.sortable(..., on_drag_start=lambda e: setattr(self, "dragging", True),
+                       on_drag_end=lambda e: setattr(self, "dragging", False))
+
+   trash = pz.droppable(bin_, "trash", accepts="cards", on_drop=self.delete,
+                        over_style={"background": pz.theme.alpha(t.error, 0.15), "border_color": t.error})
+
+   def delete(self, event):
+       self.cards[event.from_list].pop(event.from_index)
+   ```
+
+5. **Las columnas largas se desplazan.** Cada lista está en un `pz.scrollable`: arrastrar una
+   tarjeta cerca de su borde inferior la desplaza sola.
+
+</Steps>
+
+## Ideas para seguir
+
+- Limita una columna con `max_items` (un límite de "trabajo en curso") o impide devolver
+  tarjetas con `can_drop=lambda e: ...`.
+- Guarda el tablero como JSON en `move_card`.
+- Haz "Done" de solo lectura para los demás: `put=False` en esa lista.

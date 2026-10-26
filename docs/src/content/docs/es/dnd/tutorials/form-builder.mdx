@@ -1,0 +1,77 @@
+---
+title: Creador de formularios
+description: Crea un creador de formularios en Python con Pyzed — arrastra campos desde una paleta a un formulario, reordénalos por su asa, edita el seleccionado y mira el formulario en vivo.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Campos arrastrados desde una paleta a un formulario, reordenados por su asa, con la vista previa del formulario en vivo](/pyzed/media/dnd/form-builder.webp)
+
+Un creador de formularios como el de Typeform o Google Forms:
+[`examples/dnd/form_builder.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/form_builder.py).
+
+```bash
+python examples/dnd/form_builder.py
+```
+
+<Aside type="note" title="Qué vas a aprender">
+Paletas que copian sus elementos (`pull="clone"`), convertir una plantilla en un elemento nuevo
+al soltarla, asas y una papelera que solo acepta algunos elementos.
+</Aside>
+
+<Steps>
+
+1. **La paleta copia.** Sus elementos son los tipos de campo. `pull="clone"` los deja en la
+   paleta al sacarlos y `sort=False` mantiene su orden fijo:
+
+   ```python
+   palette = pz.sortable(items=list(KINDS), item=self.palette_item, key=lambda k: f"palette-{k}",
+                         id="palette", group="fields", pull="clone", sort=False, placeholder="none")
+   ```
+
+2. **El formulario los recibe.** El mismo `group`, así que se pueden soltar elementos de la
+   paleta. `handle=True` arrastra sus campos solo por el agarre, así que un clic en un campo lo
+   selecciona:
+
+   ```python
+   form = pz.sortable(items=self.fields, item=self.editor_item, id="form", group="fields",
+                      handle=True, spacing=8, padding=12, height="fill", on_reorder=self.drop)
+   ```
+
+3. **Una plantilla se vuelve un campo.** Una suelta desde la paleta trae el tipo de campo
+   (`event.data`, `"email"`); la función crea un campo nuevo en `event.index`. Una suelta desde
+   el propio formulario es un reordenado:
+
+   ```python
+   def drop(self, event):
+       if event.from_list == "palette":
+           field = new_field(event.data)
+           self.fields.insert(event.index, field)
+           self.selected = field["id"]
+       else:
+           pz.dnd.move(self.fields, event)
+   ```
+
+   `pz.dnd.move(self.fields, event, make=new_field)` haría las dos cosas en una línea.
+
+4. **A la papelera solo van campos del formulario.** La papelera acepta el grupo y descarta los
+   elementos de la paleta:
+
+   ```python
+   trash = pz.droppable(bin_, "trash", accepts="fields", can_drop=lambda e: e.from_list == "form",
+                        on_drop=self.remove)
+   ```
+
+5. **Editar y previsualizar.** Un clic en un campo lo selecciona; el inspector edita su
+   etiqueta, su ayuda y si es obligatorio, y la vista previa dibuja el formulario real desde la
+   misma lista.
+
+</Steps>
+
+## Ideas para seguir
+
+- Secciones: un campo de tipo `"section"` con su propia lista (mira
+  [anidar](/pyzed/es/dnd/guides/nesting-and-combining/)).
+- Guarda `self.fields` como JSON y dibuja el mismo formulario en otra app con `preview_field`.

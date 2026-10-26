@@ -1,0 +1,62 @@
+---
+title: Conditions
+description: Restrict drag and drop in Pyzed — types and accepts, can_drop rules, lists that only give, only copy, don't sort, are full or have locked items, and disabled targets.
+sidebar:
+  order: 1
+---
+
+![A card refused by a full column and by a rule, with a "not allowed" cursor, then accepted by another column](/pyzed/media/dnd/conditions.webp)
+
+Every drop is checked in this order. The first "no" refuses it, and the target shows a
+"not allowed" cursor instead of its highlight:
+
+1. **Type.** The draggable's `type` (a sortable item's: the list's `group`) must be in the
+   target's `accepts` (or its `group`). `None` and `"*"` accept anything.
+2. **Disabled.** `disabled=True` targets take nothing.
+3. **The list's rules.** `put=False` takes nothing from other lists, `sort=False` doesn't
+   reorder inside, `max_items` is full, and the source list's `pull=False` keeps its items.
+4. **Your rule.** `can_drop(event)` returns `True` or `False`.
+
+## Types and accepts
+
+```python
+pz.draggable(photo, p.id, type="image")
+pz.draggable(doc, d.id, type=["file", "pdf"])
+
+pz.droppable(gallery, "gallery", accepts="image")
+pz.droppable(inbox, "inbox", accepts=["file", "image"])
+```
+
+Sortables use `group` for both: their items have it as type and they accept it. Add
+`accepts` for more (a list that also takes [`pz.draggable`](/pyzed/dnd/basics/draggable/)s from
+a toolbar).
+
+## Your own rules
+
+`can_drop(event)` is asked once per drag and target (the first time the drag reaches it), so it can be as
+slow as you like. `event.data` is the dragged item and `event.target` the target:
+
+```python
+# A node can't be connected to itself
+pz.droppable(port, f"in/{node}/{name}", accepts="port:float",
+             can_drop=lambda e: e.data["node"] != node)
+
+# Only the owner's cards go to "Done"
+pz.sortable(..., id="done", group="cards", can_drop=lambda e: e.data["owner"] == self.user)
+```
+
+## Lists
+
+| Option | Effect |
+| --- | --- |
+| `pull=False` | Its items can't leave it (they still reorder inside). |
+| `pull="clone"` | Its items are copied out: a palette. |
+| `put=False` | It takes nothing from other lists. |
+| `sort=False` | It doesn't reorder inside (a palette). |
+| `max_items=3` | Full at 3 items; reordering inside still works. |
+| `locked=[...]` | These keys can't be dragged. |
+| `draggable=False` | No item can be dragged: only the order animates. |
+| `disabled=True` | Nothing is dragged out or dropped in. |
+
+Holding <kbd>Alt</kbd> while dropping marks the drop as a copy (`event.copy`), like in a file
+manager: your handler decides what to do with it.

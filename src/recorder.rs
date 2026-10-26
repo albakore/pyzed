@@ -739,6 +739,8 @@ pub fn record(
     // Animations play (a screenshot shows them at rest).
     crate::animation::set_screenshot(false);
     SHADER_DRAWN.store(false, Ordering::Relaxed);
+    // A new app: no drag or list animation carries over from the last one.
+    crate::dnd::reset();
     let result = py.detach(move || {
         let program = crate::app::daemon(app, font_size, true);
         let renderer = renderer_for(&program, backend, font_size)?;

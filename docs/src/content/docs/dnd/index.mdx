@@ -1,0 +1,103 @@
+---
+title: Drag and drop
+description: Drag and drop in Python desktop apps with Pyzed — Trello-style boards, sortable lists and grids, form and page builders, Figma-style canvases with snapping and guides, and node editors with wires, all animated natively.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![Cards moving between the columns of a Kanban board: the others slide aside and a shadow shows where the card lands](/pyzed/media/dnd/kanban.webp)
+
+Pyzed has a complete drag and drop system: everything that apps such as Trello, Notion, form
+builders, website builders, Figma or a shader node editor do with the mouse (and the finger).
+It is inspired by the best web libraries (dnd-kit, SortableJS, react-beautiful-dnd and
+Pragmatic drag and drop), but runs natively: the preview that follows the pointer, the items
+that slide aside, the shadow where the item will land and the flight to its new place are
+drawn frame by frame without calling Python, so it stays smooth with hundreds of items.
+
+<Aside type="note" title="In plain words">
+You say **what** can be picked up, **where** it can be dropped and **what happens** after the
+drop. Pyzed does the moving, the animations and the shadows for you.
+</Aside>
+
+## Three building blocks
+
+| Block | What it is | Like |
+| --- | --- | --- |
+| [`pz.draggable`](/pyzed/dnd/basics/draggable/) | Something the pointer can pick up: a card, a shape, a tool, a node's output. | `useDraggable` in dnd-kit |
+| [`pz.droppable`](/pyzed/dnd/basics/droppable/) | A place that takes it: a trash can, a canvas, an input port. | `useDroppable` in dnd-kit |
+| [`pz.sortable`](/pyzed/dnd/basics/sortable/) | A list, row or grid whose items you reorder, and move between lists. | SortableJS, react-beautiful-dnd |
+
+A fourth one, [`pz.drag_handle`](/pyzed/dnd/basics/handles/), marks the part of an item that
+starts the drag (the dots of a row, the title of a window).
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Todo(pz.App):
+    def __init__(self):
+        self.tasks = ["Buy milk", "Answer emails", "Book flights"]
+
+    def view(self):
+        return pz.sortable(
+            items=self.tasks,
+            item=lambda task: ui.card(ui.label(task)),
+            key=str,
+            on_reorder=lambda event: pz.dnd.move(self.tasks, event),
+        )
+
+
+pz.run(Todo)
+```
+
+That is a list you reorder by dragging: the other rows slide out of the way, a shadow shows
+where the row will land, and on release it glides there. Python only hears about the drop
+(`on_reorder`) and [`pz.dnd.move`](/pyzed/dnd/basics/events/#applying-a-drop) applies it to
+your list.
+
+## What you can build
+
+- **Boards and lists** (Trello, Jira, Notion): [sortable lists](/pyzed/dnd/basics/sortable/)
+  with the same `group` move cards between columns. [Tutorial](/pyzed/dnd/tutorials/kanban/).
+- **Form and page builders** (Typeform, Webflow, Elementor): a palette whose items are
+  copied (`pull="clone"`), nested lists, handles and a trash can.
+  [Form builder](/pyzed/dnd/tutorials/form-builder/), [page builder](/pyzed/dnd/tutorials/page-builder/).
+- **Design canvases** (Figma, Canva): free positions, a grid to snap to and guides that align
+  shapes with each other. [Tutorial](/pyzed/dnd/tutorials/design-canvas/).
+- **Node editors** (shader graphs, Blender, Unreal Blueprints): wires dragged from an output to
+  a compatible input. [Tutorial](/pyzed/dnd/tutorials/node-editor/).
+- **Grids, tabs and folders**: photo grids that wrap, tabs that only slide sideways, files you
+  drop onto a folder to group them ([combine](/pyzed/dnd/guides/nesting-and-combining/)).
+
+## Everything it does
+
+- **Animations**: the item lifts with a shadow, the others make room smoothly, the dropped item
+  flies to its place, and a cancelled drag (<kbd>Esc</kbd>) flies back home.
+  [Previews and animations](/pyzed/dnd/guides/previews-and-animations/).
+- **Placeholders**: a shadow or a translucent ghost of the item where it will land.
+- **Rules**: `type` and `accepts`, `can_drop` functions, lists that only give (`put=False`),
+  only copy (`pull="clone"`), don't reorder (`sort=False`), are full (`max_items`) or have
+  pinned items (`locked`). [Conditions](/pyzed/dnd/guides/conditions/).
+- **Limits**: drag only by a handle, along one axis, inside a parent, in grid steps, after a
+  long press (touch screens). [Handles](/pyzed/dnd/basics/handles/).
+- **Canvases**: drop coordinates, snapping to a grid and alignment guides.
+  [Free canvas](/pyzed/dnd/guides/free-canvas/).
+- **Scrolling**: lists inside a scrollable scroll by themselves when you drag near an edge.
+- **Keyboard**: sortables can be reordered with <kbd>Alt</kbd>+arrows.
+  [Keyboard and touch](/pyzed/dnd/guides/keyboard-and-touch/).
+
+## Where to start
+
+<CardGrid>
+	<LinkCard title="Sortable lists" href="/pyzed/dnd/basics/sortable/" description="Reorder rows, cards, tabs and grids; move items between lists." />
+	<LinkCard title="Draggable and droppable" href="/pyzed/dnd/basics/draggable/" description="Pick anything up and drop it anywhere." />
+	<LinkCard title="Kanban board" href="/pyzed/dnd/tutorials/kanban/" description="A Trello-style board, step by step." />
+	<LinkCard title="Events" href="/pyzed/dnd/basics/events/" description="What your handlers receive and how to apply a drop." />
+</CardGrid>
+
+All the examples are in [`examples/dnd/`](https://github.com/albakore/pyzed/tree/main/examples/dnd)
+and in the welcome gallery of Pyzed Design.

@@ -1,0 +1,46 @@
+---
+title: Cables
+description: Conecta nodos con cables en Pyzed — arrastra una curva desde un puerto de salida hasta una entrada compatible, con puertos con tipo, reglas y los enlaces dibujados en un lienzo.
+sidebar:
+  order: 5
+---
+
+![Un cable arrastrado desde la salida de un nodo hasta la entrada de otro](/pyzed/media/dnd/wires.webp)
+
+`preview="wire"` convierte un draggable en el extremo de un cable: al arrastrarlo dibuja una
+curva desde donde empezó hasta el puntero, como el grafo de shaders, los nodos de Blender o los
+Blueprints de Unreal. Los puertos son un draggable (salidas) y droppables (entradas) con el
+mismo tipo:
+
+```python
+salida = pz.draggable(punto("float"), "out/ruido/valor", data=("ruido", "valor"), type="port:float",
+                      preview="wire", wire_color="#e5c07b", wire_width=2.5)
+
+entrada = pz.droppable(punto("float"), "in/rampa/t", accepts="port:float",
+                       can_drop=lambda e: e.data[0] != "rampa",   # no desde el mismo nodo
+                       on_drop=self.conectar)
+```
+
+- El **tipo** del puerto (`"port:float"`, `"port:color"`) decide qué conecta: una salida de color
+  no entra en una entrada de número.
+- `can_drop` añade reglas: sin bucles, un cable por entrada, unidades compatibles.
+- El draggable conserva su aspecto (`source="keep"` es lo predeterminado para cables).
+
+## Dibujar los enlaces
+
+El cable solo existe mientras arrastras. Los enlaces que guardas son tus datos, dibujados con un
+[`pz.canvas`](/pyzed/es/reference/draw/) bajo los nodos:
+
+```python
+def cables(self):
+    formas = []
+    for a, b in self.enlaces:
+        (x1, y1), (x2, y2) = self.posicion_puerto(a), self.posicion_puerto(b)
+        curva = max(abs(x2 - x1) / 2, 40)
+        formas.append(draw.path([("M", x1, y1), ("C", x1 + curva, y1, x2 - curva, y2, x2, y2)],
+                                stroke="#e5c07b", width=2.5))
+    return pz.canvas(formas, width="fill", height="fill")
+```
+
+El [tutorial del editor de nodos](/pyzed/es/dnd/tutorials/node-editor/) lo junta con nodos que se
+mueven. Las apps de audio tienen uno ya hecho: el [rack y sus cables](/pyzed/es/audio/rack/cables/).

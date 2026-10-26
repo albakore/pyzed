@@ -497,6 +497,54 @@ pz.run(Results)
 
 Docs: `animation/timeline`, `editor/animations-and-effects`.
 
+## Drag and drop
+
+Lists you reorder and move between (a Kanban board), and a trash can. The sortables animate the
+gap, the shadow and the drop natively; Python only applies the drop with `pz.dnd.move`. Lists
+with the same `group` exchange items; `pull="clone"` makes a palette, `handle=True` drags only by
+a `pz.drag_handle`, `combine=True` drops onto items, `keyboard=True` reorders with Alt+arrows.
+For free canvases use `pz.droppable(..., snap=8, guides=True)` around `pz.pin`ned
+`pz.draggable`s and save `event.item_x`/`event.item_y`; for node wires `pz.draggable(..., preview="wire")`.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Board(pz.App):
+    title = "Board"
+    size = (640, 420)
+
+    def __init__(self):
+        self.lists = {"todo": ["Design", "Build", "Test"], "done": ["Plan"]}
+        self.dragging = False
+
+    def card(self, text):
+        t = pz.theme.current()
+        return pz.container(ui.label(text), padding=10, width="fill").style(
+            background=t.elevated, border_color=t.border, border_width=1, radius=8)
+
+    def column(self, name):
+        t = pz.theme.current()
+        cards = pz.sortable(items=self.lists[name], item=self.card, key=str, id=name, group="cards",
+                            spacing=8, height="fill", on_reorder=lambda e: pz.dnd.move(self.lists, e),
+                            on_drag_start=lambda e: setattr(self, "dragging", True),
+                            on_drag_end=lambda e: setattr(self, "dragging", False))
+        return pz.container(pz.column([ui.label(name.title(), weight="bold"), cards], spacing=10),
+                            padding=12, width="fill", height="fill").style(background=t.surface, radius=10)
+
+    def view(self):
+        trash = pz.droppable(ui.card(ui.label("Drop here to delete")), "trash", accepts="cards",
+                             on_drop=lambda e: self.lists[e.from_list].pop(e.from_index))
+        return pz.column([pz.row([self.column("todo"), self.column("done")], spacing=12, height="fill"),
+                          trash if self.dragging else ui.muted("Drag the cards")], spacing=12, padding=16)
+
+
+pz.run(Board)
+```
+
+Docs: `dnd/index`, `dnd/basics/sortable`, `dnd/guides/free-canvas`, `dnd/tutorials/kanban`.
+
 ## States of components
 
 Components carry their own states: buttons take `loading`, `disabled`, `selected`, `tooltip`

@@ -1,0 +1,93 @@
+---
+title: Kanban board
+description: Build a Trello-style Kanban board in Python with Pyzed — cards that move between columns, columns reordered by their header, a trash can that shows up while dragging.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![A Kanban board: a card moves to another column, a column is dragged by its header and a card is dropped on the trash](/pyzed/media/dnd/kanban.webp)
+
+A board like Trello's in about 100 lines:
+[`examples/dnd/kanban.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/kanban.py).
+
+```bash
+python examples/dnd/kanban.py
+```
+
+<Aside type="note" title="What you will learn">
+Lists that share items (`group`), lists inside a list (the columns are sortable too), handles,
+and a target that only shows up while dragging.
+</Aside>
+
+<Steps>
+
+1. **The data.** The board is plain Python: the columns in order, and the cards of each one by
+   column id. Each card has an `id`, which the sortable uses as its key.
+
+   ```python
+   def card(title, tag=None):
+       return {"id": f"card-{next(_ids)}", "title": title, "tag": tag}
+
+   self.columns = [{"id": "todo", "title": "To do"}, {"id": "doing", "title": "In progress"},
+                   {"id": "done", "title": "Done"}]
+   self.cards = {"todo": [card("Design the login screen", "feature"), ...], "doing": [...], "done": [...]}
+   ```
+
+2. **One column is a sortable.** Its `id` is the column's id and every column has the same
+   `group`, so cards can travel between them:
+
+   ```python
+   cards = pz.sortable(items=self.cards[cid], item=self.card_view, id=cid, group="cards",
+                       spacing=8, height="fill", on_reorder=self.move_card)
+   ```
+
+   `self.cards` already maps list ids to lists, which is what `pz.dnd.move` takes, so the
+   handler is one line:
+
+   ```python
+   def move_card(self, event):
+       pz.dnd.move(self.cards, event)
+   ```
+
+3. **The columns are a sortable too.** A horizontal sortable of columns, with another `group`
+   so cards and columns don't mix. `handle=True` drags a column only by the grip in its header:
+   the rest of the column belongs to its cards.
+
+   ```python
+   header = pz.row([pz.drag_handle(pz.icon("grip-vertical")), ui.label(column["title"], weight="bold"),
+                    ui.count_badge(len(self.cards[cid]))], spacing=6)
+
+   board = pz.sortable(items=self.columns, item=self.column_view, id="board", group="columns",
+                       direction="horizontal", spacing=14, handle=True, on_reorder=self.move_column)
+
+   def move_column(self, event):
+       pz.dnd.reorder(self.columns, event.from_index, event.index)
+   ```
+
+4. **A trash can that appears while dragging.** The column's `on_drag_start` and `on_drag_end`
+   set a flag, and the view shows a droppable that accepts cards while it is on:
+
+   ```python
+   cards = pz.sortable(..., on_drag_start=lambda e: setattr(self, "dragging", True),
+                       on_drag_end=lambda e: setattr(self, "dragging", False))
+
+   trash = pz.droppable(bin_, "trash", accepts="cards", on_drop=self.delete,
+                        over_style={"background": pz.theme.alpha(t.error, 0.15), "border_color": t.error})
+
+   def delete(self, event):
+       self.cards[event.from_list].pop(event.from_index)
+   ```
+
+5. **Long columns scroll.** Each list sits in a `pz.scrollable`: dragging a card near its
+   bottom edge scrolls it by itself.
+
+</Steps>
+
+## Ideas to go further
+
+- Limit a column with `max_items` (a "work in progress" limit), or forbid moving cards back
+  with `can_drop=lambda e: ...`.
+- Save the board as JSON in `move_card`.
+- Make "Done" read-only for others: `put=False` on that list.

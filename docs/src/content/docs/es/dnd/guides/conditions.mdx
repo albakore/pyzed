@@ -1,0 +1,64 @@
+---
+title: Condiciones
+description: Restringe el arrastrar y soltar en Pyzed — tipos y accepts, reglas can_drop, listas que solo dan, solo copian, no se ordenan, están llenas o tienen elementos fijos, y destinos desactivados.
+sidebar:
+  order: 1
+---
+
+![Una tarjeta rechazada por una columna llena y por una regla, con cursor de "no permitido", y luego aceptada por otra columna](/pyzed/media/dnd/conditions.webp)
+
+Cada suelta se comprueba en este orden. El primer "no" la rechaza y el destino muestra un cursor
+de "no permitido" en lugar de su resaltado:
+
+1. **Tipo.** El `type` del draggable (el de un elemento de sortable: el `group` de la lista)
+   tiene que estar en el `accepts` del destino (o en su `group`). `None` y `"*"` aceptan todo.
+2. **Desactivado.** Los destinos con `disabled=True` no aceptan nada.
+3. **Las reglas de la lista.** `put=False` no recibe nada de otras listas, `sort=False` no se
+   reordena por dentro, `max_items` está lleno y el `pull=False` de la lista de origen retiene
+   sus elementos.
+4. **Tu regla.** `can_drop(event)` devuelve `True` o `False`.
+
+## Tipos y accepts
+
+```python
+pz.draggable(foto, f.id, type="imagen")
+pz.draggable(doc, d.id, type=["archivo", "pdf"])
+
+pz.droppable(galeria, "galeria", accepts="imagen")
+pz.droppable(bandeja, "bandeja", accepts=["archivo", "imagen"])
+```
+
+Los sortables usan `group` para las dos cosas: sus elementos lo llevan como tipo y lo aceptan.
+Añade `accepts` para más (una lista que también recibe [`pz.draggable`](/pyzed/es/dnd/basics/draggable/)s
+de una barra de herramientas).
+
+## Tus propias reglas
+
+`can_drop(event)` se pregunta una vez por arrastre y destino (la primera vez que el arrastre
+llega a él), así que puede tardar lo que quieras. `event.data` es el elemento arrastrado y
+`event.target` el destino:
+
+```python
+# Un nodo no se puede conectar consigo mismo
+pz.droppable(puerto, f"in/{nodo}/{nombre}", accepts="port:float",
+             can_drop=lambda e: e.data["nodo"] != nodo)
+
+# Solo las tarjetas del dueño van a "Hecho"
+pz.sortable(..., id="hecho", group="tarjetas", can_drop=lambda e: e.data["dueño"] == self.usuario)
+```
+
+## Listas
+
+| Opción | Efecto |
+| --- | --- |
+| `pull=False` | Sus elementos no pueden salir (sí se reordenan dentro). |
+| `pull="clone"` | Sus elementos se copian al sacarlos: una paleta. |
+| `put=False` | No recibe nada de otras listas. |
+| `sort=False` | No se reordena por dentro (una paleta). |
+| `max_items=3` | Llena con 3 elementos; reordenar dentro sigue funcionando. |
+| `locked=[...]` | Esas claves no se pueden arrastrar. |
+| `draggable=False` | No se arrastra ningún elemento: solo se anima el orden. |
+| `disabled=True` | No sale ni entra nada. |
+
+Mantener <kbd>Alt</kbd> al soltar marca la suelta como copia (`event.copy`), como en un
+explorador de archivos: tu función decide qué hacer.

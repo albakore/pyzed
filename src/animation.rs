@@ -88,6 +88,15 @@ pub fn opacity() -> f32 {
     OPACITY.with(Cell::get)
 }
 
+/// Runs `draw` with every color faded by `opacity` (on top of the current opacity).
+pub fn with_opacity<R>(opacity: f32, draw: impl FnOnce() -> R) -> R {
+    let outer = OPACITY.with(Cell::get);
+    OPACITY.with(|o| o.set(outer * opacity.clamp(0.0, 1.0)));
+    let result = draw();
+    OPACITY.with(|o| o.set(outer));
+    result
+}
+
 /// `color` with the current opacity applied.
 pub fn fade(color: Color) -> Color {
     let o = opacity();

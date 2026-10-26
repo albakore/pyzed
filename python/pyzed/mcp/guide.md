@@ -218,6 +218,10 @@ Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guide
   reuses a subtree while its arguments are the same.
 - **Windows**: `frame = "custom"` (or `"macos"`, `"windows"`...) draws Pyzed's own title bar, with
   `frame_menus()` returning `ui.Menu` / `ui.MenuItem`; `pz.window_edges` adds resize borders.
+- **Drag and drop**: `pz.sortable(items=, item=, id=, group=, on_reorder=)` for lists, rows and grids
+  (between lists with the same `group`), `pz.draggable` + `pz.droppable` for anything else (`accepts`,
+  `can_drop`, `snap`, `guides`, `preview="wire"`), `pz.drag_handle`; `pz.dnd.move(lists, event)` applies a
+  drop. Kanban boards, form and page builders, Figma-style canvases and node editors: `get_guide("dnd")`.
 - **Anchored layouts**: `pz.anchor_layout` with `pz.anchor(widget, x=, y=, width=, height=, anchor=)`,
   like the designer.
 - **Forms and backends**: `ui.field(..., error=)` and `pz.validation_errors(error)` for Pydantic,

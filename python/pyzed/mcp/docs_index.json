@@ -439,6 +439,108 @@
    "path": "docs/src/content/docs/contributing/testing.md"
   },
   {
+   "slug": "dnd/basics/draggable",
+   "title": "Draggable",
+   "description": "Make any Pyzed widget draggable — data, types, previews, lift and shadow, axis locks, bounds, grids, long press, and drag events in Python.",
+   "path": "docs/src/content/docs/dnd/basics/draggable.mdx"
+  },
+  {
+   "slug": "dnd/basics/droppable",
+   "title": "Droppable",
+   "description": "Drop targets in Pyzed — accept types, decide with can_drop, highlight while dragging, show where the item lands and get drop coordinates for canvases.",
+   "path": "docs/src/content/docs/dnd/basics/droppable.mdx"
+  },
+  {
+   "slug": "dnd/basics/events",
+   "title": "Events",
+   "description": "The DragEvent of Pyzed drag and drop — every field (source, data, target, index, combine, coordinates, modifiers) and the move and reorder helpers that apply a drop.",
+   "path": "docs/src/content/docs/dnd/basics/events.mdx"
+  },
+  {
+   "slug": "dnd/basics/handles",
+   "title": "Handles",
+   "description": "Drag handles in Pyzed — start a drag only from the grip of a row or the title of a node, so the rest of the item keeps its clicks, inputs and text selection.",
+   "path": "docs/src/content/docs/dnd/basics/handles.mdx"
+  },
+  {
+   "slug": "dnd/basics/sortable",
+   "title": "Sortable lists",
+   "description": "Sortable lists, rows and wrapping grids in Python with Pyzed — reorder by dragging, move items between lists, copy from a palette, with animated gaps and drop shadows.",
+   "path": "docs/src/content/docs/dnd/basics/sortable.mdx"
+  },
+  {
+   "slug": "dnd/guides/conditions",
+   "title": "Conditions",
+   "description": "Restrict drag and drop in Pyzed — types and accepts, can_drop rules, lists that only give, only copy, don't sort, are full or have locked items, and disabled targets.",
+   "path": "docs/src/content/docs/dnd/guides/conditions.mdx"
+  },
+  {
+   "slug": "dnd/guides/free-canvas",
+   "title": "Free canvas",
+   "description": "A Figma-style canvas in Pyzed — drop items at any position, snap to a grid, align with smart guides, keep them inside bounds and drop new shapes from a toolbar.",
+   "path": "docs/src/content/docs/dnd/guides/free-canvas.mdx"
+  },
+  {
+   "slug": "dnd/guides/keyboard-and-touch",
+   "title": "Keyboard and touch",
+   "description": "Accessible drag and drop in Pyzed — reorder sortable lists with the keyboard, long press for touch screens, and cancelling with Escape.",
+   "path": "docs/src/content/docs/dnd/guides/keyboard-and-touch.mdx"
+  },
+  {
+   "slug": "dnd/guides/nesting-and-combining",
+   "title": "Nesting and combining",
+   "description": "Nested sortable lists in Pyzed (columns inside a page, groups inside groups) and combining items by dropping one onto another, like files onto a folder.",
+   "path": "docs/src/content/docs/dnd/guides/nesting-and-combining.mdx"
+  },
+  {
+   "slug": "dnd/guides/previews-and-animations",
+   "title": "Previews and animations",
+   "description": "How drag and drop looks in Pyzed — lifted previews with shadows, ghosts and placeholders, custom previews, the drop and cancel flights and the list animations.",
+   "path": "docs/src/content/docs/dnd/guides/previews-and-animations.mdx"
+  },
+  {
+   "slug": "dnd/guides/wires",
+   "title": "Wires",
+   "description": "Connect nodes with wires in Pyzed — drag a curve from an output port to a compatible input, with typed ports, rules and the links drawn on a canvas.",
+   "path": "docs/src/content/docs/dnd/guides/wires.mdx"
+  },
+  {
+   "slug": "dnd/index",
+   "title": "Drag and drop",
+   "description": "Drag and drop in Python desktop apps with Pyzed — Trello-style boards, sortable lists and grids, form and page builders, Figma-style canvases with snapping and guides, and node editors with wires, all animated natively.",
+   "path": "docs/src/content/docs/dnd/index.mdx"
+  },
+  {
+   "slug": "dnd/tutorials/design-canvas",
+   "title": "Design canvas",
+   "description": "Build a Figma-style design canvas in Python with Pyzed — shapes moved freely with a grid and smart guides, new shapes dropped from a toolbar and a layers panel.",
+   "path": "docs/src/content/docs/dnd/tutorials/design-canvas.mdx"
+  },
+  {
+   "slug": "dnd/tutorials/form-builder",
+   "title": "Form builder",
+   "description": "Build a form builder in Python with Pyzed — drag fields from a palette into a form, reorder them by a handle, edit the selected one and see the form live.",
+   "path": "docs/src/content/docs/dnd/tutorials/form-builder.mdx"
+  },
+  {
+   "slug": "dnd/tutorials/kanban",
+   "title": "Kanban board",
+   "description": "Build a Trello-style Kanban board in Python with Pyzed — cards that move between columns, columns reordered by their header, a trash can that shows up while dragging.",
+   "path": "docs/src/content/docs/dnd/tutorials/kanban.mdx"
+  },
+  {
+   "slug": "dnd/tutorials/node-editor",
+   "title": "Node editor",
+   "description": "Build a node editor in Python with Pyzed — nodes moved by their title, typed ports, wires dragged from outputs to inputs and links drawn as curves.",
+   "path": "docs/src/content/docs/dnd/tutorials/node-editor.mdx"
+  },
+  {
+   "slug": "dnd/tutorials/page-builder",
+   "title": "Page builder",
+   "description": "Build a website builder in Python with Pyzed — blocks dropped from a library, nested columns, reordering anywhere, a trash can and desktop and phone widths.",
+   "path": "docs/src/content/docs/dnd/tutorials/page-builder.mdx"
+  },
+  {
    "slug": "download",
    "title": "Download Pyzed Design",
    "description": "Download Pyzed Design, the free drag-and-drop visual designer for Python desktop GUIs, as a standalone app for Windows, macOS and Linux.",
@@ -1727,6 +1829,12 @@
    "title": "Visual designer (pyzed.designer)",
    "description": "API reference for pyzed.designer: run, open and build forms from Python code, and register toolbox components and templates.",
    "path": "docs/src/content/docs/reference/designer.md"
+  },
+  {
+   "slug": "reference/dnd",
+   "title": "Drag and drop (pyzed.dnd)",
+   "description": "API reference for pyzed.dnd: draggable, droppable and sortable widgets, drag handles, the DragEvent and the move and reorder helpers for drag and drop in Python desktop apps.",
+   "path": "docs/src/content/docs/reference/dnd.md"
   },
   {
    "slug": "reference/draw",
@@ -6469,7 +6577,30 @@
    },
    "pyzed.shading.Preset": {
     "desc": "An entry of the Shading sidebar: a node type with some settings (`func:sin` is the Function node set to sin)."
-   }
+   },
+   "pyzed.sortable": {
+    "example": "pz.sortable(items=self.cards[\"todo\"], item=self.card, id=\"todo\", group=\"cards\",\n            on_reorder=lambda e: pz.dnd.move(self.cards, e))"
+   },
+   "pyzed.draggable": {
+    "example": "pz.draggable(ui.card(ui.label(\"Report.pdf\")), \"file-7\", data=file, type=\"file\")"
+   },
+   "pyzed.droppable": {
+    "example": "pz.droppable(trash, \"trash\", accepts=\"file\", on_drop=lambda e: self.delete(e.data))"
+   },
+   "pyzed.drag_handle": {
+    "desc": "The part of an item that starts the drag when the draggable or sortable has `handle=True` (the grip of a row, the title of a node). Shows `cursor` (`\"grab\"` by default) when hovered.",
+    "params": {
+     "content": "What the handle looks like.",
+     "cursor": "The cursor shown over it: `\"grab\"`, `\"move\"`, `\"pointer\"`..."
+    }
+   },
+   "pyzed.DragEvent": {},
+   "pyzed.dnd.move": {
+    "example": "pz.dnd.move({\"todo\": self.todo, \"done\": self.done}, event)"
+   },
+   "pyzed.dnd.reorder": {},
+   "pyzed.dnd.current": {},
+   "pyzed.dnd.cancel": {}
   }
  }
 }

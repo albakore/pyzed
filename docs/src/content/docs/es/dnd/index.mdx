@@ -1,0 +1,106 @@
+---
+title: Arrastrar y soltar
+description: Arrastrar y soltar en apps de escritorio con Python y Pyzed — tableros al estilo de Trello, listas y cuadrículas ordenables, creadores de formularios y de páginas, lienzos al estilo de Figma con imán y guías, y editores de nodos con cables, todo animado de forma nativa.
+sidebar:
+  order: 0
+  label: Introducción
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![Tarjetas que pasan entre las columnas de un tablero Kanban: las demás se apartan y una sombra muestra dónde cae la tarjeta](/pyzed/media/dnd/kanban.webp)
+
+Pyzed tiene un sistema completo de arrastrar y soltar: todo lo que hacen con el ratón (y con el
+dedo) apps como Trello, Notion, los creadores de formularios y de páginas web, Figma o un editor
+de nodos de shaders. Se inspira en las mejores librerías web (dnd-kit, SortableJS,
+react-beautiful-dnd y Pragmatic drag and drop), pero funciona de forma nativa: la vista previa
+que sigue al puntero, los elementos que se apartan, la sombra donde caerá el elemento y el vuelo
+hasta su sitio nuevo se dibujan fotograma a fotograma sin llamar a Python, así que va fluido
+incluso con cientos de elementos.
+
+<Aside type="note" title="En pocas palabras">
+Tú dices **qué** se puede agarrar, **dónde** se puede soltar y **qué pasa** al soltarlo. Pyzed se
+encarga del movimiento, las animaciones y las sombras.
+</Aside>
+
+## Tres bloques básicos
+
+| Bloque | Qué es | Como |
+| --- | --- | --- |
+| [`pz.draggable`](/pyzed/es/dnd/basics/draggable/) | Algo que el puntero puede agarrar: una tarjeta, una forma, una herramienta, la salida de un nodo. | `useDraggable` de dnd-kit |
+| [`pz.droppable`](/pyzed/es/dnd/basics/droppable/) | Un sitio que lo recibe: una papelera, un lienzo, un puerto de entrada. | `useDroppable` de dnd-kit |
+| [`pz.sortable`](/pyzed/es/dnd/basics/sortable/) | Una lista, fila o cuadrícula cuyos elementos reordenas y mueves entre listas. | SortableJS, react-beautiful-dnd |
+
+Un cuarto, [`pz.drag_handle`](/pyzed/es/dnd/basics/handles/), marca la parte de un elemento que
+empieza el arrastre (los puntitos de una fila, el título de una ventana).
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Tareas(pz.App):
+    def __init__(self):
+        self.tareas = ["Comprar leche", "Responder correos", "Reservar vuelos"]
+
+    def view(self):
+        return pz.sortable(
+            items=self.tareas,
+            item=lambda tarea: ui.card(ui.label(tarea)),
+            key=str,
+            on_reorder=lambda event: pz.dnd.move(self.tareas, event),
+        )
+
+
+pz.run(Tareas)
+```
+
+Eso es una lista que se reordena arrastrando: las demás filas se apartan, una sombra muestra
+dónde caerá la fila y, al soltar, se desliza hasta allí. Python solo se entera de la suelta
+(`on_reorder`) y [`pz.dnd.move`](/pyzed/es/dnd/basics/events/#aplicar-una-suelta) la aplica a tu
+lista.
+
+## Qué puedes crear
+
+- **Tableros y listas** (Trello, Jira, Notion): [listas ordenables](/pyzed/es/dnd/basics/sortable/)
+  con el mismo `group` mueven tarjetas entre columnas. [Tutorial](/pyzed/es/dnd/tutorials/kanban/).
+- **Creadores de formularios y de páginas** (Typeform, Webflow, Elementor): una paleta cuyos
+  elementos se copian (`pull="clone"`), listas anidadas, asas y una papelera.
+  [Formularios](/pyzed/es/dnd/tutorials/form-builder/), [páginas](/pyzed/es/dnd/tutorials/page-builder/).
+- **Lienzos de diseño** (Figma, Canva): posiciones libres, una cuadrícula a la que se ajustan y
+  guías que alinean las formas entre sí. [Tutorial](/pyzed/es/dnd/tutorials/design-canvas/).
+- **Editores de nodos** (grafos de shaders, Blender, Blueprints de Unreal): cables que se
+  arrastran desde una salida hasta una entrada compatible. [Tutorial](/pyzed/es/dnd/tutorials/node-editor/).
+- **Cuadrículas, pestañas y carpetas**: galerías de fotos que saltan de fila, pestañas que solo
+  se mueven a los lados y archivos que sueltas sobre una carpeta para agruparlos
+  ([combinar](/pyzed/es/dnd/guides/nesting-and-combining/)).
+
+## Todo lo que hace
+
+- **Animaciones**: el elemento se levanta con una sombra, los demás le hacen sitio con suavidad,
+  el elemento soltado vuela a su sitio y un arrastre cancelado (<kbd>Esc</kbd>) vuelve a casa.
+  [Vistas previas y animaciones](/pyzed/es/dnd/guides/previews-and-animations/).
+- **Marcadores**: una sombra o un fantasma translúcido del elemento donde va a caer.
+- **Reglas**: `type` y `accepts`, funciones `can_drop`, listas que solo dan (`put=False`), solo
+  copian (`pull="clone"`), no se reordenan (`sort=False`), están llenas (`max_items`) o tienen
+  elementos fijos (`locked`). [Condiciones](/pyzed/es/dnd/guides/conditions/).
+- **Límites**: arrastrar solo desde un asa, en un eje, dentro del padre, a saltos de cuadrícula
+  o tras una pulsación larga (pantallas táctiles). [Asas](/pyzed/es/dnd/basics/handles/).
+- **Lienzos**: coordenadas de la suelta, imán a una cuadrícula y guías de alineación.
+  [Lienzo libre](/pyzed/es/dnd/guides/free-canvas/).
+- **Desplazamiento**: las listas dentro de un scrollable se desplazan solas al arrastrar cerca
+  de un borde.
+- **Teclado**: las listas ordenables se reordenan con <kbd>Alt</kbd>+flechas.
+  [Teclado y pantallas táctiles](/pyzed/es/dnd/guides/keyboard-and-touch/).
+
+## Por dónde empezar
+
+<CardGrid>
+	<LinkCard title="Listas ordenables" href="/pyzed/es/dnd/basics/sortable/" description="Reordena filas, tarjetas, pestañas y cuadrículas; mueve elementos entre listas." />
+	<LinkCard title="Draggable y droppable" href="/pyzed/es/dnd/basics/draggable/" description="Agarra cualquier cosa y suéltala en cualquier sitio." />
+	<LinkCard title="Tablero Kanban" href="/pyzed/es/dnd/tutorials/kanban/" description="Un tablero al estilo de Trello, paso a paso." />
+	<LinkCard title="Eventos" href="/pyzed/es/dnd/basics/events/" description="Qué reciben tus funciones y cómo aplicar una suelta." />
+</CardGrid>
+
+Todos los ejemplos están en [`examples/dnd/`](https://github.com/albakore/pyzed/tree/main/examples/dnd)
+y en la galería de bienvenida de Pyzed Design.

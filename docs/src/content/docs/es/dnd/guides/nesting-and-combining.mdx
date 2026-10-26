@@ -1,0 +1,54 @@
+---
+title: Anidar y combinar
+description: Listas ordenables anidadas en Pyzed (columnas dentro de una página, grupos dentro de grupos) y combinar elementos soltando uno sobre otro, como archivos sobre una carpeta.
+sidebar:
+  order: 4
+---
+
+![Un archivo soltado sobre una carpeta: la carpeta se ilumina y el archivo entra en ella](/pyzed/media/dnd/combine.webp)
+
+## Listas dentro de listas
+
+Los sortables pueden contener sortables: una página con secciones, una sección con columnas,
+una columna con bloques. Dale a cada lista un `id` único y el mismo `group`. La lista más
+profunda bajo el puntero recibe la suelta:
+
+```python
+def listas(self):
+    encontradas = {"pagina": self.pagina}
+    for bloque in self.pagina:
+        if bloque["tipo"] == "columnas":
+            encontradas[bloque["id"] + ":izq"] = bloque["izq"]
+            encontradas[bloque["id"] + ":der"] = bloque["der"]
+    return encontradas
+
+def soltar(self, e):
+    pz.dnd.move(self.listas(), e)
+```
+
+Mientras arrastras un elemento, las listas que tiene dentro no aceptan sueltas: un bloque no se
+puede soltar dentro de sí mismo. Añade un `can_drop` para otras reglas ("no hay columnas dentro
+de columnas"). El [tutorial del creador de páginas](/pyzed/es/dnd/tutorials/page-builder/) lo
+muestra todo.
+
+## Combinar elementos
+
+`combine=True` deja soltar un elemento **sobre** otro. Cada elemento tiene una franja central:
+sobre ella, el elemento de destino se ilumina y el hueco se queda donde estaba. El `combine` del
+evento de la suelta es la clave de ese elemento (si no, `None`):
+
+```python
+def soltar(self, e):
+    if e.combine is None:
+        pz.dnd.move(self.archivos, e)              # un reordenado normal
+        return
+    carpeta = next(f for f in self.archivos if f["id"] == e.combine)
+    if "hijos" in carpeta:
+        carpeta["hijos"].append(self.archivos.pop(e.from_index))
+
+pz.sortable(items=self.archivos, item=self.fila, id="archivos", combine=True, on_reorder=self.soltar)
+```
+
+Sirve para meter archivos en carpetas, fusionar dos tarjetas, agrupar capas o apilar apps en una
+pantalla de inicio. [`examples/dnd/sortables.py`](https://github.com/albakore/pyzed/blob/main/examples/dnd/sortables.py)
+tiene la lista de carpetas.

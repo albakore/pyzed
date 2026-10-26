@@ -16,6 +16,10 @@ stable version.
 
 ## [Unreleased]
 
+### Highlights
+
+- **Drag and drop**: `pz.draggable`, `pz.droppable`, `pz.sortable` and `pz.drag_handle` cover Trello-style boards, sortable lists, rows and wrapping grids, form and page builders, Figma-style canvases with snapping and alignment guides, and node editors with wires. Previews lift with a shadow, items slide aside, a shadow or ghost marks the landing place, drops fly into place and Escape flies them back, all drawn natively. Types, `accepts`, `can_drop`, `pull="clone"`, `max_items`, handles, axis locks, long press, autoscroll, combining items and keyboard reordering are built in. New docs section with tutorials and six examples in the welcome gallery.
+
 ## [1.13.1] - 2026-10-25
 
 > 1.13.0 was tagged but never published: its build stopped on a test that needs Pillow. 1.13.1 ships everything it had.
