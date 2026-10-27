@@ -2837,6 +2837,10 @@ editor(
     hover_delay=500,
     sticky_scroll=0,
     indent_guides=False,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=(),
+    vim=False,
     theme=None,
 )
 ```
@@ -2889,6 +2893,10 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
 | `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 | `indent_guides` | `True` dibuja una línea fina en cada nivel de sangría (la del bloque donde está el cursor resalta); `"rainbow"` da a cada profundidad su propio color. |
+| `diagnostics` | Problemas como `(line, column, end_line, end_column, severity)` desde 1 (`"error"`, `"warning"`, `"info"`, `"hint"` o 1–4 de LSP): se marcan en el minimapa y se subrayan con una línea ondulada. |
+| `diagnostic_underlines` | `False` quita el subrayado ondulado (el minimapa sigue marcando los problemas). |
+| `hover_keys` | Teclas que dejan abierta la tarjeta de información en vez de ocultarla (Ctrl+Espacio para ver más). |
+| `vim` | `True` edita como Vim (el `vim_mode` de Zed): modos Normal, Insertar y Visual; `on_action` recibe el modo y lo que Vim pide a la app. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

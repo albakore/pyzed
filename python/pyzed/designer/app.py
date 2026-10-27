@@ -1621,6 +1621,8 @@ class Designer(App):
                 self.assist.intel.apply_settings(self.assist.settings)
                 if "font_family" in changed:
                     self.apply_fonts()
+                if "base_keymap" in changed:
+                    _keymap.set_base(changed["base_keymap"])
                 if changed.get("code_lens"):
                     self.assist.intel.refresh_lenses(self.doc.form)
         if section in (None, "designer"):
@@ -3282,10 +3284,12 @@ class Designer(App):
         ]
         if self.buffers.current is not None:
             line, column = self.assist.cursor
-            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t), *end]
+            end = [code_panel.vim_status_item(self.assist, t),
+                   ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t), *end]
         elif self.editing is not None:
             line, column = self.assist.cursor
-            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
+            end = [code_panel.vim_status_item(self.assist, t),
+                   ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
                    *code_panel.server_status_items(self.assist, t, self.open_editor_settings), *end]
         return ui.status_bar(start, end, theme=t)
 

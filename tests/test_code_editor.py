@@ -269,7 +269,8 @@ def test_key_bindings_parse_like_zed():
     assert parse_keys("shift-alt-ctrl-up") == "ctrl-alt-shift-up"
     assert parse_keys("ctrl-k ctrl-c") == "ctrl-k ctrl-c"
     assert parse_keys("ctrl--") == "ctrl--" and parse_keys("esc") == "escape"
-    assert parse_keys("ctrl-a ctrl-b") is None and parse_keys("hyper-x") is None and parse_keys("") is None
+    assert parse_keys("ctrl-x u") == "ctrl-x u"  # Emacs's chords start with any key
+    assert parse_keys("ctrl-a ctrl-b ctrl-c") is None and parse_keys("hyper-x") is None and parse_keys("") is None
     keymap = keymap_for({"delete_line": "ctrl-shift-d, alt-d", "select_next": ""})
     assert keymap["ctrl-shift-d"] == "delete_line" and keymap["alt-d"] == "delete_line"
     assert all(keymap[k] is None for k in DEFAULT_KEYS["delete_line"] + DEFAULT_KEYS["select_next"])
@@ -291,7 +292,10 @@ def test_designer_key_bindings(tmp_path):
     [delete_line] = km.bindings_for("editor::delete_line")
     assert km.change(delete_line, "Ctrl+Shift+")  # not keys
     assert km.change(delete_line, "Ctrl+Shift+D") is None
-    assert a.editor_keymap() == {"ctrl-shift-k": None, "ctrl-shift-d": "delete_line"}
+    singles = lambda: {k: v for k, v in a.editor_keymap().items() if " " not in k}  # noqa: E731
+    assert singles() == {"ctrl-shift-k": None, "ctrl-shift-d": "delete_line"}
+    # The designer's chords reach the editor bound to nothing, so their first key waits for the second.
+    assert a.editor_keymap()["ctrl-k ctrl-s"] is None
     # Alt+Z toggles wrapping, and the code panel's keys can move too.
     assert not a.settings.wrap
     d.on_key("alt-z")
@@ -303,7 +307,7 @@ def test_designer_key_bindings(tmp_path):
     d.on_key("ctrl-alt-g")
     assert a.goto == ""
     km.reset_all()
-    assert km.keys_for("code_panel::go_to_line") == "ctrl-g" and a.editor_keymap() == {}
+    assert km.keys_for("code_panel::go_to_line") == "ctrl-g" and singles() == {}
 
 
 def test_old_editor_keys_move_to_the_keymap(tmp_path):

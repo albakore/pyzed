@@ -1,6 +1,7 @@
 //! Custom widgets used by the code editor: the cursors (`Caret`), the boxes behind and around
 //! the text (`Boxes`: other cursors' selections, search results, matching brackets), the
-//! `Minimap` and `EditorInput` (tracks the modifiers; Ctrl + mouse wheel changes the font size).
+//! wavy underlines of the problems (`Squiggles`), the `Minimap` and `EditorInput` (tracks the
+//! modifiers; Ctrl + mouse wheel changes the font size).
 
 use std::cell::Cell;
 use std::time::{Duration, Instant};
@@ -874,6 +875,74 @@ impl<'a> From<Boxes<'a>> for Element<'a, Message> {
     }
 }
 
+/// Wavy underlines under the problems in the text (errors, warnings), like Zed's.
+pub struct Squiggles {
+    /// The rows to underline, relative to the text layer (the underline runs along their
+    /// bottom), and their color.
+    pub rects: Vec<(Rectangle, Color)>,
+}
+
+/// Wavelength and height of a squiggle, in pixels.
+const WAVE: f32 = 4.0;
+const WAVE_HEIGHT: f32 = 1.5;
+
+impl Widget<Message, Theme, Renderer> for Squiggles {
+    fn size(&self) -> Size<Length> {
+        Size::new(Length::Shrink, Length::Shrink)
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(Size::ZERO)
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        _theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        _cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        use iced::advanced::Renderer as _;
+        let origin = layout.bounds().position();
+        for (rect, color) in &self.rects {
+            let bounds = *rect + Vector::new(origin.x, origin.y);
+            if !bounds.intersects(viewport) {
+                continue;
+            }
+            // A zigzag of small dots: cheap to draw and it reads as a wave.
+            let width = bounds.width.max(WAVE);
+            let base = bounds.y + bounds.height - WAVE_HEIGHT - 2.0;
+            let start = bounds.x.max(viewport.x - WAVE);
+            let end = (bounds.x + width).min(viewport.x + viewport.width + WAVE);
+            let mut x = start - (start - bounds.x).rem_euclid(1.0);
+            while x < end {
+                let phase = ((x - bounds.x) / WAVE).fract();
+                let up = (phase * 2.0 - 1.0).abs();
+                renderer.fill_quad(
+                    Quad {
+                        bounds: Rectangle::new(
+                            Point::new(x, base + up * WAVE_HEIGHT),
+                            Size::new(1.0, 1.0),
+                        ),
+                        ..Quad::default()
+                    },
+                    Background::Color(*color),
+                );
+                x += 1.0;
+            }
+        }
+    }
+}
+
+impl<'a> From<Squiggles> for Element<'a, Message> {
+    fn from(squiggles: Squiggles) -> Self {
+        Element::new(squiggles)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Minimap
 // ---------------------------------------------------------------------------
@@ -882,6 +951,8 @@ impl<'a> From<Boxes<'a>> for Element<'a, Message> {
 const MINI_LINE: f32 = 3.0;
 const MINI_TEXT: f32 = 2.0;
 const MINI_COLUMN: f32 = 1.2;
+/// Width of the problem marks on the minimap's right edge.
+const MARK_WIDTH: f32 = 3.0;
 
 /// A zoomed-out view of the visible text with the scrolled area highlighted (like Zed's and
 /// VS Code's). Clicking scrolls there; dragging the highlighted area scrolls along. When the
@@ -897,6 +968,10 @@ pub struct Minimap<'a> {
     pub background: Option<Color>,
     /// The color of text without a syntax color.
     pub text_color: Color,
+    /// The lines with problems (0-based, real lines) and their color, the most severe last:
+    /// each one tints its line and gets a mark on the right edge, placed over the whole text so
+    /// the problems off screen show too.
+    pub diagnostics: Vec<(usize, Color)>,
 }
 
 /// The `(column, length, color)` runs of non-blank text of a highlighted line, with tabs
@@ -1012,6 +1087,56 @@ impl Minimap<'_> {
                     y: Some(y),
                 }));
             shell.request_redraw();
+        }
+    }
+
+    /// The problems: a tint over their lines and, on the right edge, a mark for each one placed
+    /// over the whole text (like VS Code's overview ruler), so the ones off screen show too.
+    fn draw_diagnostics(
+        &self,
+        renderer: &mut Renderer,
+        bounds: Rectangle,
+        g: &Geometry,
+        starts: &[u32],
+    ) {
+        use iced::advanced::Renderer as _;
+        if self.diagnostics.is_empty() || starts.len() < 2 {
+            return;
+        }
+        let rows = (*starts.last().unwrap_or(&1)).max(1) as f32;
+        let total = (rows * MINI_LINE).max(bounds.height);
+        for &(line, color) in &self.diagnostics {
+            let (index, _) = self.state.visible_line(line);
+            let Some(&row) = starts.get(index) else {
+                continue;
+            };
+            let y = bounds.y + row as f32 * MINI_LINE - g.offset;
+            if y + MINI_LINE >= bounds.y && y <= bounds.y + bounds.height {
+                renderer.fill_quad(
+                    Quad {
+                        bounds: Rectangle::new(
+                            Point::new(bounds.x, y),
+                            Size::new(bounds.width, MINI_LINE),
+                        ),
+                        ..Quad::default()
+                    },
+                    Background::Color(Color { a: 0.28, ..color }),
+                );
+            }
+            let mark = bounds.y + row as f32 / rows * total.min(bounds.height);
+            renderer.fill_quad(
+                Quad {
+                    bounds: Rectangle::new(
+                        Point::new(
+                            bounds.x + bounds.width - MARK_WIDTH,
+                            mark.min(bounds.y + bounds.height - 2.0),
+                        ),
+                        Size::new(MARK_WIDTH, 2.0),
+                    ),
+                    ..Quad::default()
+                },
+                Background::Color(color),
+            );
         }
     }
 
@@ -1210,6 +1335,7 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
             }
             cache.retain(|line, _| (first..=last).contains(line));
             drop(cache);
+            self.draw_diagnostics(renderer, bounds, &g, &metrics.starts);
             let base = self
                 .thumb
                 .unwrap_or(theme.extended_palette().background.strong.color);
@@ -1251,6 +1377,8 @@ pub struct EditorInput<'a> {
     on_zoom: Option<PyMsg>,
     on_hover: Option<PyMsg>,
     hover_delay: Duration,
+    /// Keys that keep the hover shown (the ones that expand it), besides the modifiers.
+    hover_keys: Vec<crate::editor::keymap::Keystroke>,
     /// Highlight the lines below the view a little each frame (the minimap shows them).
     highlight_all: bool,
 }
@@ -1258,6 +1386,11 @@ pub struct EditorInput<'a> {
 impl<'a> EditorInput<'a> {
     pub fn highlight_all(mut self, all: bool) -> Self {
         self.highlight_all = all;
+        self
+    }
+
+    pub fn hover_keys(mut self, keys: Vec<crate::editor::keymap::Keystroke>) -> Self {
+        self.hover_keys = keys;
         self
     }
 
@@ -1276,6 +1409,7 @@ impl<'a> EditorInput<'a> {
             on_zoom,
             on_hover,
             hover_delay,
+            hover_keys: Vec::new(),
             highlight_all: false,
         }
     }
@@ -1403,7 +1537,21 @@ impl EditorInput<'_> {
                 state.rest = None;
                 hide(state, shell)
             }
-            Event::Keyboard(keyboard::Event::KeyPressed { .. }) => {
+            Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
+                use keyboard::key::Named;
+                // Holding a modifier, or pressing a key that expands the hover, keeps it.
+                let modifier = matches!(
+                    key.as_ref(),
+                    keyboard::Key::Named(Named::Control | Named::Shift | Named::Alt | Named::Super)
+                );
+                if modifier
+                    || self
+                        .hover_keys
+                        .iter()
+                        .any(|k| k.matches_key(key, *modifiers))
+                {
+                    return;
+                }
                 state.rest = None;
                 hide(state, shell)
             }

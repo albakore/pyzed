@@ -60,6 +60,15 @@ RENAME_ID = "designer-code-rename"
 STICKY_LINES = 5
 HOVER_WIDTH = 520.0
 HOVER_HEIGHT = 300.0
+#: The hover card and the completion's documentation after Ctrl+Space shows all of it.
+EXPANDED_WIDTH = 680.0
+EXPANDED_HEIGHT = 560.0
+#: Characters of documentation a hover card shows before Ctrl+Space.
+HOVER_SHORT = 700
+COMMAND_ID = "designer-code-vim-command"
+#: Vim's modes as the editor reports them, and their names in the status bar.
+VIM_MODES = {"vim_normal": "NORMAL", "vim_insert": "INSERT", "vim_visual": "VISUAL",
+             "vim_visual_line": "VISUAL LINE"}
 ACTIONS_WIDTH = 420.0
 #: How many places Go back remembers.
 HISTORY = 50
@@ -103,6 +112,8 @@ class Completion:
     top: int = 0
     #: Keep the highlighted row in view (off after the wheel scrolls the list).
     follow: bool = True
+    #: Ctrl+Space showed the whole documentation of the highlighted item, in a bigger card.
+    expanded: bool = False
 
     @property
     def selected(self) -> Optional[CompletionItem]:
@@ -126,6 +137,10 @@ class HoverCard:
     text: str = ""
     diagnostics: List[Diagnostic] = field(default_factory=list)
     loading: bool = True
+    #: Ctrl+Space showed the whole documentation, in a bigger card.
+    expanded: bool = False
+    #: Opened from the keyboard (``hover``): placed at the word's position in the text, not at the mouse.
+    at_cursor: bool = False
 
 
 @dataclass
@@ -179,6 +194,7 @@ class CodeAssist:
             _keymap.get().migrate(self.settings.keymap)
             self.settings = replace(self.settings, keymap={})
             _settings.save(self.settings)
+        _keymap.set_base(self.settings.base_keymap)
         self.intel = CodeIntel(self.settings, dispatch=self._post, on_update=self._noop)
         self.servers = servers
         self.cursor: Tuple[int, int] = (1, 1)
@@ -200,6 +216,9 @@ class CodeAssist:
         #: Places left by jumps (Go to definition, a reference), for Go back and Go forward.
         self.back: List[Place] = []
         self.forward: List[Place] = []
+        #: Vim's mode (a key of ``VIM_MODES``) while Vim mode is on, and its ":" command line while open.
+        self.vim_mode = "vim_normal"
+        self.command: Optional[str] = None
 
     # -- plumbing -------------------------------------------------------------
     @staticmethod
@@ -460,8 +479,13 @@ class CodeAssist:
     def run_action(self, name: str) -> Any:
         """Runs the code panel's keymap action ``name`` (``code_panel::`` in the keymap)."""
         if name == "show_completions":
-            return None if self.plain else self.open_completion()
+            return self.show_more() if not self.plain else None
         panel = {
+            "hover": self.hover_at_cursor,
+            "go_to_diagnostic": lambda: self.go_to_diagnostic(1),
+            "go_to_previous_diagnostic": lambda: self.go_to_diagnostic(-1),
+            "format": self.format_now,
+            "toggle_vim_mode": lambda: self.set("vim_mode", not self.settings.vim_mode),
             "find": lambda: self.open_search(),
             "replace": lambda: self.open_search(replacing=True),
             "go_to_line": self.open_goto,
@@ -509,6 +533,8 @@ class CodeAssist:
             return True, self.next_match(-1 if combo.startswith("shift") else 1)
         if self.goto is not None and combo == "escape":
             return True, self.close_goto()
+        if self.command is not None and combo == "escape":
+            return True, self.close_command()
         c = self.completion
         if c is None:
             return False, None
@@ -538,23 +564,68 @@ class CodeAssist:
         """The mouse rests on a word (``info`` from the editor's ``on_hover``), or left it (``None``): shows or
         hides its hover card with the symbol's documentation and the problems there."""
         if info is None:
-            self.hover = None
+            if self.hover is not None and not self.hover.at_cursor:
+                self.hover = None
             return
+        h = self.hover
+        if h is not None and (h.line, h.start, h.end) == (int(info["line"]), int(info["start"]), int(info["end"])):
+            return  # the same word: keep the card (and Ctrl+Space's longer text)
         if self.plain or not self.settings.hover or self.rename is not None or self.actions is not None \
                 or (self.completion is not None and self.completion.shown):
             return
         card = HoverCard(int(info["line"]), int(info["column"]), int(info["start"]), int(info["end"]),
                          float(info["x"]), float(info["y"]), float(info["height"]))
+        self._show_hover(card)
+        _telemetry.get().count("editor.hover")
+
+    def _show_hover(self, card: HoverCard) -> None:
         card.diagnostics = [d for d in self.diagnostics() if _covers(d, card.line, card.start, card.end)]
         text = self._line(card.line)
         if self.d.buffers.current is None:
             card.text = _intel.designer_hover(self.d.doc.form, text, card.start, card.end)
+        if not card.text:
+            card.text = _intel.keyword_doc(_byte_slice(text, card.start, card.end))
         self.hover = card
         if card.text or not self.intel.hover(card.line, card.column, lambda doc: self._hover_text(card, doc)):
             card.loading = False
             if not card.text and not card.diagnostics:
                 self.hover = None
-        _telemetry.get().count("editor.hover")
+
+    def hover_at_cursor(self) -> Any:
+        """Shows the hover card of the word at the cursor (Ctrl+K Ctrl+I, Vim's ``K``), like the mouse does."""
+        if self.plain:
+            return None
+        line, column = self.cursor
+        text = self._line(line)
+        at = _char_index(text, column)
+        start = at
+        while start > 0 and (text[start - 1].isalnum() or text[start - 1] == "_"):
+            start -= 1
+        end = at
+        while end < len(text) and (text[end].isalnum() or text[end] == "_"):
+            end += 1
+        if start == end:
+            return None
+        byte = lambda i: len(text[:i].encode("utf-8")) + 1  # noqa: E731
+        self.completion = None
+        self._show_hover(HoverCard(line, column, byte(start), byte(end), 0.0, 0.0, 0.0, at_cursor=True))
+        _telemetry.get().count("editor.hover_at_cursor")
+        return None
+
+    def show_more(self) -> Any:
+        """Ctrl+Space: over a word with a hover card, shows all of its documentation in a bigger card (again:
+        the short one); with the completion list open, the same for the highlighted item; else opens the
+        completion list."""
+        h = self.hover
+        if h is not None and (h.text or h.loading):
+            h.expanded = not h.expanded
+            _telemetry.get().count("editor.hover_expand")
+            return None
+        c = self.completion
+        if c is not None and c.shown:
+            c.expanded = not c.expanded
+            return None
+        return self.open_completion()
 
     def _hover_text(self, card: HoverCard, text: str) -> None:
         if self.hover is not card:
@@ -1064,12 +1135,54 @@ class CodeAssist:
         self.intel.apply_settings(self.settings)
         if key == "font_family":
             self.d.apply_fonts()
+        if key == "base_keymap":
+            _keymap.set_base(value)
+        if key == "vim_mode":
+            self.vim_mode = "vim_normal"
         if key == "code_lens" and value:
             self.intel.refresh_lenses(self.d.doc.form)
 
     def editor_keymap(self) -> Dict[str, Optional[str]]:
         """The ``ui.editor(keymap=...)`` for the user's ``Editor`` bindings in ``keymap.json``."""
         return _keymap.get().editor_keymap()
+
+    @property
+    def hover_keys(self) -> Tuple[str, ...]:
+        """Keys that leave the hover card open (Ctrl+Space shows more of it)."""
+        km = _keymap.get()
+        return tuple(b.keys for name in ("show_completions", "hover") for b in km.bindings_for(f"code_panel::{name}"))
+
+    def editor_diagnostics(self) -> List[Tuple[int, int, int, int, int]]:
+        """The problems for ``ui.editor(diagnostics=...)``: the minimap marks them, a wavy line underlines them."""
+        return [(d.line, d.column, d.end_line, d.end_column, d.severity) for d in self.diagnostics()]
+
+    def go_to_diagnostic(self, step: int = 1) -> Any:
+        """Moves to the next problem after the cursor (F8), or the one before it (Shift+F8), wrapping around,
+        and shows it in the hover card."""
+        diags = sorted(self.diagnostics(), key=lambda d: (d.line, d.column))
+        if not diags:
+            return None
+        here = self.cursor
+        if step > 0:
+            diag = next((d for d in diags if (d.line, d.column) > here), diags[0])
+        else:
+            diag = next((d for d in reversed(diags) if (d.line, d.column) < here), diags[-1])
+        command = self.go_to(diag)
+        self.hover_at_cursor()
+        _telemetry.get().count("editor.go_to_diagnostic")
+        return _core.Command.batch([command, _core.Command.focus(self.d.editor_id)])
+
+    def format_now(self) -> Any:
+        """Formats the code with ruff (Ctrl+Shift+I) as one undo step."""
+        if self.plain or self.readonly or not self._text:
+            return None
+        formatted = _intel.format_code(self._text, self.intel.env)
+        if formatted is None or formatted == self._text:
+            return None
+        lines = self._text.split("\n")
+        whole = (1, 1, len(lines), len(lines[-1].encode("utf-8")) + 1)
+        _telemetry.get().count("editor.format")
+        return _core.Command.replace_editor_ranges(self.d.editor_id, [(whole, formatted)])
 
     def show_settings_section(self, section: str) -> None:
         """Shows ``section`` of the editor settings (a page of the Settings dialog)."""
@@ -1091,10 +1204,83 @@ class CodeAssist:
     def action_ran(self, name: str) -> Any:
         """An editor action ran (``on_action``): counted by the telemetry when it is on. Ctrl+click reports
         ``go_to_definition``, which goes there."""
+        if name in VIM_MODES:
+            self.vim_mode = name
+            return None
         _telemetry.get().count(f"editor.{name}")
         if name == "go_to_definition":
             return self.go_to_definition()
-        return None
+        vim = {
+            "vim_search": lambda: self.open_search(),
+            "vim_search_backward": lambda: self.open_search(),
+            "vim_search_next": lambda: self.vim_next(1),
+            "vim_search_previous": lambda: self.vim_next(-1),
+            "vim_command": self.open_command,
+            "vim_hover": self.hover_at_cursor,
+            "vim_go_back": lambda: self.go_back(1),
+            "vim_go_forward": lambda: self.go_back(-1),
+        }
+        return vim[name]() if name in vim else None
+
+    # -- Vim ------------------------------------------------------------------------
+    def vim_next(self, step: int) -> Any:
+        """Vim's ``n`` and ``N``: the next or previous match of the last search (``*`` and ``#`` search in the
+        editor itself)."""
+        if self.search is None or not self.search.matches:
+            return None
+        self._find(nearest=True)
+        if step < 0:
+            self.search.index -= 1
+        self.search.index %= len(self.search.matches)
+        return _core.Command.batch([self._select_current(), _core.Command.focus(self.d.editor_id)])
+
+    def open_command(self) -> Any:
+        """Vim's ``:``: opens the command line under the editor."""
+        self.command = ""
+        return _core.Command.focus(COMMAND_ID)
+
+    def set_command(self, text: str) -> None:
+        """The command line changed."""
+        self.command = text
+
+    def close_command(self) -> Any:
+        """Closes the command line and gives the keyboard back to the editor."""
+        self.command = None
+        return _core.Command.focus(self.d.editor_id)
+
+    def submit_command(self) -> Any:
+        """Runs the typed command: ``:w``, ``:q``, ``:wq``/``:x``, a line number, ``:s/old/new/g`` on the
+        cursor's line or ``:%s`` on every line, ``:noh`` and ``:set wrap``/``nowrap``."""
+        text = (self.command or "").strip().lstrip(":")
+        self.command = None
+        back = _core.Command.focus(self.d.editor_id)
+        run = vim_command(text, self._text, self.cursor[0])
+        _telemetry.get().count("editor.vim_command")
+        if run is None:
+            if text:
+                self.d.notify(tr("Vim"), tr("Unknown command: {command}", command=text), kind="warning")
+            return back
+        kind, value = run
+        commands = [back]
+        if kind == "write":
+            commands.append(self.d.save())
+        elif kind == "quit":
+            self.d.close_code()
+        elif kind == "write_quit":
+            commands.append(self.d.save())
+            self.d.close_code()
+        elif kind == "line":
+            line = min(max(int(value), 1), self._text.count("\n") + 1)
+            self.cursor = (line, 1)
+            commands.append(_core.Command.set_editor_cursor(self.d.editor_id, line, 1))
+        elif kind == "replace":
+            if value:
+                commands.append(_core.Command.replace_editor_ranges(self.d.editor_id, value))
+        elif kind == "nohlsearch":
+            self.search = None
+        elif kind == "set":
+            self.set(*value)
+        return _core.Command.batch([c for c in commands if c is not None])
 
     # -- search -----------------------------------------------------------------------
     def open_search(self, replacing: bool = False) -> Any:
@@ -1360,6 +1546,66 @@ def _char_index(line: str, column: int) -> int:
     return len(line.encode("utf-8")[: column - 1].decode("utf-8", "ignore"))
 
 
+def _byte_slice(line: str, start: int, end: int) -> str:
+    """The text of ``line`` between 1-based byte columns ``start`` and ``end`` (excluded)."""
+    return line.encode("utf-8")[start - 1: end - 1].decode("utf-8", "ignore")
+
+
+_SUBSTITUTE = re.compile(r"(%|\d+(?:,\d+)?)?s(\W)(.*?)\2(.*?)(?:\2([gi]*))?$")
+
+
+def vim_command(text: str, code: str, line: int) -> Optional[Tuple[str, Any]]:
+    """What Vim's command ``text`` (without the ``:``) does to ``code`` with the cursor on ``line``:
+    ``("write", None)``, ``("quit", None)``, ``("write_quit", None)``, ``("line", n)``, ``("nohlsearch", None)``,
+    ``("set", (setting, value))`` or ``("replace", [(range, text), ...])`` for ``s/old/new/[gi]`` (``%s``: every
+    line, ``a,b s``: lines a to b); ``None`` if it is not one of these."""
+    text = text.strip()
+    simple = {"w": "write", "write": "write", "q": "quit", "q!": "quit", "quit": "quit", "wq": "write_quit",
+              "x": "write_quit", "noh": "nohlsearch", "nohlsearch": "nohlsearch"}
+    if text in simple:
+        return simple[text], None
+    if text.isdigit():
+        return "line", int(text)
+    if text in ("$",):
+        return "line", code.count("\n") + 1
+    options = {"wrap": ("wrap", True), "nowrap": ("wrap", False), "number": ("line_numbers", True),
+               "nu": ("line_numbers", True), "nonumber": ("line_numbers", False), "nonu": ("line_numbers", False)}
+    if text.startswith("set ") and text[4:].strip() in options:
+        return "set", options[text[4:].strip()]
+    m = _SUBSTITUTE.match(text)
+    if m is None:
+        return None
+    where, _, old, new, flags = m.groups()
+    lines = code.split("\n")
+    if where == "%":
+        first, last = 1, len(lines)
+    elif where:
+        a, _, b = where.partition(",")
+        first, last = int(a), int(b or a)
+    else:
+        first = last = line
+    pattern = _pattern(old, case="i" not in (flags or ""), word=False, regex=True)
+    if pattern is None or not old:
+        return None
+    # Vim writes the groups of the replacement as \1 and the whole match as &.
+    new = re.sub(r"(?<!\\)&", r"\\g<0>", new)
+    out: List[Tuple[Range, str]] = []
+    for n in range(max(first, 1), min(last, len(lines)) + 1):
+        body = lines[n - 1]
+        for found in pattern.finditer(body):
+            if found.end() == found.start():
+                continue
+            start = len(body[: found.start()].encode("utf-8")) + 1
+            end = len(body[: found.end()].encode("utf-8")) + 1
+            try:
+                out.append(((n, start, n, end), found.expand(new)))
+            except (re.error, IndexError):
+                return None
+            if "g" not in (flags or ""):
+                break
+    return "replace", out
+
+
 def _word_at(line: str, index: int) -> str:
     start = index
     while start > 0 and (line[start - 1].isalnum() or line[start - 1] == "_"):
@@ -1471,9 +1717,16 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
         _core.text(item.detail, size=12, font="mono", color=t.text_muted) if item.detail else None,
         ui.divider(theme=t) if item.documentation else None,
         _core.container(ui.markdown(_short_doc(item.documentation), size=12, theme=t),
-                        max_height=max(max_height - 80, 40), clip=True) if item.documentation else None,
+                        max_height=max(max_height - 80, 40), clip=True)
+        if item.documentation and not c.expanded else None,
+        _core.scrollable(ui.markdown(item.documentation, size=12, selectable=True, theme=t), scrollbar_width=4,
+                         height="shrink")
+        if item.documentation and c.expanded else None,
+        _more_hint(c.expanded, t) if item.documentation and (c.expanded or _short_doc(item.documentation)
+                                                              != item.documentation) else None,
     ]
-    docs = _core.container(_core.column(doc_parts, spacing=6), width=DOC_WIDTH, max_height=max_height, clip=True,
+    docs = _core.container(_core.column(doc_parts, spacing=6), width=EXPANDED_WIDTH if c.expanded else DOC_WIDTH,
+                           max_height=max_height, clip=True,
                            padding=10, bg=t.elevated,
                            border_color=t.border, border_width=1, radius=6)
     return _core.row([listing, docs], spacing=4)
@@ -1541,19 +1794,25 @@ def _editor_area(a: CodeAssist, editor: Any, below: List[Any], size: float, line
             if up:
                 y = y - lh - 4 - (rows * ROW_HEIGHT + FOOTER)
             docs = c.selected is not None and bool(c.selected.detail or c.selected.documentation)
-            x = max(4.0, min(x, width - LIST_WIDTH - (DOC_WIDTH + 4 if docs else 0) - 4))
+            doc_width = EXPANDED_WIDTH if c.expanded else DOC_WIDTH
+            x = max(4.0, min(x, width - LIST_WIDTH - (doc_width + 4 if docs else 0) - 4))
             popup = completion_popup(a, t, rows, max(room, 80))
         pins.append(_core.pin(popup, x=x, y=y))
         h = a.hover
         card: Any = nothing
         x = y = 0.0
         if h is not None and (h.text or h.diagnostics):
-            room_width = max(min(HOVER_WIDTH, width - 8), 200.0)
-            estimate = min(HOVER_HEIGHT, 24 + 30 * len(h.diagnostics) + 19 * _text_rows(h.text, room_width))
+            if h.at_cursor:  # from the keyboard: at the word in the text
+                h.x, bottom = anchor(h.line, h.start)
+                h.y, h.height = bottom - lh, float(lh)
+            most_width, most_height = (EXPANDED_WIDTH, EXPANDED_HEIGHT) if h.expanded else (HOVER_WIDTH, HOVER_HEIGHT)
+            room_width = max(min(most_width, width - 8), 200.0)
+            shown = h.text if h.expanded else _short_doc(h.text, HOVER_SHORT)
+            estimate = min(most_height, 44 + 30 * len(h.diagnostics) + 19 * _text_rows(shown, room_width))
             below_room = visible - (h.y + h.height) - 6
             up = below_room < estimate and h.y - 6 > below_room
             room = h.y - 6 if up else below_room
-            tall = max(min(room, HOVER_HEIGHT), 80)
+            tall = max(min(room, most_height), 80)
             card = hover_card(a, h, t, room_width, tall)
             x = max(4.0, min(h.x - 6, width - room_width - 4))
             y = h.y + h.height + 2
@@ -1617,7 +1876,10 @@ def hover_card(a: CodeAssist, h: HoverCard, t: Theme, width: float, max_height: 
     if h.text:
         if parts:
             parts.append(ui.divider(theme=t))
-        parts.append(ui.markdown(h.text, size=12, selectable=True, theme=t))
+        short = _short_doc(h.text, HOVER_SHORT)
+        parts.append(ui.markdown(h.text if h.expanded else short, size=12, selectable=True, theme=t))
+        if h.expanded or short != h.text:
+            parts.append(_more_hint(h.expanded, t))
     elif h.loading:
         parts.append(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t))
     body = _core.scrollable(_core.column(parts, spacing=8, width="fill", padding=(0, 6, 0, 0)), scrollbar_width=4,
@@ -1625,6 +1887,14 @@ def hover_card(a: CodeAssist, h: HoverCard, t: Theme, width: float, max_height: 
     card = _core.container(body, width=width, max_height=max_height, padding=10, clip=True, bg=t.elevated,
                            border_color=t.border, border_width=1, radius=6)
     return _core.mouse_area(card, cursor="default")
+
+
+def _more_hint(expanded: bool, t: Theme) -> Any:
+    """"Ctrl+Space for more" (or "for less") under a card's documentation, with the keys in force."""
+    keys = _keymap.shown_keys("code_panel::show_completions") or "ctrl-space"
+    text = tr("{keys} for less", keys=ui.keys_text(keys)) if expanded else \
+        tr("{keys} for more", keys=ui.keys_text(keys))
+    return ui.label(text, size="xs", color="text_muted", theme=t)
 
 
 def rename_box(a: CodeAssist, r: RenameBox, t: Theme) -> Any:
@@ -1769,6 +2039,8 @@ def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any]
         line_height=a.line_height, scrollbar=s.scrollbar, keymap=a.editor_keymap(),
         on_hover=a.hovered if s.hover and not a.plain else None,
         sticky_scroll=STICKY_LINES if s.sticky_scroll else 0, readonly=a.readonly,
+        diagnostics=a.editor_diagnostics(), diagnostic_underlines=s.diagnostic_underlines,
+        hover_keys=a.hover_keys, vim=s.vim_mode,
         indent_guides=(s.indent_guides_coloring if s.indent_guides else False), theme=et)
 
 
@@ -1779,6 +2051,8 @@ def _bars(d: "Designer", t: Theme) -> List[Any]:
         bars.append(search_bar(a, t))
     if a.goto is not None:
         bars.append(goto_bar(a, t))
+    if a.command is not None:
+        bars.append(command_bar(a, t))
     return bars
 
 
@@ -1921,6 +2195,27 @@ def goto_bar(a: CodeAssist, t: Theme) -> Any:
         _core.space(width="fill"),
         ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=8, align="center"), padding=(4, 8), width="fill", bg=t.tab_bar)
+
+
+def command_bar(a: CodeAssist, t: Theme) -> Any:
+    """Vim's command line (``:``): ``w``, ``q``, ``wq``, a line, ``s/old/new/g``..."""
+    return _core.container(_core.row([
+        _core.text(":", size=13, font="mono", color=t.accent),
+        ui.input(a.command or "", a.set_command, placeholder=tr("w, q, wq, a line, %s/old/new/g"), id=COMMAND_ID,
+                 on_submit=a.submit_command, size="sm", mono=True, width=280, theme=t),
+        _core.space(width="fill"),
+        ui.icon_button("x", a.close_command, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
+    ], spacing=8, align="center"), padding=(4, 8), width="fill", bg=t.tab_bar)
+
+
+def vim_status_item(a: CodeAssist, t: Theme) -> Optional[Any]:
+    """The status bar's Vim mode (``NORMAL``, ``INSERT``...) while Vim mode is on; a click turns it off."""
+    if not a.settings.vim_mode:
+        return None
+    name = VIM_MODES.get(a.vim_mode, "NORMAL")
+    return ui.status_item(f"-- {name} --" if name != "NORMAL" else name, lambda: a.set("vim_mode", False),
+                          tooltip=tr("Vim mode (click to turn it off)"), color="accent" if name != "NORMAL" else None,
+                          theme=t)
 
 
 # ---------------------------------------------------------------------------

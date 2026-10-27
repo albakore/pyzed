@@ -53,7 +53,8 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 - **Folding**: chevrons in the gutter fold and unfold blocks (functions, classes, `if`s...);
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> folds the innermost block around the cursor and
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> unfolds it.
-- **Minimap**: the code zoomed out on the right; click or drag it to scroll.
+- **Minimap**: the code zoomed out on the right; click or drag it to scroll. Lines with errors and warnings are
+  tinted in it, and a mark on its right edge shows each problem of the whole file, also the ones off screen.
 - **Input methods**: Chinese, Japanese and Korean input methods (IME) work: the text being composed is
   drawn at the cursor and the committed text goes in at every cursor.
 - **Whitespace**: optionally draws spaces as `·` and tabs as `→`.
@@ -211,6 +212,12 @@ knows (the controls of the form).
   (as Markdown), plus the problems at that spot. `form.email` and `form.email.text` describe the control and its
   property. The card stays while the mouse is over it, so you can scroll it and select its text. Turn it off with
   *Information on hover* in the settings.
+- **More documentation**: with the card open, <kbd>Ctrl</kbd>+<kbd>Space</kbd> shows all of it in a bigger card
+  (press it again for the short one). It works on Python's keywords too: `for`, `with`, `match`, `lambda` and the
+  rest show the chapter of the Python reference, with its grammar, examples and related keywords. With the
+  completion list open, <kbd>Ctrl</kbd>+<kbd>Space</kbd> does the same for the highlighted item, like VS Code.
+  <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>I</kbd> opens the card of the name at the cursor without the
+  mouse.
 - **Go to definition**: <kbd>F12</kbd> or <kbd>Ctrl</kbd>+click on a name opens where it is defined (holding
   <kbd>Ctrl</kbd> underlines the name under the mouse, like a link): further down
   the same code, another handler of the form (the editor switches to it), a file of your project or a library in
@@ -247,6 +254,12 @@ the reference for the name.
 
 - **Inline diagnostics** (error lens): the most severe problem of each line is written at its end, in red for
   errors, yellow for warnings and blue for information.
+- **Wavy underlines** under the code each problem is about, in the same colors (turn them off with *Wavy
+  underlines*).
+- **In the minimap**: the problem's lines tinted and a mark on its right edge for each one in the file, so you see
+  where they are without scrolling.
+- <kbd>F8</kbd> goes to the next problem and <kbd>Shift</kbd>+<kbd>F8</kbd> to the previous one, showing it in the
+  hover card.
 - **Problems list**: under the editor, every problem with its line and column, message and source (`ruff (F401)`,
   `ty`). Click one to jump to it. The header button shows the counts and hides or shows the list.
 - **Code lens** at the end of each `def` and `class` line: how many **references** it has (from ty, or counted by
@@ -341,7 +354,10 @@ to its default, and the *Project* scope to give a project its own (its tab size,
 | | **Sticky scroll** | Keeps the lines of the enclosing blocks pinned at the top while you scroll. |
 | Code lens and diagnostics | **Code lens** | References, implementations and wired events at the end of definitions. |
 | | **Inline diagnostics** | Problems at the end of the line. |
+| | **Wavy underlines** | A wavy line under errors and warnings (the minimap marks them anyway). |
 | | **Information on hover** | The card with the type, documentation and problems of the name under the mouse. |
+| Keymap and Vim | **Base keymap** | Start from the keys of VS Code, JetBrains, Sublime Text, Atom, TextMate or Emacs (see [Base keymaps](/pyzed/editor/keymap/#base-keymaps)). |
+| | **Vim mode** | Vim's Normal, Insert and Visual modes (see [Vim mode](/pyzed/editor/keymap/#vim-mode)). |
 | Language servers | **ty**, **ruff** | Turn each server on or off. Each row shows its state and version. Below: the project root and the Python in use. |
 | | **Restart servers** | Restarts both; use it after `uv sync` or after installing them. |
 

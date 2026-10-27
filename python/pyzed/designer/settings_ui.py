@@ -90,6 +90,12 @@ def _frames() -> List[Tuple[str, str]]:
 _LINE_HEIGHTS = tuple((name, name.capitalize()) for name in _settings.LINE_HEIGHTS)
 _CURSORS = tuple((shape, shape.capitalize()) for shape in _settings.CURSOR_SHAPES)
 _GUIDES = (("fixed", "One color"), ("rainbow", "Rainbow"))
+
+
+def _base_keymaps() -> List[Tuple[str, str]]:
+    from .keymap import BASE_TITLES
+
+    return list(BASE_TITLES.items())
 _EYES = (("visible", "Hidden when running"), ("editor", "Hidden in the editor only"))
 _CHANNELS = (("stable", "Stable"), ("preview", "Preview"))
 _RENDERERS = (("auto", "Auto"), ("gpu", "GPU"), ("cpu", "CPU"))
@@ -211,8 +217,15 @@ SETTINGS: Tuple[Setting, ...] = (
     Setting("editor", "code_lens", "editor.diagnostics", "Code lens", "References, implementations and wired events"),
     Setting("editor", "inline_diagnostics", "editor.diagnostics", "Inline diagnostics",
             "Problems at the end of the line"),
+    Setting("editor", "diagnostic_underlines", "editor.diagnostics", "Wavy underlines",
+            "A wavy line under errors and warnings"),
     Setting("editor", "hover", "editor.diagnostics", "Information on hover",
             "Resting the mouse on a name shows what it is, its documentation and its problems"),
+    Setting("editor", "base_keymap", "editor.keymap", "Base keymap",
+            "Start from the keys of another editor, like Zed; your own bindings go on top", kind="select",
+            options=_base_keymaps),
+    Setting("editor", "vim_mode", "editor.keymap", "Vim mode",
+            "Normal, Insert and Visual modes with Vim's motions, operators and commands"),
     Setting("editor", "ty", "editor.servers", "ty", "Types, completion and references"),
     Setting("editor", "ruff", "editor.servers", "ruff", "Linting"),
 )
@@ -259,6 +272,7 @@ PAGES: Tuple[Tuple[str, Tuple[Tuple[str, str, str], ...]], ...] = (
         ("editor.deleting", "Deleting", "delete"),
         ("editor.scrolling", "Scrolling and wrapping", "wrap-text"),
         ("editor.diagnostics", "Code lens and diagnostics", "circle-alert"),
+        ("editor.keymap", "Keymap and Vim", "keyboard"),
         ("editor.servers", "Language servers", "server"),
     )),
     ("Project", (

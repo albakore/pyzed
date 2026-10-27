@@ -25,6 +25,7 @@ use iced::{
 mod actions;
 mod ide;
 pub mod keymap;
+pub mod vim;
 
 pub(crate) use actions::EditKind;
 pub use actions::{ActionContext, EditorAction};
@@ -169,8 +170,9 @@ pub struct EditorState {
     pub(crate) history: actions::History,
     /// Keyboard modifiers, tracked by `EditorInput` (Alt+click adds a cursor).
     pub(crate) modifiers: Cell<keyboard::Modifiers>,
-    /// Ctrl+K was pressed and the next key completes the chord.
-    pub(crate) chord: Cell<bool>,
+    /// The first key of a chord was pressed (Ctrl+K, or a key the keymap uses as one) and the
+    /// next key completes it.
+    pub(crate) chord: RefCell<Option<keymap::Keystroke>>,
     /// An input method (IME) is composing text: its preedit is drawn at the cursor, so the
     /// caret is hidden. Tracked by `EditorInput`.
     pub(crate) composing: Cell<bool>,
@@ -192,6 +194,8 @@ pub struct EditorState {
     /// A selection drag moved the cursor in `EditorInput` without telling the app, which hears
     /// of it when the mouse button goes up.
     pub(crate) dragged: Cell<bool>,
+    /// Vim's mode and what it is typing (with `vim=True`).
+    pub(crate) vim: vim::Vim,
 }
 
 impl EditorState {
@@ -207,7 +211,7 @@ impl EditorState {
             extra: Vec::new(),
             history: actions::History::default(),
             modifiers: Cell::new(keyboard::Modifiers::default()),
-            chord: Cell::new(false),
+            chord: RefCell::new(None),
             composing: Cell::new(false),
             ime_commit: Cell::new(false),
             context: RefCell::new(None),
@@ -217,6 +221,7 @@ impl EditorState {
             reveal: Cell::new(false),
             scroll: Cell::new(None),
             dragged: Cell::new(false),
+            vim: vim::Vim::default(),
         }
     }
 
@@ -729,6 +734,9 @@ impl EditorState {
         let definition = matches!(action, Action::Click(_))
             && self.modifiers.get().command()
             && !self.modifiers.get().alt();
+        if matches!(action, Action::Click(_) | Action::Edit(_)) {
+            self.history.mark = false;
+        }
         match action {
             Action::Click(_) if self.modifiers.get().alt() => self.alt_click(action),
             Action::Click(_) | Action::SelectAll => {
@@ -1295,6 +1303,81 @@ fn chord_action(press: &text_editor::KeyPress) -> Option<Chord> {
     })
 }
 
+/// Vim's keys (`vim=True`). In Insert mode only Escape and Ctrl+[ go to Vim and the other keys
+/// type; in Normal and Visual modes Vim takes the keys it knows and leaves the others (Ctrl+S,
+/// F12, Alt+Up) to the editor's and the app's bindings. `None`: not Vim's key.
+fn vim_binding(
+    state: &EditorState,
+    id: &Arc<str>,
+    press: &text_editor::KeyPress,
+    ctx: &Arc<ActionContext>,
+) -> Option<Option<Binding<Message>>> {
+    use keyboard::key::Named;
+    use vim::{Mode, VimKey as K};
+    let m = press.modifiers;
+    let insert = state.vim.mode == Mode::Insert;
+    let typed = press.text.as_deref().and_then(|t| {
+        let mut chars = t.chars();
+        chars
+            .next()
+            .filter(|c| chars.next().is_none() && !c.is_control())
+    });
+    let key = match press.key.as_ref() {
+        keyboard::Key::Named(Named::Escape) => K::Escape,
+        keyboard::Key::Character("[") if m.command() && !m.alt() => K::Ctrl('['),
+        _ if insert => return None,
+        keyboard::Key::Character(c) if m.command() && !m.alt() && !m.shift() => match c {
+            "r" | "d" | "u" | "f" | "b" | "e" | "y" | "o" | "i" => K::Ctrl(c.chars().next()?),
+            _ => return None,
+        },
+        keyboard::Key::Named(named) if !m.command() && !m.alt() => match named {
+            Named::Enter => K::Enter,
+            Named::Backspace => K::Backspace,
+            Named::Delete => K::Delete,
+            Named::Tab => K::Tab,
+            Named::ArrowLeft => K::Left,
+            Named::ArrowRight => K::Right,
+            Named::ArrowUp => K::Up,
+            Named::ArrowDown => K::Down,
+            Named::Home => K::Home,
+            Named::End => K::End,
+            Named::PageUp => K::PageUp,
+            Named::PageDown => K::PageDown,
+            Named::Space => K::Char(' '),
+            _ => return None,
+        },
+        // AltGr is Ctrl+Alt on Windows: `{` and `@` on many keyboards.
+        _ if m.command() && m.alt() => match typed {
+            Some(c) if !c.is_alphanumeric() => K::Char(c),
+            _ => return None,
+        },
+        _ if m.command() || m.alt() => return None,
+        _ => match typed {
+            Some(c) => K::Char(c),
+            None => return Some(Some(Binding::Custom(Message::Noop))),
+        },
+    };
+    // Escape with nothing to cancel in Normal mode is the app's (it closes popups).
+    if key == K::Escape && state.vim.mode == Mode::Normal && state.vim.idle() {
+        return None;
+    }
+    // With Vim's register empty, `p` pastes the clipboard.
+    if matches!(key, K::Char('p' | 'P'))
+        && state.vim.idle()
+        && state.vim.register.is_none()
+        && !matches!(state.vim.mode, Mode::Visual | Mode::VisualLine)
+    {
+        crate::app::claim_key(&press.key);
+        return Some(Some(Binding::Paste));
+    }
+    crate::app::claim_key(&press.key);
+    Some(Some(Binding::Custom(Message::EditorVim {
+        id: id.clone(),
+        key,
+        ctx: ctx.clone(),
+    })))
+}
+
 /// Zed's default editor keys (Linux and Windows, with Cmd in place of Ctrl on macOS).
 fn zed_action(press: &text_editor::KeyPress, state: &EditorState) -> Option<EditorAction> {
     use EditorAction as A;
@@ -1580,6 +1663,58 @@ fn behind_text(
         }
     }
     rects
+}
+
+/// The rows under the problems (`diagnostics`), for their wavy underlines. A problem without
+/// a width (at the end of a line) underlines the character before it, or a space.
+fn squiggle_rects(
+    state: &EditorState,
+    props: &EditorProps,
+    lines: &[String],
+    starts: &[u32],
+    wrap_width: Option<f32>,
+    measure: &mut Measure,
+    right: f32,
+) -> Vec<(Rectangle, Color)> {
+    use text_editor::Position;
+    let line_count = lines.len();
+    let mut out = Vec::new();
+    for &((line, column, end_line, end_column), color) in props.diagnostics.iter().take(2000) {
+        if line == 0 || end_line == 0 {
+            continue;
+        }
+        let (a, hidden_a) = state.visible_line(line - 1);
+        let (b, hidden_b) = state.visible_line(end_line - 1);
+        if hidden_a || hidden_b || a >= line_count || b >= line_count {
+            continue;
+        }
+        let mut start = Position {
+            line: a,
+            column: actions::floor(&lines[a], column.saturating_sub(1)),
+        };
+        let mut end = Position {
+            line: b,
+            column: actions::floor(&lines[b], end_column.saturating_sub(1)),
+        };
+        if (end.line, end.column) <= (start.line, start.column) {
+            let text = &lines[a];
+            end = start;
+            if let Some(c) = text[start.column..].chars().next() {
+                end.column += c.len_utf8();
+            } else if let Some(c) = text[..start.column].chars().next_back() {
+                start.column -= c.len_utf8();
+            }
+        }
+        let rects = span(props, lines, starts, wrap_width, measure, start, end, right);
+        let empty = start == end;
+        out.extend(rects.into_iter().map(|mut r| {
+            if empty {
+                r.width = props.size * 0.6;
+            }
+            (r, color)
+        }));
+    }
+    out
 }
 
 /// Outlines of the bracket next to the cursor and its match.
@@ -1898,15 +2033,28 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             ) {
                 return Binding::from_key_press(press);
             }
+            if props.vim
+                && let Some(binding) = vim_binding(state, &props.id, &press, &ctx)
+            {
+                return binding;
+            }
             let target = |target: Option<keymap::Target>| match target {
+                // Pasting reads the clipboard, which only the editor's own binding does.
+                Some(keymap::Target::Action(EditorAction::Paste)) => {
+                    crate::app::claim_key(&press.key);
+                    Some(Binding::Paste)
+                }
                 Some(keymap::Target::Action(action)) => run(action),
                 Some(keymap::Target::Fold(op)) if folding => fold(op),
                 _ => Some(Binding::Custom(Message::Noop)),
             };
-            if state.chord.replace(false) {
-                // Second key of a Ctrl+K chord.
-                if let Some(bound) = keymap::lookup(&props.keymap, &press, true) {
+            if let Some(first) = state.chord.borrow_mut().take() {
+                // The second key of a chord.
+                if let Some(bound) = keymap::lookup(&props.keymap, &press, Some(&first)) {
                     return target(bound);
+                }
+                if first != keymap::ctrl_k() {
+                    return Some(Binding::Custom(Message::Noop));
                 }
                 let action = chord_action(&press);
                 return match action {
@@ -1915,10 +2063,15 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                     _ => Some(Binding::Custom(Message::Noop)),
                 };
             }
-            match keymap::lookup(&props.keymap, &press, false) {
+            match keymap::lookup(&props.keymap, &press, None) {
                 Some(None) => return Binding::from_key_press(press),
                 Some(bound) => return target(bound),
                 None => {}
+            }
+            // The first key of one of the keymap's chords waits for the second one.
+            if let Some(first) = keymap::prefix(&props.keymap, &press) {
+                *state.chord.borrow_mut() = Some(first);
+                return Some(Binding::Custom(Message::Noop));
             }
             // Paste the text as usual, then tell the app (a chat box attaches a pasted image).
             if let Some(cb) = &props.on_paste
@@ -1934,7 +2087,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 && !press.modifiers.shift()
                 && matches!(press.key.as_ref(), keyboard::Key::Character("k"))
             {
-                state.chord.set(true);
+                *state.chord.borrow_mut() = Some(keymap::ctrl_k());
                 return Some(Binding::Custom(Message::Noop));
             }
             if let Some(action) = zed_action(&press, state) {
@@ -2125,6 +2278,23 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         );
     }
 
+    // Wavy underlines under the problems.
+    if props.diagnostic_underlines && !props.diagnostics.is_empty() {
+        let mut measure = state.measure.borrow_mut();
+        let rects = squiggle_rects(
+            state,
+            props,
+            &lines,
+            &starts,
+            wrap_width,
+            &mut measure,
+            right,
+        );
+        if !rects.is_empty() {
+            layers.push(editor_widgets::Squiggles { rects }.into());
+        }
+    }
+
     let fallback = props
         .gutter_color
         .unwrap_or(Color::from_rgb8(0x6b, 0x72, 0x80));
@@ -2262,7 +2432,11 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 origin: iced::Point::new(PAD_LEFT + cx, PAD_Y + cy),
                 char_width,
                 line_height: lh,
-                shape: props.cursor.shape,
+                shape: if props.vim && state.vim.mode != vim::Mode::Insert {
+                    editor_widgets::CaretShape::Block
+                } else {
+                    props.cursor.shape
+                },
                 width: props.cursor.width,
                 blink: props.cursor.blink,
                 color: caret_color,
@@ -2452,6 +2626,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         props.hover_delay,
     )
     .highlight_all(props.minimap.is_some())
+    .hover_keys(props.hover_keys.clone())
     .into();
     // The minimap sits over the right edge of the scrollable, just left of its vertical
     // scrollbar (a `row` would give the scrollable finite limits and let the gutter fill them).
@@ -2477,6 +2652,12 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             thumb: minimap.thumb,
             background: props.background,
             text_color: props.text_color.unwrap_or(Color::WHITE),
+            diagnostics: props
+                .diagnostics
+                .iter()
+                .filter(|((line, ..), _)| *line > 0)
+                .map(|((line, ..), color)| (line - 1, *color))
+                .collect(),
         };
         layers.push(
             widget::pin(minimap)
