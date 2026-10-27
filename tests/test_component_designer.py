@@ -313,14 +313,14 @@ def test_designer_component_mode(tmp_path):
 
 
 def test_custom_events_live_in_the_events_tab(tmp_path, monkeypatch):
-    from pyzed.designer import panels, scene_panel
+    from pyzed.designer import component_view, panels, scene_panel
     from ui_tree import install
 
     path = make_rating(tmp_path).save()
     app = designer.Designer(path, language_servers=False)
     t = app.theme_obj
     fake = install(monkeypatch)
-    for module in (panels, scene_panel):
+    for module in (panels, scene_panel, component_view):
         monkeypatch.setattr(module, "_core", fake)
     texts = " ".join(panels.events(app, t).texts())
     assert "Built-in events" in texts and "Custom events (1)" in texts and "setup" in texts

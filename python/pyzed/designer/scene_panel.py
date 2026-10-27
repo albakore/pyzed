@@ -62,7 +62,7 @@ def _guard(d: "Designer", action: Callable[[], Any]) -> Any:
 # -- layout helpers ------------------------------------------------------------------
 
 LABEL = 84.0
-SECTIONS = ("class", "toolbox", "layout", "inherited", "properties", "methods", "bindings")
+SECTIONS = ("try", "class", "toolbox", "layout", "inherited", "properties", "methods", "bindings")
 
 
 def _open(d: "Designer") -> set:
@@ -144,7 +144,10 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
         warning = _core.container(ui.callout(tr("The class does not parse"),
                                              "Showing its last good version; fix the code to edit it here.",
                                              tint="warning", theme=t), padding=(0, 12, 12, 12))
+    from . import component_view
+
     sections = [
+        component_view.try_section(d, t, type_context),
         ui.AccordionSection("class", "Class", _stack([
             field(tr("Name"), ui.input(scene.name, lambda v: _guard(d, lambda: doc.set_class_name(v)),
                                    mono=True, theme=t), t, tip="The Python class name (CamelCase)."),
