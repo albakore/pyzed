@@ -141,6 +141,11 @@ STATEFUL = {
     "split": [("ratio", "on_resize", "set")],
     "tree": [("expanded", "on_toggle", "member"), ("selected", "on_select", "set")],
     "file_input": [("value", "on_change", "set")],
+    "rating": [("value", "on_change", "set")],
+    "range_slider": [("value", "on_change", "set")],
+    "tag_input": [("tags", "on_change", "set"), ("text", "on_input", "set")],
+    "stepper": [("current", "on_select", "set")],
+    "pagination": [("page", "on_change", "set")],
 }
 
 

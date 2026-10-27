@@ -185,7 +185,7 @@ selected and invalid. `pz.ui` draws them; for your own styled boxes use
 
 | State | What the user sees | In Pyzed |
 | --- | --- | --- |
-| Loading | Where the content will be, and that it is coming | `ui.spinner()` (≤ 2 s), `ui.progress(None)`, or `ui.progress(value)` with a label for long work |
+| Loading | Where the content will be, and that it is coming | `ui.skeleton(lines=3)` in the shape of what is coming, `ui.spinner()` (≤ 2 s), `ui.progress(None)`, or `ui.progress(value)` / `ui.progress_ring(value)` with a label for long work |
 | Empty | Why it is empty and the action that fills it | `ui.empty_state(title, description, icon=, actions=[ui.button(..., variant="solid")])` |
 | Error | What failed, why if known, and how to recover (Retry) | `ui.callout(title, description, tint="error", actions=[...])`; `ui.error_boundary` around risky parts |
 | Partial | Some results, and that there are more or some failed | A footer row, a `ui.badge` count, a warning `ui.callout` |
@@ -229,12 +229,15 @@ Clear button), offline / permission denied, and very long or missing values (tru
 - Put the focus on the first field when the form opens (`Command.focus(id)`) and on the first invalid field
   after a failed submit.
 - Sensible defaults, input masks only when they help (dates, numbers), and never clear the form after an error.
+- Pick the control that fits the value: `ui.range_slider` for a range (price, dates), `ui.tag_input` for a short
+  free list (labels, recipients), `ui.rating` for a score.
 - While submitting: the primary button shows `loading=True`; the form stays readable.
 
 ## 10. Navigation and information architecture
 
 - **Where am I?** The selected item in the sidebar, the active tab and the window title say it.
-  `ui.breadcrumbs` for deep hierarchies.
+  `ui.breadcrumbs` for deep hierarchies, `ui.stepper` for the steps of a wizard and `ui.pagination` under
+  long paged results.
 - **Shallow and predictable**: at most three levels; the same thing is always in the same place.
 - **Power users**: every command is reachable from the keyboard, the command palette (`ui.command_palette`)
   and menus (`frame_menus`), not only from buttons. Show shortcuts with `keys=`.

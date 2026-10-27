@@ -50,7 +50,7 @@ Cada control visible tiene tres eventos comunes además de los suyos:
 
 | Componente | Eventos propios |
 | --- | --- |
-| Etiqueta de texto, Imagen, Icono, Avatar, Contador, Punto de estado, Grupo de avatares, Código QR, Imagen SVG | `click`, `double_click` |
+| Etiqueta de texto, Imagen, Icono, Avatar, Contador, Punto de estado, Grupo de avatares, Código QR, Imagen SVG, Anillo de progreso, Indicador | `click`, `double_click` |
 | Botón, Enlace | `click` |
 | Etiqueta (chip) | `click`, `remove` (su x, con **Se puede quitar** activado) |
 | Botón con menú | `click` (la parte principal), `choose` (una opción de su menú: su texto), `menu` (se abre el menú) |
@@ -62,6 +62,11 @@ Cada control visible tiene tres eventos comunes además de los suyos:
 | Grupo de botones | `change` (el valor pulsado, o la lista de valores pulsados con **Varios** activado) |
 | Deslizador | `change` (el número nuevo mientras se arrastra), `release` (se soltó: guarda o aplica aquí) |
 | Número | `change` (el número nuevo) |
+| Valoración | `change` (las estrellas elegidas, 0 si un clic en la encendida la borra) |
+| Deslizador de rango | `change` (`(low, high)` mientras se mueve un tirador), `release` (se soltó el tirador) |
+| Campo de etiquetas | `change` (la lista de etiquetas tras añadir o quitar una), `input` (el texto que se escribe) |
+| Pasos, Paginación | `change` (el índice del paso pulsado; el número de la página elegida, desde 1) |
+| Línea de tiempo | `click` (el índice de la entrada pulsada) |
 | Lista | `change` (el elemento elegido), `open` (doble clic en un elemento) |
 | Tabla | `change` (el índice de la fila elegida), `open` (doble clic en una fila: su índice), `sort` (clic en un encabezado con **Ordenable** activado: su título) |
 | Árbol | `change` (la ruta del elemento elegido, como `"Docs/README.md"`), `toggle` (se pliega o despliega un elemento), `open` (doble clic en un elemento sin hijos) |
@@ -70,7 +75,7 @@ Cada control visible tiene tres eventos comunes además de los suyos:
 | Selector de color, Selector de iconos | `change` (el color o el nombre de icono nuevo) |
 | Dock | `layout` (se movió, redimensionó o cambió un panel: el dict de la distribución, que también queda en **Distribución guardada**) |
 | Temporizador, Atajo, Vigilante de archivos, Proceso, Tarea en segundo plano, Petición web, Portapapeles, Ajustes, Diálogo de archivos, Notificación | Los suyos (`tick`, `activate`, `change`, `output`, `done`, `response`...): mira [Componentes no visuales](/pyzed/es/editor/non-visual-components/). No tienen eventos de ratón. |
-| Título, Barra de progreso, Insignia, Indicador de carga, Aviso, Atajo, Métrica, Gráfico, Estado vacío, Resumen de cambios, Visor de imágenes, Salida de terminal, contenedores, Espaciador, Separador | Solo los comunes |
+| Título, Barra de progreso, Insignia, Indicador de carga, Aviso, Atajo, Métrica, Gráfico, Estado vacío, Resumen de cambios, Visor de imágenes, Salida de terminal, Esqueleto, Gráfico de líneas, Lista de detalles, contenedores, Espaciador, Separador | Solo los comunes |
 
 El propio formulario:
 

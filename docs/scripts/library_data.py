@@ -6264,6 +6264,462 @@ VARIANTS.update({
     ],
 })
 
+# ------------------------------------------------------------------------------- more components
+
+add(
+    slug="rating",
+    name=T("Rating", "Valoración"),
+    category="forms",
+    api=["pyzed.ui.rating"],
+    badge="new",
+    blurb=T("Stars to give or show a score.", "Estrellas para dar o mostrar una puntuación."),
+    desc=T(
+        "A row of stars (or any icon) where the first `value` are lit. Clicking a star sends its number to "
+        "`on_change`; with `clearable` a click on the lit one sends 0. Without `on_change` it only shows the "
+        "score, rounded to the nearest star.",
+        "Una fila de estrellas (o cualquier icono) en la que las primeras `value` están encendidas. Al pulsar "
+        "una estrella se envía su número a `on_change`; con `clearable`, pulsar la encendida envía 0. Sin "
+        "`on_change` solo muestra la puntuación, redondeada a la estrella más cercana.",
+    ),
+    when=T(
+        ["To rate an item, a song or an answer.", "To show an average score next to a product or a review."],
+        ["Para valorar un artículo, una canción o una respuesta.",
+         "Para mostrar una nota media junto a un producto o una reseña."],
+    ),
+    preview={"code": """pz.column([
+    ui.rating(4, on_rate),
+    ui.rating(3, on_rate, icon="heart", tint="error"),
+    ui.rating(4.4),
+], spacing=12)""", "size": (480, 200)},
+    usage="""class Review(pz.App):
+    def __init__(self):
+        self.stars = 3
+
+    def view(self):
+        return ui.rating(self.stars, lambda stars: setattr(self, "stars", stars))""",
+    notes=T("Focused (click it or press Tab), the arrows change the score by one and Home/End jump to 0 and `max`.",
+            "Con el foco (púlsala o pulsa Tab), las flechas cambian la nota de uno en uno e Inicio/Fin saltan a 0 y a `max`."),
+    related=["slider", "segmented", "toggle-group"],
+)
+
+add(
+    slug="range-slider",
+    name=T("Range slider", "Deslizador de rango"),
+    category="forms",
+    api=["pyzed.ui.range_slider"],
+    badge="new",
+    blurb=T("A slider with two knobs that picks a range.", "Un deslizador con dos tiradores que elige un rango."),
+    desc=T(
+        "Picks a range such as a price from 20 to 80. `value` is `(low, high)` and `on_change` receives the new "
+        "pair. Pressing the track moves the nearer knob there and dragging keeps moving it; the knobs never cross.",
+        "Elige un rango, como un precio de 20 a 80. `value` es `(bajo, alto)` y `on_change` recibe el par nuevo. "
+        "Al pulsar la barra se mueve allí el tirador más cercano y al arrastrar sigue moviéndose; nunca se cruzan.",
+    ),
+    when=T(
+        ["To filter by a range: prices, dates, sizes, years.", "For a single number, use [Slider](/pyzed/library/slider/)."],
+        ["Para filtrar por un rango: precios, fechas, tamaños, años.",
+         "Para un solo número, usa [Deslizador](/pyzed/es/library/slider/)."],
+    ),
+    preview={"code": """pz.container(ui.range_slider((20, 80), on_change, min=0, max=100, step=5, show_value=True),
+             width=360)""", "size": (480, 120)},
+    usage="""class Shop(pz.App):
+    def __init__(self):
+        self.price = (20, 80)
+
+    def view(self):
+        return ui.range_slider(self.price, lambda value: setattr(self, "price", value),
+                               min=0, max=500, step=5, show_value="{:.0f} €")""",
+    related=["slider", "number-field"],
+)
+
+add(
+    slug="tag-input",
+    name=T("Tag input", "Campo de etiquetas"),
+    category="forms",
+    api=["pyzed.ui.tag_input"],
+    badge="new",
+    blurb=T("Removable chips with a field to type more.", "Fichas que se pueden quitar con un campo para escribir más."),
+    desc=T(
+        "A box of chips with a field at the end. Enter or a comma turns the text into a tag and `on_change` gets "
+        "the new list, as it does when the x of a chip is clicked. `suggestions` offers matching tags under it.",
+        "Una caja de fichas con un campo al final. Intro o una coma convierten el texto en etiqueta y `on_change` "
+        "recibe la lista nueva, igual que al pulsar la x de una ficha. `suggestions` ofrece etiquetas que coinciden.",
+    ),
+    when=T(
+        ["For labels, keywords, recipients or any short list the user types.",
+         "For a fixed set of options, use [Chip](/pyzed/library/chip/) filters or a [Drop-down](/pyzed/library/select/)."],
+        ["Para etiquetas, palabras clave, destinatarios o cualquier lista corta que se escribe.",
+         "Para un conjunto fijo de opciones, usa filtros [Chip](/pyzed/es/library/chip/) o un [desplegable](/pyzed/es/library/select/)."],
+    ),
+    preview={"code": """pz.container(ui.tag_input(["design", "rust", "python"], on_change, placeholder="Add a tag…"),
+             width=380)""", "size": (480, 120)},
+    usage="""class Labels(pz.App):
+    def __init__(self):
+        self.tags = ["design"]
+        self.typing = ""
+
+    def view(self):
+        return ui.tag_input(self.tags, lambda tags: setattr(self, "tags", tags),
+                            text=self.typing, on_input=lambda text: setattr(self, "typing", text),
+                            suggestions=["python", "rust", "docs"])""",
+    related=["chip", "input", "select"],
+)
+
+add(
+    slug="stepper",
+    name=T("Stepper", "Pasos"),
+    category="navigation",
+    api=["pyzed.ui.stepper"],
+    badge="new",
+    blurb=T("The steps of a wizard, with checks on the done ones.", "Los pasos de un asistente, con marcas en los hechos."),
+    desc=T(
+        "Shows where the user is in a process of several steps. Done steps get a check, the `current` one is "
+        "ringed and the line between them fills as you advance. `on_select` lets the user go back to a step.",
+        "Muestra en qué punto de un proceso de varios pasos está el usuario. Los pasos hechos llevan una marca, "
+        "el actual (`current`) va rodeado y la línea se llena al avanzar. `on_select` deja volver a un paso.",
+    ),
+    when=T(
+        ["For sign-ups, checkouts, installers and other wizards.", "For sections the user can open in any order, use a [Tab bar](/pyzed/library/tab-bar/)."],
+        ["Para registros, compras, instaladores y otros asistentes.",
+         "Para secciones que se abren en cualquier orden, usa una [barra de pestañas](/pyzed/es/library/tab-bar/)."],
+    ),
+    preview={"code": """pz.container(ui.stepper(["Cart", "Address", "Payment", "Done"], 2, on_step), width=520)""",
+             "size": (640, 120)},
+    usage="""class Checkout(pz.App):
+    def __init__(self):
+        self.step = 0
+
+    def view(self):
+        return pz.column([
+            ui.stepper(["Cart", "Address", "Payment"], self.step, lambda i: setattr(self, "step", i)),
+            ui.button("Next", lambda: setattr(self, "step", min(self.step + 1, 3)), variant="solid"),
+        ], spacing=16)""",
+    related=["progress", "tab-bar", "breadcrumbs"],
+)
+
+add(
+    slug="pagination",
+    name=T("Pagination", "Paginación"),
+    category="navigation",
+    api=["pyzed.ui.pagination"],
+    badge="new",
+    blurb=T("Page numbers with previous and next arrows.", "Números de página con flechas de anterior y siguiente."),
+    desc=T(
+        "Moves through long results one page at a time: `‹ 1 … 4 5 6 … 20 ›`. `page` counts from 1; "
+        "`siblings` pages show on each side of it and `boundaries` at each end. `compact` shows `4 / 20`.",
+        "Recorre resultados largos de página en página: `‹ 1 … 4 5 6 … 20 ›`. `page` empieza en 1; "
+        "`siblings` páginas se ven a cada lado y `boundaries` en cada extremo. `compact` muestra `4 / 20`.",
+    ),
+    when=T(
+        ["Under a table or a list of search results split into pages.",
+         "When everything fits in one scroll, a [Virtual list](/pyzed/library/virtual-list/) is simpler."],
+        ["Bajo una tabla o una lista de resultados dividida en páginas.",
+         "Si todo cabe con desplazamiento, una [lista virtual](/pyzed/es/library/virtual-list/) es más sencilla."],
+    ),
+    preview={"code": """pz.column([
+    ui.pagination(5, 20, on_page),
+    ui.pagination(1, 3, on_page),
+    ui.pagination(4, 20, on_page, compact=True),
+], spacing=12, align="center")""", "size": (480, 180)},
+    related=["table", "virtual-list", "breadcrumbs"],
+)
+
+add(
+    slug="skeleton",
+    name=T("Skeleton", "Esqueleto"),
+    category="feedback",
+    api=["pyzed.ui.skeleton"],
+    badge="new",
+    blurb=T("A pulsing placeholder while content loads.", "Un marcador que late mientras carga el contenido."),
+    desc=T(
+        "Grey shapes that pulse where text, pictures or rows will appear, so the layout does not jump when "
+        "they arrive. `lines` makes a paragraph and `circle` an avatar.",
+        "Formas grises que laten donde aparecerán textos, imágenes o filas, para que el diseño no salte "
+        "cuando lleguen. `lines` hace un párrafo y `circle` un avatar.",
+    ),
+    when=T(
+        ["While a list, a profile or a card is loading.", "For a short wait with no known shape, a [Spinner](/pyzed/library/spinner/) is enough."],
+        ["Mientras carga una lista, un perfil o una tarjeta.",
+         "Para una espera corta sin forma conocida, basta un [indicador giratorio](/pyzed/es/library/spinner/)."],
+    ),
+    preview={"code": """pz.container(pz.row([
+    ui.skeleton(height=40, circle=True),
+    pz.column([ui.skeleton(width=160, height=14), ui.skeleton(lines=2, height=10)], spacing=10, width="fill"),
+], spacing=12), width=360)""", "size": (480, 140)},
+    related=["spinner", "progress", "empty-state"],
+)
+
+add(
+    slug="progress-ring",
+    name=T("Progress ring", "Anillo de progreso"),
+    category="feedback",
+    api=["pyzed.ui.progress_ring"],
+    badge="new",
+    blurb=T("A round progress bar.", "Una barra de progreso redonda."),
+    desc=T(
+        "A ring that fills clockwise from the top as `value` reaches `max`. `show_value` writes the percentage "
+        "in the middle; `value=None` spins until the task knows how far it is.",
+        "Un anillo que se llena en el sentido de las agujas del reloj desde arriba según `value` llega a `max`. "
+        "`show_value` escribe el porcentaje en el centro; `value=None` gira mientras no se sabe cuánto falta.",
+    ),
+    when=T(
+        ["For a download, an upload or a goal shown in little space.", "In a row of a list, use a small one without text."],
+        ["Para una descarga, una subida o un objetivo en poco espacio.", "En una fila de una lista, usa uno pequeño sin texto."],
+    ),
+    preview={"code": """pz.row([
+    ui.progress_ring(0.25),
+    ui.progress_ring(0.6, size=56, thickness=5, show_value=True),
+    ui.progress_ring(1.0, size=56, thickness=5, tint="success", label="Done"),
+    ui.progress_ring(None),
+], spacing=20, align="center")""", "size": (480, 140)},
+    related=["progress", "spinner", "gauge"],
+)
+
+add(
+    slug="gauge",
+    name=T("Gauge", "Indicador"),
+    category="data",
+    api=["pyzed.ui.gauge"],
+    badge="new",
+    blurb=T("A half-circle meter for one number.", "Un medidor de media circunferencia para un número."),
+    desc=T(
+        "Shows one number between `min` and `max` on an arc, like a speedometer: CPU use, temperature, a score. "
+        "`thresholds` recolor the arc as the value climbs.",
+        "Muestra un número entre `min` y `max` sobre un arco, como un velocímetro: uso de CPU, temperatura, una nota. "
+        "`thresholds` cambia el color del arco al subir el valor.",
+    ),
+    when=T(
+        ["On dashboards, for a value with a known range and limits.", "For a value over time, use a [Line chart](/pyzed/library/line-chart/)."],
+        ["En paneles, para un valor con un rango y unos límites conocidos.",
+         "Para un valor a lo largo del tiempo, usa un [gráfico de líneas](/pyzed/es/library/line-chart/)."],
+    ),
+    preview={"code": """pz.row([
+    ui.gauge(42, unit="%", label="CPU"),
+    ui.gauge(78, unit="°C", label="GPU", thresholds=[(70, "warning"), (90, "error")]),
+], spacing=24)""", "size": (480, 160)},
+    related=["progress-ring", "stat", "donut"],
+)
+
+add(
+    slug="line-chart",
+    name=T("Line chart", "Gráfico de líneas"),
+    category="data",
+    api=["pyzed.ui.line_chart"],
+    badge="new",
+    blurb=T("Lines with axes, labels and a legend.", "Líneas con ejes, etiquetas y leyenda."),
+    desc=T(
+        "Draws one or several series of numbers as lines over the x `labels`, with a y axis of four steps. "
+        "A `{name: values}` dict adds a legend; `fill` shades under each line and `points` marks each value.",
+        "Dibuja una o varias series de números como líneas sobre las etiquetas `labels` del eje x, con un eje y de "
+        "cuatro pasos. Un dict `{nombre: valores}` añade una leyenda; `fill` sombrea y `points` marca cada valor.",
+    ),
+    when=T(
+        ["To show how values change over time: visits, sales, temperatures.",
+         "Inside a card or a row, a [Sparkline](/pyzed/library/sparkline/) takes less space."],
+        ["Para mostrar cómo cambian los valores en el tiempo: visitas, ventas, temperaturas.",
+         "Dentro de una tarjeta o una fila, una [minigráfica](/pyzed/es/library/sparkline/) ocupa menos."],
+    ),
+    preview={"code": """ui.line_chart({"Visits": [12, 18, 15, 24, 30, 28, 36], "Sales": [4, 6, 5, 9, 11, 10, 14]},
+              labels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], width=440, height=200)""",
+             "size": (520, 280)},
+    related=["sparkline", "bar-chart", "stat"],
+)
+
+add(
+    slug="timeline",
+    name=T("Timeline", "Línea de tiempo"),
+    category="data",
+    api=["pyzed.ui.timeline", "pyzed.ui.TimelineItem"],
+    badge="new",
+    blurb=T("Events in order down a line.", "Sucesos en orden a lo largo de una línea."),
+    desc=T(
+        "A vertical list of what happened, joined by a line: each `ui.TimelineItem` has a title, an optional "
+        "`time`, `description` and `icon` in its dot. `on_press` makes the entries clickable.",
+        "Una lista vertical de lo que pasó, unida por una línea: cada `ui.TimelineItem` tiene un título y, si quieres, "
+        "`time`, `description` e `icon` en su punto. `on_press` hace pulsables las entradas.",
+    ),
+    when=T(
+        ["For the history of an order, a ticket or a file, or a changelog.", "For the steps still to come, use a [Stepper](/pyzed/library/stepper/)."],
+        ["Para el historial de un pedido, una incidencia o un archivo, o un registro de cambios.",
+         "Para los pasos que faltan, usa [Pasos](/pyzed/es/library/stepper/)."],
+    ),
+    preview={"code": """pz.container(ui.timeline([
+    ui.TimelineItem("Order placed", "We got your order.", time="09:12", icon="shopping-cart"),
+    ui.TimelineItem("Shipped", "On its way with the courier.", time="14:30", icon="truck"),
+    ui.TimelineItem("Delivered", time="Tomorrow", icon="package-check", tint="success"),
+]), width=360)""", "size": (480, 260)},
+    related=["stepper", "list-item", "console"],
+)
+
+add(
+    slug="description-list",
+    name=T("Description list", "Lista de detalles"),
+    category="data",
+    api=["pyzed.ui.description_list"],
+    badge="new",
+    blurb=T("Name and value pairs, one per row.", "Pares de nombre y valor, uno por fila."),
+    desc=T(
+        "The details of something, one property per row: names on the left (or above with `vertical`) and their "
+        "values, which can be text or any widget such as a badge. Text values can be selected and copied.",
+        "Los detalles de algo, una propiedad por fila: los nombres a la izquierda (o encima con `vertical`) y sus "
+        "valores, que pueden ser texto o cualquier widget, como una insignia. Los textos se pueden copiar.",
+    ),
+    when=T(
+        ["For the properties of a file, an order, a user or a device.", "For many rows of the same columns, use a [Table](/pyzed/library/table/)."],
+        ["Para las propiedades de un archivo, un pedido, un usuario o un dispositivo.",
+         "Para muchas filas con las mismas columnas, usa una [tabla](/pyzed/es/library/table/)."],
+    ),
+    preview={"code": """pz.container(ui.description_list({
+    "Name": "report.pdf",
+    "Size": "2.4 MB",
+    "Modified": "Today, 10:42",
+    "Status": ui.badge("Synced", tint="success"),
+}), width=360)""", "size": (480, 220)},
+    related=["table", "settings-group", "card"],
+)
+
+PLAIN.update({
+    "rating": T("Little stars you click to say how much you like something.",
+                "Estrellitas que pulsas para decir cuánto te gusta algo."),
+    "range-slider": T("A bar with two handles to choose “from this much to that much”.",
+                      "Una barra con dos asas para elegir “desde tanto hasta tanto”."),
+    "tag-input": T("A box where you type words and each one becomes a little label you can remove.",
+                   "Una caja donde escribes palabras y cada una se convierte en una etiqueta que puedes quitar."),
+    "stepper": T("Numbered circles that show which step of a process you are on.",
+                 "Círculos numerados que muestran en qué paso de un proceso estás."),
+    "pagination": T("Page numbers with arrows, to move through long lists page by page.",
+                    "Números de página con flechas, para recorrer listas largas página a página."),
+    "skeleton": T("Grey shapes that softly blink while the real content is loading.",
+                  "Formas grises que parpadean suave mientras carga el contenido de verdad."),
+    "progress-ring": T("A circle that fills up to show how much of a task is done.",
+                       "Un círculo que se llena para mostrar cuánto lleva hecho una tarea."),
+    "gauge": T("A half circle like a car's speedometer that shows one number.",
+               "Media circunferencia, como el velocímetro de un coche, que muestra un número."),
+    "line-chart": T("A drawing with lines that go up and down to show how numbers change.",
+                    "Un dibujo con líneas que suben y bajan para mostrar cómo cambian los números."),
+    "timeline": T("A list of things that happened, in order, joined by a line.",
+                  "Una lista de cosas que pasaron, en orden, unidas por una línea."),
+    "description-list": T("A short list of names and values, like the details of a file.",
+                          "Una lista corta de nombres y valores, como los detalles de un archivo."),
+})
+
+VARIANTS.update({
+    "rating": [
+        V(_OPTIONS, [
+            ('max=5', 'ui.rating(3, on_rate)'),
+            ('max=10, size=14', 'ui.rating(7, on_rate, max=10, size=14)'),
+            ('icon="heart"', 'ui.rating(4, on_rate, icon="heart", tint="error")'),
+            ('icon="thumbs-up"', 'ui.rating(2, on_rate, icon="thumbs-up", tint="accent", max=3)'),
+        ]),
+        V(_STATES, [
+            (T("Read only", "Solo lectura"), 'ui.rating(4.4)'),
+            ('disabled=True', 'ui.rating(3, on_rate, disabled=True)'),
+        ]),
+    ],
+    "range-slider": [
+        V(_OPTIONS, [
+            (T("Plain", "Sencillo"), 'pz.container(ui.range_slider((0.2, 0.7), on_change), width=320)'),
+            ('show_value=True', 'pz.container(ui.range_slider((10, 60), on_change, min=0, max=100, step=1, show_value=True), width=360)'),
+            ('show_value="{:.0f} €"', 'pz.container(ui.range_slider((50, 250), on_change, min=0, max=500, step=10, show_value="{:.0f} €"), width=380)'),
+            ('tint="success"', 'pz.container(ui.range_slider((30, 90), on_change, min=0, max=100, tint="success"), width=320)'),
+        ]),
+        V(_STATES, [
+            ('disabled=True', 'pz.container(ui.range_slider((20, 80), on_change, min=0, max=100, disabled=True), width=320)'),
+        ]),
+    ],
+    "tag-input": [
+        V(_CONTENT, [
+            (T("Empty", "Vacío"), 'pz.container(ui.tag_input([], on_change, placeholder="Add a tag…"), width=320)'),
+            (T("With tags", "Con etiquetas"), 'pz.container(ui.tag_input(["design", "rust"], on_change), width=320)'),
+            ('suggestions=', 'pz.container(ui.tag_input(["design"], on_change, text="py", suggestions=["python", "pyzed", "rust"]), width=340)', {"size": (480, 180)}),
+            ('tint="success"', 'pz.container(ui.tag_input(["approved", "ready"], on_change, tint="success"), width=320)'),
+        ]),
+        V(_STATES, [
+            ('max_tags=2', 'pz.container(ui.tag_input(["one", "two"], on_change, max_tags=2), width=320)'),
+            ('disabled=True', 'pz.container(ui.tag_input(["design", "rust"], on_change, disabled=True), width=320)'),
+        ]),
+    ],
+    "stepper": [
+        V(_OPTIONS, [
+            (T("Horizontal", "Horizontal"), 'pz.container(ui.stepper(["Cart", "Address", "Payment"], 1, on_step), width=420)', {"size": (520, 120)}),
+            ('vertical=True', 'ui.stepper([("Account", "Name and email"), ("Address", "Where it goes"), ("Payment", "Card or transfer")], 1, on_step, vertical=True)', {"size": (480, 220)}),
+            ('tint="success"', 'pz.container(ui.stepper(["Upload", "Check", "Publish"], 3, on_step, tint="success"), width=420)', {"size": (520, 120)}),
+        ]),
+        V(_STATES, [
+            ('errors=[1]', 'pz.container(ui.stepper(["Cart", "Address", "Payment"], 1, on_step, errors=[1]), width=420)', {"size": (520, 120)}),
+            (T("Not clickable", "Sin pulsar"), 'pz.container(ui.stepper(["One", "Two", "Three"], 0), width=420)', {"size": (520, 120)}),
+        ]),
+    ],
+    "pagination": [
+        V(_OPTIONS, [
+            (T("Few pages", "Pocas páginas"), 'ui.pagination(2, 5, on_page)'),
+            (T("Many pages", "Muchas páginas"), 'ui.pagination(10, 40, on_page)'),
+            ('siblings=2', 'ui.pagination(10, 40, on_page, siblings=2)', {"size": (560, 160)}),
+            ('compact=True', 'ui.pagination(3, 12, on_page, compact=True)'),
+        ]),
+        V(_SIZE, [
+            ('size="sm"', 'ui.pagination(4, 9, on_page, size="sm")'),
+            ('size="lg"', 'ui.pagination(4, 9, on_page, size="lg")'),
+        ]),
+    ],
+    "skeleton": [
+        V(_OPTIONS, [
+            (T("A bar", "Una barra"), 'pz.container(ui.skeleton(height=14), width=320)'),
+            ('lines=3', 'pz.container(ui.skeleton(lines=3, height=10), width=320)'),
+            ('circle=True', 'ui.skeleton(height=48, circle=True)'),
+            (T("A card", "Una tarjeta"), 'pz.container(pz.column([ui.skeleton(height=120, radius=8), ui.skeleton(width=180, height=14), ui.skeleton(lines=2, height=10)], spacing=10), width=280)', {"size": (480, 260)}),
+        ]),
+        V(_STATES, [
+            ('animated=False', 'pz.container(ui.skeleton(lines=2, animated=False), width=320)'),
+        ]),
+    ],
+    "progress-ring": [
+        V(_OPTIONS, [
+            ('value=0.3', 'ui.progress_ring(0.3)'),
+            ('show_value=True', 'ui.progress_ring(0.72, size=64, thickness=6, show_value=True)'),
+            ('label="3/8"', 'ui.progress_ring(3, max=8, size=56, thickness=5, label="3/8")'),
+            ('tint="warning"', 'ui.progress_ring(0.45, size=48, tint="warning", show_value=True)'),
+        ]),
+        V(_STATES, [
+            (T("Spinning", "Girando"), 'ui.progress_ring(None, size=40)'),
+            (T("Full", "Lleno"), 'ui.progress_ring(1, size=48, tint="success", show_value=True)'),
+        ]),
+    ],
+    "gauge": [
+        V(_OPTIONS, [
+            ('unit="%"', 'ui.gauge(64, unit="%")'),
+            ('label="Speed"', 'ui.gauge(88, max=200, unit=" km/h", label="Speed", size=180)', {"size": (480, 180)}),
+            ('thresholds=', 'ui.gauge(93, unit="%", label="Disk", thresholds=[(70, "warning"), (90, "error")])'),
+            ('tint="success"', 'ui.gauge(7.5, max=10, label="Score", tint="success")'),
+        ]),
+    ],
+    "line-chart": [
+        V(_OPTIONS, [
+            (T("One series", "Una serie"), 'ui.line_chart([3, 7, 4, 9, 6, 11, 8], width=360, height=160)', {"size": (480, 220)}),
+            ('fill=True, points=True', 'ui.line_chart([3, 7, 4, 9, 6, 11, 8], labels=list("MTWTFSS"), fill=True, points=True, width=360, height=170)', {"size": (480, 230)}),
+            (T("Several series", "Varias series"), 'ui.line_chart({"2025": [5, 8, 6, 9, 12], "2026": [7, 9, 11, 13, 17]}, labels=["Jan", "Feb", "Mar", "Apr", "May"], width=360, height=160)', {"size": (480, 240)}),
+            ('grid=False', 'ui.line_chart([1200, 1800, 1500, 2400, 3000], grid=False, width=360, height=150)', {"size": (480, 210)}),
+        ]),
+    ],
+    "timeline": [
+        V(_OPTIONS, [
+            (T("Titles only", "Solo títulos"), 'pz.container(ui.timeline(["Created", "Reviewed", "Merged"]), width=300)', {"size": (480, 200)}),
+            ('icon=, time=', 'pz.container(ui.timeline([ui.TimelineItem("Commit pushed", time="2 min ago", icon="git-commit-horizontal"), ui.TimelineItem("Checks passed", time="1 min ago", icon="check", tint="success")]), width=340)', {"size": (480, 200)}),
+            ('dense=True', 'pz.container(ui.timeline([ui.TimelineItem("Started", time="10:00"), ui.TimelineItem("Paused", time="10:20", tint="warning"), ui.TimelineItem("Finished", time="11:05", tint="success")], dense=True), width=300)', {"size": (480, 180)}),
+            ('content=', 'pz.container(ui.timeline([ui.TimelineItem("Ada commented", "Looks good to me!", time="Today", icon="message-circle", content=ui.facepile(["Ada", "Grace"]))]), width=340)', {"size": (480, 180)}),
+        ]),
+    ],
+    "description-list": [
+        V(_OPTIONS, [
+            (T("Text values", "Valores de texto"), 'pz.container(ui.description_list({"Owner": "Ada", "Plan": "Pro", "Seats": 12}), width=320)', {"size": (480, 200)}),
+            ('vertical=True', 'pz.container(ui.description_list({"Email": "ada@example.com", "Phone": "+44 20 7946 0000"}, vertical=True), width=320)', {"size": (480, 200)}),
+            ('mono_values=True', 'pz.container(ui.description_list([("Commit", "26a7ccf"), ("Branch", "main")], mono_values=True, label_width=90), width=320)', {"size": (480, 160)}),
+            ('dividers=False', 'pz.container(ui.description_list({"Width": "1280", "Height": "720"}, dividers=False, label_width=90), width=280)', {"size": (480, 140)}),
+        ]),
+    ],
+})
+
+
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:
     _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]

@@ -17,8 +17,8 @@ Los widgets de Pyzed reaccionan a eventos en dos capas:
   `.on(...)`: clics, paso del puntero, arrastre, foco, teclas y tamaño. Un `pz.Component` además lanza
   `on_mount` y `on_unmount`.
 
-Así que un componente puede tener sus eventos propios más los 18 comunes. Entre los 114
-componentes de la biblioteca hay **161 eventos propios**; los que más tienen aparecen primero en la tabla
+Así que un componente puede tener sus eventos propios más los 18 comunes. Entre los 125
+componentes de la biblioteca hay **169 eventos propios**; los que más tienen aparecen primero en la tabla
 del final.
 
 ```python
@@ -77,12 +77,13 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | --- | --- | --- |
 | `()` | Nada: el evento ya es la noticia (una pulsación, un cierre, Enter). | `ui.alert(on_close=)`, `pz.mouse_area(on_press=)`, `pz.mouse_area(on_release=)`, `pz.mouse_area(on_right_press=)`… |
 | `(event)` | Un `pz.Event`: su `value` trae el dato y `source` el componente. | `ui.AuthPrompt(on_pick=)`, `ui.AuthPrompt(on_cancel=)`, `ui.AuthPrompt(on_open_url=)`, `ui.AuthPrompt(on_copy=)`… |
-| `(text)` | El texto nuevo, en cada pulsación de tecla. | `ui.shortcuts(on_query=)`, `ui.picker(on_query=)`, `ui.search_input(on_input=)`, `ui.input(on_input=)`… |
+| `(text)` | El texto nuevo, en cada pulsación de tecla. | `ui.shortcuts(on_query=)`, `ui.picker(on_query=)`, `ui.search_input(on_input=)`, `ui.tag_input(on_input=)`… |
 | `(x, y)` | La posición del puntero, relativa al widget. | `pz.mouse_area(on_move=)`, `pz.canvas(on_press=)`, `pz.canvas(on_release=)`, `pz.canvas(on_right_press=)`… |
 | `(value)` | El valor nuevo: un número, un color, una opción… | `ui.number_field(on_change=)`, `ui.slider(on_change=)`, `ui.toggle_group(on_select=)`, `ui.radio_group(on_select=)`… |
 | `(info)` | Un dict (desplazamiento y tamaños) o un `ui.ErrorInfo`. | `pz.scrollable(on_scroll=)`, `ui.editor(on_scroll=)`, `ui.error_boundary(on_error=)`, `ui.error_boundary(on_details=)`… |
 | `(id)` | El id de la fila o pestaña (en un árbol, su ruta). | `ui.tree(on_toggle=)`, `ui.tree(on_select=)`, `ui.tree(on_open=)`, `ui.tree(on_context=)` |
 | `(tab_id)` | El id de la pestaña. | `ui.tab_bar(on_select=)`, `ui.tab_bar(on_close=)`, `ui.tab_bar(on_drag=)`, `ui.tab_bar(on_context=)` |
+| `(index)` | La posición de lo pulsado, 0 para lo primero. | `ui.tab_bar(on_drag_over=)`, `ui.timeline(on_press=)`, `ui.breadcrumbs(on_press=)`, `ui.stepper(on_select=)` |
 | `(row)` | La fila (el dict u objeto que pasaste en `rows`). | `ui.table(on_row_press=)`, `ui.table(on_row_double_press=)`, `ui.table(on_row_context=)` |
 | `(dx, dy)` | Cuánto giró la rueda, en líneas. | `pz.mouse_area(on_scroll=)`, `pz.canvas(on_scroll=)` |
 | `(checked)` | El estado nuevo, `True` o `False`. | `ui.checkbox(on_toggle=)`, `ui.switch(on_toggle=)` |
@@ -124,10 +125,12 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | [Botón dividido](/pyzed/es/library/split-button/#eventos) | 2 | 20 | `on_press`, `on_menu` |
 | [Buscador](/pyzed/es/library/picker/#eventos) | 2 | 20 | `on_query`, `on_submit` |
 | [Calendario](/pyzed/es/library/calendar/#eventos) | 2 | 22 | `on_change`, `on_month` |
+| [Campo de etiquetas](/pyzed/es/library/tag-input/#eventos) | 2 | 20 | `on_change`, `on_input` |
 | [Campo numérico](/pyzed/es/library/number-field/#eventos) | 2 | 20 | `on_change`, `on_submit` |
 | [Chip](/pyzed/es/library/chip/#eventos) | 2 | 20 | `on_press`, `on_remove` |
 | [Confirmación](/pyzed/es/library/confirm/#eventos) | 2 | 20 | `on_confirm`, `on_cancel` |
 | [Deslizador](/pyzed/es/library/slider/#eventos) | 2 | 20 | `on_change`, `on_release` |
+| [Deslizador de rango](/pyzed/es/library/range-slider/#eventos) | 2 | 20 | `on_change`, `on_release` |
 | [Fila de servicio](/pyzed/es/library/service-row/#eventos) | 2 | 22 | `on_toggle`, `on_primary` |
 | [Historial de hilos](/pyzed/es/library/thread-history/#eventos) | 2 | 22 | `on_open`, `on_delete` |
 | [Límite de errores](/pyzed/es/library/error-boundary/#eventos) | 2 | 20 | `on_error`, `on_details` |
@@ -157,18 +160,23 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | [Grupo de radios](/pyzed/es/library/radio-group/#eventos) | 1 | 19 | `on_select` |
 | [Insignia](/pyzed/es/library/badge/#eventos) | 1 | 19 | `on_press` |
 | [Interruptor](/pyzed/es/library/switch/#eventos) | 1 | 19 | `on_toggle` |
+| [Línea de tiempo](/pyzed/es/library/timeline/#eventos) | 1 | 19 | `on_press` |
 | [Lista virtual](/pyzed/es/library/virtual-list/#eventos) | 1 | 19 | `on_scroll` |
 | [Markdown](/pyzed/es/library/markdown/#eventos) | 1 | 19 | `on_link` |
 | [Menú](/pyzed/es/library/menu/#eventos) | 1 | 19 | `on_press` |
 | [Modal](/pyzed/es/library/modal/#eventos) | 1 | 19 | `on_close` |
+| [Paginación](/pyzed/es/library/pagination/#eventos) | 1 | 19 | `on_change` |
 | [Panel](/pyzed/es/library/panel/#eventos) | 1 | 19 | `on_resize` |
+| [Pasos](/pyzed/es/library/stepper/#eventos) | 1 | 19 | `on_select` |
 | [Popover](/pyzed/es/library/popover/#eventos) | 1 | 19 | `on_dismiss` |
 | [Redimensionable](/pyzed/es/library/resizable/#eventos) | 1 | 19 | `on_resize` |
 | [Segmentado](/pyzed/es/library/segmented/#eventos) | 1 | 19 | `on_select` |
 | [Selector de archivos](/pyzed/es/library/file-input/#eventos) | 1 | 19 | `on_change` |
 | [Tarjeta](/pyzed/es/library/card/#eventos) | 1 | 19 | `on_press` |
+| [Valoración](/pyzed/es/library/rating/#eventos) | 1 | 19 | `on_change` |
 | [Visor de referencia](/pyzed/es/library/reference-browser/#eventos) | 1 | 19 | `on_open_url` |
 | [Acerca de](/pyzed/es/library/about/#eventos) | 0 | 18 | — |
+| [Anillo de progreso](/pyzed/es/library/progress-ring/#eventos) | 0 | 18 | — |
 | [Animación](/pyzed/es/library/animation/#eventos) | 0 | 18 | — |
 | [Avatar](/pyzed/es/library/avatar/#eventos) | 0 | 18 | — |
 | [Barra de herramientas](/pyzed/es/library/toolbar/#eventos) | 0 | 18 | — |
@@ -186,17 +194,21 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | [Efectos](/pyzed/es/library/effects/#eventos) | 0 | 18 | — |
 | [Encabezado](/pyzed/es/library/heading/#eventos) | 0 | 18 | — |
 | [Espacio](/pyzed/es/library/spacing/#eventos) | 0 | 18 | — |
+| [Esqueleto](/pyzed/es/library/skeleton/#eventos) | 0 | 18 | — |
 | [Estado vacío](/pyzed/es/library/empty-state/#eventos) | 0 | 18 | — |
 | [Etiqueta](/pyzed/es/library/label/#eventos) | 0 | 18 | — |
 | [Facepile](/pyzed/es/library/facepile/#eventos) | 0 | 18 | — |
 | [Fila](/pyzed/es/library/row/#eventos) | 0 | 18 | — |
 | [Flex](/pyzed/es/library/flex/#eventos) | 0 | 18 | — |
 | [Gráfico de barras](/pyzed/es/library/bar-chart/#eventos) | 0 | 18 | — |
+| [Gráfico de líneas](/pyzed/es/library/line-chart/#eventos) | 0 | 18 | — |
 | [Grupo de ajustes](/pyzed/es/library/settings-group/#eventos) | 0 | 18 | — |
 | [Icono](/pyzed/es/library/icon/#eventos) | 0 | 18 | — |
 | [Imagen](/pyzed/es/library/image/#eventos) | 0 | 18 | — |
 | [Indicador](/pyzed/es/library/indicator/#eventos) | 0 | 18 | — |
+| [Indicador](/pyzed/es/library/gauge/#eventos) | 0 | 18 | — |
 | [Kbd](/pyzed/es/library/kbd/#eventos) | 0 | 18 | — |
+| [Lista de detalles](/pyzed/es/library/description-list/#eventos) | 0 | 18 | — |
 | [Medidor de contexto](/pyzed/es/library/context-meter/#eventos) | 0 | 18 | — |
 | [Minigráfico](/pyzed/es/library/sparkline/#eventos) | 0 | 18 | — |
 | [Pila](/pyzed/es/library/stack/#eventos) | 0 | 18 | — |

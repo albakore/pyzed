@@ -22,7 +22,7 @@ los filtra por título y descripción. **Todos** muestra cada categoría bajo su
 
 | Categoría | Ejemplos |
 | --- | --- |
-| **Apps** | Contador, Lista de tareas, Tareas (Iced), Pomodoro, Visor de Markdown, Juego de la vida, Reloj analógico, Cronómetro, Código QR, Selector de color, Visor de imágenes, Varias ventanas, Marco de ventana propio, Galería de componentes, Mini editor, Editor estilo Zed. |
+| **Apps** | Contador, Lista de tareas, Tareas (Iced), Pomodoro, Visor de Markdown, Juego de la vida, Reloj analógico, Cronómetro, Código QR, Selector de color, Visor de imágenes, Varias ventanas, Marco de ventana propio, Gestión de tienda, Galería de componentes, Mini editor, Editor estilo Zed. |
 | **Tutorial** | Los cinco pasos del tutorial (Hola, Estado, Diseño, Trabajo asíncrono, App de notas), Diseño básico, Listas y tablas, Navegación, Hablar con el usuario, Selector de tema, Contactos con SQLite. |
 | **Audio** | Sintetizador, Caja de ritmos, Rack modular, Visualizador de música, Controlador MIDI, Webcam. |
 | **Arrastrar y soltar** | Tablero de arrastrar y soltar, Creador de formularios, Creador de páginas, Lienzo de diseño, Editor de nodos, Listas ordenables ([guía](/pyzed/es/dnd/)). |

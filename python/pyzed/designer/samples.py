@@ -87,6 +87,8 @@ CATALOG: Tuple[Sample, ...] = (
            "multi_window.py"),
     Sample("window_frame", "Custom window frame", "A title bar drawn by Pyzed, with menus like Zed and the window "
            "buttons.", "Apps", "window_frame.py"),
+    Sample("store_admin", "Store admin", "Filters, pages, an order's steps and timeline, and the numbers of the week.",
+           "Apps", "store_admin.py"),
     Sample("gallery", "Component gallery", "A tour of the ready-made components in pyzed.ui.", "Apps",
            "gallery.py"),
     Sample("mini_editor", "Mini editor", "A Zed-like editor in about 150 lines: tree, tabs, code, docks and palette.",

@@ -71,6 +71,9 @@ HANDLERS = {
     "ui.error_boundary.on_details": "(info)",
     "ui.radio_group.on_select": "(value)", "pz.radio.on_select": "()",
     "ui.toggle_group.on_select": "(value)",
+    "ui.rating.on_change": "(stars)", "ui.range_slider.on_change": "((low, high))",
+    "ui.tag_input.on_change": "(tags)", "ui.stepper.on_select": "(index)", "ui.pagination.on_change": "(page)",
+    "ui.timeline.on_press": "(index)",
     "pz.canvas.on_press": "(x, y)", "pz.canvas.on_release": "(x, y)", "pz.canvas.on_right_press": "(x, y)",
     "pz.canvas.on_scroll": "(dx, dy)", "pz.mouse_area.on_scroll": "(dx, dy)",
 }
@@ -104,6 +107,11 @@ SHAPES = {
     "(url)": T("The URL of the link.", "La URL del enlace."),
     "(name)": T("A name: of the icon, or of the editor action.", "Un nombre: del icono o de la acción del editor."),
     "(line)": T("The log line (a `ui.LogEntry`).", "La línea del registro (un `ui.LogEntry`)."),
+    "(index)": T("The position of what was clicked, 0 for the first.", "La posición de lo pulsado, 0 para lo primero."),
+    "(stars)": T("How many stars were picked, 0 when cleared.", "Cuántas estrellas se eligieron, 0 al borrar."),
+    "((low, high))": T("The new range, as a tuple.", "El rango nuevo, como una tupla."),
+    "(tags)": T("The new list of tags.", "La nueva lista de etiquetas."),
+    "(page)": T("The page that was picked, from 1.", "La página elegida, desde 1."),
 }
 
 #: The groups of ``pyzed.events.CATALOG``.
@@ -3283,3 +3291,249 @@ class State:
 def view(state, set_state):
     return pz.mouse_area(ui.card(ui.label("Hovering" if state.hovering else "Point at me"), width=320),
                          on_enter=lambda: set_state(hovering=True), on_exit=lambda: set_state(hovering=False))''')
+
+
+# ---------------------------------------------------------------------------------- more components
+
+ex("rating", '''class Review(pz.App):
+    def __init__(self):
+        self.stars = 3
+
+    def rate(self, stars):               # on_change: the number of stars (0 when cleared)
+        self.stars = stars
+
+    def view(self):
+        return pz.column([ui.rating(self.stars, self.rate), ui.label(f"{self.stars} of 5")], spacing=8)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Rate:
+    stars: int
+
+
+class Review(pz.App):
+    stars = 3
+
+    def update(self, message):
+        match message:
+            case Rate(stars):
+                self.stars = stars
+
+    def view(self):
+        return ui.rating(self.stars, Rate)   # the class builds the message from the stars''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    stars: int = 3
+
+
+def view(state, set_state):
+    return ui.rating(state.stars, lambda stars: set_state(stars=stars))''')
+
+ex("range-slider", '''class Shop(pz.App):
+    def __init__(self):
+        self.price = (20, 80)
+
+    def set_price(self, value):          # on_change: the new (low, high)
+        self.price = value
+
+    def search(self):                    # on_release: the knob was let go
+        print("search", self.price)
+
+    def view(self):
+        return ui.range_slider(self.price, self.set_price, min=0, max=100, step=5,
+                               on_release=self.search, show_value=True)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Price:
+    value: tuple
+
+
+class Shop(pz.App):
+    price = (20, 80)
+
+    def update(self, message):
+        match message:
+            case Price(value):
+                self.price = value
+
+    def view(self):
+        return ui.range_slider(self.price, Price, min=0, max=100, step=5)''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    price: tuple = (20, 80)
+
+
+def view(state, set_state):
+    return ui.range_slider(state.price, lambda value: set_state(price=value), min=0, max=100, step=5)''')
+
+ex("tag-input", '''class Labels(pz.App):
+    def __init__(self):
+        self.tags = ["design", "rust"]
+        self.typing = ""
+
+    def set_tags(self, tags):            # on_change: the new list (a tag added or removed)
+        self.tags = tags
+
+    def type(self, text):                # on_input: the text in the field
+        self.typing = text
+
+    def view(self):
+        return ui.tag_input(self.tags, self.set_tags, text=self.typing, on_input=self.type,
+                            placeholder="Add a label…", suggestions=["python", "docs", "bug"])''', '''from dataclasses import dataclass
+
+
+@dataclass
+class SetTags:
+    tags: list
+
+
+@dataclass
+class Type:
+    text: str
+
+
+class Labels(pz.App):
+    tags = ["design"]
+    typing = ""
+
+    def update(self, message):
+        match message:
+            case SetTags(tags):
+                self.tags = tags
+            case Type(text):
+                self.typing = text
+
+    def view(self):
+        return ui.tag_input(self.tags, SetTags, text=self.typing, on_input=Type)''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    tags: tuple = ("design",)
+    typing: str = ""
+
+
+def view(state, set_state):
+    return ui.tag_input(state.tags, lambda tags: set_state(tags=tuple(tags)), text=state.typing,
+                        on_input=lambda text: set_state(typing=text))''')
+
+ex("stepper", '''class Checkout(pz.App):
+    def __init__(self):
+        self.step = 1
+
+    def go(self, index):                 # on_select: the index of the clicked step
+        self.step = index
+
+    def view(self):
+        return pz.column([
+            ui.stepper(["Cart", "Address", "Payment", "Done"], self.step, self.go),
+            ui.button("Next", lambda: self.go(min(self.step + 1, 4)), variant="solid"),
+        ], spacing=16)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class GoTo:
+    index: int
+
+
+class Checkout(pz.App):
+    step = 1
+
+    def update(self, message):
+        match message:
+            case GoTo(index):
+                self.step = index
+
+    def view(self):
+        return ui.stepper(["Cart", "Address", "Payment"], self.step, GoTo)''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    step: int = 1
+
+
+def view(state, set_state):
+    return ui.stepper(["Cart", "Address", "Payment"], state.step, lambda index: set_state(step=index))''')
+
+ex("pagination", '''class Results(pz.App):
+    def __init__(self):
+        self.page = 1
+
+    def go(self, page):                  # on_change: the page that was clicked, from 1
+        self.page = page
+
+    def view(self):
+        return pz.column([ui.label(f"Results of page {self.page}"),
+                          ui.pagination(self.page, 20, self.go)], spacing=8)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Page:
+    number: int
+
+
+class Results(pz.App):
+    page = 1
+
+    def update(self, message):
+        match message:
+            case Page(number):
+                self.page = number
+
+    def view(self):
+        return ui.pagination(self.page, 20, Page)''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    page: int = 1
+
+
+def view(state, set_state):
+    return ui.pagination(state.page, 20, lambda page: set_state(page=page))''')
+
+ex("timeline", '''class Orders(pz.App):
+    def __init__(self):
+        self.opened = None
+
+    def open(self, index):               # on_press: the index of the clicked entry
+        self.opened = index
+
+    def view(self):
+        return ui.timeline([
+            ui.TimelineItem("Order placed", time="09:12", icon="shopping-cart"),
+            ui.TimelineItem("Shipped", "On its way.", time="14:30", icon="truck",
+                            tint="success" if self.opened == 1 else "accent"),
+        ], on_press=self.open)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Open:
+    index: int
+
+
+class Orders(pz.App):
+    opened = None
+
+    def update(self, message):
+        match message:
+            case Open(index):
+                self.opened = index
+
+    def view(self):
+        return ui.timeline(["Order placed", "Shipped", "Delivered"], on_press=Open)''', '''from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class State:
+    opened: int = -1
+
+
+def view(state, set_state):
+    return ui.timeline(["Order placed", "Shipped", "Delivered"], on_press=lambda index: set_state(opened=index))''')

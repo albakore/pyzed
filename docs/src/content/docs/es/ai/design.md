@@ -187,7 +187,7 @@ seleccionado e inválido. `pz.ui` los dibuja; en tus propias cajas con estilo us
 
 | Estado | Qué ve el usuario | En Pyzed |
 | --- | --- | --- |
-| Cargando | Dónde estará el contenido y que está llegando | `ui.spinner()` (≤ 2 s), `ui.progress(None)`, o `ui.progress(value)` con etiqueta para trabajos largos |
+| Cargando | Dónde estará el contenido y que está llegando | `ui.skeleton(lines=3)` con la forma de lo que llega, `ui.spinner()` (≤ 2 s), `ui.progress(None)`, o `ui.progress(value)` / `ui.progress_ring(value)` con etiqueta para trabajos largos |
 | Vacío | Por qué está vacío y la acción que lo llena | `ui.empty_state(title, description, icon=, actions=[ui.button(..., variant="solid")])` |
 | Error | Qué falló, por qué si se sabe, y cómo recuperarse (Reintentar) | `ui.callout(title, description, tint="error", actions=[...])`; `ui.error_boundary` alrededor de partes delicadas |
 | Parcial | Algunos resultados, y que hay más o que algunos fallaron | Una fila al pie, un contador con `ui.badge`, un `ui.callout` de aviso |
@@ -233,12 +233,15 @@ un botón Limpiar), sin conexión / sin permiso, y valores muy largos o ausentes
   un envío fallido.
 - Valores por defecto sensatos, máscaras solo cuando ayudan (fechas, números), y nunca vacíes el formulario tras un
   error.
+- Elige el control que encaja con el valor: `ui.range_slider` para un rango (precio, fechas), `ui.tag_input`
+  para una lista libre corta (etiquetas, destinatarios), `ui.rating` para una puntuación.
 - Mientras envía: el botón principal muestra `loading=True`; el formulario sigue legible.
 
 ## 10. Navegación y arquitectura de la información
 
 - **¿Dónde estoy?** Lo dicen el elemento seleccionado en la barra lateral, la pestaña activa y el título de la
-  ventana. `ui.breadcrumbs` para jerarquías profundas.
+  ventana. `ui.breadcrumbs` para jerarquías profundas, `ui.stepper` para los pasos de un asistente y
+  `ui.pagination` bajo resultados largos por páginas.
 - **Poco profunda y predecible**: como mucho tres niveles; cada cosa siempre en el mismo sitio.
 - **Usuarios avanzados**: cada comando se alcanza con el teclado, la paleta de comandos (`ui.command_palette`) y
   los menús (`frame_menus`), no solo con botones. Muestra los atajos con `keys=`.

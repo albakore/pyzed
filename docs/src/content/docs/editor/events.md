@@ -48,7 +48,7 @@ Every visible control has three common events on top of its own:
 
 | Component | Own events |
 | --- | --- |
-| Label, Image, Icon, Avatar, Counter badge, Status dot, Facepile, QR code, SVG image | `click`, `double_click` |
+| Label, Image, Icon, Avatar, Counter badge, Status dot, Facepile, QR code, SVG image, Progress ring, Gauge | `click`, `double_click` |
 | Button, Link | `click` |
 | Chip | `click`, `remove` (its x, when **Removable** is on) |
 | Split button | `click` (the main part), `choose` (an item of its menu: its text), `menu` (the menu opens) |
@@ -60,6 +60,11 @@ Every visible control has three common events on top of its own:
 | Toggle group | `change` (the pressed value, or the list of pressed values when **Multiple** is on) |
 | Slider | `change` (the new number while dragging), `release` (the drag ended: save or apply here) |
 | Number box | `change` (the new number) |
+| Rating | `change` (the stars picked, 0 when a click on the lit one clears it) |
+| Range slider | `change` (`(low, high)` while a knob moves), `release` (the knob was let go) |
+| Tag box | `change` (the list of tags after one is added or removed), `input` (the text being typed) |
+| Steps, Pagination | `change` (the index of the clicked step; the number of the picked page, from 1) |
+| Timeline | `click` (the index of the clicked entry) |
 | List box | `change` (the selected item), `open` (an item double-clicked) |
 | Table | `change` (the selected row's index), `open` (a row double-clicked: its index), `sort` (a header clicked when **Sortable** is on: its title) |
 | Tree view | `change` (the selected item's path, such as `"Docs/README.md"`), `toggle` (an item folded or unfolded), `open` (an item without children double-clicked) |
@@ -68,7 +73,7 @@ Every visible control has three common events on top of its own:
 | Color picker, Icon picker | `change` (the new color or icon name) |
 | Dock | `layout` (a panel was moved, resized or switched: the layout dict, also kept in **Saved layout**) |
 | Timer, Shortcut, File watcher, Process, Background worker, Web request, Clipboard, Settings, File dialog, Notification | Their own (`tick`, `activate`, `change`, `output`, `done`, `response`...): see [Non-visual components](/pyzed/editor/non-visual-components/). They have no mouse events. |
-| Heading, Progress bar, Badge, Spinner, Callout, Key binding, Stat, Chart, Empty state, Diff stat, Image viewer, Terminal output, containers, Spacer, Divider | Only the common ones |
+| Heading, Progress bar, Badge, Spinner, Callout, Key binding, Stat, Chart, Empty state, Diff stat, Image viewer, Terminal output, Skeleton, Line chart, Details list, containers, Spacer, Divider | Only the common ones |
 
 The form itself:
 

@@ -68,6 +68,10 @@ SCRIPTS: dict[str, dict] = {
                                drag((412, 311), (300, 311)), leave()]},
     "icon-picker": {"steps": [wait(300), press("input:0"), type_text("star"), wait(500),
                               hover((228, 89), hold=300), press(), leave()]},
+    "rating": {"steps": clicks((260, 69), (220, 69), (280, 101))},
+    "range-slider": {"steps": [wait(300), drag((122, 60), (180, 60)), drag((300, 60), (250, 60)), leave(), wait(400)]},
+    "tag-input": {"steps": [wait(300), press("input:0"), type_text("docs"), key("Enter"), wait(300),
+                            type_text("ui,"), wait(400), leave(), wait(500)]},
     # -- dates and times --
     "date-picker": {"steps": [wait(300), press((455, 39), after=600), hover((346, 237), hold=300),
                               hover((414, 237), hold=300), press(after=600), press("input:0"), key("Down"),
@@ -138,6 +142,8 @@ pz.column([
                              press("Environment variables", after=500), press("Advanced options", after=500),
                              leave()]},
     # -- navigation --
+    "stepper": {"steps": clicks("Address", "Cart", "Payment")},
+    "pagination": {"steps": clicks("6", "7", "20", "1")},
     "tab-bar": {"steps": [wait(300), press("app.rs"), press("README.md"), hover((412, 70)),
                           press("main.rs"), leave()]},
     "breadcrumbs": {"steps": tour("src", "ui", "main.rs", "fn main", "Editor")},
