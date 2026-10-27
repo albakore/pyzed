@@ -1674,10 +1674,10 @@ The visual form editor.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, indent_guides=True, indent_guides_coloring='fixed', wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, ty=True, ruff=True, keymap={})
+class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, indent_guides=True, indent_guides_coloring='fixed', wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, hover=True, sticky_scroll=True, diagnostic_underlines=True, ty=True, ruff=True, base_keymap='VSCode', vim_mode=False, keymap={})
 ```
 
-EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, indent_guides: 'bool' = True, indent_guides_coloring: 'str' = 'fixed', wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, hover: 'bool' = True, sticky_scroll: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
+EditorSettings(theme: 'str' = '', font_family: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, hard_tabs: 'bool' = False, convert_indentation: 'bool' = False, backspace_unindent: 'bool' = True, repeat_delay: 'float' = 500.0, repeat_rate: 'float' = 20.0, show_whitespace: 'bool' = False, indent_guides: 'bool' = True, indent_guides_coloring: 'str' = 'fixed', wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, hover: 'bool' = True, sticky_scroll: 'bool' = True, diagnostic_underlines: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, base_keymap: 'str' = 'VSCode', vim_mode: 'bool' = False, keymap: 'Dict[str, str]' = <factory>)
 
 **Methods and properties**
 
@@ -1715,6 +1715,14 @@ class History
 Snapshots of a form: `push` after an edit, then `undo`/`redo` to move through them.
 
 **Methods and properties**
+
+#### `History.snapshot`
+
+```python
+History.snapshot  # property
+```
+
+The form as last recorded (JSON): equal snapshots mean nothing changed in between.
 
 #### `History.push`
 

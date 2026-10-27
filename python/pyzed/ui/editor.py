@@ -61,7 +61,22 @@ DEFAULT_KEYS: Dict[str, Tuple[str, ...]] = {
     "convert_to_upper_case": (),
     "convert_to_lower_case": (),
     "sort_lines_case_sensitive": (),
+    "select_larger_syntax_node": ("alt-shift-right",),
+    "select_smaller_syntax_node": ("alt-shift-left",),
+    # Without default keys: the arrows, Home, End and the others already move, select and delete; other
+    # editors' keymaps (``keymap.BASE_KEYMAPS``) bind them to their own keys.
+    **{name: () for name in (
+        "move_left", "move_right", "move_up", "move_down", "move_to_previous_word_start", "move_to_next_word_end",
+        "move_to_end_of_line", "move_to_beginning", "move_to_end", "move_page_up", "move_page_down",
+        "select_left", "select_right", "select_up", "select_down", "select_to_previous_word_start",
+        "select_to_next_word_end", "select_to_end_of_line", "select_to_beginning", "select_to_end",
+        "select_page_up", "select_page_down", "select_all", "backspace", "delete", "paste", "newline",
+        "transpose", "cut_to_end_of_line", "delete_to_end_of_line", "delete_to_beginning_of_line", "toggle_case",
+        "select_to_enclosing_bracket", "set_mark", "swap_selection_ends", "scroll_cursor_center")},
 }
+
+#: The severities of ``editor(diagnostics=...)``, from the least to the most severe (drawn in that order).
+SEVERITIES = ("hint", "info", "warning", "error")
 
 _MODIFIERS = {"ctrl": "ctrl", "control": "ctrl", "cmd": "ctrl", "super": "ctrl", "win": "ctrl", "secondary": "ctrl",
               "alt": "alt", "option": "alt", "opt": "alt", "shift": "shift"}
@@ -89,12 +104,10 @@ def _keystroke(text: str) -> Optional[str]:
 
 
 def parse_keys(text: str) -> Optional[str]:
-    """Normalizes a Zed-style binding (``"Ctrl+Shift+K"`` -> ``"ctrl-shift-k"``, ``"ctrl-k ctrl-c"``), or
-    ``None`` when it is not one the editor understands (chords must start with Ctrl+K)."""
+    """Normalizes a Zed-style binding (``"Ctrl+Shift+K"`` -> ``"ctrl-shift-k"``, chords of two keys such as
+    ``"ctrl-k ctrl-c"`` or Emacs's ``"ctrl-x u"``), or ``None`` when it is not one the editor understands."""
     strokes = [_keystroke(part) for part in text.split()]
     if not strokes or len(strokes) > 2 or None in strokes:
-        return None
-    if len(strokes) == 2 and strokes[0] != "ctrl-k":
         return None
     return " ".join(strokes)  # type: ignore[arg-type]
 
@@ -166,6 +179,10 @@ def editor(
     hover_delay: float = 500,
     sticky_scroll: int = 0,
     indent_guides: Union[bool, str] = False,
+    diagnostics: Optional[Sequence[Tuple[int, int, int, int, Union[str, int]]]] = None,
+    diagnostic_underlines: bool = True,
+    hover_keys: Sequence[str] = (),
+    vim: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -248,6 +265,24 @@ a log, a traceback or generated code to look at.
     ``indent_guides=True`` draws a thin line at each level of indentation (the one of the block around
     the cursor stands out); ``indent_guides="rainbow"`` colors them by depth with the theme's player colors.
 
+    ``diagnostics`` lists the problems in the text as 1-based ``(line, column, end_line, end_column, severity)``
+    with byte columns and exclusive ends, the severity ``"error"``, ``"warning"``, ``"info"`` or ``"hint"`` (or
+    LSP's 1 to 4, or a color): like Zed, they are underlined with a wavy line (``diagnostic_underlines=False``
+    turns that off) and marked on the minimap, where each problem tints its line and leaves a mark on the
+    right edge placed over the whole text, so the ones off screen show too. Keys in ``hover_keys`` (such as
+    ``"ctrl-space"``) keep the hover shown, to expand it.
+
+    ``vim=True`` edits like Vim (Zed's ``vim_mode``): Normal mode moves and changes text with Vim's keys
+    (``hjkl``, ``w``/``b``/``e``, ``0``/``^``/``$``, ``gg``/``G``, ``f``/``t``, ``%``, counts, the
+    operators ``d``, ``c``, ``y``, ``>``, ``<``, ``gc``, ``g~``/``gu``/``gU`` with motions and text objects
+    such as ``iw``, ``i"`` and ``a(``, ``x``, ``p``, ``u``, ``Ctrl+R`` and ``.``), ``i``/``a``/``o`` enter
+    Insert mode and Escape leaves it, ``v`` and ``V`` select. The cursor is a block outside Insert mode.
+    ``on_action`` hears each change of mode (``"vim_normal"``, ``"vim_insert"``, ``"vim_visual"``,
+    ``"vim_visual_line"``) and what Vim asks of the app: ``"vim_search"`` and ``"vim_search_backward"`` (``/``
+    and ``?``), ``"vim_search_next"`` and ``"vim_search_previous"`` (``n`` and ``N`` after them),
+    ``"vim_command"`` (``:``), ``"vim_hover"`` (``K``), ``"go_to_definition"`` (``gd``), ``"vim_go_back"`` and
+    ``"vim_go_forward"`` (Ctrl+O and Ctrl+I).
+
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
 
@@ -322,7 +357,24 @@ a log, a traceback or generated code to look at.
         sticky_scroll=sticky_scroll,
         indent_guides=guides,
         indent_guides_active=guides_active,
+        diagnostics=_diagnostic_colors(t, diagnostics or ()),
+        diagnostic_underlines=diagnostic_underlines,
+        hover_keys=list(hover_keys),
+        vim=vim,
     )
+
+
+def _diagnostic_colors(t: Theme, diagnostics: Sequence[Tuple[int, int, int, int, Union[str, int]]]) -> List[Tuple]:
+    """``editor(diagnostics=...)`` with a color for each severity, the most severe last (drawn on top)."""
+    names = {1: "error", 2: "warning", 3: "info", 4: "hint"}
+    colors = {"error": t.error, "warning": t.warning, "info": t.info, "hint": alpha(t.text_muted, 0.8)}
+    out = []
+    for line, column, end_line, end_column, severity in diagnostics:
+        level = names.get(severity, "info") if isinstance(severity, int) else str(severity)
+        rank = SEVERITIES.index(level) if level in SEVERITIES else len(SEVERITIES)
+        out.append((rank, (int(line), int(column), int(end_line), int(end_column), colors.get(level, level))))
+    out.sort(key=lambda item: item[0])
+    return [d for _, d in out]
 
 
 def _guide_colors(t: Theme, guides: Union[bool, str]) -> Tuple[Optional[List[str]], Optional[List[str]]]:

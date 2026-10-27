@@ -64,10 +64,47 @@ A context is the part of the designer that has the keyboard. Keys are looked up 
 | `Editor` | The text of the code editor | CodePanel |
 
 :::note
-In the `Editor` context a chord must start with <kbd>Ctrl</kbd>+<kbd>K</kbd>, like the editor's own chords. Inside
-the editor, <kbd>Ctrl</kbd>+<kbd>K</kbd> waits for the editor's second key, so use the menu to open the keymap editor
-from there.
+A chord can start with any key, like Emacs's <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>U</kbd>. Inside the editor, the first
+key of a chord only waits for the second one: <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> opens the
+keymap editor from the code too.
 :::
+
+## Base keymaps
+
+Coming from another editor? Like Zed's `base_keymap`, **Settings → Code editor → Keymap and Vim → Base keymap** puts
+that editor's keys over the defaults (which are VS Code's and Zed's), and your own bindings still go on top:
+
+| Base keymap | Some of its keys |
+| --- | --- |
+| **VS Code** (default) | The defaults: <kbd>Ctrl</kbd>+<kbd>D</kbd> next match, <kbd>Alt</kbd>+<kbd>↑</kbd> move line, <kbd>F12</kbd> definition. |
+| **JetBrains** | <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate, <kbd>Ctrl</kbd>+<kbd>Y</kbd> delete line, <kbd>Ctrl</kbd>+<kbd>W</kbd> expand selection, <kbd>Ctrl</kbd>+<kbd>B</kbd> definition, <kbd>Shift</kbd>+<kbd>F6</kbd> rename, <kbd>Alt</kbd>+<kbd>Enter</kbd> quick fixes, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd> format, <kbd>F2</kbd> next problem. |
+| **Sublime Text** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicate, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> move line, <kbd>Ctrl</kbd>+<kbd>J</kbd> join lines, <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>U</kbd> upper case, <kbd>Ctrl</kbd>+<kbd>B</kbd> run. |
+| **Atom** | <kbd>Ctrl</kbd>+<kbd>↑</kbd> move line, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicate, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>[</kbd> fold. |
+| **TextMate** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> move line, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> select line, <kbd>Ctrl</kbd>+<kbd>R</kbd> run. |
+| **Emacs** | <kbd>Ctrl</kbd>+<kbd>F</kbd>/<kbd>B</kbd>/<kbd>N</kbd>/<kbd>P</kbd> move, <kbd>Ctrl</kbd>+<kbd>A</kbd>/<kbd>E</kbd> line start and end, <kbd>Ctrl</kbd>+<kbd>K</kbd> kill line, <kbd>Ctrl</kbd>+<kbd>W</kbd>/<kbd>Alt</kbd>+<kbd>W</kbd>/<kbd>Ctrl</kbd>+<kbd>Y</kbd> cut, copy, yank, <kbd>Ctrl</kbd>+<kbd>Space</kbd> mark, <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>U</kbd> undo, <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> save, <kbd>Alt</kbd>+<kbd>X</kbd> command palette. |
+
+The keymap editor and the shortcut reference show the keys of the base keymap in force, and **Reset** puts back its
+keys, not VS Code's.
+
+## Vim mode
+
+**Vim mode** (Settings → Code editor → Keymap and Vim, or *Toggle Vim mode* in the command palette) edits like Vim,
+as Zed's `vim_mode` does. The status bar shows the mode (`NORMAL`, `-- INSERT --`, `-- VISUAL --`) and the cursor is
+a block outside Insert mode.
+
+- **Motions**: `h` `j` `k` `l`, `w` `b` `e` (and `W` `B` `E`), `0` `^` `$`, `gg` `G`, `{` `}`, `%`, `f` `t` `F` `T`
+  with `;` and `,`, and counts (`3w`, `5j`).
+- **Operators**: `d` `c` `y` `>` `<`, `gc` (comment), `g~` `gu` `gU` (case), doubled for whole lines (`dd`, `cc`,
+  `yy`, `gcc`), with motions and text objects: `iw` `aw`, `i"` `a'`, `i(` `ab`, `i{` `aB`, `i[`, `i<`, `ip`.
+- **Commands**: `i` `a` `I` `A` `o` `O`, `v` `V`, `x` `X` `s` `S` `D` `C` `Y`, `p` `P`, `u` and <kbd>Ctrl</kbd>+<kbd>R</kbd>,
+  `J`, `~`, `r`, `.` (repeat), `*` `#`, `/` `?` `n` `N` (the find bar), `K` (hover card), `gd` (definition),
+  <kbd>Ctrl</kbd>+<kbd>O</kbd>/<kbd>I</kbd> (back and forward), <kbd>Ctrl</kbd>+<kbd>D</kbd>/<kbd>U</kbd>/<kbd>F</kbd>/<kbd>B</kbd>,
+  `zz`, `zc` `zo` `za` `zM` `zR` (folds).
+- **The command line** (`:`): `:w`, `:q`, `:wq` and `:x`, `:42` (go to line), `:s/old/new/g` on the line,
+  `:%s/old/new/g` on every line (with `\1` and `&` in the replacement), `:noh`, `:set wrap` and `:set number`.
+
+Yanks and deletes go to the system clipboard, so `p` pastes what you copied in another app too.
+
 
 ## The keymap.json file
 

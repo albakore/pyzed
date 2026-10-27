@@ -23,6 +23,11 @@ class History:
         self._group: Optional[str] = None
         self._kind = type(form)  # snapshots come back as the same kind (a Form or a component Scene)
 
+    @property
+    def snapshot(self) -> str:
+        """The form as last recorded (JSON): equal snapshots mean nothing changed in between."""
+        return self._current
+
     def push(self, form: Form, group: Optional[str] = None) -> bool:
         """Records the form's current state; returns ``False`` if nothing changed.
 

@@ -80,8 +80,15 @@ class EditorSettings:
     hover: bool = True
     #: Pin the headers of the blocks being scrolled through (``class``, ``def``) to the top.
     sticky_scroll: bool = True
+    #: A wavy line under the code with errors and warnings (they are always marked in the minimap).
+    diagnostic_underlines: bool = True
     ty: bool = True
     ruff: bool = True
+    #: The keys the editor starts from, like Zed's base keymaps: ``"VSCode"``, ``"JetBrains"``,
+    #: ``"SublimeText"``, ``"Atom"``, ``"TextMate"`` or ``"Emacs"`` (see ``keymap.BASE_KEYMAPS``).
+    base_keymap: str = "VSCode"
+    #: Vim's modes and commands in the code editor (Normal, Insert and Visual).
+    vim_mode: bool = False
     #: Keys changed by the user: action name -> bindings separated by commas (``""``: no key).
     keymap: Dict[str, str] = field(default_factory=dict)
 
@@ -119,6 +126,10 @@ class EditorSettings:
         out.cursor_width = min(max(out.cursor_width, 1.0), 4.0)
         out.repeat_delay = min(max(out.repeat_delay, 0.0), MAX_REPEAT_DELAY)
         out.repeat_rate = min(max(out.repeat_rate, 0.0), MAX_REPEAT_RATE)
+        from .keymap import BASE_KEYMAPS, DEFAULT_BASE
+
+        if out.base_keymap not in BASE_KEYMAPS:
+            out.base_keymap = DEFAULT_BASE
         out.keymap = {k: v for k, v in out.keymap.items() if isinstance(k, str) and isinstance(v, str)}
         return out
 

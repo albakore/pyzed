@@ -3905,6 +3905,90 @@
   "ms": 5500,
   "width": 480
  },
+ "description-list-v1-1.dark": {
+  "bytes": 9636,
+  "frames": 4,
+  "height": 222,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-1.light": {
+  "bytes": 9636,
+  "frames": 4,
+  "height": 222,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-2.dark": {
+  "bytes": 16538,
+  "frames": 4,
+  "height": 232,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-2.light": {
+  "bytes": 16276,
+  "frames": 4,
+  "height": 232,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-3.dark": {
+  "bytes": 9766,
+  "frames": 4,
+  "height": 162,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-3.light": {
+  "bytes": 9712,
+  "frames": 4,
+  "height": 162,
+  "ms": 4200,
+  "width": 720
+ },
+ "description-list-v1-4.dark": {
+  "bytes": 8016,
+  "frames": 4,
+  "height": 162,
+  "ms": 4200,
+  "width": 348
+ },
+ "description-list-v1-4.light": {
+  "bytes": 7834,
+  "frames": 4,
+  "height": 162,
+  "ms": 4200,
+  "width": 348
+ },
+ "description-list.dark": {
+  "bytes": 22554,
+  "frames": 4,
+  "height": 440,
+  "ms": 4150,
+  "width": 960
+ },
+ "description-list.light": {
+  "bytes": 22818,
+  "frames": 4,
+  "height": 440,
+  "ms": 4150,
+  "width": 960
+ },
+ "description-list.thumb.dark": {
+  "bytes": 11086,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
+  "width": 480
+ },
+ "description-list.thumb.light": {
+  "bytes": 11084,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
+  "width": 480
+ },
  "dialog-layer-v1-1.dark": {
   "bytes": 46158,
   "frames": 4,
@@ -5778,6 +5862,90 @@
   "bytes": 5948,
   "frames": 4,
   "height": 240,
+  "ms": 4200,
+  "width": 480
+ },
+ "gauge-v1-1.dark": {
+  "bytes": 10910,
+  "frames": 4,
+  "height": 232,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge-v1-1.light": {
+  "bytes": 12044,
+  "frames": 4,
+  "height": 232,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge-v1-2.dark": {
+  "bytes": 16734,
+  "frames": 4,
+  "height": 300,
+  "ms": 4200,
+  "width": 440
+ },
+ "gauge-v1-2.light": {
+  "bytes": 17990,
+  "frames": 4,
+  "height": 300,
+  "ms": 4200,
+  "width": 440
+ },
+ "gauge-v1-3.dark": {
+  "bytes": 14870,
+  "frames": 4,
+  "height": 254,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge-v1-3.light": {
+  "bytes": 15182,
+  "frames": 4,
+  "height": 254,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge-v1-4.dark": {
+  "bytes": 11470,
+  "frames": 4,
+  "height": 254,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge-v1-4.light": {
+  "bytes": 10960,
+  "frames": 4,
+  "height": 254,
+  "ms": 4200,
+  "width": 360
+ },
+ "gauge.dark": {
+  "bytes": 24868,
+  "frames": 4,
+  "height": 320,
+  "ms": 4150,
+  "width": 960
+ },
+ "gauge.light": {
+  "bytes": 24902,
+  "frames": 4,
+  "height": 320,
+  "ms": 4150,
+  "width": 960
+ },
+ "gauge.thumb.dark": {
+  "bytes": 14800,
+  "frames": 4,
+  "height": 218,
+  "ms": 4200,
+  "width": 480
+ },
+ "gauge.thumb.light": {
+  "bytes": 14686,
+  "frames": 4,
+  "height": 218,
   "ms": 4200,
   "width": 480
  },
@@ -7699,6 +7867,90 @@
   "ms": 3300,
   "width": 480
  },
+ "line-chart-v1-1.dark": {
+  "bytes": 10408,
+  "frames": 4,
+  "height": 390,
+  "ms": 4200,
+  "width": 780
+ },
+ "line-chart-v1-1.light": {
+  "bytes": 10502,
+  "frames": 4,
+  "height": 390,
+  "ms": 4200,
+  "width": 780
+ },
+ "line-chart-v1-2.dark": {
+  "bytes": 15792,
+  "frames": 4,
+  "height": 406,
+  "ms": 4200,
+  "width": 784
+ },
+ "line-chart-v1-2.light": {
+  "bytes": 15720,
+  "frames": 4,
+  "height": 406,
+  "ms": 4200,
+  "width": 784
+ },
+ "line-chart-v1-3.dark": {
+  "bytes": 19786,
+  "frames": 4,
+  "height": 432,
+  "ms": 4200,
+  "width": 792
+ },
+ "line-chart-v1-3.light": {
+  "bytes": 19642,
+  "frames": 4,
+  "height": 432,
+  "ms": 4200,
+  "width": 792
+ },
+ "line-chart-v1-4.dark": {
+  "bytes": 5192,
+  "frames": 4,
+  "height": 372,
+  "ms": 4200,
+  "width": 778
+ },
+ "line-chart-v1-4.light": {
+  "bytes": 5122,
+  "frames": 4,
+  "height": 372,
+  "ms": 4200,
+  "width": 778
+ },
+ "line-chart.dark": {
+  "bytes": 26390,
+  "frames": 4,
+  "height": 560,
+  "ms": 4150,
+  "width": 1040
+ },
+ "line-chart.light": {
+  "bytes": 26094,
+  "frames": 4,
+  "height": 560,
+  "ms": 4150,
+  "width": 1040
+ },
+ "line-chart.thumb.dark": {
+  "bytes": 13178,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
+  "width": 472
+ },
+ "line-chart.thumb.light": {
+  "bytes": 14016,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
+  "width": 472
+ },
  "list-header-v1-1.dark": {
   "bytes": 2124,
   "frames": 4,
@@ -8567,6 +8819,118 @@
   "ms": 4300,
   "width": 480
  },
+ "pagination-v1-1.dark": {
+  "bytes": 1654,
+  "frames": 3,
+  "height": 132,
+  "ms": 2333,
+  "width": 430
+ },
+ "pagination-v1-1.light": {
+  "bytes": 1788,
+  "frames": 3,
+  "height": 132,
+  "ms": 2333,
+  "width": 430
+ },
+ "pagination-v1-2.dark": {
+  "bytes": 5334,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 542
+ },
+ "pagination-v1-2.light": {
+  "bytes": 5476,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 542
+ },
+ "pagination-v1-3.dark": {
+  "bytes": 2262,
+  "frames": 3,
+  "height": 132,
+  "ms": 2333,
+  "width": 654
+ },
+ "pagination-v1-3.light": {
+  "bytes": 2410,
+  "frames": 3,
+  "height": 132,
+  "ms": 2333,
+  "width": 654
+ },
+ "pagination-v1-4.dark": {
+  "bytes": 2594,
+  "frames": 4,
+  "height": 102,
+  "ms": 4200,
+  "width": 222
+ },
+ "pagination-v1-4.light": {
+  "bytes": 2654,
+  "frames": 4,
+  "height": 102,
+  "ms": 4200,
+  "width": 222
+ },
+ "pagination-v2-1.dark": {
+  "bytes": 1504,
+  "frames": 3,
+  "height": 124,
+  "ms": 2333,
+  "width": 474
+ },
+ "pagination-v2-1.light": {
+  "bytes": 1612,
+  "frames": 3,
+  "height": 124,
+  "ms": 2333,
+  "width": 474
+ },
+ "pagination-v2-2.dark": {
+  "bytes": 1620,
+  "frames": 3,
+  "height": 140,
+  "ms": 2333,
+  "width": 598
+ },
+ "pagination-v2-2.light": {
+  "bytes": 1716,
+  "frames": 3,
+  "height": 140,
+  "ms": 2333,
+  "width": 598
+ },
+ "pagination.dark": {
+  "bytes": 19236,
+  "frames": 37,
+  "height": 360,
+  "ms": 4850,
+  "width": 960
+ },
+ "pagination.light": {
+  "bytes": 20576,
+  "frames": 37,
+  "height": 360,
+  "ms": 4850,
+  "width": 960
+ },
+ "pagination.thumb.dark": {
+  "bytes": 12942,
+  "frames": 24,
+  "height": 240,
+  "ms": 4900,
+  "width": 480
+ },
+ "pagination.thumb.light": {
+  "bytes": 14856,
+  "frames": 24,
+  "height": 240,
+  "ms": 4900,
+  "width": 480
+ },
  "panel-header-v1-1.dark": {
   "bytes": 2854,
   "frames": 4,
@@ -8971,6 +9335,118 @@
   "frames": 16,
   "height": 240,
   "ms": 3300,
+  "width": 480
+ },
+ "progress-ring-v1-1.dark": {
+  "bytes": 2522,
+  "frames": 4,
+  "height": 160,
+  "ms": 4200,
+  "width": 160
+ },
+ "progress-ring-v1-1.light": {
+  "bytes": 3012,
+  "frames": 4,
+  "height": 160,
+  "ms": 4200,
+  "width": 160
+ },
+ "progress-ring-v1-2.dark": {
+  "bytes": 8744,
+  "frames": 4,
+  "height": 208,
+  "ms": 4200,
+  "width": 208
+ },
+ "progress-ring-v1-2.light": {
+  "bytes": 9932,
+  "frames": 4,
+  "height": 208,
+  "ms": 4200,
+  "width": 208
+ },
+ "progress-ring-v1-3.dark": {
+  "bytes": 5942,
+  "frames": 4,
+  "height": 192,
+  "ms": 4200,
+  "width": 192
+ },
+ "progress-ring-v1-3.light": {
+  "bytes": 6680,
+  "frames": 4,
+  "height": 192,
+  "ms": 4200,
+  "width": 192
+ },
+ "progress-ring-v1-4.dark": {
+  "bytes": 6494,
+  "frames": 4,
+  "height": 176,
+  "ms": 4200,
+  "width": 176
+ },
+ "progress-ring-v1-4.light": {
+  "bytes": 6138,
+  "frames": 4,
+  "height": 176,
+  "ms": 4200,
+  "width": 176
+ },
+ "progress-ring-v2-1.dark": {
+  "bytes": 20096,
+  "frames": 35,
+  "height": 150,
+  "ms": 2333,
+  "width": 150
+ },
+ "progress-ring-v2-1.light": {
+  "bytes": 24106,
+  "frames": 35,
+  "height": 150,
+  "ms": 2333,
+  "width": 150
+ },
+ "progress-ring-v2-2.dark": {
+  "bytes": 6334,
+  "frames": 4,
+  "height": 176,
+  "ms": 4200,
+  "width": 176
+ },
+ "progress-ring-v2-2.light": {
+  "bytes": 6206,
+  "frames": 4,
+  "height": 176,
+  "ms": 4200,
+  "width": 176
+ },
+ "progress-ring.dark": {
+  "bytes": 37846,
+  "frames": 46,
+  "height": 280,
+  "ms": 2300,
+  "width": 960
+ },
+ "progress-ring.light": {
+  "bytes": 42640,
+  "frames": 46,
+  "height": 280,
+  "ms": 2300,
+  "width": 960
+ },
+ "progress-ring.thumb.dark": {
+  "bytes": 17388,
+  "frames": 23,
+  "height": 226,
+  "ms": 2300,
+  "width": 480
+ },
+ "progress-ring.thumb.light": {
+  "bytes": 19472,
+  "frames": 23,
+  "height": 226,
+  "ms": 2300,
   "width": 480
  },
  "progress-v1-1.dark": {
@@ -9461,6 +9937,216 @@
   "frames": 26,
   "height": 240,
   "ms": 4900,
+  "width": 480
+ },
+ "range-slider-v1-1.dark": {
+  "bytes": 1098,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 688
+ },
+ "range-slider-v1-1.light": {
+  "bytes": 1108,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 688
+ },
+ "range-slider-v1-2.dark": {
+  "bytes": 1984,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 782
+ },
+ "range-slider-v1-2.light": {
+  "bytes": 2072,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 782
+ },
+ "range-slider-v1-3.dark": {
+  "bytes": 2434,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 822
+ },
+ "range-slider-v1-3.light": {
+  "bytes": 2582,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 822
+ },
+ "range-slider-v1-4.dark": {
+  "bytes": 1280,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 688
+ },
+ "range-slider-v1-4.light": {
+  "bytes": 1288,
+  "frames": 2,
+  "height": 112,
+  "ms": 2333,
+  "width": 688
+ },
+ "range-slider-v2-1.dark": {
+  "bytes": 2526,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 688
+ },
+ "range-slider-v2-1.light": {
+  "bytes": 2488,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 688
+ },
+ "range-slider.dark": {
+  "bytes": 28536,
+  "frames": 54,
+  "height": 240,
+  "ms": 3950,
+  "width": 960
+ },
+ "range-slider.light": {
+  "bytes": 28996,
+  "frames": 54,
+  "height": 240,
+  "ms": 3950,
+  "width": 960
+ },
+ "range-slider.thumb.dark": {
+  "bytes": 14474,
+  "frames": 30,
+  "height": 144,
+  "ms": 4000,
+  "width": 480
+ },
+ "range-slider.thumb.light": {
+  "bytes": 15634,
+  "frames": 30,
+  "height": 144,
+  "ms": 4000,
+  "width": 480
+ },
+ "rating-v1-1.dark": {
+  "bytes": 3544,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 274
+ },
+ "rating-v1-1.light": {
+  "bytes": 3804,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 274
+ },
+ "rating-v1-2.dark": {
+  "bytes": 2302,
+  "frames": 4,
+  "height": 112,
+  "ms": 2333,
+  "width": 394
+ },
+ "rating-v1-2.light": {
+  "bytes": 2322,
+  "frames": 4,
+  "height": 112,
+  "ms": 2333,
+  "width": 394
+ },
+ "rating-v1-3.dark": {
+  "bytes": 2910,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 274
+ },
+ "rating-v1-3.light": {
+  "bytes": 3038,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 274
+ },
+ "rating-v1-4.dark": {
+  "bytes": 2754,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 196
+ },
+ "rating-v1-4.light": {
+  "bytes": 3134,
+  "frames": 5,
+  "height": 120,
+  "ms": 2333,
+  "width": 196
+ },
+ "rating-v2-1.dark": {
+  "bytes": 4862,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 274
+ },
+ "rating-v2-1.light": {
+  "bytes": 4906,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 274
+ },
+ "rating-v2-2.dark": {
+  "bytes": 4150,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 274
+ },
+ "rating-v2-2.light": {
+  "bytes": 4490,
+  "frames": 4,
+  "height": 112,
+  "ms": 4200,
+  "width": 274
+ },
+ "rating.dark": {
+  "bytes": 22636,
+  "frames": 35,
+  "height": 400,
+  "ms": 3900,
+  "width": 960
+ },
+ "rating.light": {
+  "bytes": 24646,
+  "frames": 35,
+  "height": 400,
+  "ms": 3900,
+  "width": 960
+ },
+ "rating.thumb.dark": {
+  "bytes": 18350,
+  "frames": 22,
+  "height": 240,
+  "ms": 3900,
+  "width": 480
+ },
+ "rating.thumb.light": {
+  "bytes": 20814,
+  "frames": 22,
+  "height": 240,
+  "ms": 3900,
   "width": 480
  },
  "reference-browser-v1-1.dark": {
@@ -10779,6 +11465,104 @@
   "ms": 2500,
   "width": 480
  },
+ "skeleton-v1-1.dark": {
+  "bytes": 920,
+  "frames": 32,
+  "height": 108,
+  "ms": 2333,
+  "width": 720
+ },
+ "skeleton-v1-1.light": {
+  "bytes": 886,
+  "frames": 30,
+  "height": 108,
+  "ms": 2333,
+  "width": 720
+ },
+ "skeleton-v1-2.dark": {
+  "bytes": 1658,
+  "frames": 32,
+  "height": 172,
+  "ms": 2333,
+  "width": 720
+ },
+ "skeleton-v1-2.light": {
+  "bytes": 1656,
+  "frames": 30,
+  "height": 172,
+  "ms": 2333,
+  "width": 720
+ },
+ "skeleton-v1-3.dark": {
+  "bytes": 1402,
+  "frames": 32,
+  "height": 176,
+  "ms": 2333,
+  "width": 176
+ },
+ "skeleton-v1-3.light": {
+  "bytes": 1304,
+  "frames": 30,
+  "height": 176,
+  "ms": 2333,
+  "width": 176
+ },
+ "skeleton-v1-4.dark": {
+  "bytes": 3190,
+  "frames": 32,
+  "height": 444,
+  "ms": 2333,
+  "width": 640
+ },
+ "skeleton-v1-4.light": {
+  "bytes": 3096,
+  "frames": 30,
+  "height": 444,
+  "ms": 2333,
+  "width": 640
+ },
+ "skeleton-v2-1.dark": {
+  "bytes": 1064,
+  "frames": 4,
+  "height": 144,
+  "ms": 4200,
+  "width": 720
+ },
+ "skeleton-v2-1.light": {
+  "bytes": 1060,
+  "frames": 4,
+  "height": 144,
+  "ms": 4200,
+  "width": 720
+ },
+ "skeleton.dark": {
+  "bytes": 8726,
+  "frames": 41,
+  "height": 280,
+  "ms": 2300,
+  "width": 960
+ },
+ "skeleton.light": {
+  "bytes": 10470,
+  "frames": 37,
+  "height": 280,
+  "ms": 2300,
+  "width": 960
+ },
+ "skeleton.thumb.dark": {
+  "bytes": 3254,
+  "frames": 22,
+  "height": 140,
+  "ms": 2300,
+  "width": 480
+ },
+ "skeleton.thumb.light": {
+  "bytes": 3610,
+  "frames": 22,
+  "height": 140,
+  "ms": 2300,
+  "width": 480
+ },
  "slider-v1-1.dark": {
   "bytes": 736,
   "frames": 2,
@@ -11843,6 +12627,104 @@
   "ms": 3800,
   "width": 480
  },
+ "stepper-v1-1.dark": {
+  "bytes": 6492,
+  "frames": 3,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v1-1.light": {
+  "bytes": 7302,
+  "frames": 3,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v1-2.dark": {
+  "bytes": 10516,
+  "frames": 3,
+  "height": 370,
+  "ms": 2333,
+  "width": 326
+ },
+ "stepper-v1-2.light": {
+  "bytes": 11662,
+  "frames": 3,
+  "height": 370,
+  "ms": 2333,
+  "width": 326
+ },
+ "stepper-v1-3.dark": {
+  "bytes": 8014,
+  "frames": 4,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v1-3.light": {
+  "bytes": 8128,
+  "frames": 4,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v2-1.dark": {
+  "bytes": 6032,
+  "frames": 3,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v2-1.light": {
+  "bytes": 6394,
+  "frames": 3,
+  "height": 136,
+  "ms": 2333,
+  "width": 902
+ },
+ "stepper-v2-2.dark": {
+  "bytes": 9816,
+  "frames": 4,
+  "height": 128,
+  "ms": 4200,
+  "width": 902
+ },
+ "stepper-v2-2.light": {
+  "bytes": 10780,
+  "frames": 4,
+  "height": 128,
+  "ms": 4200,
+  "width": 902
+ },
+ "stepper.dark": {
+  "bytes": 25676,
+  "frames": 35,
+  "height": 240,
+  "ms": 3900,
+  "width": 1280
+ },
+ "stepper.light": {
+  "bytes": 27776,
+  "frames": 35,
+  "height": 240,
+  "ms": 3900,
+  "width": 1280
+ },
+ "stepper.thumb.dark": {
+  "bytes": 10432,
+  "frames": 22,
+  "height": 103,
+  "ms": 3900,
+  "width": 480
+ },
+ "stepper.thumb.light": {
+  "bytes": 11756,
+  "frames": 22,
+  "height": 103,
+  "ms": 3900,
+  "width": 480
+ },
  "switch-v1-1.dark": {
   "bytes": 1722,
   "frames": 2,
@@ -12291,6 +13173,118 @@
   "ms": 4200,
   "width": 480
  },
+ "tag-input-v1-1.dark": {
+  "bytes": 2254,
+  "frames": 8,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v1-1.light": {
+  "bytes": 2420,
+  "frames": 8,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v1-2.dark": {
+  "bytes": 3246,
+  "frames": 8,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v1-2.light": {
+  "bytes": 3488,
+  "frames": 8,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v1-3.dark": {
+  "bytes": 4848,
+  "frames": 2,
+  "height": 184,
+  "ms": 2800,
+  "width": 760
+ },
+ "tag-input-v1-3.light": {
+  "bytes": 5208,
+  "frames": 2,
+  "height": 184,
+  "ms": 2800,
+  "width": 760
+ },
+ "tag-input-v1-4.dark": {
+  "bytes": 3642,
+  "frames": 8,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v1-4.light": {
+  "bytes": 3806,
+  "frames": 9,
+  "height": 136,
+  "ms": 2800,
+  "width": 720
+ },
+ "tag-input-v2-1.dark": {
+  "bytes": 7218,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 720
+ },
+ "tag-input-v2-1.light": {
+  "bytes": 7766,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 720
+ },
+ "tag-input-v2-2.dark": {
+  "bytes": 5814,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 720
+ },
+ "tag-input-v2-2.light": {
+  "bytes": 6488,
+  "frames": 4,
+  "height": 132,
+  "ms": 4200,
+  "width": 720
+ },
+ "tag-input.dark": {
+  "bytes": 16960,
+  "frames": 30,
+  "height": 240,
+  "ms": 3900,
+  "width": 960
+ },
+ "tag-input.light": {
+  "bytes": 18060,
+  "frames": 30,
+  "height": 240,
+  "ms": 3900,
+  "width": 960
+ },
+ "tag-input.thumb.dark": {
+  "bytes": 8668,
+  "frames": 21,
+  "height": 135,
+  "ms": 3900,
+  "width": 480
+ },
+ "tag-input.thumb.light": {
+  "bytes": 9576,
+  "frames": 21,
+  "height": 135,
+  "ms": 3900,
+  "width": 480
+ },
  "terminal-v1-1.dark": {
   "bytes": 10120,
   "frames": 4,
@@ -12737,6 +13731,90 @@
   "frames": 15,
   "height": 240,
   "ms": 5000,
+  "width": 480
+ },
+ "timeline-v1-1.dark": {
+  "bytes": 15430,
+  "frames": 4,
+  "height": 250,
+  "ms": 4200,
+  "width": 268
+ },
+ "timeline-v1-1.light": {
+  "bytes": 15540,
+  "frames": 4,
+  "height": 250,
+  "ms": 4200,
+  "width": 268
+ },
+ "timeline-v1-2.dark": {
+  "bytes": 19702,
+  "frames": 4,
+  "height": 186,
+  "ms": 4200,
+  "width": 758
+ },
+ "timeline-v1-2.light": {
+  "bytes": 20198,
+  "frames": 4,
+  "height": 186,
+  "ms": 4200,
+  "width": 758
+ },
+ "timeline-v1-3.dark": {
+  "bytes": 15884,
+  "frames": 4,
+  "height": 190,
+  "ms": 4200,
+  "width": 678
+ },
+ "timeline-v1-3.light": {
+  "bytes": 15782,
+  "frames": 4,
+  "height": 190,
+  "ms": 4200,
+  "width": 678
+ },
+ "timeline-v1-4.dark": {
+  "bytes": 18264,
+  "frames": 4,
+  "height": 208,
+  "ms": 4200,
+  "width": 760
+ },
+ "timeline-v1-4.light": {
+  "bytes": 19166,
+  "frames": 4,
+  "height": 208,
+  "ms": 4200,
+  "width": 760
+ },
+ "timeline.dark": {
+  "bytes": 36496,
+  "frames": 4,
+  "height": 520,
+  "ms": 4150,
+  "width": 960
+ },
+ "timeline.light": {
+  "bytes": 37796,
+  "frames": 4,
+  "height": 520,
+  "ms": 4150,
+  "width": 960
+ },
+ "timeline.thumb.dark": {
+  "bytes": 16786,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
+  "width": 480
+ },
+ "timeline.thumb.light": {
+  "bytes": 17428,
+  "frames": 4,
+  "height": 240,
+  "ms": 4200,
   "width": 480
  },
  "title-bar-v1-1.dark": {

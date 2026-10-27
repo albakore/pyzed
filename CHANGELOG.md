@@ -10,15 +10,32 @@ Sections follow FastAPI's release notes: `### Breaking Changes`,
 `### Translations` and `### Internal`. They are generated from the gitmoji
 commit messages when a version is released (see
 [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)); notes
-written by hand under `## [Unreleased]` are kept and merged in.
-The documentation site reads this file on every build and marks the latest
-stable version.
+written by hand under `## [Unreleased]
 
-## [Unreleased]
+## [1.14.0] - 2026-10-27
 
 ### Highlights
 
 - **Drag and drop**: `pz.draggable`, `pz.droppable`, `pz.sortable` and `pz.drag_handle` cover Trello-style boards, sortable lists, rows and wrapping grids, form and page builders, Figma-style canvases with snapping and alignment guides, and node editors with wires. Previews lift with a shadow, items slide aside, a shadow or ghost marks the landing place, drops fly into place and Escape flies them back, all drawn natively. Types, `accepts`, `can_drop`, `pull="clone"`, `max_items`, handles, axis locks, long press, autoscroll, combining items and keyboard reordering are built in. New docs section with tutorials and six examples in the welcome gallery.
+- **11 new components**: rating, range slider, tag input, stepper, pagination, skeleton, progress ring, gauge, line chart, timeline and description list, all in Pyzed Design's toolbox.
+- **The Component view**: `.pzcomp` tabs let you try property values, switch between Design and Live (the real component running on the canvas), browse its Members and open its script from the outline.
+- **A code editor closer to Zed**: problems in the minimap, full docs with Ctrl+Space, base keymaps (VS Code, JetBrains, Sublime Text, Atom, TextMate, Emacs) and a Vim mode.
+
+### Features
+
+- ✨ Drag and drop: `pz.draggable`, `pz.droppable`, `pz.sortable` and `pz.drag_handle` with native previews, placeholders, drop and cancel flights, snapping and alignment guides, node wires, autoscroll, combining items, conditions (types, `accepts`, `can_drop`, `pull`, `put`, `sort`, `max_items`, `locked`), axis and bounds limits, long press and keyboard reordering. `pz.dnd.move` and `pz.dnd.reorder` apply a drop to Python lists. PR [#234](https://github.com/albakore/pyzed/pull/234) by [@albakore](https://github.com/albakore).
+- ✨ A Drag and drop category in the welcome gallery (Kanban board, form builder, page builder, design canvas, node editor and sortable lists) and a Sortable list in the toolbox. PR [#234](https://github.com/albakore/pyzed/pull/234) by [@albakore](https://github.com/albakore).
+- ✨ New components: `ui.rating`, `ui.range_slider` and `ui.tag_input` (Forms), `ui.stepper` and `ui.pagination` (Navigation), `ui.skeleton` and `ui.progress_ring` (Feedback), and `ui.gauge`, `ui.line_chart`, `ui.timeline` (`ui.TimelineItem`) and `ui.description_list` (Data), each in the toolbox, plus a "Store admin" example. PR [#236](https://github.com/albakore/pyzed/pull/236) by [@albakore](https://github.com/albakore).
+- ✨ Component view for `.pzcomp`: *Try values* in the inspector (never saved), a *Design | Live* switch (Live runs `setup()`, handlers and custom events with an event log and *Restart from setup()*), a Members panel (variables, methods, events and classes) and a script icon in the outline that opens the linked `.py`, for forms too. PR [#235](https://github.com/albakore/pyzed/pull/235) by [@albakore](https://github.com/albakore).
+- ✨ Code editor: errors and warnings tint their lines, mark the minimap's edge and get wavy underlines (`diagnostics=` in `ui.editor` and `pz.code_editor`); Ctrl+Space shows the whole documentation in a bigger card (Python keywords show their chapter of the reference) and Ctrl+K Ctrl+I shows it at the cursor. PR [#237](https://github.com/albakore/pyzed/pull/237) by [@albakore](https://github.com/albakore).
+- ✨ Code editor: base keymaps like Zed's (VS Code, JetBrains, Sublime Text, Atom, TextMate and Emacs) with chords that start with any key, a Vim mode (`vim=True`: Normal, Insert and Visual, motions, operators, text objects, counts, dot repeat and `:w`, `:q`, `:s`, `:%s`, `:set`), and new actions: expand and shrink selection, transpose, toggle case, set mark, F8/Shift+F8 for problems and Ctrl+Shift+I to format. PR [#237](https://github.com/albakore/pyzed/pull/237) by [@albakore](https://github.com/albakore).
+- ⚡️ Dragging a selection or the minimap thumb in the code editor no longer rebuilds the whole designer on every mouse move. PR [#233](https://github.com/albakore/pyzed/pull/233) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 New Drag and drop section (en/es) with guides, five tutorials, animated clips and the `pyzed.dnd` reference; the MCP guide, cookbook and agent rules cover it. PR [#234](https://github.com/albakore/pyzed/pull/234) by [@albakore](https://github.com/albakore).
+- 📝 Library pages (en/es) with animated captures for the 11 new components, and the component designer, views and outline pages updated for the Component view. PR [#236](https://github.com/albakore/pyzed/pull/236) by [@albakore](https://github.com/albakore). PR [#235](https://github.com/albakore/pyzed/pull/235) by [@albakore](https://github.com/albakore).
+- 📝 Code editor pages (en/es) for keymaps, Vim mode, problems and documentation cards. PR [#237](https://github.com/albakore/pyzed/pull/237) by [@albakore](https://github.com/albakore).
 
 ## [1.13.1] - 2026-10-25
 

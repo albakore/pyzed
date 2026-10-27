@@ -126,6 +126,16 @@ impl Caches {
         Some(editor.run(id, action, ctx))
     }
 
+    pub fn vim_editor(
+        &mut self,
+        id: &str,
+        key: crate::editor::vim::VimKey,
+        ctx: &crate::editor::ActionContext,
+    ) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.vim_key(id, key, ctx))
+    }
+
     /// The action context of the editor's last render (`None` if it was never rendered).
     /// What `on_cursor` hears after a selection drag (see [`Message::EditorDragged`]).
     pub fn editor_dragged(&self, id: &str) -> Option<Outcome> {

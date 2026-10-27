@@ -3864,7 +3864,7 @@ dependencies = [
 
 [[package]]
 name = "pyzed"
-version = "1.13.1"
+version = "1.14.0"
 dependencies = [
  "arboard",
  "bytes",

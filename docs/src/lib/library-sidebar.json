@@ -46,11 +46,14 @@
 			"library/input",
 			"library/number-field",
 			"library/radio-group",
+			"library/range-slider",
+			"library/rating",
 			"library/search-input",
 			"library/segmented",
 			"library/select",
 			"library/slider",
-			"library/switch"
+			"library/switch",
+			"library/tag-input"
 		]
 	},
 	{
@@ -79,6 +82,8 @@
 			"library/error-boundary",
 			"library/keybinding-hint",
 			"library/progress",
+			"library/progress-ring",
+			"library/skeleton",
 			"library/spinner"
 		]
 	},
@@ -90,13 +95,17 @@
 		},
 		"items": [
 			"library/bar-chart",
+			"library/description-list",
 			"library/diff-stat",
 			"library/donut",
 			"library/facepile",
+			"library/gauge",
+			"library/line-chart",
 			"library/settings-group",
 			"library/sparkline",
 			"library/stat",
-			"library/table"
+			"library/table",
+			"library/timeline"
 		]
 	},
 	{
@@ -123,6 +132,8 @@
 		},
 		"items": [
 			"library/breadcrumbs",
+			"library/pagination",
+			"library/stepper",
 			"library/tab-bar",
 			"library/toolbar"
 		]

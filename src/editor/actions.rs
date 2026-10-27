@@ -60,10 +60,48 @@ pub enum EditorAction {
     Cut,
     LineUp,
     LineDown,
+    MoveLeft,
+    MoveRight,
+    MoveUp,
+    MoveDown,
+    MoveToPreviousWordStart,
+    MoveToNextWordEnd,
+    MoveToEndOfLine,
+    MoveToBeginning,
+    MoveToEnd,
+    MovePageUp,
+    MovePageDown,
+    SelectLeft,
+    SelectRight,
+    SelectUp,
+    SelectDown,
+    SelectToPreviousWordStart,
+    SelectToNextWordEnd,
+    SelectToEndOfLine,
+    SelectToBeginning,
+    SelectToEnd,
+    SelectPageUp,
+    SelectPageDown,
+    SelectAll,
+    Backspace,
+    Delete,
+    Paste,
+    Newline,
+    Transpose,
+    CutToEndOfLine,
+    DeleteToEndOfLine,
+    DeleteToBeginningOfLine,
+    ToggleCase,
+    SelectLargerSyntaxNode,
+    SelectSmallerSyntaxNode,
+    SetMark,
+    SwapSelectionEnds,
+    ScrollCursorCenter,
+    SelectToEnclosingBracket,
 }
 
 impl EditorAction {
-    pub const ALL: [EditorAction; 35] = [
+    pub const ALL: [EditorAction; 73] = [
         Self::Undo,
         Self::Redo,
         Self::AddCursorAbove,
@@ -99,6 +137,44 @@ impl EditorAction {
         Self::Cut,
         Self::LineUp,
         Self::LineDown,
+        Self::MoveLeft,
+        Self::MoveRight,
+        Self::MoveUp,
+        Self::MoveDown,
+        Self::MoveToPreviousWordStart,
+        Self::MoveToNextWordEnd,
+        Self::MoveToEndOfLine,
+        Self::MoveToBeginning,
+        Self::MoveToEnd,
+        Self::MovePageUp,
+        Self::MovePageDown,
+        Self::SelectLeft,
+        Self::SelectRight,
+        Self::SelectUp,
+        Self::SelectDown,
+        Self::SelectToPreviousWordStart,
+        Self::SelectToNextWordEnd,
+        Self::SelectToEndOfLine,
+        Self::SelectToBeginning,
+        Self::SelectToEnd,
+        Self::SelectPageUp,
+        Self::SelectPageDown,
+        Self::SelectAll,
+        Self::Backspace,
+        Self::Delete,
+        Self::Paste,
+        Self::Newline,
+        Self::Transpose,
+        Self::CutToEndOfLine,
+        Self::DeleteToEndOfLine,
+        Self::DeleteToBeginningOfLine,
+        Self::ToggleCase,
+        Self::SelectLargerSyntaxNode,
+        Self::SelectSmallerSyntaxNode,
+        Self::SetMark,
+        Self::SwapSelectionEnds,
+        Self::ScrollCursorCenter,
+        Self::SelectToEnclosingBracket,
     ];
 
     pub fn name(self) -> &'static str {
@@ -138,7 +214,75 @@ impl EditorAction {
             Self::Cut => "cut",
             Self::LineUp => "line_up",
             Self::LineDown => "line_down",
+            Self::MoveLeft => "move_left",
+            Self::MoveRight => "move_right",
+            Self::MoveUp => "move_up",
+            Self::MoveDown => "move_down",
+            Self::MoveToPreviousWordStart => "move_to_previous_word_start",
+            Self::MoveToNextWordEnd => "move_to_next_word_end",
+            Self::MoveToEndOfLine => "move_to_end_of_line",
+            Self::MoveToBeginning => "move_to_beginning",
+            Self::MoveToEnd => "move_to_end",
+            Self::MovePageUp => "move_page_up",
+            Self::MovePageDown => "move_page_down",
+            Self::SelectLeft => "select_left",
+            Self::SelectRight => "select_right",
+            Self::SelectUp => "select_up",
+            Self::SelectDown => "select_down",
+            Self::SelectToPreviousWordStart => "select_to_previous_word_start",
+            Self::SelectToNextWordEnd => "select_to_next_word_end",
+            Self::SelectToEndOfLine => "select_to_end_of_line",
+            Self::SelectToBeginning => "select_to_beginning",
+            Self::SelectToEnd => "select_to_end",
+            Self::SelectPageUp => "select_page_up",
+            Self::SelectPageDown => "select_page_down",
+            Self::SelectAll => "select_all",
+            Self::Backspace => "backspace",
+            Self::Delete => "delete",
+            Self::Paste => "paste",
+            Self::Newline => "newline",
+            Self::Transpose => "transpose",
+            Self::CutToEndOfLine => "cut_to_end_of_line",
+            Self::DeleteToEndOfLine => "delete_to_end_of_line",
+            Self::DeleteToBeginningOfLine => "delete_to_beginning_of_line",
+            Self::ToggleCase => "toggle_case",
+            Self::SelectLargerSyntaxNode => "select_larger_syntax_node",
+            Self::SelectSmallerSyntaxNode => "select_smaller_syntax_node",
+            Self::SetMark => "set_mark",
+            Self::SwapSelectionEnds => "swap_selection_ends",
+            Self::ScrollCursorCenter => "scroll_cursor_center",
+            Self::SelectToEnclosingBracket => "select_to_enclosing_bracket",
         }
+    }
+
+    /// The cursor motion of a moving or selecting action, and whether it selects.
+    pub fn motion(self) -> Option<(Motion, bool)> {
+        use EditorAction as A;
+        Some(match self {
+            A::MoveLeft => (Motion::Left, false),
+            A::MoveRight => (Motion::Right, false),
+            A::MoveUp => (Motion::Up, false),
+            A::MoveDown => (Motion::Down, false),
+            A::MoveToPreviousWordStart => (Motion::WordLeft, false),
+            A::MoveToNextWordEnd => (Motion::WordRight, false),
+            A::MoveToEndOfLine => (Motion::End, false),
+            A::MoveToBeginning => (Motion::DocumentStart, false),
+            A::MoveToEnd => (Motion::DocumentEnd, false),
+            A::MovePageUp => (Motion::PageUp, false),
+            A::MovePageDown => (Motion::PageDown, false),
+            A::SelectLeft => (Motion::Left, true),
+            A::SelectRight => (Motion::Right, true),
+            A::SelectUp => (Motion::Up, true),
+            A::SelectDown => (Motion::Down, true),
+            A::SelectToPreviousWordStart => (Motion::WordLeft, true),
+            A::SelectToNextWordEnd => (Motion::WordRight, true),
+            A::SelectToEndOfLine => (Motion::End, true),
+            A::SelectToBeginning => (Motion::DocumentStart, true),
+            A::SelectToEnd => (Motion::DocumentEnd, true),
+            A::SelectPageUp => (Motion::PageUp, true),
+            A::SelectPageDown => (Motion::PageDown, true),
+            _ => return None,
+        })
     }
 
     pub fn parse(name: &str) -> Option<Self> {
@@ -186,6 +330,10 @@ pub(crate) struct History {
     last: Option<(Instant, EditKind)>,
     /// The cursors before each action that added or replaced cursors (for `undo_selection`).
     selections: Vec<(Cursor, Vec<Cursor>)>,
+    /// Each `select_larger_syntax_node`: the cursors before it and after it (for the smaller).
+    expansions: Vec<(Vec<Cursor>, Vec<Cursor>)>,
+    /// Emacs's mark is set: moving the cursor selects from where it was set.
+    pub(crate) mark: bool,
 }
 
 impl History {
@@ -418,6 +566,93 @@ pub(crate) fn all_matches(text: &str, needle: &str, whole_word: bool) -> Vec<usi
         }
     }
     out
+}
+
+/// How `convert_case` changes the text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Case {
+    Upper,
+    Lower,
+    Toggle,
+}
+
+/// The smallest range of `lines` (joined with `\n`) around `a..b` that is larger than it: the
+/// word, a string on the line (its inside, then with its quotes), the inside of each pair of
+/// brackets around it and then with them, the line without and with its indentation, the
+/// indented block it starts (a `def` with its body) and the blocks around it, and the whole
+/// text.
+fn larger_range(lines: &[String], a: usize, b: usize) -> Option<(usize, usize)> {
+    let text = lines.join("\n");
+    let bytes = text.as_bytes();
+    let start = position_at(lines, a);
+    let end = position_at(lines, b);
+    let line_start = |l: usize| offset_of(lines, pos(l, 0));
+    let line_end = |l: usize| offset_of(lines, pos(l, lines[l].len()));
+    let indent = |l: usize| lines[l].len() - lines[l].trim_start().len();
+    let blank = |l: usize| lines[l].trim().is_empty();
+    let mut candidates: Vec<(usize, usize)> = Vec::new();
+    if start.line == end.line {
+        let line = &lines[start.line];
+        let base = line_start(start.line);
+        if let Some((ws, we)) = word_at(line, start.column) {
+            candidates.push((base + ws, base + we));
+        }
+        let mut open: Option<(usize, u8)> = None;
+        let mut escaped = false;
+        for (i, &ch) in line.as_bytes().iter().enumerate() {
+            match open {
+                Some(_) if escaped => escaped = false,
+                Some(_) if ch == b'\\' => escaped = true,
+                Some((o, quote)) if ch == quote => {
+                    candidates.push((base + o + 1, base + i));
+                    candidates.push((base + o, base + i + 1));
+                    open = None;
+                }
+                None if matches!(ch, b'"' | b'\'' | b'`') => open = Some((i, ch)),
+                _ => {}
+            }
+        }
+    }
+    let mut from = a;
+    while let Some(open) = enclosing_bracket(bytes, from) {
+        if let Some(close) = matching_bracket(bytes, open)
+            && close >= b
+        {
+            candidates.push((open + 1, close));
+            candidates.push((open, close + 1));
+        }
+        from = open;
+    }
+    candidates.push((
+        line_start(start.line) + indent(start.line),
+        line_end(end.line),
+    ));
+    candidates.push((line_start(start.line), line_end(end.line)));
+    let mut header = start.line;
+    loop {
+        let level = indent(header);
+        let mut last = header;
+        for l in header + 1..lines.len() {
+            if blank(l) {
+                continue;
+            }
+            if indent(l) <= level {
+                break;
+            }
+            last = l;
+        }
+        candidates.push((line_start(header) + level, line_end(last)));
+        candidates.push((line_start(header), line_end(last)));
+        match (0..header).rev().find(|&l| !blank(l) && indent(l) < level) {
+            Some(parent) => header = parent,
+            None => break,
+        }
+    }
+    candidates.push((0, text.len()));
+    candidates
+        .into_iter()
+        .filter(|&(s, e)| s <= a && e >= b && e - s > b - a)
+        .min_by_key(|&(s, e)| e - s)
 }
 
 /// Whether the selection `start..end` of `text` is a whole word (the search for the next
@@ -1530,7 +1765,7 @@ impl EditorState {
         })
     }
 
-    fn convert_case(&mut self, upper: bool) -> bool {
+    fn convert_case(&mut self, case: Case) -> bool {
         self.each_cursor(|s, _| {
             let mut c = s.primary();
             if !has_selection(&c) {
@@ -1544,10 +1779,19 @@ impl EditorState {
             let Some(text) = s.content.selection() else {
                 return false;
             };
-            let converted = if upper {
-                text.to_uppercase()
-            } else {
-                text.to_lowercase()
+            let converted = match case {
+                Case::Upper => text.to_uppercase(),
+                Case::Lower => text.to_lowercase(),
+                Case::Toggle => text
+                    .chars()
+                    .flat_map(|c| {
+                        if c.is_uppercase() {
+                            c.to_lowercase().collect::<Vec<_>>()
+                        } else {
+                            c.to_uppercase().collect::<Vec<_>>()
+                        }
+                    })
+                    .collect(),
             };
             if converted == text {
                 return false;
@@ -1563,12 +1807,222 @@ impl EditorState {
     }
 
     // -----------------------------------------------------------------------------------
+    // The other editors' keys (Emacs, Sublime Text, JetBrains)
+    // -----------------------------------------------------------------------------------
+
+    /// Selects from every cursor without a selection to the end of its line (the line break
+    /// when it is there already, with `newline`) or to its start.
+    fn select_to_line_edge(&mut self, end: bool, newline: bool) {
+        let count = self.content.line_count();
+        self.each_cursor(|s, _| {
+            let c = s.primary();
+            if has_selection(&c) {
+                return false;
+            }
+            let len = s.line_text(c.position.line).len();
+            let target = if !end {
+                pos(c.position.line, 0)
+            } else if c.position.column < len {
+                pos(c.position.line, len)
+            } else if newline && c.position.line + 1 < count {
+                pos(c.position.line + 1, 0)
+            } else {
+                return false;
+            };
+            s.set_cursor(Cursor {
+                position: target,
+                selection: Some(c.position),
+            });
+            false
+        });
+    }
+
+    /// Deletes what every cursor selects.
+    fn delete_selections(&mut self) -> bool {
+        self.each_cursor(|s, _| {
+            if has_selection(&s.primary()) {
+                s.perform_one(Action::Edit(Edit::Backspace))
+            } else {
+                false
+            }
+        })
+    }
+
+    /// Emacs's `ctrl-t`: swaps the characters around the cursor (the last two at the end of a line).
+    fn transpose(&mut self) -> bool {
+        self.each_cursor(|s, _| {
+            let c = s.primary();
+            if has_selection(&c) {
+                return false;
+            }
+            let line = s.line_text(c.position.line);
+            let column = floor(&line, c.position.column);
+            let (a, b) = if column >= line.len() {
+                let mut chars = line.char_indices().rev();
+                let (Some((b, _)), Some((a, _))) = (chars.next(), chars.next()) else {
+                    return false;
+                };
+                (a, b)
+            } else {
+                let Some((a, _)) = line[..column].char_indices().next_back() else {
+                    return false;
+                };
+                (a, column)
+            };
+            let end = b + line[b..].chars().next().map_or(0, char::len_utf8);
+            let swapped = format!("{}{}", &line[b..end], &line[a..b]);
+            s.set_cursor(selected(pos(c.position.line, a), pos(c.position.line, end)));
+            s.perform_one(Action::Edit(Edit::Paste(Arc::new(swapped))));
+            s.set_cursor(collapsed(pos(c.position.line, end)));
+            true
+        })
+    }
+
+    /// Swaps the ends of every selection (Emacs's `ctrl-x ctrl-x`, Vim's `o`).
+    pub(crate) fn swap_selection_ends(&mut self) -> bool {
+        let cursors: Vec<Cursor> = self
+            .cursors()
+            .into_iter()
+            .map(|c| match c.selection {
+                Some(anchor) if anchor != c.position => Cursor {
+                    position: anchor,
+                    selection: Some(c.position),
+                },
+                _ => c,
+            })
+            .collect();
+        self.set_cursors(cursors);
+        true
+    }
+
+    /// Emacs's `ctrl-space`: sets the mark where the cursors are (moving then selects), or
+    /// clears it.
+    fn set_mark(&mut self) -> bool {
+        self.history.mark = !self.history.mark;
+        let cursors = self
+            .cursors()
+            .into_iter()
+            .map(|c| collapsed(c.position))
+            .collect();
+        self.set_cursors(cursors);
+        true
+    }
+
+    /// Sublime Text's `ctrl-shift-m`: selects the inside of the brackets around every cursor,
+    /// then the brackets too.
+    fn select_to_enclosing_bracket(&mut self) -> bool {
+        let lines = self.visible_lines();
+        let text = lines.join("\n");
+        let bytes = text.as_bytes();
+        let mut changed = false;
+        let cursors: Vec<Cursor> = self
+            .cursors()
+            .into_iter()
+            .map(|c| {
+                let (s, e) = range(&c);
+                let (a, b) = (offset_of(&lines, s), offset_of(&lines, e));
+                let mut from = a;
+                while let Some(open) = enclosing_bracket(bytes, from) {
+                    if let Some(close) = matching_bracket(bytes, open)
+                        && close >= b
+                    {
+                        changed = true;
+                        let (x, y) = if (a, b) == (open + 1, close) {
+                            (open, close + 1)
+                        } else {
+                            (open + 1, close)
+                        };
+                        return selected(position_at(&lines, x), position_at(&lines, y));
+                    }
+                    from = open;
+                }
+                c
+            })
+            .collect();
+        if changed {
+            self.set_cursors(cursors);
+        }
+        changed
+    }
+
+    /// Zed's `select_larger_syntax_node` (VS Code's expand selection, JetBrains's `ctrl-w`):
+    /// every selection grows to the word, the string, the brackets' inside and then the
+    /// brackets, the line, the indented block and its parents, and the whole text.
+    fn select_larger(&mut self) -> bool {
+        let lines = self.visible_lines();
+        let before = self.cursors();
+        let mut changed = false;
+        let after: Vec<Cursor> = before
+            .iter()
+            .map(|c| {
+                let (s, e) = range(c);
+                let (a, b) = (offset_of(&lines, s), offset_of(&lines, e));
+                match larger_range(&lines, a, b) {
+                    Some((x, y)) => {
+                        changed = true;
+                        selected(position_at(&lines, x), position_at(&lines, y))
+                    }
+                    None => *c,
+                }
+            })
+            .collect();
+        if !changed {
+            return false;
+        }
+        self.set_cursors(after);
+        let now = self.cursors();
+        self.history.expansions.push((before, now));
+        true
+    }
+
+    /// Undoes the last `select_larger_syntax_node`, if the selections are still the ones it made.
+    fn select_smaller(&mut self) -> bool {
+        let Some((before, after)) = self.history.expansions.pop() else {
+            return false;
+        };
+        let key = |cursors: &[Cursor]| -> Vec<(Position, Option<Position>)> {
+            cursors.iter().map(|c| (c.position, c.selection)).collect()
+        };
+        if key(&self.cursors()) != key(&after) {
+            self.history.expansions.clear();
+            return false;
+        }
+        self.set_cursors(before);
+        true
+    }
+
+    // -----------------------------------------------------------------------------------
     // Entry point
     // -----------------------------------------------------------------------------------
 
     /// Runs a named action.
     pub fn run(&mut self, id: &str, action: EditorAction, ctx: &ActionContext) -> Outcome {
         use EditorAction as A;
+        // Moving, selecting and the plain edits work like their keys (with Emacs's mark set,
+        // moving selects).
+        if let Some((motion, select)) = action.motion() {
+            let select = select || self.history.mark;
+            let mut outcome = match motion {
+                Motion::PageUp | Motion::PageDown => {
+                    self.page(id, matches!(motion, Motion::PageDown), select)
+                }
+                _ if select => self.perform(id, Action::Select(motion)),
+                _ => self.perform(id, Action::Move(motion)),
+            };
+            outcome.action = Some(action.name());
+            return outcome;
+        }
+        let plain = match action {
+            A::SelectAll => Some(self.perform(id, Action::SelectAll)),
+            A::Backspace => Some(self.perform(id, Action::Edit(Edit::Backspace))),
+            A::Delete => Some(self.perform(id, Action::Edit(Edit::Delete))),
+            A::Newline => Some(self.key(id, EditKey::Enter, ctx.indent, ctx.pairs)),
+            _ => None,
+        };
+        if let Some(mut outcome) = plain {
+            outcome.action = Some(action.name());
+            return outcome;
+        }
         let before = self.real_position(self.content.cursor().position);
         let text_before = self.content.text();
         let edits = matches!(
@@ -1591,6 +2045,11 @@ impl EditorState {
                 | A::ConvertToLowerCase
                 | A::SortLines
                 | A::Cut
+                | A::Transpose
+                | A::CutToEndOfLine
+                | A::DeleteToEndOfLine
+                | A::DeleteToBeginningOfLine
+                | A::ToggleCase
         );
         if edits {
             self.record(EditKind::Other);
@@ -1609,7 +2068,10 @@ impl EditorState {
             A::SelectAllMatches => self.select_all_matches(),
             A::SplitSelectionIntoLines => self.split_selection_into_lines(),
             A::UndoSelection => self.undo_selection(),
-            A::Cancel => self.cancel(),
+            A::Cancel => {
+                self.history.mark = false;
+                self.cancel()
+            }
             A::MoveLineUp => self.move_lines(true),
             A::MoveLineDown => self.move_lines(false),
             A::DuplicateLineUp => self.duplicate_lines(true),
@@ -1634,17 +2096,45 @@ impl EditorState {
             A::DeleteToNextWordEnd => self.delete_word(true),
             A::MoveToBeginningOfLine => self.home(false),
             A::SelectToBeginningOfLine => self.home(true),
-            A::ConvertToUpperCase => self.convert_case(true),
-            A::ConvertToLowerCase => self.convert_case(false),
+            A::ConvertToUpperCase => self.convert_case(Case::Upper),
+            A::ConvertToLowerCase => self.convert_case(Case::Lower),
+            A::ToggleCase => self.convert_case(Case::Toggle),
             A::SortLines => self.sort_lines(),
             A::Copy => {
                 clipboard = Some(self.copied());
+                self.history.mark = false;
                 true
             }
             A::Cut => {
                 clipboard = Some(self.copied());
+                self.history.mark = false;
                 self.cut()
             }
+            A::CutToEndOfLine => {
+                self.select_to_line_edge(true, true);
+                if self.cursors().iter().any(has_selection) {
+                    clipboard = Some(self.copied());
+                    self.delete_selections()
+                } else {
+                    false
+                }
+            }
+            A::DeleteToEndOfLine | A::DeleteToBeginningOfLine => {
+                self.select_to_line_edge(action == A::DeleteToEndOfLine, false);
+                self.delete_selections()
+            }
+            A::Transpose => self.transpose(),
+            A::SelectLargerSyntaxNode => self.select_larger(),
+            A::SelectSmallerSyntaxNode => self.select_smaller(),
+            A::SelectToEnclosingBracket => self.select_to_enclosing_bracket(),
+            A::SetMark => self.set_mark(),
+            A::SwapSelectionEnds => self.swap_selection_ends(),
+            A::ScrollCursorCenter => {
+                scroll = self.center_cursor(id);
+                true
+            }
+            // A paste needs the clipboard: its key pastes (see `Target`), the command cannot.
+            A::Paste => false,
             A::LineUp | A::LineDown => {
                 let lh = self.metrics.borrow().line_height.max(1.0);
                 let dy = if action == A::LineUp { -lh } else { lh };
@@ -1654,6 +2144,7 @@ impl EditorState {
                 );
                 true
             }
+            _ => unreachable!("handled above"),
         };
         let edited =
             self.content.text() != text_before || matches!(action, A::Undo | A::Redo) && done;
@@ -1666,17 +2157,13 @@ impl EditorState {
         if matches!(action, A::Undo | A::Redo) && !done {
             done = false;
         }
-        let mut outcome = self.outcome(
-            id,
-            before,
-            edited,
-            !matches!(action, A::LineUp | A::LineDown),
-        );
+        let scrolls = matches!(action, A::LineUp | A::LineDown | A::ScrollCursorCenter);
+        let mut outcome = self.outcome(id, before, edited, !scrolls);
         // Moves without a real position change still count (selection changes).
         outcome.cursor_moved |= done;
         outcome.action = done.then_some(action.name());
         outcome.clipboard = clipboard;
-        if !matches!(action, A::LineUp | A::LineDown) && done {
+        if !scrolls && done {
             outcome.scroll = Task::batch([outcome.scroll, self.autoscroll(id)]);
         } else {
             outcome.scroll = Task::batch([outcome.scroll, scroll]);
@@ -1873,6 +2360,54 @@ mod tests {
         assert_eq!(s.content.cursor().position, pos(0, 4));
         run(&mut s, EditorAction::MoveToBeginningOfLine);
         assert_eq!(s.content.cursor().position, pos(0, 0));
+    }
+
+    #[test]
+    fn expand_and_shrink_the_selection() {
+        let mut s = editor("def f():\n    g(a, \"b c\")\n");
+        at(&mut s, 1, 11);
+        let selection = |s: &EditorState| s.content.selection().unwrap_or_default();
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "b");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "b c");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "\"b c\"");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "a, \"b c\"");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "(a, \"b c\")");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "g(a, \"b c\")");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "    g(a, \"b c\")");
+        run(&mut s, EditorAction::SelectLargerSyntaxNode);
+        assert_eq!(selection(&s), "def f():\n    g(a, \"b c\")");
+        run(&mut s, EditorAction::SelectSmallerSyntaxNode);
+        assert_eq!(selection(&s), "    g(a, \"b c\")");
+    }
+
+    #[test]
+    fn emacs_editing() {
+        let mut s = editor("abc def\nxyz");
+        at(&mut s, 0, 4);
+        let out = s.run("e", EditorAction::CutToEndOfLine, &ctx());
+        assert_eq!(s.text(), "abc \nxyz");
+        assert_eq!(out.clipboard.as_deref(), Some("def"));
+        run(&mut s, EditorAction::CutToEndOfLine);
+        assert_eq!(s.text(), "abc xyz", "at the end it takes the line break");
+        at(&mut s, 0, 1);
+        run(&mut s, EditorAction::Transpose);
+        assert_eq!(s.text(), "bac xyz");
+        at(&mut s, 0, 0);
+        run(&mut s, EditorAction::SetMark);
+        run(&mut s, EditorAction::MoveToNextWordEnd);
+        assert_eq!(s.content.selection().as_deref(), Some("bac"));
+        run(&mut s, EditorAction::Cancel);
+        run(&mut s, EditorAction::MoveRight);
+        assert!(s.content.selection().is_none());
+        run(&mut s, EditorAction::ToggleCase);
+        assert_eq!(s.text(), "bac XYZ", "the word at the cursor");
     }
 
     #[test]

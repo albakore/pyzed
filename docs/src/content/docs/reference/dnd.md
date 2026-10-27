@@ -105,7 +105,8 @@ another one (`event.combine` is its key): folders, groups, merging.
 Items: `handle=True` drags them only from a :func:`drag_handle`; `lock_axis` keeps them
 on the list's axis and inside it; `source`, `preview`, `lift`, `shadow`,
 `opacity`, `radius`, `threshold`, `delay` and `drop_animation` are as in
-:func:`draggable` (`preview="none"` moves the items without a preview).
+:func:`draggable` (`preview="none"` moves the items without a preview; `source="ghost"`
+shows the faded item at its landing place, as `placeholder="ghost"`).
 `keyboard=True` lets the focused item move with Alt+arrows (or Space, arrows, Space).
 
 Events:

@@ -75,6 +75,16 @@ EVENT_DOCS = {
     ("tree", "open"): "Runs when an item without children of {name} is double-clicked (``event.value`` is its path).",
     ("tree", "toggle"): "Runs when an item of {name} is folded or unfolded (``event.value`` is its path; "
                         "``expanded`` already changed).",
+    ("rating", "change"): "Runs when a star of {name} is clicked (``event.value`` is the new rating, 0 when cleared).",
+    ("range_slider", "change"): "Runs while a knob of {name} moves (``event.value`` is ``(low, high)``; ``low`` and "
+                                "``high`` already changed).",
+    ("range_slider", "release"): "Runs when the knob of {name} is let go.",
+    ("tag_input", "change"): "Runs when a tag of {name} is added or removed (``event.value`` is the list; ``tags`` "
+                             "already changed).",
+    ("tag_input", "input"): "Runs on every key typed in the field of {name} (``event.value`` is the text).",
+    ("stepper", "change"): "Runs when a step of {name} is clicked (``event.value`` is its index, 0 for the first).",
+    ("pagination", "change"): "Runs when another page of {name} is picked (``event.value`` is its number, from 1).",
+    ("timeline", "click"): "Runs when an entry of {name} is clicked (``event.value`` is its index, 0 for the first).",
     ("breadcrumbs", "click"): "Runs when a part of {name} is clicked (``event.value`` is its index, 0 for the first).",
     ("dock", "layout"): "Runs when a panel of {name} is moved, resized or switched (``event.value`` is the layout: "
                         "``positions``, ``sizes``, ``active`` and ``hidden``; it is kept in ``layout``).",
@@ -1162,6 +1172,132 @@ def _terminal(c: Control, ctx: RenderContext) -> Any:
         border_color=t.border_variant, border_width=1, radius=t.radius_sm)
 
 
+def _rating(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    size = max(min(c.height - 4, 48), 10)
+    return _fill(ui.rating(_num(p["value"]), ctx.on(c, "change", "value") if c.enabled else None,
+                           max=int(_num(p["max"], 5)) or 5, icon=p["icon"] or "star", size=size, tint=p["tint"],
+                           clearable=bool(p["clearable"]), disabled=not c.enabled, theme=ctx.theme), c)
+
+
+def _range_slider(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    lo, hi = _num(p["min"]), _num(p["max"], 100)
+
+    def change(value: Any) -> Any:
+        # the event gets the pair; each end is kept in its own property
+        ctx.set(c, "low", value[0])
+        ctx.set(c, "high", value[1])
+        return ctx.on(c, "change")(value)
+
+    return _fill(ui.range_slider((_num(p["low"]), _num(p["high"], hi)), change if c.enabled and ctx.live else None,
+                                 min=lo, max=hi, step=_num(p["step"], 1) or 1,
+                                 on_release=ctx.on(c, "release") if c.events.get("release") else None,
+                                 show_value=bool(p["show_value"]), disabled=not c.enabled, theme=ctx.theme), c)
+
+
+def _tag_input(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    tags = _lines(p["tags"])
+
+    def change(new: List[str]) -> Any:
+        ctx.set(c, "tags", "\n".join(new))
+        return ctx.on(c, "change")(new)
+
+    return _fill(ui.tag_input(tags, change if c.enabled and ctx.live else None, text=str(p["text"] or ""),
+                              on_input=ctx.on(c, "input", "text") if c.enabled else None,
+                              placeholder=p["placeholder"], suggestions=_lines(p["suggestions"]),
+                              max_tags=int(_num(p["max_tags"])) or None, disabled=not c.enabled,
+                              theme=ctx.theme), c, align_y="start")
+
+
+def _stepper(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    steps = [tuple(_fields(line)[:2]) if "," in line else line for line in _lines(p["steps"])]
+    return _fill(ui.stepper(steps, int(_num(p["current"])), ctx.on(c, "change", "current") if c.enabled else None,
+                            vertical=bool(p["vertical"]), linear=bool(p["linear"]), tint=p["tint"],
+                            theme=ctx.theme), c, align_y="start" if p["vertical"] else "center")
+
+
+def _pagination(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _fill(ui.pagination(int(_num(p["page"], 1)) or 1, int(_num(p["pages"], 1)) or 1,
+                               ctx.on(c, "change", "page") if c.enabled else None,
+                               siblings=int(_num(p["siblings"], 1)), compact=bool(p["compact"]),
+                               theme=ctx.theme), c)
+
+
+def _skeleton(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    lines = max(int(_num(p["lines"], 1)), 1)
+    if p["circle"]:
+        return _core.container(ui.skeleton(height=min(c.width, c.height), circle=True, animated=bool(p["animated"]),
+                                           theme=ctx.theme), width="fill", height="fill", center=True)
+    height = (c.height - 8 * (lines - 1)) / lines if lines > 1 else c.height
+    return ui.skeleton("fill", max(min(height, 16 if lines > 1 else c.height), 4), lines=lines,
+                       animated=bool(p["animated"]), theme=ctx.theme)
+
+
+def _progress_ring(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    size = min(c.width, c.height)
+    value = None if p["indeterminate"] else _num(p["value"])
+    return _clickable(_core.container(ui.progress_ring(value, max=_num(p["max"], 100) or 1, size=size,
+                                                       thickness=max(size / 10, 2), tint=p["tint"],
+                                                       show_value=bool(p["show_value"]), theme=ctx.theme),
+                                      width="fill", height="fill", center=True), c, ctx)
+
+
+def _gauge(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    size = min(c.width, (c.height - (20 if p["label"] else 0)) * 2)
+    thresholds = [(_num(p[key]), tone) for key, tone in (("warning_at", "warning"), ("error_at", "error"))
+                  if p[key] not in (None, "")]
+    return _clickable(_core.container(ui.gauge(_num(p["value"]), min=_num(p["min"]), max=_num(p["max"], 100),
+                                               size=max(size, 40), thickness=max(size / 12, 4), unit=p["unit"],
+                                               label=p["label"] or None, tint=p["tint"], thresholds=thresholds,
+                                               theme=ctx.theme),
+                                      width="fill", height="fill", center=True), c, ctx)
+
+
+def _line_chart(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    # one series per line, "Name: 1 2 3" (the name is optional)
+    series = {}
+    for i, line in enumerate(_lines(p["series"])):
+        name, _, values = line.rpartition(":")
+        series[name.strip() or f"Series {i + 1}"] = _values(values)
+    named = any(":" in line for line in _lines(p["series"]))
+    labels = _lines(p["labels"]) or None
+    legend_h = 22 if named and p["legend"] else 0
+    return ui.line_chart(series if named else list(series.values()), labels=labels, width=c.width,
+                         height=max(c.height - legend_h, 40), fill=bool(p["fill"]), points=bool(p["points"]),
+                         grid=bool(p["grid"]), legend=bool(p["legend"]), theme=ctx.theme)
+
+
+def _timeline(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    # one entry per line: "title, time, description, icon"
+    items = []
+    for line in _lines(p["items"]):
+        title, time, description, icon, *_ = [*_fields(line), "", "", ""]
+        items.append(ui.TimelineItem(title, description or None, time or None, icon or None, tint=p["tint"]))
+    on_press = ctx.on(c, "click") if c.events.get("click") and c.enabled else None
+    return _core.container(_core.scrollable(ui.timeline(items, dense=bool(p["dense"]), on_press=on_press,
+                                                        theme=ctx.theme), width="fill", height="fill"),
+                           width="fill", height="fill")
+
+
+def _description_list(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    # one pair per line, "Name: value"
+    pairs = [(name.strip(), value.strip()) for name, _, value in (line.partition(":") for line in _lines(p["items"]))]
+    return _core.container(ui.description_list(pairs, label_width=_num(p["label_width"], 120) or 120,
+                                               vertical=bool(p["vertical"]), dividers=bool(p["dividers"]),
+                                               mono_values=bool(p["mono"]), theme=ctx.theme),
+                           width="fill", height="fill", align_y="start")
+
+
 def _dock(c: Control, ctx: RenderContext) -> Any:
     """The frame of a dock: each side's tabs over its panels (drawn on top as controls). A running form swaps
     it for a live ``pz.Dock`` whose tabs switch, move and resize (see ``FormRuntime``)."""
@@ -1602,6 +1738,65 @@ for _component in (
               (Prop("text", "multiline", "$ pyzed run\n\x1b[32m✓ Ready\x1b[0m", group="Data"),
                Prop("font_size", "number", 13, min=8, max=32), Prop("follow", "bool", True, label="Follow output")),
               (), "Monospace output with ANSI colors, such as what a Process prints."),
+    Component("rating", "Rating", "star", "Forms", _rating, (120, 24),
+              (Prop("value", "number", 3, min=0, group="Data"), Prop("max", "number", 5, min=1, max=20, label="Stars"),
+               Prop("icon", "icon", "star"), Prop("tint", "choice", "warning", choices=TINTS),
+               Prop("clearable", "bool", True, label="Click again to clear", group="Behavior")),
+              ("change",), "Stars to give a score; a click on the lit one clears it."),
+    Component("range_slider", "Range slider", "sliders-horizontal", "Forms", _range_slider, (220, 24),
+              (Prop("low", "number", 20, group="Data"), Prop("high", "number", 80, group="Data"),
+               Prop("min", "number", 0, group="Data"), Prop("max", "number", 100, group="Data"),
+               Prop("step", "number", 1, min=0), Prop("show_value", "bool", False, label="Show values")),
+              ("change", "release"), "A slider with two knobs that picks a range, such as a price from 20 to 80."),
+    Component("tag_input", "Tag box", "tags", "Forms", _tag_input, (280, 32),
+              (Prop("tags", "list", "design\nrust", group="Data"), Prop("text", "text", "", group="Data"),
+               Prop("placeholder", "text", "Add a tag…"), Prop("suggestions", "list", "", group="Data"),
+               Prop("max_tags", "number", 0, min=0, label="Most tags (0: no limit)", group="Behavior")),
+              ("change", "input"), "Removable chips with a field to type more; Enter or a comma adds one."),
+    Component("stepper", "Steps", "list-checks", "Navigation", _stepper, (420, 32),
+              (Prop("steps", "list", "Account\nAddress\nPayment\nDone", group="Data"),
+               Prop("current", "number", 1, min=0, group="Data"), Prop("vertical", "bool", False),
+               Prop("tint", "choice", "accent", choices=TINTS),
+               Prop("linear", "bool", True, label="Only back to done steps", group="Behavior")),
+              ("change",), "The steps of a wizard or a checkout, with checks on the done ones."),
+    Component("pagination", "Pagination", "chevrons-left-right", "Navigation", _pagination, (260, 28),
+              (Prop("page", "number", 1, min=1, group="Data"), Prop("pages", "number", 10, min=1, group="Data"),
+               Prop("siblings", "number", 1, min=0, max=4, label="Pages beside the current one"),
+               Prop("compact", "bool", False, label="Compact (4 / 20)")),
+              ("change",), "Page numbers with arrows: ‹ 1 … 4 5 6 … 20 ›."),
+    Component("skeleton", "Skeleton", "rectangle-ellipsis", "Display", _skeleton, (240, 16),
+              (Prop("lines", "number", 1, min=1, max=20), Prop("circle", "bool", False),
+               Prop("animated", "bool", True)),
+              (), "A grey placeholder that pulses where content is still loading."),
+    Component("progress_ring", "Progress ring", "circle-dashed", "Display", _progress_ring, (48, 48),
+              (Prop("value", "number", 60, min=0, group="Data"), Prop("max", "number", 100, min=0, group="Data"),
+               Prop("indeterminate", "bool", False, label="Spin (no value)", group="Data"),
+               Prop("tint", "choice", "accent", choices=TINTS), Prop("show_value", "bool", True, label="Show percent")),
+              ("click", "double_click"), "A round progress bar that fills clockwise, or spins without a value."),
+    Component("gauge", "Gauge", "gauge", "Display", _gauge, (160, 100),
+              (Prop("value", "number", 64, group="Data"), Prop("min", "number", 0, group="Data"),
+               Prop("max", "number", 100, group="Data"), Prop("unit", "text", "%"), Prop("label", "text", "CPU"),
+               Prop("tint", "choice", "accent", choices=TINTS),
+               Prop("warning_at", "number", None, label="Warning from"), Prop("error_at", "number", None, label="Error from")),
+              ("click", "double_click"), "A half-circle meter for one number, like a speedometer."),
+    Component("line_chart", "Line chart", "chart-line", "Display", _line_chart, (360, 200),
+              (Prop("series", "list", "Visits: 12 18 15 24 30 28 36\nSales: 4 6 5 9 11 10 14", group="Data"),
+               Prop("labels", "list", "Mon\nTue\nWed\nThu\nFri\nSat\nSun", group="Data"),
+               Prop("fill", "bool", False, label="Shade under lines"), Prop("points", "bool", False),
+               Prop("grid", "bool", True), Prop("legend", "bool", True)),
+              (), "Lines with axes and a legend; one series per line, as \"Name: 1 2 3\"."),
+    Component("timeline", "Timeline", "git-commit-vertical", "Display", _timeline, (300, 220),
+              (Prop("items", "list", "Order placed, 09:12, We got your order., shopping-cart\n"
+                                     "Shipped, 14:30, On its way., truck\nDelivered, , , package-check",
+                    group="Data", label="Entries (title, time, text, icon)"),
+               Prop("tint", "choice", "accent", choices=TINTS), Prop("dense", "bool", False)),
+              ("click",), "Events in order down a line: a history, a changelog, a delivery."),
+    Component("description_list", "Details list", "list-collapse", "Display", _description_list, (300, 140),
+              (Prop("items", "list", "Name: report.pdf\nSize: 2.4 MB\nModified: Today, 10:42", group="Data",
+                    label="Pairs (name: value)"),
+               Prop("label_width", "number", 110, min=20, label="Name width"), Prop("vertical", "bool", False),
+               Prop("dividers", "bool", True), Prop("mono", "bool", False, label="Monospace values")),
+              (), "Name and value pairs, one per row: the details of a file, an order or a device."),
     # -- the operating system
     Component("file_input", "File picker", "folder-open", SYSTEM, _file_input, (260, 30),
               (Prop("path", "text", "", group="Data"),

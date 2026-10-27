@@ -192,6 +192,16 @@ pub struct EditorProps {
     /// of the block around the cursor.
     pub indent_guides: Vec<Color>,
     pub indent_guides_active: Vec<Color>,
+    /// Problems in the text, underlined with a wavy line and marked on the minimap: 1-based
+    /// `(line, column, end_line, end_column)` with exclusive ends, and their color. The last
+    /// ones are drawn on top (the most severe go last).
+    pub diagnostics: Vec<(crate::editor::TextRange, Color)>,
+    /// Underline the diagnostics in the text (they are marked on the minimap either way).
+    pub diagnostic_underlines: bool,
+    /// Keys that keep the hover shown (the ones that expand it).
+    pub hover_keys: Vec<crate::editor::keymap::Keystroke>,
+    /// Vim's modal editing: Normal, Insert and Visual modes.
+    pub vim: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1694,6 +1704,11 @@ pub fn progress_bar(
 /// depth (one color, or several for rainbow guides); the guide of the block around the cursor
 /// takes the colors of `indent_guides_active`.
 ///
+/// `diagnostics` lists problems as 1-based `(line, column, end_line, end_column, color)` with
+/// exclusive ends, the most severe last: they get a wavy underline (unless
+/// `diagnostic_underlines=False`) and marks on the minimap. Keys in `hover_keys` keep the hover
+/// shown. `vim=True` edits like Vim (Normal, Insert and Visual modes; see `pyzed.ui.editor`).
+///
 /// Holding Ctrl (Cmd) over a name underlines it; Ctrl+click reports `"go_to_definition"`.
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
@@ -1707,7 +1722,8 @@ pub fn progress_bar(
     highlight_color=None, match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true,
     readonly=false,
     hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None, on_hover=None,
-    hover_delay=500.0, sticky_scroll=0, indent_guides=None, indent_guides_active=None))]
+    hover_delay=500.0, sticky_scroll=0, indent_guides=None, indent_guides_active=None,
+    diagnostics=None, diagnostic_underlines=true, hover_keys=None, vim=false))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1768,6 +1784,10 @@ pub fn code_editor(
     sticky_scroll: usize,
     indent_guides: Option<Vec<Bound<'_, PyAny>>>,
     indent_guides_active: Option<Vec<Bound<'_, PyAny>>>,
+    diagnostics: Option<Vec<Bound<'_, PyAny>>>,
+    diagnostic_underlines: bool,
+    hover_keys: Option<Vec<String>>,
+    vim: bool,
 ) -> PyResult<Py<Widget>> {
     let colors = |list: Option<Vec<Bound<'_, PyAny>>>| -> PyResult<Vec<Color>> {
         list.unwrap_or_default().iter().map(style::color).collect()
@@ -1837,6 +1857,28 @@ pub fn code_editor(
             );
         }
     }
+    // diagnostics: [(line, column, end_line, end_column, color), ...]
+    let mut diagnostic_list = Vec::new();
+    for item in diagnostics.unwrap_or_default() {
+        let (line, column, end_line, end_column, color): (
+            usize,
+            usize,
+            usize,
+            usize,
+            Bound<'_, PyAny>,
+        ) = item.extract()?;
+        diagnostic_list.push(((line, column, end_line, end_column), style::color(&color)?));
+    }
+    let hover_keys = hover_keys
+        .unwrap_or_default()
+        .iter()
+        .flat_map(|keys| {
+            keys.split_whitespace()
+                .map(str::to_owned)
+                .collect::<Vec<_>>()
+        })
+        .filter_map(|key| crate::editor::keymap::Keystroke::parse(&key))
+        .collect();
     let font = style::font(Some(font.unwrap_or("mono")), &None, false)?.unwrap_or(Font::MONOSPACE);
     new(
         py,
@@ -1902,6 +1944,10 @@ pub fn code_editor(
             sticky_scroll,
             indent_guides: colors(indent_guides)?,
             indent_guides_active: colors(indent_guides_active)?,
+            diagnostics: diagnostic_list,
+            diagnostic_underlines,
+            hover_keys,
+            vim,
         })),
     )
 }

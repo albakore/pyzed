@@ -12,6 +12,10 @@ away (``//`` comments and trailing commas are allowed)::
 
 A key is looked up from the deepest context that has the keyboard to the outermost one (``Editor``, then
 ``CodePanel``, then ``Workspace``), and in each context the last binding wins, so the user's beat the defaults.
+
+Like Zed's ``base_keymap``, the keys of another editor can go between the defaults and the user's bindings:
+``BASE_KEYMAPS`` has VS Code's (the defaults themselves), JetBrains', Sublime Text's, Atom's, TextMate's and
+Emacs's, chosen in the editor settings (``set_base``).
 """
 
 from __future__ import annotations
@@ -135,6 +139,11 @@ _CODE_PANEL: Tuple[Tuple[str, str, Tuple[str, ...]], ...] = (
     ("go_back", "Go back", ("alt-left",)),
     ("go_forward", "Go forward", ("alt-right",)),
     ("toggle_sticky_scroll", "Toggle sticky scroll", ()),
+    ("hover", "Show the documentation at the cursor", ("ctrl-k ctrl-i",)),
+    ("go_to_diagnostic", "Next problem", ("f8",)),
+    ("go_to_previous_diagnostic", "Previous problem", ("shift-f8",)),
+    ("format", "Format the code", ("ctrl-shift-i",)),
+    ("toggle_vim_mode", "Toggle Vim mode", ()),
 )
 
 #: The code editor's actions by group (their keys are ``ui.editor.DEFAULT_KEYS``).
@@ -162,7 +171,213 @@ _EDITOR: Tuple[Tuple[str, Tuple[Tuple[str, str], ...]], ...] = (
                 ("line_up", "Scroll up one line"), ("line_down", "Scroll down one line"))),
     ("Folding", (("fold", "Fold"), ("unfold_lines", "Unfold"), ("toggle_fold", "Toggle fold"),
                  ("fold_all", "Fold everything"), ("unfold_all", "Unfold everything"))),
+    ("Selecting", (("select_larger_syntax_node", "Expand the selection"),
+                   ("select_smaller_syntax_node", "Shrink the selection"),
+                   ("select_to_enclosing_bracket", "Select inside the brackets"),
+                   ("select_all", "Select all"), ("select_left", "Select left"), ("select_right", "Select right"),
+                   ("select_up", "Select up"), ("select_down", "Select down"),
+                   ("select_to_previous_word_start", "Select to the previous word"),
+                   ("select_to_next_word_end", "Select to the next word"),
+                   ("select_to_end_of_line", "Select to the end of the line"),
+                   ("select_to_beginning", "Select to the start of the text"),
+                   ("select_to_end", "Select to the end of the text"),
+                   ("select_page_up", "Select a page up"), ("select_page_down", "Select a page down"),
+                   ("set_mark", "Set the mark (Emacs)"), ("swap_selection_ends", "Swap the ends of the selection"))),
+    ("Cursor", (("move_left", "Left"), ("move_right", "Right"), ("move_up", "Up"), ("move_down", "Down"),
+                ("move_to_previous_word_start", "Previous word"), ("move_to_next_word_end", "Next word"),
+                ("move_to_end_of_line", "End of the line"), ("move_to_beginning", "Start of the text"),
+                ("move_to_end", "End of the text"), ("move_page_up", "Page up"), ("move_page_down", "Page down"),
+                ("scroll_cursor_center", "Center the cursor's line"))),
+    ("Changing", (("backspace", "Delete the previous character"), ("delete", "Delete the next character"),
+                  ("paste", "Paste"), ("newline", "New line"), ("transpose", "Swap characters"),
+                  ("cut_to_end_of_line", "Cut to the end of the line"),
+                  ("delete_to_end_of_line", "Delete to the end of the line"),
+                  ("delete_to_beginning_of_line", "Delete to the start of the line"),
+                  ("toggle_case", "Toggle case"))),
 )
+
+#: The keymaps of other editors, like Zed's ``base_keymap``: their bindings go over the defaults (which are
+#: VS Code's and Zed's) as ``(context, keys, action)``. Choose one in the editor settings.
+BASE_KEYMAPS: Dict[str, Tuple[Tuple[str, str, str], ...]] = {
+    "VSCode": (),
+    "JetBrains": (
+        ("Editor", "ctrl-d", "editor::duplicate_selection"),
+        ("Editor", "ctrl-y", "editor::delete_line"),
+        ("Editor", "ctrl-shift-up", "editor::move_line_up"),
+        ("Editor", "ctrl-shift-down", "editor::move_line_down"),
+        ("Editor", "alt-shift-up", "editor::move_line_up"),
+        ("Editor", "alt-shift-down", "editor::move_line_down"),
+        ("Editor", "ctrl-w", "editor::select_larger_syntax_node"),
+        ("Editor", "ctrl-shift-w", "editor::select_smaller_syntax_node"),
+        ("Editor", "ctrl-shift-u", "editor::toggle_case"),
+        ("Editor", "alt-j", "editor::select_next"),
+        ("Editor", "alt-shift-j", "editor::undo_selection"),
+        ("Editor", "ctrl-alt-shift-j", "editor::select_all_matches"),
+        ("Editor", "shift-enter", "editor::newline_below"),
+        ("Editor", "ctrl-alt-enter", "editor::newline_above"),
+        ("Editor", "ctrl-[", "editor::move_to_enclosing_bracket"),
+        ("Editor", "ctrl-]", "editor::move_to_enclosing_bracket"),
+        ("Editor", "ctrl--", "editor::fold"),
+        ("Editor", "ctrl-=", "editor::unfold_lines"),
+        ("Editor", "ctrl-shift--", "editor::fold_all"),
+        ("Editor", "ctrl-shift-=", "editor::unfold_all"),
+        ("CodePanel", "ctrl-b", "code_panel::go_to_definition"),
+        ("CodePanel", "ctrl-alt-b", "code_panel::go_to_definition"),
+        ("CodePanel", "ctrl-shift-b", "code_panel::go_to_type_definition"),
+        ("CodePanel", "alt-f7", "code_panel::find_all_references"),
+        ("CodePanel", "shift-f6", "code_panel::rename_symbol"),
+        ("CodePanel", "alt-enter", "code_panel::code_actions"),
+        ("CodePanel", "ctrl-alt-o", "code_panel::organize_imports"),
+        ("CodePanel", "ctrl-alt-l", "code_panel::format"),
+        ("CodePanel", "ctrl-q", "code_panel::hover"),
+        ("CodePanel", "ctrl-p", "code_panel::hover"),
+        ("CodePanel", "f2", "code_panel::go_to_diagnostic"),
+        ("CodePanel", "shift-f2", "code_panel::go_to_previous_diagnostic"),
+        ("CodePanel", "ctrl-r", "code_panel::replace"),
+        ("CodePanel", "ctrl-alt-left", "code_panel::go_back"),
+        ("CodePanel", "ctrl-alt-right", "code_panel::go_forward"),
+        ("CodePanel", "ctrl-shift-space", "code_panel::show_completions"),
+        ("Workspace", "ctrl-shift-n", "workspace::find_file"),
+        ("Workspace", "ctrl-e", "workspace::find_file"),
+        ("Workspace", "ctrl-shift-a", "workspace::palette"),
+        ("Workspace", "alt-1", "workspace::left_dock"),
+        ("Workspace", "alt-f12", "workspace::console"),
+        ("Workspace", "shift-f10", "workspace::run"),
+        ("Workspace", "ctrl-f2", "workspace::stop"),
+        ("Workspace", "ctrl-shift-r", "workspace::replace_in_project"),
+        ("Workspace", "ctrl-alt-s", "workspace::settings"),
+    ),
+    "SublimeText": (
+        ("Editor", "ctrl-shift-up", "editor::move_line_up"),
+        ("Editor", "ctrl-shift-down", "editor::move_line_down"),
+        ("Editor", "ctrl-shift-d", "editor::duplicate_line_down"),
+        ("Editor", "alt-f3", "editor::select_all_matches"),
+        ("Editor", "ctrl-shift-m", "editor::select_to_enclosing_bracket"),
+        ("Editor", "ctrl-shift-space", "editor::select_larger_syntax_node"),
+        ("Editor", "ctrl-j", "editor::join_lines"),
+        ("Editor", "ctrl-k ctrl-u", "editor::convert_to_upper_case"),
+        ("Editor", "ctrl-k ctrl-l", "editor::convert_to_lower_case"),
+        ("Editor", "ctrl-k ctrl-k", "editor::delete_to_end_of_line"),
+        ("Editor", "ctrl-k ctrl-backspace", "editor::delete_to_beginning_of_line"),
+        ("Editor", "ctrl-k ctrl-0", "editor::unfold_all"),
+        ("Editor", "ctrl-k ctrl-1", "editor::fold_all"),
+        ("Editor", "f9", "editor::sort_lines_case_sensitive"),
+        ("Editor", "ctrl-t", "editor::transpose"),
+        ("CodePanel", "alt--", "code_panel::go_back"),
+        ("CodePanel", "alt-shift--", "code_panel::go_forward"),
+        ("CodePanel", "f4", "code_panel::go_to_diagnostic"),
+        ("CodePanel", "shift-f4", "code_panel::go_to_previous_diagnostic"),
+        ("Workspace", "ctrl-k ctrl-b", "workspace::left_dock"),
+        ("Workspace", "ctrl-b", "workspace::run"),
+        ("Workspace", "ctrl-`", "workspace::console"),
+    ),
+    "Atom": (
+        ("Editor", "ctrl-up", "editor::move_line_up"),
+        ("Editor", "ctrl-down", "editor::move_line_down"),
+        ("Editor", "ctrl-shift-d", "editor::duplicate_line_down"),
+        ("Editor", "ctrl-j", "editor::join_lines"),
+        ("Editor", "alt-f3", "editor::select_all_matches"),
+        ("Editor", "ctrl-alt-m", "editor::select_to_enclosing_bracket"),
+        ("Editor", "ctrl-k ctrl-u", "editor::convert_to_upper_case"),
+        ("Editor", "ctrl-k ctrl-l", "editor::convert_to_lower_case"),
+        ("Editor", "ctrl-alt-[", "editor::fold"),
+        ("Editor", "ctrl-alt-]", "editor::unfold_lines"),
+        ("Editor", "ctrl-alt-shift-[", "editor::fold_all"),
+        ("Editor", "ctrl-alt-shift-]", "editor::unfold_all"),
+        ("Editor", "ctrl-t", "editor::transpose"),
+        ("Workspace", "ctrl-\\", "workspace::left_dock"),
+        ("Workspace", "ctrl-`", "workspace::console"),
+    ),
+    "TextMate": (
+        ("Editor", "ctrl-shift-d", "editor::duplicate_line_down"),
+        ("Editor", "ctrl-alt-up", "editor::move_line_up"),
+        ("Editor", "ctrl-alt-down", "editor::move_line_down"),
+        ("Editor", "ctrl-shift-l", "editor::select_line"),
+        ("Editor", "ctrl-j", "editor::join_lines"),
+        ("Editor", "ctrl-t", "editor::transpose"),
+        ("Editor", "ctrl-u", "editor::convert_to_upper_case"),
+        ("Editor", "ctrl-shift-u", "editor::convert_to_lower_case"),
+        ("Editor", "ctrl-shift-b", "editor::select_to_enclosing_bracket"),
+        ("Editor", "ctrl-alt-0", "editor::fold_all"),
+        ("Workspace", "ctrl-alt-t", "workspace::find_file"),
+        ("Workspace", "ctrl-r", "workspace::run"),
+    ),
+    "Emacs": (
+        ("Editor", "ctrl-g", "editor::cancel"),
+        ("Editor", "ctrl-f", "editor::move_right"),
+        ("Editor", "ctrl-b", "editor::move_left"),
+        ("Editor", "ctrl-n", "editor::move_down"),
+        ("Editor", "ctrl-p", "editor::move_up"),
+        ("Editor", "alt-f", "editor::move_to_next_word_end"),
+        ("Editor", "alt-b", "editor::move_to_previous_word_start"),
+        ("Editor", "ctrl-a", "editor::move_to_beginning_of_line"),
+        ("Editor", "ctrl-e", "editor::move_to_end_of_line"),
+        ("Editor", "alt-<", "editor::move_to_beginning"),
+        ("Editor", "alt->", "editor::move_to_end"),
+        ("Editor", "ctrl-v", "editor::move_page_down"),
+        ("Editor", "alt-v", "editor::move_page_up"),
+        ("Editor", "ctrl-d", "editor::delete"),
+        ("Editor", "alt-d", "editor::delete_to_next_word_end"),
+        ("Editor", "alt-backspace", "editor::delete_to_previous_word_start"),
+        ("Editor", "ctrl-k", "editor::cut_to_end_of_line"),
+        ("Editor", "ctrl-w", "editor::cut"),
+        ("Editor", "alt-w", "editor::copy"),
+        ("Editor", "ctrl-y", "editor::paste"),
+        ("Editor", "ctrl-/", "editor::undo"),
+        ("Editor", "ctrl-_", "editor::undo"),
+        ("Editor", "ctrl-x u", "editor::undo"),
+        ("Editor", "ctrl-space", "editor::set_mark"),
+        ("Editor", "ctrl-x ctrl-x", "editor::swap_selection_ends"),
+        ("Editor", "ctrl-x h", "editor::select_all"),
+        ("Editor", "ctrl-t", "editor::transpose"),
+        ("Editor", "alt-u", "editor::convert_to_upper_case"),
+        ("Editor", "alt-l", "editor::convert_to_lower_case"),
+        ("Editor", "alt-;", "editor::toggle_comments"),
+        ("Editor", "ctrl-x ctrl-;", "editor::toggle_comments"),
+        ("Editor", "alt-^", "editor::join_lines"),
+        ("Editor", "ctrl-j", "editor::newline"),
+        ("Editor", "ctrl-l", "editor::scroll_cursor_center"),
+        ("CodePanel", "ctrl-s", "code_panel::find"),
+        ("CodePanel", "ctrl-r", "code_panel::find"),
+        ("CodePanel", "alt-%", "code_panel::replace"),
+        ("CodePanel", "alt-g g", "code_panel::go_to_line"),
+        ("CodePanel", "alt-g alt-g", "code_panel::go_to_line"),
+        ("CodePanel", "alt-g n", "code_panel::go_to_diagnostic"),
+        ("CodePanel", "alt-g p", "code_panel::go_to_previous_diagnostic"),
+        ("CodePanel", "alt-/", "code_panel::show_completions"),
+        ("CodePanel", "alt-.", "code_panel::go_to_definition"),
+        ("CodePanel", "alt-,", "code_panel::go_back"),
+        ("Workspace", "alt-x", "workspace::palette"),
+        ("Workspace", "ctrl-x ctrl-f", "workspace::open"),
+        ("Workspace", "ctrl-x b", "workspace::find_file"),
+        ("Workspace", "ctrl-x ctrl-s", "workspace::save"),
+        ("Workspace", "ctrl-x ctrl-w", "workspace::save_as"),
+        ("Workspace", "ctrl-x ctrl-b", "workspace::find_file"),
+    ),
+}
+#: The base keymaps' names as the settings show them.
+BASE_TITLES: Dict[str, str] = {"VSCode": "VS Code", "JetBrains": "JetBrains", "SublimeText": "Sublime Text",
+                               "Atom": "Atom", "TextMate": "TextMate", "Emacs": "Emacs"}
+DEFAULT_BASE = "VSCode"
+_BASE = DEFAULT_BASE
+
+
+def set_base(name: str) -> None:
+    """Puts the keys of editor ``name`` (a key of ``BASE_KEYMAPS``) over the defaults."""
+    global _BASE
+    _BASE = name if name in BASE_KEYMAPS else DEFAULT_BASE
+    if _KEYMAP is not None:
+        _KEYMAP.set_base(_BASE)
+
+
+def base_bindings(name: str) -> List["Binding"]:
+    """The bindings of base keymap ``name`` (none for VS Code's or an unknown name)."""
+    out = []
+    for context, keys, action in BASE_KEYMAPS.get(name, ()):
+        normalized = normalize(keys, context)
+        if normalized is not None and action in actions():
+            out.append(Binding(normalized, action, context))
+    return out
 
 #: Keys that are not actions of their own, for the shortcut reference (they cannot be changed).
 FIXED: Tuple[Tuple[str, Tuple[Tuple[str, str], ...]], ...] = (
@@ -239,14 +454,12 @@ def action_id(name: str) -> Optional[str]:
 
 def normalize(keys: str, context: str = "Workspace") -> Optional[str]:
     """Normalizes ``keys`` (``"Ctrl+Shift+K"`` -> ``"ctrl-shift-k"``, ``"ctrl-k ctrl-s"``; Cmd counts as Ctrl),
-    also the designer's ``"ctrl- "`` for Ctrl+Space; ``None`` if they are not keys. A chord has two keys, and
-    in the ``Editor`` context it must start with Ctrl+K like the editor's own."""
+    also the designer's ``"ctrl- "`` for Ctrl+Space; ``None`` if they are not keys. A chord has two keys
+    (``"ctrl-k ctrl-c"``, Emacs's ``"ctrl-x u"``)."""
     if keys.endswith(" ") and (len(keys) == 1 or keys[-2] in "-+"):
         keys = keys[:-1] + "space"
     strokes = [_stroke(part) for part in keys.split()]
     if not strokes or len(strokes) > 2 or None in strokes:
-        return None
-    if context == "Editor" and len(strokes) == 2 and strokes[0] != "ctrl-k":
         return None
     return " ".join(strokes)  # type: ignore[arg-type]
 
@@ -288,6 +501,9 @@ class Keymap:
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
         self.defaults = default_bindings()
+        #: The base keymap (``BASE_KEYMAPS``) and its bindings, between the defaults and the user's.
+        self.base_name = _BASE
+        self.base: List[Binding] = base_bindings(_BASE)
         self.user: List[Binding] = []
         #: Problems found in the file, to show in the keymap editor.
         self.errors: List[str] = []
@@ -388,13 +604,21 @@ class Keymap:
             self.save()
         return self.path
 
+    def set_base(self, name: str) -> None:
+        """Uses the keys of base keymap ``name`` over the defaults."""
+        if name != self.base_name:
+            self.base_name = name
+            self.base = base_bindings(name)
+            self._active = None
+
     # -- looking keys up ------------------------------------------------------------------------------------
     @property
     def active(self) -> List[Binding]:
-        """The bindings in force: the defaults then the user's, without the ones a ``null`` took away."""
+        """The bindings in force: the defaults, the base keymap's and the user's, without the ones a ``null``
+        took away."""
         if self._active is None:
             out: List[Binding] = []
-            for b in [*self.defaults, *self.user]:
+            for b in [*self.defaults, *self.base, *self.user]:
                 if b.action is None:
                     out = [o for o in out if (o.context, o.keys) != (b.context, b.keys)]
                 else:
@@ -445,8 +669,7 @@ class Keymap:
             return None, f"Unknown context {context!r}"
         normalized = normalize(keys, context)
         if normalized is None:
-            return None, ("In the editor a chord must start with ctrl-k" if context == "Editor" and len(keys.split()) == 2
-                          else "Not valid keys")
+            return None, "Not valid keys"
         return normalized, None
 
     def add(self, action: str, keys: str, context: Optional[str] = None) -> Optional[str]:
@@ -520,10 +743,19 @@ class Keymap:
 
     # -- the code editor ------------------------------------------------------------------------------------
     def editor_keymap(self) -> Dict[str, Optional[str]]:
-        """The ``ui.editor(keymap=...)`` for the user's ``Editor`` bindings: their editor actions, and nothing
-        for keys taken away or bound to the designer's actions (so the editor leaves those keys to it)."""
+        """The ``ui.editor(keymap=...)`` for the base keymap's and the user's ``Editor`` bindings: their editor
+        actions, and nothing for keys taken away or bound to the designer's actions (so the editor leaves those
+        keys to it). The chords of the code panel and the workspace are there too, bound to nothing, so their
+        first key waits for the second one instead of doing what it does alone (Emacs's Ctrl+X Ctrl+S does not
+        cut)."""
         out: Dict[str, Optional[str]] = {}
-        for b in self.user:
+        for b in self.active:
+            if b.context in ("CodePanel", "Workspace") and " " in b.keys:
+                out.setdefault(b.keys, None)
+        for b in [*self.base, *self.user]:  # the designer's keys of another editor (JetBrains's Ctrl+B)
+            if b.context in ("CodePanel", "Workspace") and " " not in b.keys and b.action:
+                out.setdefault(b.keys, None)
+        for b in [*self.base, *self.user]:
             if b.context == "Editor":
                 out[b.keys] = b.action.split("::", 1)[1] if b.action and b.action.startswith("editor::") else None
         return out
@@ -551,11 +783,12 @@ def keymap_path() -> Path:
 
 
 def get() -> Keymap:
-    """The keymap of the current config folder (one per folder)."""
+    """The keymap of the current config folder (one per folder), with the base keymap in use."""
     global _KEYMAP
     path = keymap_path()
     if _KEYMAP is None or _KEYMAP.path != path:
         _KEYMAP = Keymap(path)
+    _KEYMAP.set_base(_BASE)
     return _KEYMAP
 
 

@@ -37,6 +37,7 @@ from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, file_scan, geometry, panels, preferences, project_panel, surface
 from . import agent_thread
+from . import component_view
 from . import profiles as _profiles
 from . import settings_ui
 from . import commands as _commands
@@ -243,6 +244,8 @@ class Designer(App):
         self.app_menu: Optional[str] = None  # the title bar menu that is open: "file", "view" or "help"
         self.new_state: Dict[str, str] = {}
         self.left_ratio = 0.62
+        #: How much of the area under the toolbox the Outline takes in a component (the Members list gets the rest).
+        self.members_ratio = 0.5
         self.toolbox_query = ""
         self.name_buffer = ""
         self.folded: set = set()  # containers folded in the outline
@@ -1414,6 +1417,10 @@ class Designer(App):
         """Shows the panel ``tab`` ("properties" or "events")."""
         self.right_tab = tab
 
+    def resize_members(self, ratio: float) -> None:
+        """Resizes the Outline and Members lists of a component."""
+        self.members_ratio = ratio
+
     def resize_left(self, ratio: float) -> None:
         """Sets how much of the left column the upper panel takes (``ratio`` from 0 to 1)."""
         self.left_ratio = ratio
@@ -1621,6 +1628,8 @@ class Designer(App):
                 self.assist.intel.apply_settings(self.assist.settings)
                 if "font_family" in changed:
                     self.apply_fonts()
+                if "base_keymap" in changed:
+                    _keymap.set_base(changed["base_keymap"])
                 if changed.get("code_lens"):
                     self.assist.intel.refresh_lenses(self.doc.form)
         if section in (None, "designer"):
@@ -2918,7 +2927,9 @@ class Designer(App):
             if shader_editor.is_shader(self):
                 content = shader_editor.view(self, t)
             else:
-                canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.canvas)
+                live = component_view.is_component(self) and component_view.state(self.doc).live
+                drawn = component_view.live_surface(self, t) if live else surface.form_surface(self, t)
+                canvas = _core.container(drawn, width="fill", height="fill", bg=t.canvas)
                 content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
                                        width="fill", height="fill")
         return self.panes.asleep(pane, content)
@@ -3162,7 +3173,20 @@ class Designer(App):
             return _core.row([i for i in items if i is not None], spacing=2, align="center")
 
         sep = _core.container(ui.divider(vertical=True, theme=t), height=16, padding=(0, 6))
+        component = component_view.is_component(self)
+        if component and component_view.state(doc).live:  # running: nothing to place, align or order
+            tools = _core.row([
+                component_view.mode_switch(self, t), sep,
+                ui.label(tr("The component runs its code: try values in the inspector"), size="xs",
+                         color="text_muted", wrap=False, theme=t),
+                _core.space(width="fill"),
+                tool("rotate-ccw", lambda: component_view.restart(self), "Restart from setup()"),
+                tool("code", self.edit_whole_file, "Edit code file", command="code_file"),
+            ], spacing=0, align="center", width="fill")
+            return _core.container(tools, padding=(0, spacing.GUTTER - 4), height=36, width="fill",
+                                   align_y="center", bg=t.editor)
         groups = [
+            component_view.mode_switch(self, t) if component else None,
             group(tool("file-plus", self.new, "New form, component or shader…", command="new"),
                   tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, command="undo"),
                   tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, command="redo")),
@@ -3192,7 +3216,8 @@ class Designer(App):
                                    color="text_muted", wrap=False, theme=t))
         start: List[Any] = []
         for g in groups:
-            start += [sep, g] if start else [g]
+            if g is not None:
+                start += [sep, g] if start else [g]
         def switch(label: str, key: str, tip: str, command: Optional[str] = None) -> Any:
             keys = _keymap.shown_keys(command) if command else None
             return ui.led_toggle(tr(label), getattr(self, key), lambda _on: self.toggle(key)(), tooltip=tr(tip),
@@ -3282,10 +3307,12 @@ class Designer(App):
         ]
         if self.buffers.current is not None:
             line, column = self.assist.cursor
-            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t), *end]
+            end = [code_panel.vim_status_item(self.assist, t),
+                   ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t), *end]
         elif self.editing is not None:
             line, column = self.assist.cursor
-            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
+            end = [code_panel.vim_status_item(self.assist, t),
+                   ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
                    *code_panel.server_status_items(self.assist, t, self.open_editor_settings), *end]
         return ui.status_bar(start, end, theme=t)
 

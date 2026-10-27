@@ -438,6 +438,46 @@ def designer_completions(form: Optional[Form], line: str, column: int) -> Option
     return items
 
 
+def keyword_doc(word: str) -> str:
+    """Python's own help on keyword ``word`` (``for``, ``with``, ``match``...) as Markdown, or ``""``: the
+    reference's chapter, with its grammar and examples as code and the related keywords at the end."""
+    import pydoc
+
+    entry = pydoc.Helper.keywords.get(word)
+    if entry is None:
+        return ""
+    topic, related = entry if isinstance(entry, tuple) else (entry, "")
+    try:
+        from pydoc_data import topics
+    except ImportError:  # some builds leave out the help topics
+        return ""
+    text = topics.topics.get(topic.split()[0], "")
+    if not text:
+        return ""
+    out: List[str] = []
+    code: List[str] = []
+    lines = text.expandtabs().split("\n")
+    for i, line in enumerate(lines):
+        if re.fullmatch(r"[*=\-]{3,}", line.strip()):
+            if out and not code:  # the underline of a title
+                out[-1] = f"### {out[-1]}"
+            continue
+        if line.startswith("   ") or (code and not line.strip() and i + 1 < len(lines)
+                                       and lines[i + 1].startswith("   ")):
+            code.append(line[3:])
+            continue
+        if code:
+            out += ["```python", *code, "```"]
+            code = []
+        out.append(line)
+    if code:
+        out += ["```python", *code, "```"]
+    words = [f"`{w}`" for w in related.split() if w]
+    if words:
+        out += ["", tr("Related: {words}", words=", ".join(words))]
+    return "\n".join(out).strip()
+
+
 def designer_hover(form: Optional[Form], line: str, start: int, end: int) -> str:
     """The hover text of what only the designer knows: ``form.<control>``, a control's properties and
     ``event.`` fields (``start``/``end`` are the word's 1-based columns); ``""`` for anything else."""

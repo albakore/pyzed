@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from .. import _core, draw, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
+from . import component_view as _component_view
 from . import components as _components
 from . import layout as _layout
 from . import roles as _roles
@@ -197,6 +198,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     rects = d.rects
     # the Animation panel's playhead: control properties its tracks change, and the player of the rest
     animated = d.timeline.canvas_overrides()
+    # a component draws its bindings with the values tried in the inspector (no logic runs)
+    bound = _component_view.canvas_props(d)
     # A hidden control (a dialog, a drawer, a page that code shows) stays off the canvas, so they do not
     # pile up on the form; selecting it, or something inside it, brings it up in front of the dimmed form.
     front = d.revealed[0]
@@ -214,6 +217,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
                 continue
         x, y, cw, ch = rects[c.name]
         placed = Control(**{**c.__dict__, "width": cw, "height": ch})
+        if c.name in bound:
+            placed.props = {**placed.props, **bound[c.name]}
         if c.name in animated:
             placed.props = {**placed.props, **animated[c.name]}
         widget = _components.render(placed, ctx)
@@ -262,6 +267,10 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x - 1, y=y - 1))
         if c.locked:
             layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=x + cw - 12, y=y - 14))
+    for name in bound:  # a link on the controls that follow the component's properties
+        if name in rects and any(c.name == name for c in shown):
+            x, y, cw, _ch = rects[name]
+            layers.append(_core.pin(link_badge(t), x=x + cw - 9, y=y - 7))
     if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked \
             and not d.tab_order_mode:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
@@ -322,6 +331,13 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         on_release=d.release,
         on_move=d.pointer_moved_view,
     )
+
+
+def link_badge(t: Theme) -> Any:
+    """The small link on a control whose properties follow the component's (its bindings)."""
+    return ui.tooltip(_core.container(_icon("link", size=9, color=t.on_accent), width=14, height=14, center=True,
+                                      radius=7, bg=t.accent),
+                      tr("Bound to the component's properties"), position="top")
 
 
 def tab_order_layers(d: "Designer", rects: Dict[str, Tuple[float, float, float, float]], shown: set,

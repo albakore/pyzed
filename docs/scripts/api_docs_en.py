@@ -483,6 +483,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
                         "indent_guides": "Colors of the indent guides, one per depth (they repeat); none: no guides.",
                         "indent_guides_active": "Colors of the guide of the block around the cursor, by depth like `indent_guides`.",
+                        "diagnostics": "Problems as 1-based `(line, column, end_line, end_column, color)`: tinted lines and marks in the minimap, and wavy underlines.",
+                        "diagnostic_underlines": "`False` leaves out the wavy underlines (the minimap still marks the problems).",
+                        "hover_keys": "Keys that leave the hover open instead of hiding it (Ctrl+Space to show more).",
+                        "vim": "`True` edits like Vim: Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app.",
                     },
                 },
             }),
@@ -896,6 +900,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
                         "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none).",
                         "indent_guides": '`True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color.',
+                        "diagnostics": 'Problems as 1-based `(line, column, end_line, end_column, severity)` (`"error"`, `"warning"`, `"info"`, `"hint"` or LSP\'s 1–4): marked in the minimap and underlined with a wavy line.',
+                        "diagnostic_underlines": "`False` leaves out the wavy underlines (the minimap still marks the problems).",
+                        "hover_keys": "Keys that leave the hover card open instead of hiding it (Ctrl+Space to show more).",
+                        "vim": "`True` edits like Vim (Zed's `vim_mode`): Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app.",
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -2836,4 +2844,93 @@ PAGES.append({
             "pyzed.dnd.cancel": {**_D},
         }),
     ],
+})
+
+# -- More components: ratings, ranges, tags, steps, pages, loading and data ------------------------
+_section("ui", "Controls", {
+    "pyzed.ui.rating": {
+        "desc": "A row of stars (or any icon) to give or show a score. Clicking a star sends its number; with `clearable` a click on the lit one sends 0. Without `on_change` it only shows the value, rounded to the nearest star. Focused, the arrows change it by one.",
+        "params": {"value": "How many stars are lit (rounded).", "on_change": "Callable that receives the number of stars picked (0 to `max`).",
+                   "max": "How many stars there are.", "icon": "Lucide icon drawn for each star.", "size": "Icon size in pixels.",
+                   "tint": "Color of the lit stars (a theme token or hex color).", "clearable": "A click on the current value sends 0."},
+        "example": "ui.rating(self.stars, lambda n: setattr(self, \"stars\", n))",
+    },
+    "pyzed.ui.range_slider": {
+        "desc": "A slider with two knobs that picks a range. Pressing the track moves the nearer knob there and dragging keeps moving it; the knobs never cross.",
+        "params": {"value": "`(low, high)`.", "on_change": "Callable that receives the new `(low, high)`.", "min": "Smallest value.", "max": "Largest value.",
+                   "step": "Values snap to multiples of this.", "min_gap": "Smallest distance kept between both knobs.",
+                   "on_release": "Sent when the knob is let go (save or apply there).", "tint": "Color of the range between the knobs.",
+                   "show_value": "Adds `low – high` next to it: `True`, or a format for each end such as `\"{:.0f} €\"`."},
+        "example": "ui.range_slider(self.price, lambda v: setattr(self, \"price\", v), min=0, max=500, step=5, show_value=\"{:.0f} €\")",
+    },
+    "pyzed.ui.tag_input": {
+        "desc": "A box of removable chips with a field to type more. Enter or a comma turns the text into a tag; `on_change` gets the new list, as it does when a chip's x is clicked.",
+        "params": {"tags": "Your list of tags.", "on_change": "Callable that receives the new list of tags.", "text": "What is being typed (your state too).",
+                   "on_input": "Callable that receives the text being typed.", "suggestions": "Tags offered under the field while the text matches them.",
+                   "max_tags": "Hides the field once the list has this many.", "unique": "A tag already in the list is not added again.",
+                   "tint": "Color of the chips."},
+        "example": "ui.tag_input(self.tags, lambda tags: setattr(self, \"tags\", tags), text=self.typing,\n             on_input=lambda text: setattr(self, \"typing\", text), placeholder=\"Add a label…\")",
+    },
+    "pyzed.ui.stepper": {
+        "desc": "The steps of a wizard or a checkout: done ones get a check, the current one is ringed and the line between them fills as you advance.",
+        "params": {"steps": "Titles or `(title, description)` tuples.", "current": "Index of the step in progress (`len(steps)` once all are done).",
+                   "on_select": "Called with the index of a clicked step.", "linear": "Only done steps and the current one can be clicked.",
+                   "errors": "Indexes of steps drawn in the error color.", "vertical": "Stacks the steps, with each description under its title.",
+                   "tint": "Color of the done steps and the line."},
+        "example": "ui.stepper([\"Account\", \"Address\", \"Payment\"], self.step, lambda i: setattr(self, \"step\", i))",
+    },
+    "pyzed.ui.pagination": {
+        "desc": "Page numbers with previous and next arrows (`‹ 1 … 4 5 6 … 20 ›`). Pages count from 1.",
+        "params": {"page": "The current page, from 1.", "pages": "How many pages there are.", "on_change": "Called with the page that was clicked.",
+                   "siblings": "Pages shown on each side of the current one.", "boundaries": "Pages always shown at each end.",
+                   "size": '`"sm"`, `"md"` or `"lg"`.', "compact": "Shows `4 / 20` between the arrows instead of the numbers."},
+        "example": "ui.pagination(self.page, 20, lambda n: setattr(self, \"page\", n))",
+    },
+})
+_section("ui", "Data and feedback", {
+    "pyzed.ui.line_chart": {
+        "desc": "A line chart with axes: one list of numbers, several lists or `{name: values}` (which adds a legend). The y axis shows four steps between `min` and `max`.",
+        "params": {"series": "A list of numbers, a list of lists or a `{name: values}` dict.", "labels": "Labels under the x axis (thinned out when they do not fit).",
+                   "colors": "Colors of the lines (defaults to the theme's).", "fill": "Shades under each line.", "points": "Marks each value with a dot.",
+                   "grid": "Draws the horizontal lines.", "legend": "With a dict, `False` hides the names under the chart.",
+                   "min": "Bottom of the y axis (from the data when `None`).", "max": "Top of the y axis (from the data when `None`)."},
+        "example": "ui.line_chart({\"Visits\": [12, 18, 15, 24], \"Sales\": [4, 6, 5, 9]}, labels=[\"Q1\", \"Q2\", \"Q3\", \"Q4\"])",
+    },
+    "pyzed.ui.gauge": {
+        "desc": "A half-circle meter for one number, like a speedometer. `thresholds` recolor the arc as the value climbs.",
+        "params": {"value": "The number shown.", "min": "Value at the left end.", "max": "Value at the right end.", "size": "Width in pixels.",
+                   "thickness": "Width of the arc.", "unit": "Text after the number (`\"%\"`, `\"°C\"`).", "label": "Text under the number.",
+                   "thresholds": '`(from_value, color)` pairs, such as `[(70, "warning"), (90, "error")]`.'},
+        "example": "ui.gauge(self.cpu, unit=\"%\", label=\"CPU\", thresholds=[(70, \"warning\"), (90, \"error\")])",
+    },
+    "pyzed.ui.progress_ring": {
+        "desc": "A round progress bar that fills clockwise from the top. `value=None` spins.",
+        "params": {"value": "Progress up to `max`, or `None` to spin.", "max": "The value of a full ring.", "size": "Diameter in pixels.",
+                   "thickness": "Width of the ring.", "show_value": "Writes the percentage in the middle.", "label": "Any other text in the middle (`\"3/8\"`)."},
+        "example": "ui.progress_ring(0.6, show_value=True, size=48)",
+    },
+    "pyzed.ui.skeleton": {
+        "desc": "A grey placeholder that pulses where content is still loading. `lines` makes a paragraph and `circle` an avatar.",
+        "params": {"height": "Height of each bar (the diameter with `circle`).", "lines": "Stacks several bars, the last one shorter.",
+                   "circle": "A round placeholder of `height`.", "animated": "Pulses (it stays still when the system asks for reduced motion)."},
+        "example": "ui.skeleton(lines=3)",
+    },
+    "pyzed.ui.TimelineItem": {
+        "desc": "One entry of `ui.timeline`.",
+        "params": {"title": "Title.", "description": "Muted text under the title.", "time": "Text at the right of the title (a date, an hour).",
+                   "icon": "Icon inside the dot.", "tint": "Color of the dot.", "content": "Any widget under the text."},
+    },
+    "pyzed.ui.timeline": {
+        "desc": "Events in order down a line: a history, a changelog, the steps of a delivery. Each entry gets a dot joined to the next one.",
+        "params": {"items": "`ui.TimelineItem` objects, dicts with the same keys or plain titles.", "on_press": "Called with the index of a clicked entry.",
+                   "dense": "Small dots and less space."},
+        "example": "ui.timeline([ui.TimelineItem(\"Order placed\", time=\"09:12\", icon=\"shopping-cart\"),\n             ui.TimelineItem(\"Shipped\", \"On its way.\", time=\"14:30\", icon=\"truck\")])",
+    },
+    "pyzed.ui.description_list": {
+        "desc": "Name and value pairs, one per row: the details of a file, an order or a device. A value can be text or any widget.",
+        "params": {"items": "A dict or `(name, value)` pairs.", "label_width": "Width of the names column.", "vertical": "Puts each name above its value.",
+                   "dividers": "Lines between rows.", "mono_values": "Text values in the monospace font (ids, hashes).",
+                   "selectable": "Text values can be selected and copied."},
+        "example": "ui.description_list({\"Name\": \"report.pdf\", \"Size\": \"2.4 MB\", \"Status\": ui.badge(\"Synced\", tint=\"success\")})",
+    },
 })

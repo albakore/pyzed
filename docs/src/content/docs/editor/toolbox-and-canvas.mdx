@@ -22,10 +22,10 @@ project. Hover a row for the component's role and description.
 | Category | Components |
 | --- | --- |
 | **Common** | Label, Heading, Button, Link, Split button |
-| **Forms** | Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box, Search box, Segmented, Toggle group, Color picker, Icon picker |
+| **Forms** | Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box, Search box, Segmented, Toggle group, [Rating](/pyzed/library/rating/), [Range slider](/pyzed/library/range-slider/), [Tag box](/pyzed/library/tag-input/), Color picker, Icon picker |
 | **Date & time** | [Date picker](/pyzed/library/date-picker/), [Date range](/pyzed/library/date-range-picker/), [Time picker](/pyzed/library/time-picker/), [Calendar](/pyzed/library/calendar/) |
-| **Display** | Progress bar, Badge, Image, SVG image, Image viewer, Shader, Icon, Markdown, Spinner, Chip, Callout, Avatar, Facepile, Counter badge, Status dot, Key binding, Stat, Chart, Table, Diff stat, Empty state, QR code, Terminal output |
-| **Navigation** | Tab bar, Tree view, Breadcrumbs |
+| **Display** | Progress bar, Badge, Image, SVG image, Image viewer, Shader, Icon, Markdown, Spinner, Chip, Callout, Avatar, Facepile, Counter badge, Status dot, Key binding, Stat, Chart, Table, Diff stat, Empty state, QR code, Terminal output, [Skeleton](/pyzed/library/skeleton/), [Progress ring](/pyzed/library/progress-ring/), [Gauge](/pyzed/library/gauge/), [Line chart](/pyzed/library/line-chart/), [Timeline](/pyzed/library/timeline/), [Details list](/pyzed/library/description-list/) |
+| **Navigation** | Tab bar, Tree view, Breadcrumbs, [Steps](/pyzed/library/stepper/), [Pagination](/pyzed/library/pagination/) |
 | **Containers** and **Layout** | Panel, Group box, Card, Divider, Flex row, Flex column, Grid, Dock, Dock panel, Spacer |
 | **System** | [File picker](/pyzed/library/file-input/), [Drop zone](/pyzed/library/drop-zone/), and in the tray: Shortcut, File watcher, Process, Clipboard, File dialog, Notification, System info, Launcher, Network monitor, Battery monitor |
 | **Components** | Timer, Background worker, Web request, Settings |
@@ -228,7 +228,8 @@ The menu opens at the pointer and stays inside the window. <kbd>Esc</kbd> or a c
 ## The outline
 
 The **Outline** lists every control of the document as a tree. The first row is the form (or the component)
-itself: click it to select it, **+** adds a control to it.
+itself: click it to select it, **+** adds a control to it, and the **script** icon opens the `.py` it is tied to, as
+in Godot (see [The script link](/pyzed/editor/component-designer/#the-script-link)).
 
 ![The outline: a locked control and a hidden one](../../../../screenshots/editor-outline.png)
 
@@ -240,6 +241,8 @@ itself: click it to select it, **+** adds a control to it.
 - **Eye**: hides the control. Hidden controls are invisible when the form runs and their names are grayed in
   the outline. See [Dialogs, drawers and other hidden controls](#dialogs-drawers-and-other-hidden-controls).
 - **Lock**: locks the control so it cannot be moved or resized by accident.
+- **Script** (designed components): opens the class of a component placed here. Library controls and components
+  written only in code have none.
 - **+** (containers): adds a control inside.
 - **Drag a row** to reorder it: a line shows where it goes (before or after a row), and a frame when it would go
   *inside* a container. Drop it on the canvas to move it into the container under the pointer, or onto the form.

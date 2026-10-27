@@ -1,6 +1,8 @@
 //! The user's key bindings, written like Zed's keymap: `"ctrl-shift-k"`, `"alt-up"`, `"f2"` or a
-//! Ctrl+K chord such as `"ctrl-k ctrl-c"`. They are checked before the default keys, and a key
-//! bound to nothing (`None`) loses its default action.
+//! chord of two keys such as `"ctrl-k ctrl-c"` or Emacs's `"ctrl-x u"`. They are checked before
+//! the default keys, and a key bound to nothing (`None`) loses its default action. The first key
+//! of a chord only waits for the second one (a chord bound to nothing leaves the second key to
+//! the app, so the app's own chords work while the editor has the keyboard).
 
 use iced::keyboard;
 use iced::widget::text_editor;
@@ -110,11 +112,22 @@ impl Keystroke {
     }
 
     pub fn matches(&self, press: &text_editor::KeyPress) -> bool {
-        let m = press.modifiers;
+        self.matches_key(&press.key, press.modifiers)
+    }
+
+    pub fn matches_key(&self, key: &keyboard::Key, m: keyboard::Modifiers) -> bool {
         if (m.command(), m.alt(), m.shift()) != (self.command, self.alt, self.shift) {
-            return false;
+            // Shifted punctuation (`alt-<` is Alt+Shift+,) is written without the Shift.
+            let shifted = m.shift()
+                && !self.shift
+                && (m.command(), m.alt()) == (self.command, self.alt)
+                && self.key.chars().count() == 1
+                && !self.key.chars().all(char::is_alphanumeric);
+            if !shifted {
+                return false;
+            }
         }
-        key_name(&press.key).is_some_and(|key| key == self.key)
+        key_name(key).is_some_and(|key| key == self.key)
     }
 }
 
@@ -159,16 +172,18 @@ fn key_name(key: &keyboard::Key) -> Option<String> {
     })
 }
 
-/// A user binding: a key (or the second key of a Ctrl+K chord) and what it runs.
+/// A user binding: a key, or the second key of a chord after its first one (`prefix`), and
+/// what it runs.
 #[derive(Debug, Clone)]
 pub struct KeyBinding {
-    chord: bool,
+    prefix: Option<Keystroke>,
     stroke: Keystroke,
     target: Option<Target>,
 }
 
 impl KeyBinding {
-    /// Parses `keys` (`"ctrl-d"`, `"ctrl-k ctrl-c"`) bound to the action `name`, or to nothing.
+    /// Parses `keys` (`"ctrl-d"`, `"ctrl-k ctrl-c"`, `"ctrl-x u"`) bound to the action `name`, or
+    /// to nothing.
     pub fn parse(keys: &str, name: Option<&str>) -> Result<Self, String> {
         let target = match name.map(str::trim).filter(|n| !n.is_empty()) {
             Some(name) => {
@@ -178,19 +193,16 @@ impl KeyBinding {
         };
         let strokes: Vec<&str> = keys.split_whitespace().collect();
         let bad = || format!("invalid keystroke {keys:?}");
-        let (chord, stroke) = match strokes.as_slice() {
-            [one] => (false, Keystroke::parse(one).ok_or_else(bad)?),
-            [first, second] => {
-                let ctrl_k = Keystroke::parse("ctrl-k");
-                if Keystroke::parse(first) != ctrl_k {
-                    return Err(format!("{keys:?}: chords must start with ctrl-k"));
-                }
-                (true, Keystroke::parse(second).ok_or_else(bad)?)
-            }
+        let (prefix, stroke) = match strokes.as_slice() {
+            [one] => (None, Keystroke::parse(one).ok_or_else(bad)?),
+            [first, second] => (
+                Some(Keystroke::parse(first).ok_or_else(bad)?),
+                Keystroke::parse(second).ok_or_else(bad)?,
+            ),
             _ => return Err(bad()),
         };
         Ok(Self {
-            chord,
+            prefix,
             stroke,
             target,
         })
@@ -198,17 +210,31 @@ impl KeyBinding {
 }
 
 /// The user's binding for `press`: `Some(None)` when the key is bound to nothing, `None` when
-/// the user did not bind it. `chord` is set for the key that follows Ctrl+K.
+/// the user did not bind it. `pending` is the first key of a chord, when one was pressed.
 pub fn lookup(
     keymap: &[KeyBinding],
     press: &text_editor::KeyPress,
-    chord: bool,
+    pending: Option<&Keystroke>,
 ) -> Option<Option<Target>> {
     keymap
         .iter()
         .rev()
-        .find(|b| b.chord == chord && b.stroke.matches(press))
+        .find(|b| b.prefix.as_ref() == pending && b.stroke.matches(press))
         .map(|b| b.target)
+}
+
+/// The first key of a chord of `keymap` that `press` is, if any.
+pub fn prefix(keymap: &[KeyBinding], press: &text_editor::KeyPress) -> Option<Keystroke> {
+    keymap
+        .iter()
+        .filter_map(|b| b.prefix.as_ref())
+        .find(|p| p.matches(press))
+        .cloned()
+}
+
+/// Ctrl+K, the first key of the editor's own chords.
+pub fn ctrl_k() -> Keystroke {
+    Keystroke::parse("ctrl-k").expect("a keystroke")
 }
 
 #[cfg(test)]
@@ -230,7 +256,7 @@ mod tests {
     #[test]
     fn parses_bindings() {
         let b = KeyBinding::parse("ctrl-k ctrl-c", Some("editor::ToggleComments")).unwrap();
-        assert!(b.chord);
+        assert_eq!(b.prefix, Some(ctrl_k()));
         assert!(matches!(
             b.target,
             Some(Target::Action(EditorAction::ToggleComments))
@@ -243,6 +269,8 @@ mod tests {
         ));
         assert!(KeyBinding::parse("ctrl-d", None).unwrap().target.is_none());
         assert!(KeyBinding::parse("ctrl-d", Some("nope")).is_err());
-        assert!(KeyBinding::parse("ctrl-a ctrl-b", Some("undo")).is_err());
+        let emacs = KeyBinding::parse("ctrl-x u", Some("undo")).unwrap();
+        assert_eq!(emacs.prefix, Keystroke::parse("ctrl-x"));
+        assert!(KeyBinding::parse("ctrl-a ctrl-b ctrl-c", Some("undo")).is_err());
     }
 }

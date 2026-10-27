@@ -16,8 +16,8 @@ Pyzed widgets react to events in two layers:
 - **The common events**: 18 events every widget has, whatever it is, attached with `.on(...)`:
   clicks, hover, drag, focus, keys and size. A `pz.Component` also raises `on_mount` and `on_unmount`.
 
-So a component can have up to its own events plus 18 common ones. Across the 114 components of
-the library there are **161 own events**; the ones with the most are listed first in the table at the end.
+So a component can have up to its own events plus 18 common ones. Across the 125 components of
+the library there are **169 own events**; the ones with the most are listed first in the table at the end.
 
 ```python
 ui.list_item("main.py", self.open, icon="file").on(   # on_press is its own event
@@ -79,6 +79,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | `(x, y)` | The pointer position, relative to the widget. | `pz.canvas(on_press=)`, `pz.canvas(on_release=)`, `pz.canvas(on_right_press=)`, `pz.canvas(on_move=)`… |
 | `(info)` | A dict (scroll offset and sizes) or a `ui.ErrorInfo`. | `ui.editor(on_scroll=)`, `ui.error_boundary(on_error=)`, `ui.error_boundary(on_details=)`, `pz.scrollable(on_scroll=)`… |
 | `(value)` | The new value: a number, a color, an option… | `ui.file_input(on_change=)`, `ui.number_field(on_change=)`, `ui.radio_group(on_select=)`, `ui.slider(on_change=)`… |
+| `(index)` | The position of what was clicked, 0 for the first. | `ui.breadcrumbs(on_press=)`, `ui.stepper(on_select=)`, `ui.tab_bar(on_drag_over=)`, `ui.timeline(on_press=)` |
 | `(tab_id)` | The id of the tab. | `ui.tab_bar(on_select=)`, `ui.tab_bar(on_close=)`, `ui.tab_bar(on_drag=)`, `ui.tab_bar(on_context=)` |
 | `(id)` | The id of the row or tab (for a tree, its path). | `ui.tree(on_toggle=)`, `ui.tree(on_select=)`, `ui.tree(on_open=)`, `ui.tree(on_context=)` |
 | `(row)` | The row (the dict or object you passed in `rows`). | `ui.table(on_row_press=)`, `ui.table(on_row_double_press=)`, `ui.table(on_row_context=)` |
@@ -127,9 +128,11 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Error boundary](/pyzed/library/error-boundary/#events) | 2 | 20 | `on_error`, `on_details` |
 | [Number field](/pyzed/library/number-field/#events) | 2 | 20 | `on_change`, `on_submit` |
 | [Picker](/pyzed/library/picker/#events) | 2 | 20 | `on_query`, `on_submit` |
+| [Range slider](/pyzed/library/range-slider/#events) | 2 | 20 | `on_change`, `on_release` |
 | [Service row](/pyzed/library/service-row/#events) | 2 | 22 | `on_toggle`, `on_primary` |
 | [Slider](/pyzed/library/slider/#events) | 2 | 20 | `on_change`, `on_release` |
 | [Split button](/pyzed/library/split-button/#events) | 2 | 20 | `on_press`, `on_menu` |
+| [Tag input](/pyzed/library/tag-input/#events) | 2 | 20 | `on_change`, `on_input` |
 | [Thread history](/pyzed/library/thread-history/#events) | 2 | 22 | `on_open`, `on_delete` |
 | [Toast](/pyzed/library/toast/#events) | 2 | 20 | `on_dismiss`, `on_press` |
 | [Accordion](/pyzed/library/accordion/#events) | 1 | 19 | `on_toggle` |
@@ -149,9 +152,11 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Markdown](/pyzed/library/markdown/#events) | 1 | 19 | `on_link` |
 | [Menu](/pyzed/library/menu/#events) | 1 | 19 | `on_press` |
 | [Modal](/pyzed/library/modal/#events) | 1 | 19 | `on_close` |
+| [Pagination](/pyzed/library/pagination/#events) | 1 | 19 | `on_change` |
 | [Panel](/pyzed/library/panel/#events) | 1 | 19 | `on_resize` |
 | [Popover](/pyzed/library/popover/#events) | 1 | 19 | `on_dismiss` |
 | [Radio group](/pyzed/library/radio-group/#events) | 1 | 19 | `on_select` |
+| [Rating](/pyzed/library/rating/#events) | 1 | 19 | `on_change` |
 | [Reference browser](/pyzed/library/reference-browser/#events) | 1 | 19 | `on_open_url` |
 | [Resizable](/pyzed/library/resizable/#events) | 1 | 19 | `on_resize` |
 | [Scrollable](/pyzed/library/scrollable/#events) | 1 | 19 | `on_scroll` |
@@ -161,7 +166,9 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Split](/pyzed/library/split/#events) | 1 | 19 | `on_resize` |
 | [Stat](/pyzed/library/stat/#events) | 1 | 19 | `on_press` |
 | [Status bar](/pyzed/library/status-bar/#events) | 1 | 19 | `on_press` |
+| [Stepper](/pyzed/library/stepper/#events) | 1 | 19 | `on_select` |
 | [Switch](/pyzed/library/switch/#events) | 1 | 19 | `on_toggle` |
+| [Timeline](/pyzed/library/timeline/#events) | 1 | 19 | `on_press` |
 | [Title bar](/pyzed/library/title-bar/#events) | 1 | 19 | `on_press` |
 | [Toggle group](/pyzed/library/toggle-group/#events) | 1 | 19 | `on_select` |
 | [Virtual list](/pyzed/library/virtual-list/#events) | 1 | 19 | `on_scroll` |
@@ -175,6 +182,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Container](/pyzed/library/container/#events) | 0 | 18 | — |
 | [Context meter](/pyzed/library/context-meter/#events) | 0 | 18 | — |
 | [Count badge](/pyzed/library/count-badge/#events) | 0 | 18 | — |
+| [Description list](/pyzed/library/description-list/#events) | 0 | 18 | — |
 | [Diff stat](/pyzed/library/diff-stat/#events) | 0 | 18 | — |
 | [Diff view](/pyzed/library/diff-view/#events) | 0 | 18 | — |
 | [Divider](/pyzed/library/divider/#events) | 0 | 18 | — |
@@ -184,6 +192,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Facepile](/pyzed/library/facepile/#events) | 0 | 18 | — |
 | [Field](/pyzed/library/field/#events) | 0 | 18 | — |
 | [Flex](/pyzed/library/flex/#events) | 0 | 18 | — |
+| [Gauge](/pyzed/library/gauge/#events) | 0 | 18 | — |
 | [Grid](/pyzed/library/grid/#events) | 0 | 18 | — |
 | [Heading](/pyzed/library/heading/#events) | 0 | 18 | — |
 | [Icon](/pyzed/library/icon/#events) | 0 | 18 | — |
@@ -192,16 +201,19 @@ Controls that produce a value call your callable with it. The most common shapes
 | [Kbd](/pyzed/library/kbd/#events) | 0 | 18 | — |
 | [Keybinding hint](/pyzed/library/keybinding-hint/#events) | 0 | 18 | — |
 | [Label](/pyzed/library/label/#events) | 0 | 18 | — |
+| [Line chart](/pyzed/library/line-chart/#events) | 0 | 18 | — |
 | [List header](/pyzed/library/list-header/#events) | 0 | 18 | — |
 | [Panel header](/pyzed/library/panel-header/#events) | 0 | 18 | — |
 | [Plan](/pyzed/library/plan/#events) | 0 | 20 | — |
 | [Progress](/pyzed/library/progress/#events) | 0 | 18 | — |
+| [Progress ring](/pyzed/library/progress-ring/#events) | 0 | 18 | — |
 | [QR code](/pyzed/library/qr-code/#events) | 0 | 18 | — |
 | [Responsive](/pyzed/library/responsive/#events) | 0 | 18 | — |
 | [Rich text](/pyzed/library/rich-text/#events) | 0 | 18 | — |
 | [Row](/pyzed/library/row/#events) | 0 | 18 | — |
 | [Settings group](/pyzed/library/settings-group/#events) | 0 | 18 | — |
 | [Shader](/pyzed/library/shader/#events) | 0 | 18 | — |
+| [Skeleton](/pyzed/library/skeleton/#events) | 0 | 18 | — |
 | [Space](/pyzed/library/spacing/#events) | 0 | 18 | — |
 | [Sparkline](/pyzed/library/sparkline/#events) | 0 | 18 | — |
 | [Spinner](/pyzed/library/spinner/#events) | 0 | 18 | — |

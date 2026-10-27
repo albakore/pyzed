@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import builtins
+import math
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, List, Optional, Sequence, Union
 
@@ -476,6 +478,338 @@ def donut(
         shapes.append(draw.text(c, c, label, color=t.text, size=size * 0.18, align_x="center", align_y="center",
                                 weight="semibold"))
     return _core.canvas(shapes, width=size, height=size)
+
+
+def _short(value: float) -> str:
+    """``1260`` → ``"1.3k"``: an axis label that stays narrow."""
+    magnitude = abs(value)
+    for limit, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "k")):
+        if magnitude >= limit:
+            return f"{value / limit:.1f}".rstrip("0").rstrip(".") + suffix
+    return f"{value:.2f}".rstrip("0").rstrip(".") if magnitude < 10 and value != int(value) else f"{value:.0f}"
+
+
+def _nice_step(raw: float) -> float:
+    """The round step (1, 2, 2.5 or 5 times a power of ten) closest above ``raw``."""
+    power = 10 ** math.floor(math.log10(raw)) if raw > 0 else 1.0
+    for factor in (1, 2, 2.5, 5, 10):
+        if raw <= factor * power + 1e-12:
+            return factor * power
+    return 10 * power
+
+
+def line_chart(
+    series: Any,
+    *,
+    labels: Optional[Sequence[str]] = None,
+    width: float = 360,
+    height: float = 180,
+    colors: Optional[Sequence[str]] = None,
+    fill: bool = False,
+    points: bool = False,
+    grid: bool = True,
+    legend: Optional[bool] = None,
+    min: Optional[float] = None,  # noqa: A002
+    max: Optional[float] = None,  # noqa: A002
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A line chart with axes: one list of numbers, several lists, or ``{name: values}``.
+
+    ``labels`` go under the x axis (thinned out when they do not fit); the y axis shows four
+    steps from ``min`` to ``max`` (worked out from the data when ``None``). ``fill`` shades
+    under each line, ``points`` marks each value and ``grid`` draws the horizontal lines.
+    With a dict, a ``legend`` of the names goes under the chart (``legend=False`` hides it).
+    """
+    t = _theme(theme)
+    if isinstance(series, dict):
+        names: List[str] = [str(k) for k in series]
+        lines = [list(v) for v in series.values()]
+    elif series and isinstance(next(iter(series)), (list, tuple)):
+        names, lines = [], [list(v) for v in series]
+    else:
+        names, lines = [], [list(series)]
+    lines = [values for values in lines if values]
+    palette = list(colors) if colors else [t.accent, t.success, t.warning, t.error, t.info, *t.players]
+    if not lines:
+        return _core.space(width=width, height=height)
+    flat = [v for values in lines for v in values]
+    lo = builtins.min(flat) if min is None else min
+    hi = builtins.max(flat) if max is None else max
+    if min is None and lo > 0 and lo < (hi - lo):
+        lo = 0.0  # small positive data reads better from zero
+    if hi == lo:
+        hi = lo + 1.0
+    # round steps (1, 2, 2.5 or 5 times a power of ten) unless both ends are given
+    step_y = _nice_step((hi - lo) / 4)
+    if min is None:
+        lo = math.floor(lo / step_y + 1e-9) * step_y
+    if max is None:
+        hi = math.ceil(hi / step_y - 1e-9) * step_y
+    span = hi - lo
+    ticks = [lo + step_y * i for i in range(int(round(span / step_y)) + 1)] if min is None or max is None \
+        else [lo + span * i / 4 for i in range(5)]
+    axis = builtins.max(len(_short(v)) for v in ticks) * 6.5 + 8
+    last = str(labels[builtins.min(len(labels), builtins.max(len(v) for v in lines)) - 1]) if labels else ""
+    left, top, right = axis, 6.0, builtins.max(8.0, len(last) * 3.5)
+    bottom = height - (20 if labels else 6)
+    plot_w, plot_h = width - left - right, bottom - top
+    count = builtins.max(len(values) for values in lines)
+    step = plot_w / builtins.max(count - 1, 1)
+
+    def at(i: int, v: float) -> tuple:
+        return (left + i * step, bottom - (v - lo) / span * plot_h)
+
+    shapes: List[Any] = []
+    for value in ticks:
+        y = bottom - (value - lo) / span * plot_h
+        if grid:
+            shapes.append(draw.line(left, y, width - right, y, stroke=alpha(t.text, 0.07 if value != lo else 0.2)))
+        shapes.append(draw.text(left - 6, y, _short(value), color=t.text_placeholder, size=10.5, align_x="end",
+                                align_y="center"))
+    if labels:
+        every = builtins.max(1, int(len(labels) * 44 / builtins.max(plot_w, 1)) + 1)
+        for i, text in enumerate(labels[:count]):
+            if i % every == 0:
+                shapes.append(draw.text(left + i * step, height - 2, text, color=t.text_muted, size=11,
+                                        align_x="center", align_y="bottom"))
+    for n, values in enumerate(lines):
+        color = t.color(palette[n % len(palette)])
+        pts = [at(i, v) for i, v in enumerate(values)]
+        if fill and len(pts) > 1:
+            shapes.append(draw.polygon([(pts[0][0], bottom), *pts, (pts[-1][0], bottom)], fill=alpha(color, 0.14)))
+        if len(pts) > 1:
+            shapes.append(draw.polyline(pts, stroke=color, width=2))
+        if points or len(pts) == 1:
+            shapes.extend(draw.circle(x, y, 3, fill=color) for x, y in pts)
+    chart = _core.canvas(shapes, width=width, height=height)
+    if not names or legend is False:
+        return chart
+    keys = _core.row([
+        _core.row([_core.container(None, width=10, height=3, radius=2, bg=t.color(palette[n % len(palette)])),
+                   label(name, size="sm", color="text_muted", wrap=False, theme=t)], spacing=5, align="center")
+        for n, name in enumerate(names[:len(lines)])
+    ], spacing=14, wrap=True, padding=(0, 0, 0, left))
+    return _core.column([chart, keys], spacing=6)
+
+
+def gauge(
+    value: float,
+    *,
+    min: float = 0.0,  # noqa: A002
+    max: float = 100.0,  # noqa: A002
+    size: float = 140,
+    thickness: float = 12,
+    unit: str = "",
+    label: Any = None,
+    tint: str = "accent",
+    thresholds: Optional[Sequence[tuple]] = None,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A half-circle meter for one number, like a speedometer: CPU use, temperature, a score.
+
+    ``unit`` follows the number in the middle and ``label`` goes under it. ``thresholds``
+    are ``(from_value, color)`` pairs that recolor the arc as the value climbs, such as
+    ``[(70, "warning"), (90, "error")]``.
+    """
+    t = _theme(theme)
+    span = (max - min) or 1.0
+    fraction = _fraction((value - min) / span)
+    color = tint
+    for limit, tone in sorted(thresholds or (), key=lambda pair: pair[0]):
+        if value >= limit:
+            color = tone
+    r = (size - thickness) / 2
+    c = size / 2
+    base = c + 2
+    shapes: List[Any] = [draw.arc(c, base, r, 180, 360, stroke=alpha(t.text, 0.08), width=thickness, cap="round")]
+    if fraction > 0:
+        shapes.append(draw.arc(c, base, r, 180, 180 + 180 * fraction, stroke=t.color(color), width=thickness,
+                               cap="round"))
+    number = f"{value:.0f}" if float(value).is_integer() or abs(value) >= 100 else f"{value:.1f}"
+    shapes.append(draw.text(c, base - 2, number + unit, color=t.text, size=size * 0.17, weight="semibold",
+                            align_x="center", align_y="bottom"))
+    height = base + thickness / 2 + 2
+    if label is not None:
+        shapes.append(draw.text(c, base + 6, label, color=t.text_muted, size=12, align_x="center"))
+        height = base + 22
+    return _core.canvas(shapes, width=size, height=height)
+
+
+def progress_ring(
+    value: Optional[float],
+    *,
+    max: float = 1.0,  # noqa: A002
+    size: float = 40,
+    thickness: float = 4,
+    tint: str = "accent",
+    show_value: bool = False,
+    label: Any = None,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A round progress bar: the ring fills clockwise from the top as ``value`` reaches ``max``.
+
+    ``value=None`` spins (indeterminate). ``show_value`` writes the percentage in the middle and
+    ``label`` any other text there instead (``"3/8"``).
+    """
+    t = _theme(theme)
+    if value is None:
+        return spinner(size=size, tint=tint, theme=t)
+    fraction = _fraction(value / (max or 1.0))
+    c = size / 2
+    r = c - thickness / 2
+    shapes: List[Any] = [draw.circle(c, c, r, stroke=alpha(t.color(tint), 0.18), width=thickness)]
+    if fraction >= 1:
+        shapes.append(draw.circle(c, c, r, stroke=t.color(tint), width=thickness))
+    elif fraction > 0:
+        shapes.append(draw.arc(c, c, r, -90, -90 + 360 * fraction, stroke=t.color(tint), width=thickness,
+                               cap="round"))
+    text = label if label is not None else (f"{fraction:.0%}" if show_value else None)
+    if text is not None:
+        shapes.append(draw.text(c, c, text, color=t.text, size=builtins.max(size * 0.26, 9), weight="medium",
+                                align_x="center", align_y="center"))
+    return _core.canvas(shapes, width=size, height=size)
+
+
+def _fraction(value: float) -> float:
+    return 0.0 if value < 0 else 1.0 if value > 1 else float(value)
+
+
+def skeleton(
+    width: Any = "fill",
+    height: float = 12,
+    *,
+    lines: int = 1,
+    circle: bool = False,
+    radius: Optional[float] = None,
+    spacing: float = 8,
+    animated: bool = True,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A grey placeholder that pulses where content is still loading.
+
+    One bar of ``width`` × ``height``; ``lines`` stacks several, the last one shorter, like a
+    paragraph; ``circle`` makes a round one of ``height`` (an avatar). ``animated=False``
+    keeps it still (it also stays still when the system asks for reduced motion).
+    """
+    t = _theme(theme)
+    color = alpha(t.text, 0.09)
+
+    def bar(w: Any, h: float, r: float) -> Any:
+        return _core.container(None, width=w, height=h, bg=color, radius=r)
+
+    if circle:
+        shape = bar(height, height, height / 2)
+    elif lines > 1:
+        r = t.radius_sm if radius is None else radius
+        rows = [bar(width, height, r) for _ in range(lines - 1)]
+        rows.append(_core.row([bar("fill:3", height, r), _core.space(width="fill:2")], width=width))
+        shape = _core.column(rows, spacing=spacing, width=width)
+    else:
+        shape = bar(width, height, t.radius_sm if radius is None else radius)
+    if not animated:
+        return shape
+    return shape.animate(opacity=0.45, duration=900, repeat="infinite", direction="alternate", easing="ease_in_out")
+
+
+@dataclass
+class TimelineItem:
+    """One entry of a ``timeline``: a ``title``, its ``time`` and ``description``, an ``icon``
+    in the dot, the dot's ``tint`` and any widget as ``content`` under the text."""
+
+    title: str
+    description: Optional[str] = None
+    time: Optional[str] = None
+    icon: Optional[str] = None
+    tint: str = "accent"
+    content: Any = None
+
+
+def timeline(
+    items: Sequence[Any],
+    *,
+    on_press: Optional[Callable[[int], Any]] = None,
+    dense: bool = False,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """Events in order down a line: a history, a changelog, the steps of a delivery.
+
+    ``items`` are ``TimelineItem`` objects, dicts with the same keys, or plain titles. Each
+    gets a dot (with its ``icon`` inside, if any) joined to the next by a line; ``time`` goes
+    to the right of the title. ``dense`` uses small dots and less space; ``on_press(index)``
+    makes the entries clickable.
+
+    Events:
+        ``on_press(index)``: Called with the index of the clicked entry.
+    """
+    t = _theme(theme)
+    entries = [item if isinstance(item, TimelineItem) else
+               TimelineItem(**item) if isinstance(item, dict) else TimelineItem(str(item)) for item in items]
+    dot_size = 10 if dense else 22
+    rows: List[Any] = []
+    for i, item in enumerate(entries):
+        color = t.color(item.tint)
+        if item.icon and not dense:
+            dot = _core.container(_icon(item.icon, size=12, color=color), width=dot_size, height=dot_size,
+                                  center=True, radius=dot_size / 2, bg=alpha(color, 0.16),
+                                  border_color=alpha(color, 0.6), border_width=1.0)
+        else:
+            dot = _core.container(None, width=dot_size, height=dot_size, radius=dot_size / 2,
+                                  bg=color if dense else alpha(color, 0.16), border_color=color, border_width=2.0)
+        last = i == len(entries) - 1
+        rail = _core.column([
+            _core.container(dot, padding=(2 if dense else 0, 0, 0, 0)),
+            None if last else _core.container(None, width=2, height="fill", bg=t.border_variant, radius=1),
+        ], spacing=2 if dense else 4, align="center", width=dot_size, height="fill")
+        text = _core.column([
+            _core.row([label(item.title, weight="medium", wrap=False, theme=t), _core.space(width="fill"),
+                       label(item.time, size="sm", color="text_placeholder", wrap=False, theme=t)
+                       if item.time else None], spacing=8, align="center", width="fill"),
+            label(item.description, size="sm", color="text_muted", theme=t) if item.description else None,
+            item.content,
+        ], spacing=2 if dense else 4, width="fill", padding=(0, 0, 4 if dense else 14, 0))
+        body = _core.container(text, width="fill", padding=(0, 0, 0, 0))
+        if on_press is not None:
+            body = body.on(click=lambda i=i: on_press(i), cursor="pointer")
+        rows.append(_core.row([rail, body], spacing=8 if dense else 12, width="fill", height="shrink"))
+    return _core.column(rows, width="fill")
+
+
+def description_list(
+    items: Any,
+    *,
+    label_width: Any = 140,
+    vertical: bool = False,
+    dividers: bool = True,
+    mono_values: bool = False,
+    selectable: bool = True,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """Name and value pairs, one per row: the details of a file, an order or a device.
+
+    ``items`` is a dict or ``(name, value)`` pairs; a value may be text or any widget (a
+    badge, a link). Names take ``label_width`` on the left, or go above the value with
+    ``vertical``. ``mono_values`` writes text values in the monospace font (ids, hashes);
+    ``selectable`` lets them be selected and copied.
+    """
+    t = _theme(theme)
+    pairs = list(items.items()) if isinstance(items, dict) else [tuple(pair) for pair in items]
+    rows: List[Any] = []
+    for i, (name, value) in enumerate(pairs):
+        if isinstance(value, _core.Widget):
+            shown = value
+        else:
+            shown = label("—" if value is None else str(value), mono=mono_values, theme=t,
+                          selectable="description_list" if selectable else False)
+        title = label(name, size="sm", color="text_muted", wrap=False, theme=t)
+        if vertical:
+            row = _core.column([title, shown], spacing=2, width="fill")
+        else:
+            row = _core.row([_core.container(title, width=label_width), _core.container(shown, width="fill")],
+                            spacing=12, align="center", width="fill")
+        if i and dividers:
+            rows.append(_core.container(None, width="fill", height=1, bg=t.border_variant))
+        rows.append(_core.container(row, width="fill", padding=(6, 0)))
+    return _core.column(rows, width="fill")
 
 
 def spinner(*, size: float = 16, tint: str = "accent", speed: float = 1.0, theme: Optional[Theme] = None) -> _core.Widget:

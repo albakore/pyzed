@@ -32,7 +32,7 @@ def test_names_and_keys_are_written_like_zed():
     assert keymap.normalize("ctrl- ") == "ctrl-space"
     assert keymap.normalize("ctrl-k ctrl-s") == "ctrl-k ctrl-s"
     assert keymap.normalize("ctrl-j ctrl-s") == "ctrl-j ctrl-s"
-    assert keymap.normalize("ctrl-j ctrl-s", "Editor") is None  # editor chords start with ctrl-k
+    assert keymap.normalize("ctrl-x u", "Editor") == "ctrl-x u"  # Emacs's chords work in the editor too
     assert keymap.normalize("hyper-k") is None and keymap.normalize("a b c") is None
 
 
@@ -49,7 +49,9 @@ def test_the_users_file_overrides_and_removes_defaults():
     km.load()
     assert km.resolve("ctrl-alt-s", ("Workspace",)) == "workspace::save_as"
     assert km.resolve("ctrl-s", ("Canvas", "Workspace")) is None
-    assert km.editor_keymap() == {"ctrl-alt-d": "duplicate_line_down", "ctrl-d": None}
+    # the designer's keys and chords reach the editor bound to nothing, so it leaves them to the designer
+    assert km.editor_keymap() == {"ctrl-alt-d": "duplicate_line_down", "ctrl-d": None, "ctrl-alt-s": None,
+                                  "ctrl-k ctrl-s": None, "ctrl-k ctrl-i": None}
     assert km.resolve("ctrl-d", ("Canvas",)) == "workspace::save"  # the user's binding wins...
     assert km.conflicts() == {("Canvas", "ctrl-d"): [Binding("ctrl-d", "workspace::duplicate", "Canvas"),
                                                      Binding("ctrl-d", "workspace::save", "Canvas", True)]}
@@ -63,7 +65,7 @@ def test_changes_are_saved_in_zeds_format_and_reset():
     [save] = km.bindings_for("workspace::save")
     assert km.change(save, "ctrl-alt-w") is None
     assert km.add("canvas::open_main_event", "f4") is None
-    assert km.add("editor::delete_line", "ctrl-j ctrl-d", "Editor")  # an error: not an editor chord
+    assert km.add("editor::delete_line", "ctrl-j ctrl-d ctrl-x", "Editor")  # an error: three keys
     [enter] = km.bindings_for("project_panel::open")
     km.remove(enter)
     km.save()

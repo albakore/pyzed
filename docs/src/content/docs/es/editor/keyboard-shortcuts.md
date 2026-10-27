@@ -125,7 +125,11 @@ Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/p
 
 | Teclas | Acción |
 | --- | --- |
-| <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> | Mostrar sugerencias |
+| <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> | Mostrar sugerencias; sobre una tarjeta de información o con la lista abierta, mostrar toda la documentación |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>I</kbd> | Mostrar la tarjeta de información del nombre en el cursor |
+| <kbd>F8</kbd> / <kbd>Mayús</kbd>+<kbd>F8</kbd> | Problema siguiente / anterior |
+| <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>I</kbd> | Formatear el código con ruff |
+| <kbd>Alt</kbd>+<kbd>Mayús</kbd>+<kbd>→</kbd> / <kbd>←</kbd> | Ampliar / reducir la selección (palabra, cadena, paréntesis, línea, bloque) |
 | <kbd>↑</kbd> / <kbd>↓</kbd> | Moverse por la lista de sugerencias (da la vuelta) |
 | <kbd>RePág</kbd> / <kbd>AvPág</kbd> | Nueve filas en la lista, o una página en el código |
 | <kbd>Enter</kbd>, <kbd>Tab</kbd> | Aceptar la sugerencia |
@@ -161,6 +165,9 @@ Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/p
 | <kbd>Ctrl</kbd>+<kbd>/</kbd> | Comentar o descomentar |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer / rehacer |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Plegar / desplegar todo |
+
+Los atajos de otro editor (JetBrains, Sublime Text, Atom, TextMate, Emacs) y el modo Vim están en
+[Atajos base](/pyzed/es/editor/keymap/#atajos-base).
 
 La lista completa está en [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed).
 Todas estas teclas se pueden cambiar en el [editor de keymap](/pyzed/es/editor/keymap/).

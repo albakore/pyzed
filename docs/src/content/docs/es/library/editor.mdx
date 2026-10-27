@@ -2,7 +2,7 @@
 title: "Editor"
 description: "Un editor de código completo: resaltado, plegado, minimapa, marcas de git. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 49
+  order: 52
   label: "Editor"
 ---
 
@@ -363,6 +363,10 @@ editor(
     hover_delay=500,
     sticky_scroll=0,
     indent_guides=False,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=(),
+    vim=False,
     theme=None,
 )
 ```
@@ -408,6 +412,10 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `hover_delay` | `500` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
 | `sticky_scroll` | `0` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 | `indent_guides` | `False` | `True` dibuja una línea fina en cada nivel de sangría (la del bloque donde está el cursor resalta); `"rainbow"` da a cada profundidad su propio color. |
+| `diagnostics` | `None` | Problemas como `(line, column, end_line, end_column, severity)` desde 1 (`"error"`, `"warning"`, `"info"`, `"hint"` o 1–4 de LSP): se marcan en el minimapa y se subrayan con una línea ondulada. |
+| `diagnostic_underlines` | `True` | `False` quita el subrayado ondulado (el minimapa sigue marcando los problemas). |
+| `hover_keys` | `()` | Teclas que dejan abierta la tarjeta de información en vez de ocultarla (Ctrl+Espacio para ver más). |
+| `vim` | `False` | `True` edita como Vim (el `vim_mode` de Zed): modos Normal, Insertar y Visual; `on_action` recibe el modo y lo que Vim pide a la app. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 Eventos: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([eventos](#eventos)).
@@ -490,6 +498,10 @@ code_editor(
     sticky_scroll=0,
     indent_guides=None,
     indent_guides_active=None,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=None,
+    vim=False,
 )
 ```
 
@@ -550,6 +562,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `sticky_scroll` | `0` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 | `indent_guides` | `None` | Colores de las guías de sangría, uno por profundidad (se repiten); sin colores no hay guías. |
 | `indent_guides_active` | `None` | Colores de la guía del bloque donde está el cursor, por profundidad como `indent_guides`. |
+| `diagnostics` | `None` | Problemas como `(line, column, end_line, end_column, color)` desde 1: líneas teñidas y marcas en el minimapa, y subrayado ondulado. |
+| `diagnostic_underlines` | `True` | `False` quita el subrayado ondulado (el minimapa sigue marcando los problemas). |
+| `hover_keys` | `None` | Teclas que dejan abierta la información en vez de ocultarla (Ctrl+Espacio para ver más). |
+| `vim` | `False` | `True` edita como Vim: modos Normal, Insertar y Visual; `on_action` recibe el modo y lo que Vim pide a la app. |
 
 Eventos: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([eventos](#eventos)).
 
