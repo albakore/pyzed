@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Union
 from .. import _core
 from ..icons import for_file
 from ..icons import icon as _icon
-from ..theme import Theme, mix
+from ..theme import Theme, alpha, mix
 from .base import _theme, icon_button, indicator
 
 
@@ -298,3 +298,138 @@ def toolbar(
         align_y="center",
         bg=t.editor,
     )
+
+
+def stepper(
+    steps: Sequence[Union[str, tuple]],
+    current: int,
+    on_select: Optional[Callable[[int], Any]] = None,
+    *,
+    vertical: bool = False,
+    linear: bool = True,
+    errors: Iterable[int] = (),
+    tint: str = "accent",
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """The steps of a wizard or a checkout: done ones get a check, the ``current`` one is ringed.
+
+    ``steps`` are titles or ``(title, description)`` tuples and ``current`` is the index of
+    the step in progress (``len(steps)`` once all are done). ``on_select(index)`` makes the
+    steps clickable: with ``linear`` only the done ones and the current one, to go back.
+    ``errors`` are indexes drawn in the error color with an ``!``. ``vertical`` stacks them,
+    with the description under each title.
+
+    Events:
+        ``on_select(index)``: Called with the index of the clicked step.
+    """
+    t = _theme(theme)
+    accent = t.color(tint)
+    failed = set(errors)
+    items: List[Any] = []
+    for i, step in enumerate(steps):
+        title, description = (step[0], step[1] if len(step) > 1 else None) if isinstance(step, tuple) else (step, None)
+        done, active, wrong = i < current, i == current, i in failed
+        color = t.error if wrong else accent
+        if wrong:
+            mark = _icon("triangle-alert", size=12, color=t.background)
+        elif done:
+            mark = _icon("check", size=12, color=t.background)
+        else:
+            mark = _core.text(str(i + 1), size=11, weight="semibold", wrap=False,
+                              color=accent if active else t.text_muted)
+        dot = _core.container(mark, width=24, height=24, center=True, radius=12,
+                              bg=color if done or wrong else (alpha(accent, 0.14) if active else t.element),
+                              border_color=color if done or active or wrong else t.border, border_width=1.5)
+        words = _core.column([
+            _core.text(title, size=13, wrap=False, weight="medium" if active else None,
+                       color=t.error if wrong else (t.text if done or active else t.text_muted)),
+            _core.text(description, size=12, color=t.text_placeholder) if description and vertical else None,
+        ], spacing=1)
+        body = _core.row([dot, words], spacing=8, align="center" if not (description and vertical) else "start")
+        if on_select is not None and (not linear or i <= current):
+            body = _core.button(body, lambda i=i: on_select(i), padding=(2, 4), bg="transparent",
+                                hover_bg=t.ghost_hover, radius=t.radius_sm)
+        else:
+            body = _core.container(body, padding=(2, 4))
+        if i:
+            line = t.color(tint) if i <= current else t.border
+            if vertical:
+                items.append(_core.container(_core.container(None, width=2, height=16, bg=line), padding=(0, 0, 0, 15)))
+            else:
+                items.append(_core.container(None, width="fill", height=2, bg=line, radius=1))
+        items.append(body)
+    if vertical:
+        return _core.column(items, spacing=2)
+    return _core.row(items, spacing=6, align="center", width="fill")
+
+
+def _page_items(page: int, pages: int, siblings: int, boundaries: int) -> List[Optional[int]]:
+    """The page numbers to show, with ``None`` for each gap (``1 … 4 5 6 … 20``)."""
+    shown = set(range(1, min(boundaries, pages) + 1)) | set(range(max(pages - boundaries + 1, 1), pages + 1))
+    shown |= set(range(max(page - siblings, 1), min(page + siblings, pages) + 1))
+    out: List[Optional[int]] = []
+    previous = 0
+    for n in sorted(shown):
+        if n - previous == 2:
+            out.append(n - 1)  # a gap of one page shows the page instead of "…"
+        elif n - previous > 2:
+            out.append(None)
+        out.append(n)
+        previous = n
+    return out
+
+
+def pagination(
+    page: int,
+    pages: int,
+    on_change: Optional[Callable[[int], Any]] = None,
+    *,
+    siblings: int = 1,
+    boundaries: int = 1,
+    size: str = "md",
+    compact: bool = False,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """Page numbers with previous and next arrows: ``‹ 1 … 4 5 6 … 20 ›``.
+
+    ``page`` counts from 1 to ``pages``; ``siblings`` pages are shown on each side of the
+    current one and ``boundaries`` at each end, with ``…`` for the rest. ``compact`` shows
+    ``4 / 20`` between the arrows instead of the numbers, for narrow places.
+
+    Events:
+        ``on_change(page)``: Called with the page that was clicked (1 to ``pages``).
+    """
+    t = _theme(theme)
+    pages = max(int(pages), 1)
+    page = min(max(int(page), 1), pages)
+    height = {"sm": 22, "md": 26, "lg": 30}[size]
+    text_size = {"sm": 12, "md": 13, "lg": 14}[size]
+
+    def go(n: int) -> Any:
+        return (lambda: on_change(n)) if on_change is not None and n != page and 1 <= n <= pages else None
+
+    def arrow(name: str, target: int) -> Any:
+        handler = go(target)
+        return icon_button(name, handler, size="sm" if size == "sm" else "md", disabled=handler is None, theme=t)
+
+    items: List[Any] = [arrow("chevron-left", page - 1)]
+    if compact:
+        items.append(_core.text(f"{page} / {pages}", size=text_size, color=t.text_muted, wrap=False))
+    else:
+        for n in _page_items(page, pages, max(siblings, 0), max(boundaries, 1)):
+            if n is None:
+                items.append(_core.container(_core.text("…", size=text_size, color=t.text_placeholder, wrap=False),
+                                             width=height, height=height, center=True))
+                continue
+            current = n == page
+            number = _core.container(
+                _core.text(str(n), size=text_size, wrap=False, weight="medium" if current else None,
+                           color=t.text if current else t.text_muted),
+                height=height, padding=(0, 4), center=True, width=height if n < 100 else None)
+            items.append(_core.button(number, go(n), padding=0,
+                                      bg=t.element_selected if current else "transparent",
+                                      hover_bg=t.element_selected if current else t.ghost_hover,
+                                      border_color=t.border if current else "transparent",
+                                      border_width=1.0, radius=t.radius_sm))
+    items.append(arrow("chevron-right", page + 1))
+    return _core.row(items, spacing=2, align="center")

@@ -3611,3 +3611,92 @@ PAGES.append({
         }),
     ],
 })
+
+# -- Más componentes: valoraciones, rangos, etiquetas, pasos, páginas, carga y datos ---------------
+_section("ui", "Controles", {
+    "pyzed.ui.rating": {
+        "desc": "Una fila de estrellas (o cualquier icono) para dar o mostrar una puntuación. Al pulsar una estrella se envía su número; con `clearable`, pulsar la encendida envía 0. Sin `on_change` solo muestra el valor, redondeado a la estrella más cercana. Con el foco, las flechas lo cambian de uno en uno.",
+        "params": {"value": "Cuántas estrellas están encendidas (redondeado).", "on_change": "Función que recibe el número de estrellas elegido (de 0 a `max`).",
+                   "max": "Cuántas estrellas hay.", "icon": "Icono de Lucide de cada estrella.", "size": "Tamaño del icono en píxeles.",
+                   "tint": "Color de las estrellas encendidas (un token del tema o un color hex).", "clearable": "Pulsar el valor actual envía 0."},
+        "example": "ui.rating(self.stars, lambda n: setattr(self, \"stars\", n))",
+    },
+    "pyzed.ui.range_slider": {
+        "desc": "Un deslizador con dos tiradores que elige un rango. Al pulsar la barra se mueve allí el tirador más cercano y al arrastrar sigue moviéndose; los tiradores nunca se cruzan.",
+        "params": {"value": "`(bajo, alto)`.", "on_change": "Función que recibe el nuevo `(bajo, alto)`.", "min": "Valor más pequeño.", "max": "Valor más grande.",
+                   "step": "Los valores se ajustan a múltiplos de esto.", "min_gap": "Distancia mínima entre los dos tiradores.",
+                   "on_release": "Se envía al soltar el tirador (guarda o aplica ahí).", "tint": "Color del rango entre los tiradores.",
+                   "show_value": "Añade `bajo – alto` al lado: `True` o un formato para cada extremo, como `\"{:.0f} €\"`."},
+        "example": "ui.range_slider(self.price, lambda v: setattr(self, \"price\", v), min=0, max=500, step=5, show_value=\"{:.0f} €\")",
+    },
+    "pyzed.ui.tag_input": {
+        "desc": "Una caja de fichas que se pueden quitar, con un campo para escribir más. Intro o una coma convierten el texto en etiqueta; `on_change` recibe la lista nueva, igual que al pulsar la x de una ficha.",
+        "params": {"tags": "Tu lista de etiquetas.", "on_change": "Función que recibe la nueva lista de etiquetas.", "text": "Lo que se está escribiendo (también es tu estado).",
+                   "on_input": "Función que recibe el texto que se escribe.", "suggestions": "Etiquetas que se ofrecen bajo el campo mientras el texto coincide.",
+                   "max_tags": "Oculta el campo cuando la lista llega a este número.", "unique": "Una etiqueta que ya está en la lista no se vuelve a añadir.",
+                   "tint": "Color de las fichas."},
+        "example": "ui.tag_input(self.tags, lambda tags: setattr(self, \"tags\", tags), text=self.typing,\n             on_input=lambda text: setattr(self, \"typing\", text), placeholder=\"Añade una etiqueta…\")",
+    },
+    "pyzed.ui.stepper": {
+        "desc": "Los pasos de un asistente o de una compra: los hechos llevan una marca, el actual va rodeado y la línea entre ellos se llena al avanzar.",
+        "params": {"steps": "Títulos o tuplas `(título, descripción)`.", "current": "Índice del paso en curso (`len(steps)` cuando están todos hechos).",
+                   "on_select": "Se llama con el índice del paso pulsado.", "linear": "Solo se pueden pulsar los pasos hechos y el actual.",
+                   "errors": "Índices de pasos pintados con el color de error.", "vertical": "Apila los pasos, con la descripción bajo cada título.",
+                   "tint": "Color de los pasos hechos y de la línea."},
+        "example": "ui.stepper([\"Cuenta\", \"Dirección\", \"Pago\"], self.step, lambda i: setattr(self, \"step\", i))",
+    },
+    "pyzed.ui.pagination": {
+        "desc": "Números de página con flechas de anterior y siguiente (`‹ 1 … 4 5 6 … 20 ›`). Las páginas empiezan en 1.",
+        "params": {"page": "La página actual, desde 1.", "pages": "Cuántas páginas hay.", "on_change": "Se llama con la página pulsada.",
+                   "siblings": "Páginas a cada lado de la actual.", "boundaries": "Páginas que siempre se ven en cada extremo.",
+                   "size": '`"sm"`, `"md"` o `"lg"`.', "compact": "Muestra `4 / 20` entre las flechas en lugar de los números."},
+        "example": "ui.pagination(self.page, 20, lambda n: setattr(self, \"page\", n))",
+    },
+})
+_section("ui", "Datos y feedback", {
+    "pyzed.ui.line_chart": {
+        "desc": "Un gráfico de líneas con ejes: una lista de números, varias listas o `{nombre: valores}` (que añade una leyenda). El eje y muestra cuatro pasos entre `min` y `max`.",
+        "params": {"series": "Una lista de números, una lista de listas o un dict `{nombre: valores}`.", "labels": "Etiquetas bajo el eje x (se aclaran si no caben).",
+                   "colors": "Colores de las líneas (por defecto, los del tema).", "fill": "Sombrea bajo cada línea.", "points": "Marca cada valor con un punto.",
+                   "grid": "Dibuja las líneas horizontales.", "legend": "Con un dict, `False` oculta los nombres bajo el gráfico.",
+                   "min": "Base del eje y (sale de los datos con `None`).", "max": "Tope del eje y (sale de los datos con `None`)."},
+        "example": "ui.line_chart({\"Visitas\": [12, 18, 15, 24], \"Ventas\": [4, 6, 5, 9]}, labels=[\"T1\", \"T2\", \"T3\", \"T4\"])",
+    },
+    "pyzed.ui.gauge": {
+        "desc": "Un medidor de media circunferencia para un número, como un velocímetro. `thresholds` cambia el color del arco al subir el valor.",
+        "params": {"value": "El número que se muestra.", "min": "Valor del extremo izquierdo.", "max": "Valor del extremo derecho.", "size": "Ancho en píxeles.",
+                   "thickness": "Grosor del arco.", "unit": "Texto tras el número (`\"%\"`, `\"°C\"`).", "label": "Texto bajo el número.",
+                   "thresholds": 'Pares `(desde_valor, color)`, como `[(70, "warning"), (90, "error")]`.'},
+        "example": "ui.gauge(self.cpu, unit=\"%\", label=\"CPU\", thresholds=[(70, \"warning\"), (90, \"error\")])",
+    },
+    "pyzed.ui.progress_ring": {
+        "desc": "Una barra de progreso redonda que se llena en el sentido de las agujas del reloj desde arriba. `value=None` gira.",
+        "params": {"value": "Progreso hasta `max`, o `None` para que gire.", "max": "El valor del anillo lleno.", "size": "Diámetro en píxeles.",
+                   "thickness": "Grosor del anillo.", "show_value": "Escribe el porcentaje en el centro.", "label": "Otro texto en el centro (`\"3/8\"`)."},
+        "example": "ui.progress_ring(0.6, show_value=True, size=48)",
+    },
+    "pyzed.ui.skeleton": {
+        "desc": "Un marcador gris que late donde el contenido aún está cargando. `lines` hace un párrafo y `circle` un avatar.",
+        "params": {"height": "Alto de cada barra (el diámetro con `circle`).", "lines": "Apila varias barras, la última más corta.",
+                   "circle": "Un marcador redondo de `height`.", "animated": "Late (se queda quieto si el sistema pide reducir el movimiento)."},
+        "example": "ui.skeleton(lines=3)",
+    },
+    "pyzed.ui.TimelineItem": {
+        "desc": "Una entrada de `ui.timeline`.",
+        "params": {"title": "Título.", "description": "Texto atenuado bajo el título.", "time": "Texto a la derecha del título (una fecha, una hora).",
+                   "icon": "Icono dentro del punto.", "tint": "Color del punto.", "content": "Cualquier widget bajo el texto."},
+    },
+    "pyzed.ui.timeline": {
+        "desc": "Sucesos en orden a lo largo de una línea: un historial, un registro de cambios, los pasos de un envío. Cada entrada lleva un punto unido al siguiente.",
+        "params": {"items": "Objetos `ui.TimelineItem`, dicts con las mismas claves o títulos sueltos.", "on_press": "Se llama con el índice de la entrada pulsada.",
+                   "dense": "Puntos pequeños y menos espacio."},
+        "example": "ui.timeline([ui.TimelineItem(\"Pedido hecho\", time=\"09:12\", icon=\"shopping-cart\"),\n             ui.TimelineItem(\"Enviado\", \"En camino.\", time=\"14:30\", icon=\"truck\")])",
+    },
+    "pyzed.ui.description_list": {
+        "desc": "Pares de nombre y valor, uno por fila: los detalles de un archivo, un pedido o un dispositivo. Un valor puede ser texto o cualquier widget.",
+        "params": {"items": "Un dict o pares `(nombre, valor)`.", "label_width": "Ancho de la columna de nombres.", "vertical": "Pone cada nombre sobre su valor.",
+                   "dividers": "Líneas entre filas.", "mono_values": "Valores de texto en fuente monoespaciada (ids, hashes).",
+                   "selectable": "Los valores de texto se pueden seleccionar y copiar."},
+        "example": "ui.description_list({\"Nombre\": \"informe.pdf\", \"Tamaño\": \"2,4 MB\", \"Estado\": ui.badge(\"Sincronizado\", tint=\"success\")})",
+    },
+})

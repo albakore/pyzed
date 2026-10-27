@@ -39,35 +39,55 @@ from .controls import (
     disclosure,
     number_field,
     radio_group,
+    rating,
     select,
     split_button,
+    tag_input,
     toggle_group,
 )
 from .display import (
     Column,
+    TimelineItem,
     bar_chart,
     callout,
     count_badge,
+    description_list,
     diff_stat,
     donut,
     empty_state,
     facepile,
+    gauge,
     keybinding_hint,
+    line_chart,
     markdown,
     popover,
+    progress_ring,
     settings_group,
+    skeleton,
     sparkline,
     spinner,
     split,
     stat,
     table,
+    timeline,
 )
 from .frame import Menu, system_platform, window_controls, window_frame, window_title_bar
 from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
-from .inputs import checkbox, field, input, path_input, progress, search_input, segmented, slider, switch
+from .inputs import (
+    checkbox,
+    field,
+    input,
+    path_input,
+    progress,
+    range_slider,
+    search_input,
+    segmented,
+    slider,
+    switch,
+)
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree, virtual_list
-from .navigation import Tab, breadcrumbs, tab, tab_bar, toolbar
+from .navigation import Tab, breadcrumbs, pagination, stepper, tab, tab_bar, toolbar
 from .overlays import (
     PaletteItem,
     command_palette,
@@ -86,6 +106,18 @@ from .instruments import lcd, led, led_toggle, theme_rack
 from . import audio, camera, rack  # noqa: E402, F401  (namespaces: ui.audio.Knob, ui.camera.Webcam, ui.rack.Rack)
 
 __all__ = [
+    "TimelineItem",
+    "description_list",
+    "gauge",
+    "line_chart",
+    "pagination",
+    "progress_ring",
+    "range_slider",
+    "rating",
+    "skeleton",
+    "stepper",
+    "tag_input",
+    "timeline",
     "Calendar",
     "ColorPicker",
     "DatePicker",

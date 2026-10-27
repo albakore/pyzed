@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 
 from .. import _core
+from ..component import Component as _Component
 from ..icons import glyph as _glyph
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
@@ -550,3 +551,159 @@ def toggle_group(
         border_width=1.0,
         radius=t.radius_sm + 1,
     )
+
+
+def rating(
+    value: float,
+    on_change: Optional[Callable[[int], Any]] = None,
+    *,
+    max: int = 5,  # noqa: A002
+    icon: str = "star",
+    size: float = 18,
+    tint: str = "warning",
+    clearable: bool = True,
+    disabled: bool = False,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A row of ``max`` stars (or any Lucide ``icon``) where the first ``value`` are lit.
+
+    Clicking a star sends its number; with ``clearable`` a click on the current one sends 0.
+    Without ``on_change`` (or ``disabled``) it only shows the value, rounded to the nearest
+    star, like a product's score. A click or Tab gives it the keyboard focus; then the arrows
+    change it by one and Home/End jump to 0 and ``max``.
+
+    Events:
+        ``on_change(value)``: Callable that receives the number of stars picked (0 to ``max``).
+    """
+    t = _theme(theme)
+    lit = int(round(value or 0))
+    on = t.text_disabled if disabled else t.color(tint)
+    off = t.border if disabled else t.text_placeholder
+    active = on_change is not None and not disabled
+    stars = []
+    for n in range(1, int(max) + 1):
+        star = _core.text(_glyph(icon), size=size, color=on if n <= lit else off, font="icons", line_height=1.0,
+                          wrap=False)
+        if active:
+            star = _core.button(star, lambda n=n: on_change(0 if clearable and n == lit else n), padding=1,
+                                bg="transparent", hover_bg=t.ghost_hover, radius=t.radius_sm)
+        stars.append(star)
+    row = _core.row(stars, spacing=0 if active else 2, align="center")
+    if not active:
+        return row
+
+    def nudge(combo: str) -> Any:
+        new = {"home": 0, "end": int(max)}.get(combo, lit + (1 if combo in ("right", "up") else -1))
+        new = 0 if new < 0 else int(max) if new > max else new
+        return None if new == lit else on_change(new)
+
+    return key_focus(row, nudge, keys=("left", "right", "up", "down", "home", "end"), radius=t.radius_sm, theme=t)
+
+
+def tag_input(
+    tags: Sequence[str],
+    on_change: Optional[Callable[[List[str]], Any]] = None,
+    *,
+    text: str = "",
+    on_input: Optional[Callable[[str], Any]] = None,
+    placeholder: str = "",
+    suggestions: Sequence[str] = (),
+    max_tags: Optional[int] = None,
+    unique: bool = True,
+    tint: str = "accent",
+    width: Any = "fill",
+    disabled: bool = False,
+    id: Optional[str] = None,  # noqa: A002
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A box of removable chips with a field to type more: labels, recipients, keywords.
+
+    ``tags`` is your list. What is being typed is kept by the box itself, unless you hold it
+    in your state with ``text`` and ``on_input`` (to clear it or check it yourself). Enter (or a comma) turns the text into a tag and ``on_change`` gets the new list, as it
+    does when the x of a chip is clicked; with ``unique`` a tag already in the list is not
+    added twice, and ``max_tags`` hides the field once the list is full. ``suggestions``
+    shows the ones that match the text under the field, as chips to click. ``id`` names the
+    field, so it keeps the focus after a tag is added (``Command.focus(id)`` focuses it too).
+
+    Events:
+        ``on_change(tags)``: Callable that receives the new list of tags.
+        ``on_input(text)``: Callable that receives the text being typed.
+    """
+    from .inputs import input as _input
+
+    tags = list(tags)
+    editable = on_change is not None and not disabled
+    if on_input is None and editable:
+        # nobody holds the typed text: a small component keeps it
+        return _TagField(tags=tags, handler=on_change, text=text,
+                         options={"placeholder": placeholder, "suggestions": tuple(suggestions), "max_tags": max_tags,
+                                  "unique": unique, "tint": tint, "width": width, "id": id, "theme": theme})
+    t = _theme(theme)
+
+    def add(raw: str) -> Any:
+        new = [part.strip() for part in raw.split(",") if part.strip()]
+        result = list(tags)
+        for tag in new:
+            if (not unique or tag not in result) and (max_tags is None or len(result) < max_tags):
+                result.append(tag)
+        cleared = send(on_input, "") if on_input is not None else None
+        changed = on_change(result) if result != tags else None
+        # the field moves when a chip goes in front of it: give it the focus back to keep typing
+        out = [r for r in (changed, cleared, _core.Command.focus(id) if id else None) if r is not None]
+        return out[0] if len(out) == 1 else (out or None)
+
+    def typed(value: str) -> Any:
+        if "," in value and editable:
+            return add(value)
+        return send(on_input, value) if on_input is not None else None
+
+    def remove(index: int) -> Any:
+        return on_change([tag for i, tag in enumerate(tags) if i != index])
+
+    chips: List[Any] = [
+        chip(tag, on_remove=(lambda i=i: remove(i)) if editable else None, selected=True, tint=tint,
+             disabled=disabled, theme=t)
+        for i, tag in enumerate(tags)
+    ]
+    full = max_tags is not None and len(tags) >= max_tags
+    if not full and not disabled:
+        chips.append(_input(text, typed if (editable or on_input is not None) else None, placeholder=placeholder,
+                            on_submit=(lambda: add(text)) if editable else None, borderless=True, size="sm",
+                            width=120, id=id, theme=t))
+    box = _core.container(
+        _core.row(chips, spacing=4, align="center", wrap=True),
+        padding=(3, 6),
+        width=width,
+        bg=t.element if disabled else t.editor,
+        border_color=t.border,
+        border_width=1.0,
+        radius=t.radius_sm,
+    )
+    needle = text.strip().lower()
+    matches = [s for s in suggestions if needle and needle in s.lower() and (not unique or s not in tags)]
+    if not matches or full or not editable:
+        return box
+    hints = _core.row([chip(s, on_press=lambda s=s: add(s), icon="plus", theme=t) for s in matches[:8]],
+                      spacing=4, wrap=True)
+    return _core.column([box, hints], spacing=4, width=width)
+
+
+class _TagField(_Component):
+    """``tag_input`` keeping its own typed text, for callers that only care about the tags."""
+
+    tags: Any = ()
+    handler: Any = None
+    text: str = ""
+    options: Any = None
+    designer = False
+
+    def setup(self) -> None:
+        self.typed = self.text
+        self.field = (self.options or {}).get("id") or f"tag-input-{id(self)}"
+
+    def type(self, value: str) -> None:
+        self.typed = value
+
+    def render(self) -> Any:
+        options = {**(self.options or {}), "id": self.field}
+        return tag_input(self.tags, self.handler, text=self.typed, on_input=self.type, **options)

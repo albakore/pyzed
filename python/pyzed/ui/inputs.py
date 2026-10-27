@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any, List, Optional, Sequence, Tuple
 
 from .. import _core
@@ -369,6 +370,98 @@ def slider(
     if vertical:
         return _core.column([shown, bar], spacing=6, align="center", height=height)
     return _core.row([bar, shown], spacing=8, align="center", width="fill" if width == "fill" else None)
+
+
+_THUMB = 16
+
+
+def range_slider(
+    value: Sequence[float],
+    on_change: Any = None,
+    *,
+    min: float = 0.0,  # noqa: A002
+    max: float = 1.0,  # noqa: A002
+    step: float = 0.01,
+    min_gap: float = 0.0,
+    on_release: Any = None,
+    width: Any = "fill",
+    tint: str = "accent",
+    disabled: bool = False,
+    show_value: Any = False,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A slider with two knobs that picks a range, such as a price from 20 to 80.
+
+    ``value`` is ``(low, high)`` and ``on_change`` receives the new pair. Pressing the track
+    moves the nearer knob there and dragging keeps moving it; the knobs never cross and stay
+    ``min_gap`` apart. ``on_release`` runs when the button is let go; ``show_value`` adds
+    ``low – high`` next to it (``True``, or a format like ``"{:.0f} €"`` for each end).
+
+    Events:
+        ``on_change(value)``: Callable that receives the new ``(low, high)``.
+        ``on_release()``: Sent when the knob is let go (save or apply there).
+    """
+    t = _theme(theme)
+    span = (max - min) or 1.0
+    low, high = sorted((float(value[0]), float(value[1])))
+    low, high = _clamp(low, min, max), _clamp(high, min, max)
+    a = (low - min) / span
+    b = (high - min) / span
+    accent = alpha(t.color(tint), 0.4) if disabled else t.color(tint)
+
+    def portion(f: float) -> str:
+        return f"fill:{int(round(f * 1000)) or 1}"
+
+    def knob() -> Any:
+        return _core.container(None, width=_THUMB, height=_THUMB, radius=_THUMB / 2,
+                               bg=t.text_disabled if disabled else t.text, border_color=t.border, border_width=1.0)
+
+    rail = _core.container(None, width="fill", height=4, radius=2, bg=t.element if disabled else t.element_active)
+    filled = _core.row([
+        _core.space(width=_THUMB / 2), _core.space(width=portion(a), height=4),
+        _core.container(None, width=_THUMB / 2, height=4, bg=accent),
+        _core.container(None, width=portion(b - a), height=4, bg=accent),
+        _core.container(None, width=_THUMB / 2, height=4, bg=accent),
+        _core.space(width=portion(1 - b), height=4), _core.space(width=_THUMB / 2),
+    ], width="fill")
+    knobs = _core.row([_core.space(width=portion(a)), knob(), _core.space(width=portion(b - a)), knob(),
+                       _core.space(width=portion(1 - b))], width="fill", align="center")
+    track = _core.stack([
+        _core.container(rail, width="fill", height=_THUMB, align_y="center", padding=(0, _THUMB / 2)),
+        _core.container(filled, width="fill", height=_THUMB, align_y="center"),
+        knobs,
+    ], width=width, height=_THUMB)
+
+    def snap(v: float) -> float:
+        v = min + round((v - min) / step) * step if step else v
+        return round(_clamp(v, min, max), 10)
+
+    def press(event: Any) -> Any:
+        usable = (event.width or 0) - 2 * _THUMB
+        if usable <= 0:
+            return None
+        lo_x = _THUMB / 2 + a * usable
+        hi_x = _THUMB * 1.5 + b * usable
+        move_high = abs(event.x - hi_x) < abs(event.x - lo_x) or (lo_x == hi_x and event.x > hi_x)
+        if move_high:
+            new = (low, snap(builtins.max(min + (event.x - _THUMB * 1.5) / usable * span, low + min_gap)))
+        else:
+            new = (snap(builtins.min(min + (event.x - _THUMB / 2) / usable * span, high - min_gap)), high)
+        return None if new == (low, high) else send(on_change, new)
+
+    if not disabled and on_change is not None:
+        released = {"click": on_release, "drag_end": on_release} if on_release is not None else {}
+        track = track.on(mouse_down=press, drag=press, cursor="pointer", **released)
+    if not show_value:
+        return track
+    fmt = show_value if isinstance(show_value, str) else None
+    text = " – ".join(fmt.format(v) if fmt else _number(v, step) for v in (low, high))
+    shown = label(text, size="sm", color="text_muted", mono=True, wrap=False, theme=t)
+    return _core.row([track, shown], spacing=8, align="center", width="fill" if width == "fill" else None)
+
+
+def _clamp(value: float, low: float, high: float) -> float:
+    return low if value < low else high if value > high else value
 
 
 def _number(value: float, step: float) -> str:

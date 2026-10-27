@@ -1040,6 +1040,192 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
+### `rating`
+
+```python
+rating(
+    value,
+    on_change=None,
+    *,
+    max=5,
+    icon='star',
+    size=18,
+    tint='warning',
+    clearable=True,
+    disabled=False,
+    theme=None,
+)
+```
+
+A row of stars (or any icon) to give or show a score. Clicking a star sends its number; with `clearable` a click on the lit one sends 0. Without `on_change` it only shows the value, rounded to the nearest star. Focused, the arrows change it by one.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | How many stars are lit (rounded). |
+| `on_change` | Callable that receives the number of stars picked (0 to `max`). |
+| `max` | How many stars there are. |
+| `icon` | Lucide icon drawn for each star. |
+| `size` | Icon size in pixels. |
+| `tint` | Color of the lit stars (a theme token or hex color). |
+| `clearable` | A click on the current value sends 0. |
+| `disabled` | Disables it (ignores clicks). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.rating(self.stars, lambda n: setattr(self, "stars", n))
+```
+
+### `range_slider`
+
+```python
+range_slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    min_gap=0.0,
+    on_release=None,
+    width='fill',
+    tint='accent',
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
+```
+
+A slider with two knobs that picks a range. Pressing the track moves the nearer knob there and dragging keeps moving it; the knobs never cross.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | `(low, high)`. |
+| `on_change` | Callable that receives the new `(low, high)`. |
+| `min` | Smallest value. |
+| `max` | Largest value. |
+| `step` | Values snap to multiples of this. |
+| `min_gap` | Smallest distance kept between both knobs. |
+| `on_release` | Sent when the knob is let go (save or apply there). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `tint` | Color of the range between the knobs. |
+| `disabled` | Disables it (ignores clicks). |
+| `show_value` | Adds `low – high` next to it: `True`, or a format for each end such as `"{:.0f} €"`. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.range_slider(self.price, lambda v: setattr(self, "price", v), min=0, max=500, step=5, show_value="{:.0f} €")
+```
+
+### `tag_input`
+
+```python
+tag_input(
+    tags,
+    on_change=None,
+    *,
+    text='',
+    on_input=None,
+    placeholder='',
+    suggestions=(),
+    max_tags=None,
+    unique=True,
+    tint='accent',
+    width='fill',
+    disabled=False,
+    id=None,
+    theme=None,
+)
+```
+
+A box of removable chips with a field to type more. Enter or a comma turns the text into a tag; `on_change` gets the new list, as it does when a chip's x is clicked.
+
+| Parameter | Description |
+| --- | --- |
+| `tags` | Your list of tags. |
+| `on_change` | Callable that receives the new list of tags. |
+| `text` | What is being typed (your state too). |
+| `on_input` | Callable that receives the text being typed. |
+| `placeholder` | Hint text shown when empty. |
+| `suggestions` | Tags offered under the field while the text matches them. |
+| `max_tags` | Hides the field once the list has this many. |
+| `unique` | A tag already in the list is not added again. |
+| `tint` | Color of the chips. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `disabled` | Disables it (ignores clicks). |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.tag_input(self.tags, lambda tags: setattr(self, "tags", tags), text=self.typing,
+on_input=lambda text: setattr(self, "typing", text), placeholder="Add a label…")
+```
+
+### `stepper`
+
+```python
+stepper(
+    steps,
+    current,
+    on_select=None,
+    *,
+    vertical=False,
+    linear=True,
+    errors=(),
+    tint='accent',
+    theme=None,
+)
+```
+
+The steps of a wizard or a checkout: done ones get a check, the current one is ringed and the line between them fills as you advance.
+
+| Parameter | Description |
+| --- | --- |
+| `steps` | Titles or `(title, description)` tuples. |
+| `current` | Index of the step in progress (`len(steps)` once all are done). |
+| `on_select` | Called with the index of a clicked step. |
+| `vertical` | Stacks the steps, with each description under its title. |
+| `linear` | Only done steps and the current one can be clicked. |
+| `errors` | Indexes of steps drawn in the error color. |
+| `tint` | Color of the done steps and the line. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.stepper(["Account", "Address", "Payment"], self.step, lambda i: setattr(self, "step", i))
+```
+
+### `pagination`
+
+```python
+pagination(
+    page,
+    pages,
+    on_change=None,
+    *,
+    siblings=1,
+    boundaries=1,
+    size='md',
+    compact=False,
+    theme=None,
+)
+```
+
+Page numbers with previous and next arrows (`‹ 1 … 4 5 6 … 20 ›`). Pages count from 1.
+
+| Parameter | Description |
+| --- | --- |
+| `page` | The current page, from 1. |
+| `pages` | How many pages there are. |
+| `on_change` | Called with the page that was clicked. |
+| `siblings` | Pages shown on each side of the current one. |
+| `boundaries` | Pages always shown at each end. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `compact` | Shows `4 / 20` between the arrows instead of the numbers. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.pagination(self.page, 20, lambda n: setattr(self, "page", n))
+```
+
 ## Console, errors and help
 
 ### `Log`
@@ -1825,6 +2011,219 @@ split(
 | `min_size` | Minimum size of each pane. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 | `kwargs` | Same as `pz.split`. |
+
+### `line_chart`
+
+```python
+line_chart(
+    series,
+    *,
+    labels=None,
+    width=360,
+    height=180,
+    colors=None,
+    fill=False,
+    points=False,
+    grid=True,
+    legend=None,
+    min=None,
+    max=None,
+    theme=None,
+)
+```
+
+A line chart with axes: one list of numbers, several lists or `{name: values}` (which adds a legend). The y axis shows four steps between `min` and `max`.
+
+| Parameter | Description |
+| --- | --- |
+| `series` | A list of numbers, a list of lists or a `{name: values}` dict. |
+| `labels` | Labels under the x axis (thinned out when they do not fit). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `colors` | Colors of the lines (defaults to the theme's). |
+| `fill` | Shades under each line. |
+| `points` | Marks each value with a dot. |
+| `grid` | Draws the horizontal lines. |
+| `legend` | With a dict, `False` hides the names under the chart. |
+| `min` | Bottom of the y axis (from the data when `None`). |
+| `max` | Top of the y axis (from the data when `None`). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.line_chart({"Visits": [12, 18, 15, 24], "Sales": [4, 6, 5, 9]}, labels=["Q1", "Q2", "Q3", "Q4"])
+```
+
+### `gauge`
+
+```python
+gauge(
+    value,
+    *,
+    min=0.0,
+    max=100.0,
+    size=140,
+    thickness=12,
+    unit='',
+    label=None,
+    tint='accent',
+    thresholds=None,
+    theme=None,
+)
+```
+
+A half-circle meter for one number, like a speedometer. `thresholds` recolor the arc as the value climbs.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | The number shown. |
+| `min` | Value at the left end. |
+| `max` | Value at the right end. |
+| `size` | Width in pixels. |
+| `thickness` | Width of the arc. |
+| `unit` | Text after the number (`"%"`, `"°C"`). |
+| `label` | Text under the number. |
+| `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
+| `thresholds` | `(from_value, color)` pairs, such as `[(70, "warning"), (90, "error")]`. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.gauge(self.cpu, unit="%", label="CPU", thresholds=[(70, "warning"), (90, "error")])
+```
+
+### `progress_ring`
+
+```python
+progress_ring(
+    value,
+    *,
+    max=1.0,
+    size=40,
+    thickness=4,
+    tint='accent',
+    show_value=False,
+    label=None,
+    theme=None,
+)
+```
+
+A round progress bar that fills clockwise from the top. `value=None` spins.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | Progress up to `max`, or `None` to spin. |
+| `max` | The value of a full ring. |
+| `size` | Diameter in pixels. |
+| `thickness` | Width of the ring. |
+| `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
+| `show_value` | Writes the percentage in the middle. |
+| `label` | Any other text in the middle (`"3/8"`). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.progress_ring(0.6, show_value=True, size=48)
+```
+
+### `skeleton`
+
+```python
+skeleton(
+    width='fill',
+    height=12,
+    *,
+    lines=1,
+    circle=False,
+    radius=None,
+    spacing=8,
+    animated=True,
+    theme=None,
+)
+```
+
+A grey placeholder that pulses where content is still loading. `lines` makes a paragraph and `circle` an avatar.
+
+| Parameter | Description |
+| --- | --- |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | Height of each bar (the diameter with `circle`). |
+| `lines` | Stacks several bars, the last one shorter. |
+| `circle` | A round placeholder of `height`. |
+| `radius` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
+| `spacing` | Space between children, in pixels. |
+| `animated` | Pulses (it stays still when the system asks for reduced motion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.skeleton(lines=3)
+```
+
+### `TimelineItem`
+
+```python
+@dataclass
+class TimelineItem(title, description=None, time=None, icon=None, tint='accent', content=None)
+```
+
+One entry of `ui.timeline`.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | Title. |
+| `description` | Muted text under the title. |
+| `time` | Text at the right of the title (a date, an hour). |
+| `icon` | Icon inside the dot. |
+| `tint` | Color of the dot. |
+| `content` | Any widget under the text. |
+
+### `timeline`
+
+```python
+timeline(items, *, on_press=None, dense=False, theme=None)
+```
+
+Events in order down a line: a history, a changelog, the steps of a delivery. Each entry gets a dot joined to the next one.
+
+| Parameter | Description |
+| --- | --- |
+| `items` | `ui.TimelineItem` objects, dicts with the same keys or plain titles. |
+| `on_press` | Called with the index of a clicked entry. |
+| `dense` | Small dots and less space. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.timeline([ui.TimelineItem("Order placed", time="09:12", icon="shopping-cart"),
+ui.TimelineItem("Shipped", "On its way.", time="14:30", icon="truck")])
+```
+
+### `description_list`
+
+```python
+description_list(
+    items,
+    *,
+    label_width=140,
+    vertical=False,
+    dividers=True,
+    mono_values=False,
+    selectable=True,
+    theme=None,
+)
+```
+
+Name and value pairs, one per row: the details of a file, an order or a device. A value can be text or any widget.
+
+| Parameter | Description |
+| --- | --- |
+| `items` | A dict or `(name, value)` pairs. |
+| `label_width` | Width of the names column. |
+| `vertical` | Puts each name above its value. |
+| `dividers` | Lines between rows. |
+| `mono_values` | Text values in the monospace font (ids, hashes). |
+| `selectable` | Text values can be selected and copied. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.description_list({"Name": "report.pdf", "Size": "2.4 MB", "Status": ui.badge("Synced", tint="success")})
+```
 
 ## Lists, tree and menus
 

@@ -22,7 +22,7 @@ filters them by title and description. **All** shows every category under its ow
 
 | Category | Examples |
 | --- | --- |
-| **Apps** | Counter, To-do list, Todos, Pomodoro, Markdown viewer, Game of Life, Analog clock, Stopwatch, QR code, Color picker, Image viewer, Several windows, Custom window frame, Component gallery, Mini editor, Zed-like editor. |
+| **Apps** | Counter, To-do list, Todos, Pomodoro, Markdown viewer, Game of Life, Analog clock, Stopwatch, QR code, Color picker, Image viewer, Several windows, Custom window frame, Store admin, Component gallery, Mini editor, Zed-like editor. |
 | **Tutorial** | The five steps of the tutorial (Hello, State, Layout, Async work, Notes app), Layout basics, Lists and tables, Navigation, Talking to the user, Theme switcher, Contacts with SQLite. |
 | **Audio** | Synthesizer, Drum machine, Modular rack, Music visualizer, MIDI controller, Webcam. |
 | **Drag and drop** | Drag and drop board, Form builder, Page builder, Design canvas, Node editor, Sortable lists ([guide](/pyzed/dnd/)). |

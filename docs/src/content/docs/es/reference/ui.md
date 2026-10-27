@@ -1040,6 +1040,192 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
+### `rating`
+
+```python
+rating(
+    value,
+    on_change=None,
+    *,
+    max=5,
+    icon='star',
+    size=18,
+    tint='warning',
+    clearable=True,
+    disabled=False,
+    theme=None,
+)
+```
+
+Una fila de estrellas (o cualquier icono) para dar o mostrar una puntuación. Al pulsar una estrella se envía su número; con `clearable`, pulsar la encendida envía 0. Sin `on_change` solo muestra el valor, redondeado a la estrella más cercana. Con el foco, las flechas lo cambian de uno en uno.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Cuántas estrellas están encendidas (redondeado). |
+| `on_change` | Función que recibe el número de estrellas elegido (de 0 a `max`). |
+| `max` | Cuántas estrellas hay. |
+| `icon` | Icono de Lucide de cada estrella. |
+| `size` | Tamaño del icono en píxeles. |
+| `tint` | Color de las estrellas encendidas (un token del tema o un color hex). |
+| `clearable` | Pulsar el valor actual envía 0. |
+| `disabled` | Lo deshabilita (ignora los clics). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.rating(self.stars, lambda n: setattr(self, "stars", n))
+```
+
+### `range_slider`
+
+```python
+range_slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    min_gap=0.0,
+    on_release=None,
+    width='fill',
+    tint='accent',
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
+```
+
+Un deslizador con dos tiradores que elige un rango. Al pulsar la barra se mueve allí el tirador más cercano y al arrastrar sigue moviéndose; los tiradores nunca se cruzan.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | `(bajo, alto)`. |
+| `on_change` | Función que recibe el nuevo `(bajo, alto)`. |
+| `min` | Valor más pequeño. |
+| `max` | Valor más grande. |
+| `step` | Los valores se ajustan a múltiplos de esto. |
+| `min_gap` | Distancia mínima entre los dos tiradores. |
+| `on_release` | Se envía al soltar el tirador (guarda o aplica ahí). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `tint` | Color del rango entre los tiradores. |
+| `disabled` | Lo deshabilita (ignora los clics). |
+| `show_value` | Añade `bajo – alto` al lado: `True` o un formato para cada extremo, como `"{:.0f} €"`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.range_slider(self.price, lambda v: setattr(self, "price", v), min=0, max=500, step=5, show_value="{:.0f} €")
+```
+
+### `tag_input`
+
+```python
+tag_input(
+    tags,
+    on_change=None,
+    *,
+    text='',
+    on_input=None,
+    placeholder='',
+    suggestions=(),
+    max_tags=None,
+    unique=True,
+    tint='accent',
+    width='fill',
+    disabled=False,
+    id=None,
+    theme=None,
+)
+```
+
+Una caja de fichas que se pueden quitar, con un campo para escribir más. Intro o una coma convierten el texto en etiqueta; `on_change` recibe la lista nueva, igual que al pulsar la x de una ficha.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `tags` | Tu lista de etiquetas. |
+| `on_change` | Función que recibe la nueva lista de etiquetas. |
+| `text` | Lo que se está escribiendo (también es tu estado). |
+| `on_input` | Función que recibe el texto que se escribe. |
+| `placeholder` | Texto de ayuda cuando está vacío. |
+| `suggestions` | Etiquetas que se ofrecen bajo el campo mientras el texto coincide. |
+| `max_tags` | Oculta el campo cuando la lista llega a este número. |
+| `unique` | Una etiqueta que ya está en la lista no se vuelve a añadir. |
+| `tint` | Color de las fichas. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `disabled` | Lo deshabilita (ignora los clics). |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.tag_input(self.tags, lambda tags: setattr(self, "tags", tags), text=self.typing,
+on_input=lambda text: setattr(self, "typing", text), placeholder="Añade una etiqueta…")
+```
+
+### `stepper`
+
+```python
+stepper(
+    steps,
+    current,
+    on_select=None,
+    *,
+    vertical=False,
+    linear=True,
+    errors=(),
+    tint='accent',
+    theme=None,
+)
+```
+
+Los pasos de un asistente o de una compra: los hechos llevan una marca, el actual va rodeado y la línea entre ellos se llena al avanzar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `steps` | Títulos o tuplas `(título, descripción)`. |
+| `current` | Índice del paso en curso (`len(steps)` cuando están todos hechos). |
+| `on_select` | Se llama con el índice del paso pulsado. |
+| `vertical` | Apila los pasos, con la descripción bajo cada título. |
+| `linear` | Solo se pueden pulsar los pasos hechos y el actual. |
+| `errors` | Índices de pasos pintados con el color de error. |
+| `tint` | Color de los pasos hechos y de la línea. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.stepper(["Cuenta", "Dirección", "Pago"], self.step, lambda i: setattr(self, "step", i))
+```
+
+### `pagination`
+
+```python
+pagination(
+    page,
+    pages,
+    on_change=None,
+    *,
+    siblings=1,
+    boundaries=1,
+    size='md',
+    compact=False,
+    theme=None,
+)
+```
+
+Números de página con flechas de anterior y siguiente (`‹ 1 … 4 5 6 … 20 ›`). Las páginas empiezan en 1.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `page` | La página actual, desde 1. |
+| `pages` | Cuántas páginas hay. |
+| `on_change` | Se llama con la página pulsada. |
+| `siblings` | Páginas a cada lado de la actual. |
+| `boundaries` | Páginas que siempre se ven en cada extremo. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `compact` | Muestra `4 / 20` entre las flechas en lugar de los números. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.pagination(self.page, 20, lambda n: setattr(self, "page", n))
+```
+
 ## Consola, errores y ayuda
 
 ### `Log`
@@ -1851,6 +2037,219 @@ split(
 | `min_size` | Tamaño mínimo de cada panel. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `kwargs` | Los de `pz.split`. |
+
+### `line_chart`
+
+```python
+line_chart(
+    series,
+    *,
+    labels=None,
+    width=360,
+    height=180,
+    colors=None,
+    fill=False,
+    points=False,
+    grid=True,
+    legend=None,
+    min=None,
+    max=None,
+    theme=None,
+)
+```
+
+Un gráfico de líneas con ejes: una lista de números, varias listas o `{nombre: valores}` (que añade una leyenda). El eje y muestra cuatro pasos entre `min` y `max`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `series` | Una lista de números, una lista de listas o un dict `{nombre: valores}`. |
+| `labels` | Etiquetas bajo el eje x (se aclaran si no caben). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `colors` | Colores de las líneas (por defecto, los del tema). |
+| `fill` | Sombrea bajo cada línea. |
+| `points` | Marca cada valor con un punto. |
+| `grid` | Dibuja las líneas horizontales. |
+| `legend` | Con un dict, `False` oculta los nombres bajo el gráfico. |
+| `min` | Base del eje y (sale de los datos con `None`). |
+| `max` | Tope del eje y (sale de los datos con `None`). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.line_chart({"Visitas": [12, 18, 15, 24], "Ventas": [4, 6, 5, 9]}, labels=["T1", "T2", "T3", "T4"])
+```
+
+### `gauge`
+
+```python
+gauge(
+    value,
+    *,
+    min=0.0,
+    max=100.0,
+    size=140,
+    thickness=12,
+    unit='',
+    label=None,
+    tint='accent',
+    thresholds=None,
+    theme=None,
+)
+```
+
+Un medidor de media circunferencia para un número, como un velocímetro. `thresholds` cambia el color del arco al subir el valor.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | El número que se muestra. |
+| `min` | Valor del extremo izquierdo. |
+| `max` | Valor del extremo derecho. |
+| `size` | Ancho en píxeles. |
+| `thickness` | Grosor del arco. |
+| `unit` | Texto tras el número (`"%"`, `"°C"`). |
+| `label` | Texto bajo el número. |
+| `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
+| `thresholds` | Pares `(desde_valor, color)`, como `[(70, "warning"), (90, "error")]`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.gauge(self.cpu, unit="%", label="CPU", thresholds=[(70, "warning"), (90, "error")])
+```
+
+### `progress_ring`
+
+```python
+progress_ring(
+    value,
+    *,
+    max=1.0,
+    size=40,
+    thickness=4,
+    tint='accent',
+    show_value=False,
+    label=None,
+    theme=None,
+)
+```
+
+Una barra de progreso redonda que se llena en el sentido de las agujas del reloj desde arriba. `value=None` gira.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Progreso hasta `max`, o `None` para que gire. |
+| `max` | El valor del anillo lleno. |
+| `size` | Diámetro en píxeles. |
+| `thickness` | Grosor del anillo. |
+| `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
+| `show_value` | Escribe el porcentaje en el centro. |
+| `label` | Otro texto en el centro (`"3/8"`). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.progress_ring(0.6, show_value=True, size=48)
+```
+
+### `skeleton`
+
+```python
+skeleton(
+    width='fill',
+    height=12,
+    *,
+    lines=1,
+    circle=False,
+    radius=None,
+    spacing=8,
+    animated=True,
+    theme=None,
+)
+```
+
+Un marcador gris que late donde el contenido aún está cargando. `lines` hace un párrafo y `circle` un avatar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `height` | Alto de cada barra (el diámetro con `circle`). |
+| `lines` | Apila varias barras, la última más corta. |
+| `circle` | Un marcador redondo de `height`. |
+| `radius` | Radio de las esquinas: un número o `(sup_izq, sup_der, inf_der, inf_izq)`. |
+| `spacing` | Separación entre hijos, en píxeles. |
+| `animated` | Late (se queda quieto si el sistema pide reducir el movimiento). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.skeleton(lines=3)
+```
+
+### `TimelineItem`
+
+```python
+@dataclass
+class TimelineItem(title, description=None, time=None, icon=None, tint='accent', content=None)
+```
+
+Una entrada de `ui.timeline`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | Título. |
+| `description` | Texto atenuado bajo el título. |
+| `time` | Texto a la derecha del título (una fecha, una hora). |
+| `icon` | Icono dentro del punto. |
+| `tint` | Color del punto. |
+| `content` | Cualquier widget bajo el texto. |
+
+### `timeline`
+
+```python
+timeline(items, *, on_press=None, dense=False, theme=None)
+```
+
+Sucesos en orden a lo largo de una línea: un historial, un registro de cambios, los pasos de un envío. Cada entrada lleva un punto unido al siguiente.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `items` | Objetos `ui.TimelineItem`, dicts con las mismas claves o títulos sueltos. |
+| `on_press` | Se llama con el índice de la entrada pulsada. |
+| `dense` | Puntos pequeños y menos espacio. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.timeline([ui.TimelineItem("Pedido hecho", time="09:12", icon="shopping-cart"),
+ui.TimelineItem("Enviado", "En camino.", time="14:30", icon="truck")])
+```
+
+### `description_list`
+
+```python
+description_list(
+    items,
+    *,
+    label_width=140,
+    vertical=False,
+    dividers=True,
+    mono_values=False,
+    selectable=True,
+    theme=None,
+)
+```
+
+Pares de nombre y valor, uno por fila: los detalles de un archivo, un pedido o un dispositivo. Un valor puede ser texto o cualquier widget.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `items` | Un dict o pares `(nombre, valor)`. |
+| `label_width` | Ancho de la columna de nombres. |
+| `vertical` | Pone cada nombre sobre su valor. |
+| `dividers` | Líneas entre filas. |
+| `mono_values` | Valores de texto en fuente monoespaciada (ids, hashes). |
+| `selectable` | Los valores de texto se pueden seleccionar y copiar. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.description_list({"Nombre": "informe.pdf", "Tamaño": "2,4 MB", "Estado": ui.badge("Sincronizado", tint="success")})
+```
 
 ## Listas, árbol y menús
 

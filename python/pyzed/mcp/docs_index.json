@@ -1219,6 +1219,12 @@
    "path": "docs/src/content/docs/library/date-range-picker.mdx"
   },
   {
+   "slug": "library/description-list",
+   "title": "Description list",
+   "description": "Name and value pairs, one per row. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/description-list.mdx"
+  },
+  {
    "slug": "library/dialog-layer",
    "title": "Dialog layer",
    "description": "Centers a dialog over your view with a dimmed backdrop. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1327,6 +1333,12 @@
    "path": "docs/src/content/docs/library/flex.mdx"
   },
   {
+   "slug": "library/gauge",
+   "title": "Gauge",
+   "description": "A half-circle meter for one number. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/gauge.mdx"
+  },
+  {
    "slug": "library/grid",
    "title": "Grid",
    "description": "Equal columns, or CSS-like tracks with spans. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1405,6 +1417,12 @@
    "path": "docs/src/content/docs/library/layer.mdx"
   },
   {
+   "slug": "library/line-chart",
+   "title": "Line chart",
+   "description": "Lines with axes, labels and a legend. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/line-chart.mdx"
+  },
+  {
    "slug": "library/list-header",
    "title": "List header",
    "description": "A small section title for lists, with an end slot. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1447,6 +1465,12 @@
    "path": "docs/src/content/docs/library/number-field.mdx"
   },
   {
+   "slug": "library/pagination",
+   "title": "Pagination",
+   "description": "Page numbers with previous and next arrows. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/pagination.mdx"
+  },
+  {
    "slug": "library/panel-header",
    "title": "Panel header",
    "description": "Icon, title and actions on top of a dock. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1477,6 +1501,12 @@
    "path": "docs/src/content/docs/library/popover.mdx"
   },
   {
+   "slug": "library/progress-ring",
+   "title": "Progress ring",
+   "description": "A round progress bar. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/progress-ring.mdx"
+  },
+  {
    "slug": "library/progress",
    "title": "Progress",
    "description": "A thin progress bar in a semantic color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1499,6 +1529,18 @@
    "title": "Radio group",
    "description": "Mutually exclusive options as radio buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/radio-group.mdx"
+  },
+  {
+   "slug": "library/range-slider",
+   "title": "Range slider",
+   "description": "A slider with two knobs that picks a range. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/range-slider.mdx"
+  },
+  {
+   "slug": "library/rating",
+   "title": "Rating",
+   "description": "Stars to give or show a score. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/rating.mdx"
   },
   {
    "slug": "library/reference-browser",
@@ -1579,6 +1621,12 @@
    "path": "docs/src/content/docs/library/shortcuts.mdx"
   },
   {
+   "slug": "library/skeleton",
+   "title": "Skeleton",
+   "description": "A pulsing placeholder while content loads. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/skeleton.mdx"
+  },
+  {
    "slug": "library/slider",
    "title": "Slider",
    "description": "Pick a number in a range by dragging. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1633,6 +1681,12 @@
    "path": "docs/src/content/docs/library/status-bar.mdx"
   },
   {
+   "slug": "library/stepper",
+   "title": "Stepper",
+   "description": "The steps of a wizard, with checks on the done ones. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/stepper.mdx"
+  },
+  {
    "slug": "library/switch",
    "title": "Switch",
    "description": "An on/off switch for settings that apply at once. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1649,6 +1703,12 @@
    "title": "Table",
    "description": "A data table with a fixed header, sorting and selection. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/table.mdx"
+  },
+  {
+   "slug": "library/tag-input",
+   "title": "Tag input",
+   "description": "Removable chips with a field to type more. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/tag-input.mdx"
   },
   {
    "slug": "library/terminal",
@@ -1673,6 +1733,12 @@
    "title": "Time picker",
    "description": "A time field with columns of hours and minutes, in 24 or 12 hours. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/time-picker.mdx"
+  },
+  {
+   "slug": "library/timeline",
+   "title": "Timeline",
+   "description": "Events in order down a line. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/timeline.mdx"
   },
   {
    "slug": "library/title-bar",
@@ -2413,6 +2479,12 @@
    "kind": "app",
    "summary": "A stopwatch with laps, after Iced's ``stopwatch`` demo.",
    "path": "examples/stopwatch.py"
+  },
+  {
+   "name": "store_admin",
+   "kind": "app",
+   "summary": "A small store back office that shows the newer components working together.",
+   "path": "examples/store_admin.py"
   },
   {
    "name": "styles",
@@ -4874,6 +4946,74 @@
     },
     "example": "\n            ui.accordion([\n                ui.AccordionSection(\"layout\", \"Layout\", layout_rows, icon=\"ruler\"),\n                ui.AccordionSection(\"events\", \"Events\", event_rows, icon=\"zap\"),\n            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))\n        "
    },
+   "pyzed.ui.rating": {
+    "desc": "A row of stars (or any icon) to give or show a score. Clicking a star sends its number; with `clearable` a click on the lit one sends 0. Without `on_change` it only shows the value, rounded to the nearest star. Focused, the arrows change it by one.",
+    "params": {
+     "value": "How many stars are lit (rounded).",
+     "on_change": "Callable that receives the number of stars picked (0 to `max`).",
+     "max": "How many stars there are.",
+     "icon": "Lucide icon drawn for each star.",
+     "size": "Icon size in pixels.",
+     "tint": "Color of the lit stars (a theme token or hex color).",
+     "clearable": "A click on the current value sends 0."
+    },
+    "example": "ui.rating(self.stars, lambda n: setattr(self, \"stars\", n))"
+   },
+   "pyzed.ui.range_slider": {
+    "desc": "A slider with two knobs that picks a range. Pressing the track moves the nearer knob there and dragging keeps moving it; the knobs never cross.",
+    "params": {
+     "value": "`(low, high)`.",
+     "on_change": "Callable that receives the new `(low, high)`.",
+     "min": "Smallest value.",
+     "max": "Largest value.",
+     "step": "Values snap to multiples of this.",
+     "min_gap": "Smallest distance kept between both knobs.",
+     "on_release": "Sent when the knob is let go (save or apply there).",
+     "tint": "Color of the range between the knobs.",
+     "show_value": "Adds `low – high` next to it: `True`, or a format for each end such as `\"{:.0f} €\"`."
+    },
+    "example": "ui.range_slider(self.price, lambda v: setattr(self, \"price\", v), min=0, max=500, step=5, show_value=\"{:.0f} €\")"
+   },
+   "pyzed.ui.tag_input": {
+    "desc": "A box of removable chips with a field to type more. Enter or a comma turns the text into a tag; `on_change` gets the new list, as it does when a chip's x is clicked.",
+    "params": {
+     "tags": "Your list of tags.",
+     "on_change": "Callable that receives the new list of tags.",
+     "text": "What is being typed (your state too).",
+     "on_input": "Callable that receives the text being typed.",
+     "suggestions": "Tags offered under the field while the text matches them.",
+     "max_tags": "Hides the field once the list has this many.",
+     "unique": "A tag already in the list is not added again.",
+     "tint": "Color of the chips."
+    },
+    "example": "ui.tag_input(self.tags, lambda tags: setattr(self, \"tags\", tags), text=self.typing,\n             on_input=lambda text: setattr(self, \"typing\", text), placeholder=\"Add a label…\")"
+   },
+   "pyzed.ui.stepper": {
+    "desc": "The steps of a wizard or a checkout: done ones get a check, the current one is ringed and the line between them fills as you advance.",
+    "params": {
+     "steps": "Titles or `(title, description)` tuples.",
+     "current": "Index of the step in progress (`len(steps)` once all are done).",
+     "on_select": "Called with the index of a clicked step.",
+     "linear": "Only done steps and the current one can be clicked.",
+     "errors": "Indexes of steps drawn in the error color.",
+     "vertical": "Stacks the steps, with each description under its title.",
+     "tint": "Color of the done steps and the line."
+    },
+    "example": "ui.stepper([\"Account\", \"Address\", \"Payment\"], self.step, lambda i: setattr(self, \"step\", i))"
+   },
+   "pyzed.ui.pagination": {
+    "desc": "Page numbers with previous and next arrows (`‹ 1 … 4 5 6 … 20 ›`). Pages count from 1.",
+    "params": {
+     "page": "The current page, from 1.",
+     "pages": "How many pages there are.",
+     "on_change": "Called with the page that was clicked.",
+     "siblings": "Pages shown on each side of the current one.",
+     "boundaries": "Pages always shown at each end.",
+     "size": "`\"sm\"`, `\"md\"` or `\"lg\"`.",
+     "compact": "Shows `4 / 20` between the arrows instead of the numbers."
+    },
+    "example": "ui.pagination(self.page, 20, lambda n: setattr(self, \"page\", n))"
+   },
    "pyzed.ui.Log": {
     "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying (`text(ids)` only those lines). `write` also takes the line's `source`, `detail` (a traceback) and `origin` (`(path, line)`) and returns the entry; `find(id)` looks one up.",
     "params": {
@@ -5135,6 +5275,89 @@
      "min_size": "Minimum size of each pane.",
      "kwargs": "Same as `pz.split`."
     }
+   },
+   "pyzed.ui.line_chart": {
+    "desc": "A line chart with axes: one list of numbers, several lists or `{name: values}` (which adds a legend). The y axis shows four steps between `min` and `max`.",
+    "params": {
+     "series": "A list of numbers, a list of lists or a `{name: values}` dict.",
+     "labels": "Labels under the x axis (thinned out when they do not fit).",
+     "colors": "Colors of the lines (defaults to the theme's).",
+     "fill": "Shades under each line.",
+     "points": "Marks each value with a dot.",
+     "grid": "Draws the horizontal lines.",
+     "legend": "With a dict, `False` hides the names under the chart.",
+     "min": "Bottom of the y axis (from the data when `None`).",
+     "max": "Top of the y axis (from the data when `None`)."
+    },
+    "example": "ui.line_chart({\"Visits\": [12, 18, 15, 24], \"Sales\": [4, 6, 5, 9]}, labels=[\"Q1\", \"Q2\", \"Q3\", \"Q4\"])"
+   },
+   "pyzed.ui.gauge": {
+    "desc": "A half-circle meter for one number, like a speedometer. `thresholds` recolor the arc as the value climbs.",
+    "params": {
+     "value": "The number shown.",
+     "min": "Value at the left end.",
+     "max": "Value at the right end.",
+     "size": "Width in pixels.",
+     "thickness": "Width of the arc.",
+     "unit": "Text after the number (`\"%\"`, `\"°C\"`).",
+     "label": "Text under the number.",
+     "thresholds": "`(from_value, color)` pairs, such as `[(70, \"warning\"), (90, \"error\")]`."
+    },
+    "example": "ui.gauge(self.cpu, unit=\"%\", label=\"CPU\", thresholds=[(70, \"warning\"), (90, \"error\")])"
+   },
+   "pyzed.ui.progress_ring": {
+    "desc": "A round progress bar that fills clockwise from the top. `value=None` spins.",
+    "params": {
+     "value": "Progress up to `max`, or `None` to spin.",
+     "max": "The value of a full ring.",
+     "size": "Diameter in pixels.",
+     "thickness": "Width of the ring.",
+     "show_value": "Writes the percentage in the middle.",
+     "label": "Any other text in the middle (`\"3/8\"`)."
+    },
+    "example": "ui.progress_ring(0.6, show_value=True, size=48)"
+   },
+   "pyzed.ui.skeleton": {
+    "desc": "A grey placeholder that pulses where content is still loading. `lines` makes a paragraph and `circle` an avatar.",
+    "params": {
+     "height": "Height of each bar (the diameter with `circle`).",
+     "lines": "Stacks several bars, the last one shorter.",
+     "circle": "A round placeholder of `height`.",
+     "animated": "Pulses (it stays still when the system asks for reduced motion)."
+    },
+    "example": "ui.skeleton(lines=3)"
+   },
+   "pyzed.ui.TimelineItem": {
+    "desc": "One entry of `ui.timeline`.",
+    "params": {
+     "title": "Title.",
+     "description": "Muted text under the title.",
+     "time": "Text at the right of the title (a date, an hour).",
+     "icon": "Icon inside the dot.",
+     "tint": "Color of the dot.",
+     "content": "Any widget under the text."
+    }
+   },
+   "pyzed.ui.timeline": {
+    "desc": "Events in order down a line: a history, a changelog, the steps of a delivery. Each entry gets a dot joined to the next one.",
+    "params": {
+     "items": "`ui.TimelineItem` objects, dicts with the same keys or plain titles.",
+     "on_press": "Called with the index of a clicked entry.",
+     "dense": "Small dots and less space."
+    },
+    "example": "ui.timeline([ui.TimelineItem(\"Order placed\", time=\"09:12\", icon=\"shopping-cart\"),\n             ui.TimelineItem(\"Shipped\", \"On its way.\", time=\"14:30\", icon=\"truck\")])"
+   },
+   "pyzed.ui.description_list": {
+    "desc": "Name and value pairs, one per row: the details of a file, an order or a device. A value can be text or any widget.",
+    "params": {
+     "items": "A dict or `(name, value)` pairs.",
+     "label_width": "Width of the names column.",
+     "vertical": "Puts each name above its value.",
+     "dividers": "Lines between rows.",
+     "mono_values": "Text values in the monospace font (ids, hashes).",
+     "selectable": "Text values can be selected and copied."
+    },
+    "example": "ui.description_list({\"Name\": \"report.pdf\", \"Size\": \"2.4 MB\", \"Status\": ui.badge(\"Synced\", tint=\"success\")})"
    },
    "pyzed.ui.list_item": {
     "desc": "A list row: icon, text and a slot at the end.",
