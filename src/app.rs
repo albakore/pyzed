@@ -105,6 +105,12 @@ pub enum Message {
         action: crate::editor::EditorAction,
         ctx: Arc<crate::editor::ActionContext>,
     },
+    /// A key for Vim's modal editing (`code_editor(vim=True)`).
+    EditorVim {
+        id: Arc<str>,
+        key: crate::editor::vim::VimKey,
+        ctx: Arc<crate::editor::ActionContext>,
+    },
     /// Replaces real ranges `(line, column, end_line, end_column)` (0-based) with texts.
     EditorReplace {
         id: Arc<str>,
@@ -2024,6 +2030,21 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
             }
             Message::EditorAction { id, action, ctx } => {
                 let Some(outcome) = state.caches.run_editor(&id, action, &ctx) else {
+                    return Task::none();
+                };
+                let ctx = (*ctx).clone();
+                return editor_outcome_with(
+                    py,
+                    state,
+                    &target,
+                    outcome,
+                    ctx.on_change,
+                    ctx.on_cursor,
+                    ctx.on_action,
+                );
+            }
+            Message::EditorVim { id, key, ctx } => {
+                let Some(outcome) = state.caches.vim_editor(&id, key, &ctx) else {
                     return Task::none();
                 };
                 let ctx = (*ctx).clone();

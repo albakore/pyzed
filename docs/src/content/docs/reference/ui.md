@@ -3210,6 +3210,10 @@ editor(
     hover_delay=500,
     sticky_scroll=0,
     indent_guides=False,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=(),
+    vim=False,
     theme=None,
 )
 ```
@@ -3262,6 +3266,10 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `indent_guides` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
+| `diagnostics` | Problems as 1-based `(line, column, end_line, end_column, severity)` (`"error"`, `"warning"`, `"info"`, `"hint"` or LSP's 1–4): marked in the minimap and underlined with a wavy line. |
+| `diagnostic_underlines` | `False` leaves out the wavy underlines (the minimap still marks the problems). |
+| `hover_keys` | Keys that leave the hover card open instead of hiding it (Ctrl+Space to show more). |
+| `vim` | `True` edits like Vim (Zed's `vim_mode`): Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

@@ -1666,6 +1666,10 @@ code_editor(
     sticky_scroll=0,
     indent_guides=None,
     indent_guides_active=None,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=None,
+    vim=False,
 )
 ```
 
@@ -1733,6 +1737,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `indent_guides` | Colors of the indent guides, one per depth (they repeat); none: no guides. |
 | `indent_guides_active` | Colors of the guide of the block around the cursor, by depth like `indent_guides`. |
+| `diagnostics` | Problems as 1-based `(line, column, end_line, end_column, color)`: tinted lines and marks in the minimap, and wavy underlines. |
+| `diagnostic_underlines` | `False` leaves out the wavy underlines (the minimap still marks the problems). |
+| `hover_keys` | Keys that leave the hover open instead of hiding it (Ctrl+Space to show more). |
+| `vim` | `True` edits like Vim: Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app. |
 
 ## Styles
 

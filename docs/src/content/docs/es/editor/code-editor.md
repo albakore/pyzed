@@ -55,7 +55,9 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 - **Plegado**: los chevrons del margen pliegan y despliegan bloques (funciones, clases, `if`...);
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> pliega el bloque más interior alrededor del cursor y
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> lo despliega.
-- **Minimapa**: el código en miniatura a la derecha; haz clic o arrastra en él para desplazarte.
+- **Minimapa**: el código en miniatura a la derecha; haz clic o arrastra en él para desplazarte. Las líneas con
+  errores y avisos se tiñen en él, y una marca en su borde derecho señala cada problema de todo el archivo, también
+  los que no se ven.
 - **Métodos de entrada**: los métodos de entrada (IME) de chino, japonés y coreano funcionan: el texto que se
   está componiendo se dibuja en el cursor y el texto confirmado se inserta en cada cursor.
 - **Espacios en blanco**: opcionalmente dibuja los espacios como `·` y los tabuladores como `→`.
@@ -218,6 +220,12 @@ controles del formulario).
   su firma y su docstring (como Markdown), junto con los problemas de ese punto. `form.email` y `form.email.text`
   describen el control y su propiedad. La tarjeta se queda mientras el ratón está encima, así puedes desplazarla y
   seleccionar su texto. Se desactiva con *Información al pasar el ratón* en los ajustes.
+- **Más documentación**: con la tarjeta abierta, <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> la muestra entera en una
+  tarjeta más grande (púlsalo otra vez para la corta). También funciona con las palabras clave de Python: `for`,
+  `with`, `match`, `lambda` y las demás muestran el capítulo de la referencia de Python, con su gramática, ejemplos
+  y palabras relacionadas. Con la lista de autocompletado abierta, <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> hace lo mismo
+  con el elemento resaltado, como VS Code. <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>I</kbd> abre la tarjeta
+  del nombre en el cursor sin usar el ratón.
 - **Ir a la definición**: <kbd>F12</kbd> o <kbd>Ctrl</kbd>+clic en un nombre abre donde está definido (al mantener
   <kbd>Ctrl</kbd>, el nombre bajo el ratón se subraya como un enlace): más abajo en
   el mismo código, otro manejador del formulario (el editor cambia a él), un archivo de tu proyecto o una librería
@@ -254,6 +262,11 @@ no hay coincidencia, busca el nombre en la referencia.
 
 - **Diagnósticos en línea** (error lens): el problema más grave de cada línea se escribe al final de ella, en rojo
   los errores, en amarillo los avisos y en azul la información.
+- **Subrayado ondulado** bajo el código de cada problema, con los mismos colores (se apaga con *Subrayado
+  ondulado*).
+- **En el minimapa**: las líneas con problemas teñidas y una marca en su borde derecho por cada uno del archivo,
+  para ver dónde están sin desplazarte.
+- <kbd>F8</kbd> va al problema siguiente y <kbd>Mayús</kbd>+<kbd>F8</kbd> al anterior, y lo muestra en la tarjeta.
 - **Lista de problemas**: bajo el editor, cada problema con su línea y columna, mensaje y origen (`ruff (F401)`,
   `ty`). Haz clic en uno para saltar a él. El botón de la cabecera muestra los recuentos y oculta o muestra la
   lista.
@@ -352,7 +365,10 @@ los suyos (su tabulación, por ejemplo).
 | | **Desplazamiento fijo** | Mantiene fijas arriba las líneas de los bloques que te rodean mientras te desplazas. |
 | Code lens y diagnósticos | **Code lens** | Referencias, implementaciones y eventos conectados al final de las definiciones. |
 | | **Diagnósticos en línea** | Los problemas al final de la línea. |
+| | **Subrayado ondulado** | Una línea ondulada bajo errores y avisos (el minimapa los marca igualmente). |
 | | **Información al pasar el ratón** | La tarjeta con el tipo, la documentación y los problemas del nombre bajo el ratón. |
+| Atajos y Vim | **Atajos base** | Parte de los atajos de VS Code, JetBrains, Sublime Text, Atom, TextMate o Emacs (ver [Atajos base](/pyzed/es/editor/keymap/#atajos-base)). |
+| | **Modo Vim** | Los modos Normal, Insertar y Visual de Vim (ver [Modo Vim](/pyzed/es/editor/keymap/#modo-vim)). |
 | Servidores de lenguaje | **ty**, **ruff** | Enciende o apaga cada servidor. Cada fila muestra su estado y versión. Debajo: la raíz del proyecto y el Python en uso. |
 | | **Reiniciar servidores** | Reinicia los dos; úsalo después de `uv sync` o de instalarlos. |
 

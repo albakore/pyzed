@@ -64,10 +64,48 @@ es **Nuevo formulario** en cualquier lado, pero **Nuevo archivo** en el árbol d
 | `Editor` | El texto del editor de código | CodePanel |
 
 :::note
-En el contexto `Editor` un acorde debe empezar con <kbd>Ctrl</kbd>+<kbd>K</kbd>, como los acordes del propio editor.
-Dentro del editor, <kbd>Ctrl</kbd>+<kbd>K</kbd> espera la segunda tecla del editor, así que desde ahí abre el editor
-de keymap con el menú.
+Un acorde puede empezar con cualquier tecla, como el <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>U</kbd> de Emacs. Dentro del
+editor, la primera tecla de un acorde solo espera la segunda: <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd>
+abre el editor de keymap también desde el código.
 :::
+
+## Atajos base
+
+¿Vienes de otro editor? Como el `base_keymap` de Zed, **Ajustes → Editor de código → Atajos y Vim → Atajos base**
+pone los atajos de ese editor sobre los de fábrica (que son los de VS Code y Zed), y los tuyos siguen yendo encima:
+
+| Atajos base | Algunos de sus atajos |
+| --- | --- |
+| **VS Code** (por defecto) | Los de fábrica: <kbd>Ctrl</kbd>+<kbd>D</kbd> siguiente coincidencia, <kbd>Alt</kbd>+<kbd>↑</kbd> mover línea, <kbd>F12</kbd> definición. |
+| **JetBrains** | <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicar, <kbd>Ctrl</kbd>+<kbd>Y</kbd> borrar línea, <kbd>Ctrl</kbd>+<kbd>W</kbd> ampliar selección, <kbd>Ctrl</kbd>+<kbd>B</kbd> definición, <kbd>Mayús</kbd>+<kbd>F6</kbd> renombrar, <kbd>Alt</kbd>+<kbd>Enter</kbd> arreglos rápidos, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd> formatear, <kbd>F2</kbd> problema siguiente. |
+| **Sublime Text** | <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>D</kbd> duplicar, <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>↑</kbd> mover línea, <kbd>Ctrl</kbd>+<kbd>J</kbd> unir líneas, <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>U</kbd> mayúsculas, <kbd>Ctrl</kbd>+<kbd>B</kbd> ejecutar. |
+| **Atom** | <kbd>Ctrl</kbd>+<kbd>↑</kbd> mover línea, <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>D</kbd> duplicar, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>[</kbd> plegar. |
+| **TextMate** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> mover línea, <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> seleccionar línea, <kbd>Ctrl</kbd>+<kbd>R</kbd> ejecutar. |
+| **Emacs** | <kbd>Ctrl</kbd>+<kbd>F</kbd>/<kbd>B</kbd>/<kbd>N</kbd>/<kbd>P</kbd> mover, <kbd>Ctrl</kbd>+<kbd>A</kbd>/<kbd>E</kbd> inicio y final de línea, <kbd>Ctrl</kbd>+<kbd>K</kbd> cortar la línea, <kbd>Ctrl</kbd>+<kbd>W</kbd>/<kbd>Alt</kbd>+<kbd>W</kbd>/<kbd>Ctrl</kbd>+<kbd>Y</kbd> cortar, copiar, pegar, <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> marca, <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>U</kbd> deshacer, <kbd>Ctrl</kbd>+<kbd>X</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> guardar, <kbd>Alt</kbd>+<kbd>X</kbd> paleta de comandos. |
+
+El editor de keymap y la referencia de atajos muestran los atajos base en uso, y **Restablecer** devuelve los suyos,
+no los de VS Code.
+
+## Modo Vim
+
+El **modo Vim** (Ajustes → Editor de código → Atajos y Vim, o *Activar o desactivar el modo Vim* en la paleta de
+comandos) edita como Vim, igual que el `vim_mode` de Zed. La barra de estado muestra el modo (`NORMAL`,
+`-- INSERT --`, `-- VISUAL --`) y el cursor es un bloque fuera del modo Insertar.
+
+- **Movimientos**: `h` `j` `k` `l`, `w` `b` `e` (y `W` `B` `E`), `0` `^` `$`, `gg` `G`, `{` `}`, `%`, `f` `t` `F`
+  `T` con `;` y `,`, y repeticiones (`3w`, `5j`).
+- **Operadores**: `d` `c` `y` `>` `<`, `gc` (comentar), `g~` `gu` `gU` (mayúsculas), doblados para líneas enteras
+  (`dd`, `cc`, `yy`, `gcc`), con movimientos y objetos de texto: `iw` `aw`, `i"` `a'`, `i(` `ab`, `i{` `aB`, `i[`,
+  `i<`, `ip`.
+- **Comandos**: `i` `a` `I` `A` `o` `O`, `v` `V`, `x` `X` `s` `S` `D` `C` `Y`, `p` `P`, `u` y <kbd>Ctrl</kbd>+<kbd>R</kbd>,
+  `J`, `~`, `r`, `.` (repetir), `*` `#`, `/` `?` `n` `N` (la barra de búsqueda), `K` (tarjeta de información), `gd`
+  (definición), <kbd>Ctrl</kbd>+<kbd>O</kbd>/<kbd>I</kbd> (atrás y adelante), <kbd>Ctrl</kbd>+<kbd>D</kbd>/<kbd>U</kbd>/<kbd>F</kbd>/<kbd>B</kbd>,
+  `zz`, `zc` `zo` `za` `zM` `zR` (pliegues).
+- **La línea de comandos** (`:`): `:w`, `:q`, `:wq` y `:x`, `:42` (ir a la línea), `:s/viejo/nuevo/g` en la línea,
+  `:%s/viejo/nuevo/g` en todas (con `\1` y `&` en el reemplazo), `:noh`, `:set wrap` y `:set number`.
+
+Lo que copias y borras va al portapapeles del sistema, así que `p` pega también lo que copiaste en otra app.
+
 
 ## El archivo keymap.json
 

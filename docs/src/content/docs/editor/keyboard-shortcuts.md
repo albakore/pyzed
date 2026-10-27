@@ -124,7 +124,11 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 
 | Keys | Action |
 | --- | --- |
-| <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Show completions |
+| <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Show completions; over a hover card or with the list open, show all of the documentation |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>I</kbd> | Show the hover card of the name at the cursor |
+| <kbd>F8</kbd> / <kbd>Shift</kbd>+<kbd>F8</kbd> | Next / previous problem |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | Format the code with ruff |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd> / <kbd>←</kbd> | Expand / shrink the selection (word, string, brackets, line, block) |
 | <kbd>↑</kbd> / <kbd>↓</kbd> | Move in the completion list (wraps around) |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | Move nine rows in the list, or a page in the code |
 | <kbd>Enter</kbd>, <kbd>Tab</kbd> | Accept the completion |
@@ -160,6 +164,9 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 | <kbd>Ctrl</kbd>+<kbd>/</kbd> | Toggle comment |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo / redo |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Fold / unfold everything |
+
+The keys of another editor (JetBrains, Sublime Text, Atom, TextMate, Emacs) and Vim mode are in
+[Base keymaps](/pyzed/editor/keymap/#base-keymaps).
 
 The full list is in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys). Every one
 of these keys can be changed in the [keymap editor](/pyzed/editor/keymap/).
