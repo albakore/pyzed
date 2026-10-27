@@ -234,7 +234,8 @@ El menú se abre en el puntero y no sale de la ventana. <kbd>Esc</kbd> o un clic
 ## La estructura
 
 La **Estructura** lista todos los controles del documento en árbol. La primera fila es el propio formulario (o
-componente): clic para seleccionarlo, **+** le añade un control.
+componente): clic para seleccionarlo, **+** le añade un control, y el icono de **script** abre el `.py` al que está
+ligado, como en Godot (mira [El script enlazado](/pyzed/es/editor/component-designer/#el-script-enlazado)).
 
 ![La estructura: un control bloqueado y otro oculto](../../../../../screenshots/editor-outline.png)
 
@@ -246,6 +247,8 @@ componente): clic para seleccionarlo, **+** le añade un control.
 - **Ojo**: oculta el control. Los controles ocultos no se ven al ejecutar el formulario y su nombre sale en gris
   en la estructura. Mira [Diálogos, cajones y otros controles ocultos](#diálogos-cajones-y-otros-controles-ocultos).
 - **Candado**: bloquea el control para no moverlo ni redimensionarlo sin querer.
+- **Script** (componentes diseñados): abre la clase de un componente colocado aquí. Los controles de la librería y
+  los componentes escritos solo en código no tienen.
 - **+** (contenedores): añade un control dentro.
 - **Arrastra una fila** para reordenarla: una línea muestra dónde va (antes o después de una fila), y un marco
   cuando iría *dentro* de un contenedor. Suéltala en el lienzo para meterla en el contenedor bajo el puntero, o en el

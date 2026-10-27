@@ -58,7 +58,7 @@ class Panel:
 
 
 def _design(d: "Designer", t: Theme) -> Any:
-    from . import panels, shader_editor
+    from . import component_view, panels, shader_editor
 
     if shader_editor.is_shader(d):  # the Shading sidebar and the shader's variables
         return shader_editor.design_panel(d, t)
@@ -66,6 +66,11 @@ def _design(d: "Designer", t: Theme) -> Any:
     outline = _nothing_open(t, "layers") if d.nothing_open else panels.outline(d, t)
     bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), outline],
                           width="fill", height="fill")
+    if not d.nothing_open and component_view.is_component(d):  # what the class brings, under its controls
+        members = _core.column([ui.panel_header(tr("Members"), icon="braces", theme=t),
+                                component_view.members_view(d, t)], width="fill", height="fill")
+        bottom = ui.split(bottom, members, vertical=True, ratio=d.members_ratio, on_resize=d.resize_members,
+                          min_size=80, theme=t)
     return ui.split(top, bottom, vertical=True, ratio=d.left_ratio, on_resize=d.resize_left, min_size=120, theme=t)
 
 

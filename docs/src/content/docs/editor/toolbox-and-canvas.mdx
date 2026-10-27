@@ -228,7 +228,8 @@ The menu opens at the pointer and stays inside the window. <kbd>Esc</kbd> or a c
 ## The outline
 
 The **Outline** lists every control of the document as a tree. The first row is the form (or the component)
-itself: click it to select it, **+** adds a control to it.
+itself: click it to select it, **+** adds a control to it, and the **script** icon opens the `.py` it is tied to, as
+in Godot (see [The script link](/pyzed/editor/component-designer/#the-script-link)).
 
 ![The outline: a locked control and a hidden one](../../../../screenshots/editor-outline.png)
 
@@ -240,6 +241,8 @@ itself: click it to select it, **+** adds a control to it.
 - **Eye**: hides the control. Hidden controls are invisible when the form runs and their names are grayed in
   the outline. See [Dialogs, drawers and other hidden controls](#dialogs-drawers-and-other-hidden-controls).
 - **Lock**: locks the control so it cannot be moved or resized by accident.
+- **Script** (designed components): opens the class of a component placed here. Library controls and components
+  written only in code have none.
 - **+** (containers): adds a control inside.
 - **Drag a row** to reorder it: a line shows where it goes (before or after a row), and a frame when it would go
   *inside* a container. Drop it on the canvas to move it into the container under the pointer, or onto the form.

@@ -211,7 +211,47 @@ en la lista, o elige **Expression…** y escribe cualquier expresión de Python 
 | `caption.text` | `f"{value} / 5"` |
 | `star3.variant` | `"solid" if value >= 3 else "ghost"` |
 
-Los enlaces se evalúan en cada render, así que los controles siguen siempre a las propiedades.
+Los enlaces se evalúan en cada render, así que los controles siguen siempre a las propiedades. En el lienzo, un
+pequeño eslabón marca los controles que tienen enlaces, y se dibujan con los valores que estás probando (mira abajo).
+
+## Probar valores, Diseño y En vivo
+
+Un componente se hace para reutilizarlo con valores distintos, así que su vista te deja probarlos sin escribir lógica:
+
+- **Probar valores** es la primera sección del panel del componente (Propiedades, sin nada seleccionado). Cada
+  propiedad pública tiene un editor; cambia una y el lienzo se vuelve a dibujar al momento a través de los enlaces.
+  Los valores probados no se guardan ni cambian el código: los **valores por defecto** siguen en la sección
+  **Properties**, que escribe la clase. El botón ↺ devuelve una propiedad a su valor por defecto, y **Volver a los
+  valores por defecto** todas.
+- **Diseño | En vivo**, al principio de la barra de herramientas, cambia lo que muestra el lienzo. **Diseño** es
+  donde colocas y ordenas controles (los enlaces dibujados con los valores probados, sin ejecutar código). **En
+  vivo** ejecuta la clase: el componente se dibuja como dice su código, con `setup()` y los manejadores, recibiendo
+  los valores probados como props, así que puedes hacer clic y ver cómo su propio código cambia su comportamiento.
+  Debajo se listan los eventos personalizados que lanza, y ↺ **Reiniciar** lo vuelve a ejecutar desde `setup()`.
+  En vivo ejecuta tu código, así que un proyecto en modo restringido pide confiar en él primero; hasta entonces en
+  Diseño solo se dibujan los enlaces a una propiedad, no las expresiones.
+
+## Miembros
+
+Bajo la Estructura, la vista de componente añade **Miembros**: lo que trae su clase, leído del código mientras lo
+escribes.
+
+| Grupo | Qué lista | Clic para |
+| --- | --- | --- |
+| **Variables** | Propiedades públicas y estado privado (marcado con un candado), con el icono de su tipo y el valor que se prueba. | Abrir su tarjeta en el panel del componente. |
+| **Métodos** | Todos los métodos de la clase, marcados *ciclo de vida* o *manejador* cuando lo son. | Abrirlo en el editor de código. |
+| **Eventos** | Los eventos personalizados que lanza con `self.emit(...)`. | Abrir la pestaña Eventos. |
+| **Clases** | La clase del componente, las clases anidadas en ella y las demás clases de su módulo (ayudantes, dataclasses...). | Abrir el módulo en su línea. |
+
+El **+** de cada grupo añade una propiedad, un método o un evento.
+
+## El script enlazado
+
+La primera fila de la Estructura (el componente, o el formulario en la vista de formulario) muestra un icono de
+**script** como el de Godot: el `.py` al que está ligado el documento. Haz clic para abrir el archivo entero
+(<kbd>F7</kbd>). Sale atenuado mientras aún no hay código. Un componente diseñado colocado en un formulario o dentro
+de otro componente tiene su propio icono de script en su fila, que abre su clase. Los componentes escritos solo en
+código (un `pz.Component` sin `.pzcomp`) no tienen ninguno: su código lo genera todo, así que no hay nada que enlazar.
 
 ## Componentes anidados
 

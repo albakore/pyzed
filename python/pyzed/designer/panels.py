@@ -482,7 +482,7 @@ OUTLINE_ROW = 24
 
 def outline(d: "Designer", t: Theme) -> Any:
     """The form's controls as a tree: containers can be folded and get a "+" to add controls inside them."""
-    from . import scene_panel
+    from . import component_view, scene_panel
 
     doc = d.doc
     form = doc.form
@@ -490,10 +490,13 @@ def outline(d: "Designer", t: Theme) -> Any:
     token = (_component._token(), t)
     drawn = d.__dict__.get("_outline_rows") or {}
     kept: dict = {}  # each control's row, built again only when what it shows changes
-    rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="app-window",
-                                 selected=not doc.selection, height=OUTLINE_ROW,
-                                 end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
-                                                    tooltip=tr("Add a control"), theme=t))]
+    root_end = _core.row([component_view.script_button(d, t),
+                          ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
+                                         tooltip=tr("Add a control"), theme=t)], spacing=0)
+    scene = getattr(doc, "is_scene", False)
+    rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="component" if scene else "app-window",
+                                 icon_color=t.accent if scene else None, selected=not doc.selection,
+                                 height=OUTLINE_ROW, end=root_end)]
 
     def add(parent: Optional[str], depth: int) -> None:
         children = form.children(parent)
@@ -542,7 +545,10 @@ def outline(d: "Designer", t: Theme) -> Any:
 def _outline_row(d: "Designer", c: Any, spec: Any, depth: int, container: bool, folded: bool, members: bool,
                  opened: bool, drop: Optional[str], editor_eye: bool, t: Theme) -> Any:
     """One control's row in the outline (``outline`` keeps it while what it shows stays the same)."""
+    from . import component_view
+
     buttons = [
+        component_view.script_button(d, t, c.name),  # a designed component placed here: its own script
         ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip=tr("Add inside"),
                        theme=t) if container else None,
         ui.icon_button("eye-off" if (c.hidden_in_editor if editor_eye else not c.visible) else "eye",

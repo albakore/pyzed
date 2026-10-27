@@ -207,7 +207,44 @@ list, or choose **Expression…** and write any Python expression over them:
 | `caption.text` | `f"{value} / 5"` |
 | `star3.variant` | `"solid" if value >= 3 else "ghost"` |
 
-Bindings are evaluated on every render, so the controls always follow the properties.
+Bindings are evaluated on every render, so the controls always follow the properties. On the canvas, a small
+link marks the controls that have bindings, and they are drawn with the values being tried (see below).
+
+## Try values, Design and Live
+
+A component is made to be reused with different values, so its view lets you try them without writing any logic:
+
+- **Try values** is the first section of the Component panel (Properties, with nothing selected). Each public
+  property has an editor; change one and the canvas redraws through the bindings right away. Tried values are not
+  saved and never change the code: the **defaults** stay in the **Properties** section, which writes the class. A
+  ↺ button puts one property back to its default, and **Reset to defaults** all of them.
+- **Design | Live**, at the start of the toolbar, switches what the canvas shows. **Design** is where you place
+  and arrange controls (the bindings drawn with the tried values, no code running). **Live** runs the class: the
+  component renders as its code says, `setup()` and handlers included, with the tried values passed as props, so
+  you can click it and see how its own code changes its behavior. The custom events it raises are listed under it,
+  and ↺ **Restart** runs it again from `setup()`. Live runs your code, so a project in restricted mode asks to
+  trust it first; until then only plain property bindings are drawn in Design, not expressions.
+
+## Members
+
+Under the Outline, a component's view adds **Members**: what its class brings, read from the code as you write it.
+
+| Group | What it lists | Click to |
+| --- | --- | --- |
+| **Variables** | Public properties and private state (a lock marks those), with their type icon and the value being tried. | Open its card in the Component panel. |
+| **Methods** | Every method of the class, marked *lifecycle* or *handler* when it is one. | Open it in the code editor. |
+| **Events** | The custom events it raises with `self.emit(...)`. | Open the Events tab. |
+| **Classes** | The component class, the classes nested in it and the other classes of its module (helpers, data classes...). | Open the module at its line. |
+
+The **+** of each group adds a property, a method or an event.
+
+## The script link
+
+The first row of the Outline (the component, or the form in a Form view) shows a **script** icon like Godot's: the
+`.py` the document is tied to. Click it to open the whole file (<kbd>F7</kbd>). It is muted while there is no code
+yet. A designed component placed on a form or inside another component has its own script icon on its row, which
+opens its class. Components written only in code (a `pz.Component` without a `.pzcomp`) have none: their code makes
+everything, so there is nothing to link.
 
 ## Nesting components
 
