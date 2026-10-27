@@ -363,6 +363,10 @@ editor(
     hover_delay=500,
     sticky_scroll=0,
     indent_guides=False,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=(),
+    vim=False,
     theme=None,
 )
 ```
@@ -408,6 +412,10 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `hover_delay` | `500` | Milliseconds the mouse rests on a word before `on_hover` is called. |
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `indent_guides` | `False` | `True` draws a thin line at each level of indentation (the one of the block around the cursor stands out); `"rainbow"` gives each depth its own color. |
+| `diagnostics` | `None` | Problems as 1-based `(line, column, end_line, end_column, severity)` (`"error"`, `"warning"`, `"info"`, `"hint"` or LSP's 1–4): marked in the minimap and underlined with a wavy line. |
+| `diagnostic_underlines` | `True` | `False` leaves out the wavy underlines (the minimap still marks the problems). |
+| `hover_keys` | `()` | Keys that leave the hover card open instead of hiding it (Ctrl+Space to show more). |
+| `vim` | `False` | `True` edits like Vim (Zed's `vim_mode`): Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([events](#events)).
@@ -490,6 +498,10 @@ code_editor(
     sticky_scroll=0,
     indent_guides=None,
     indent_guides_active=None,
+    diagnostics=None,
+    diagnostic_underlines=True,
+    hover_keys=None,
+    vim=False,
 )
 ```
 
@@ -550,6 +562,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `sticky_scroll` | `0` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 | `indent_guides` | `None` | Colors of the indent guides, one per depth (they repeat); none: no guides. |
 | `indent_guides_active` | `None` | Colors of the guide of the block around the cursor, by depth like `indent_guides`. |
+| `diagnostics` | `None` | Problems as 1-based `(line, column, end_line, end_column, color)`: tinted lines and marks in the minimap, and wavy underlines. |
+| `diagnostic_underlines` | `True` | `False` leaves out the wavy underlines (the minimap still marks the problems). |
+| `hover_keys` | `None` | Keys that leave the hover open instead of hiding it (Ctrl+Space to show more). |
+| `vim` | `False` | `True` edits like Vim: Normal, Insert and Visual modes; `on_action` hears the mode and what Vim asks of the app. |
 
 Events: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` ([events](#events)).
 

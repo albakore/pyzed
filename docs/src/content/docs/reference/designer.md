@@ -1716,6 +1716,14 @@ Snapshots of a form: `push` after an edit, then `undo`/`redo` to move through th
 
 **Methods and properties**
 
+#### `History.snapshot`
+
+```python
+History.snapshot  # property
+```
+
+The form as last recorded (JSON): equal snapshots mean nothing changed in between.
+
 #### `History.push`
 
 ```python

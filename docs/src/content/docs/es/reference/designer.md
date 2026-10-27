@@ -1696,6 +1696,14 @@ Instantáneas de un formulario: `push` tras una edición, y luego `undo`/`redo` 
 
 **Métodos y propiedades**
 
+#### `History.snapshot`
+
+```python
+History.snapshot  # property
+```
+
+El formulario tal como se guardó por última vez (JSON): instantáneas iguales indican que nada cambió entre medias.
+
 #### `History.push`
 
 ```python

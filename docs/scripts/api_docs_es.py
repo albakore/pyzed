@@ -3259,6 +3259,7 @@ MEMBERS = {
     "pyzed.designer.EditorSettings.key_repeat": "Los `repeat_delay` y `repeat_rate` del editor (`None` donde se mantiene la repetición de teclas del sistema).",
     "pyzed.designer.EditorSettings.to_dict": "Devuelve los ajustes como un dict listo para JSON.",
     "pyzed.designer.EditorSettings.from_dict": "Crea los ajustes a partir de `data` guardados, con los valores por defecto para los que falten o no sean válidos, y limitando el tamaño de tabulación, el de fuente y la forma del cursor a valores válidos.",
+    "pyzed.designer.History.snapshot": "El formulario tal como se guardó por última vez (JSON): instantáneas iguales indican que nada cambió entre medias.",
     "pyzed.designer.History.push": "Guarda el estado actual del formulario; devuelve `False` si nada cambió.",
     "pyzed.designer.History.steps": "Cuántos pasos de deshacer hay (una marca para `merge`).",
     "pyzed.designer.History.merge": "Convierte en un solo paso de deshacer todo lo guardado desde `mark` (`steps` antes de una tanda de cambios).",
