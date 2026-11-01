@@ -92,7 +92,7 @@ midir = { version = "0.11", optional = true }
 winit = { version = "0.30", features = ["android-native-activity"] }
 # Calls into Java: the safe area (WindowInsets) and the back button (moveTaskToBack).
 jni = "0.22"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 
 [features]
 # Audio devices and MIDI on Linux: needs libasound2-dev and pkg-config (Fedora: alsa-lib-devel).
