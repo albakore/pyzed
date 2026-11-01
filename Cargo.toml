@@ -39,7 +39,7 @@ iced_graphics = { version = "0.14", default-features = false }
 # Named directly to skip the rebuild after callbacks that return `pz.UNCHANGED` (see the fork note at the end).
 iced_winit = "0.14"
 # Checks `pz.shader` code, so mistakes raise in Python instead of crashing the GPU.
-naga = { version = "27", features = ["wgsl-in"] }
+naga = { version = "30", features = ["wgsl-in"] }
 pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
 two-face = { version = "0.5", default-features = false, features = ["syntect-default-fancy"] }
 elsa = "1.11"
