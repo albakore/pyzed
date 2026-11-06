@@ -348,7 +348,7 @@ jobs:
           (cd dist && sha256sum -- * > SHA256SUMS)
       # Signed build provenance for every file of the release: `gh attestation verify <file> -R albakore/pyzed`.
       # (PyPI gets its own attestations from Trusted Publishing.)
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*
       - name: Create the release
