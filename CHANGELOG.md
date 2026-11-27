@@ -12,6 +12,34 @@ commit messages when a version is released (see
 [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)); notes
 written by hand under `## [Unreleased]
 
+## [1.15.0] - 2026-11-27
+
+### Highlights
+
+- **Right-to-left languages**: windows in Arabic, Hebrew, Persian, Urdu and other right-to-left languages are laid out from the right. The direction follows the language, or `pz.set_direction`, `Window.direction` and `pz.direction(widget)` choose it. Rows, grids, padding and alignment mean the start side, text lines up on the right with numbers, Latin words and URLs in the right order, text fields type to the left, sliders and progress bars fill from the right, popups swap sides and arrows point the other way. IBM Plex Sans Arabic and Hebrew come bundled.
+
+### Features
+
+- ✨ Right-to-left layouts: `pz.set_direction("rtl" | "ltr" | "auto")`, `Window.direction`, `pz.direction(widget, ...)` and `widget.direction(...)`, `pz.get_direction()` and `pz.is_rtl()`. The layout is mirrored (a part with the other direction mirrors back), text follows the bidirectional order, text fields follow the arrows and clicks in right-to-left lines, sliders, progress bars, scroll areas, split views, resizable panels, tooltips and popups follow the direction, and arrow, chevron, panel and undo/redo icons are mirrored (`pyzed.bidi.mirrored_icon`). Code editors stay left to right. Closes [#243](https://github.com/albakore/pyzed/issues/243). PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+- ✨ IBM Plex Sans Arabic and IBM Plex Sans Hebrew are bundled and preferred for those scripts. PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+
+### Upgrades
+
+- ⬆️ Iced fork at `d1df8ca`: script font fallbacks, bidirectional cursor and clicks, and right-to-left progress bars. PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+- ⬆️ Bump naga from 27.0.3 to 30.0.1. PR [#241](https://github.com/albakore/pyzed/pull/241) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump zip from 2.6.1 to 9.1.3. PR [#240](https://github.com/albakore/pyzed/pull/240) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump rtrb from 0.4.0 to 0.4.1. PR [#239](https://github.com/albakore/pyzed/pull/239) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump the GitHub Actions group with 2 updates (`dtolnay/rust-toolchain`, `actions/attest-build-provenance` v4). PR [#242](https://github.com/albakore/pyzed/pull/242) by [@dependabot](https://github.com/apps/dependabot).
+
+### Docs
+
+- 📝 Right-to-left guide (en/es) with Arabic and Hebrew screenshots, the API reference, the MCP docs index and a `get_guide("rtl")` topic, and a right-to-left rule in the design guide for agents. PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 The MSRV job runs on Rust 1.88 again (the Actions bump had pointed it at a Rust version that does not exist). PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+- 🚨 Fix `needless_range_loop` lints from Clippy 1.100. PR [#244](https://github.com/albakore/pyzed/pull/244) by [@albakore](https://github.com/albakore).
+
 ## [1.14.0] - 2026-10-27
 
 ### Highlights
