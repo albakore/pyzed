@@ -247,6 +247,10 @@ Clear button), offline / permission denied, and very long or missing values (tru
   (`pz.system_reduced_motion()`); don't convey information only through motion.
 - **Room for languages**: Spanish and German text is ~30 % longer than English. Don't fix widths of buttons and
   labels to the English text; use `pz.t()` for every string (`get_guide("i18n")`).
+- **Right-to-left languages**: Arabic, Hebrew, Persian and Urdu mirror the whole window automatically
+  (`get_guide("rtl")`). Write layouts in terms of start and end (`align_x="left"` and the left padding mean the
+  start side), never place things with `pz.pin`/canvas x for text-heavy UI, and wrap phone numbers or code that must
+  read left to right in `.direction("ltr")`.
 - Targets ≥ 24 px, `App.min_size` set, and the UI scales with `App.scale` and the system DPI.
 
 ## 12. Motion

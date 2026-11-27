@@ -192,6 +192,7 @@ forwards them to `app.update()`.
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
 | `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
 | `isolated` | `False` | `True` promises that only its own messages change what it shows: messages from other windows and the app's timers skip its `view()`, layout and redraw. See [Many windows](/pyzed/guides/performance/#many-windows). |
+| `direction` | `None` | Writing direction: `"ltr"`, `"rtl"` (Arabic, Hebrew...), `"auto"` (from the `pz.i18n` language) or `None` for the app's, then `pz.set_direction`'s. `set_direction()` changes it. See [Right to left](/pyzed/guides/rtl/). |
 
 | Method | Description |
 | --- | --- |
@@ -329,6 +330,22 @@ Window.refresh()
 ```
 
 Draws an `isolated` window again on the next update (safe from any thread); other windows are drawn after every update anyway.
+
+#### `Window.set_direction`
+
+```python
+Window.set_direction(direction)
+```
+
+Sets the window's writing direction (`"ltr"`, `"rtl"`, `"auto"` or `None`) and draws it again: `app.set_direction("rtl")` mirrors the whole layout. See `pyzed.bidi`.
+
+#### `Window.resolved_direction`
+
+```python
+Window.resolved_direction()
+```
+
+The writing direction this window uses right now, `"ltr"` or `"rtl"`: its own `direction`, else the app's, else `pz.set_direction`'s (`"auto"` by default).
 
 #### `Window.frame_menus`
 
@@ -1569,6 +1586,82 @@ normalize(language)
 ```
 
 `"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.
+
+## Writing direction
+
+### `direction`
+
+```python
+direction(content, direction)
+```
+
+Lays `content` out in a writing direction. Right to left mirrors the layout: rows run from the right, `"left"` alignment, padding and margins mean the start side, pop-ups and tooltips on the `"left"` open on the right, sliders and progress bars grow from the right and arrows and chevrons point the other way. Text keeps its own order (the Unicode bidirectional algorithm) and lines up on the right. `widget.direction("rtl")` does the same. See [Right to left](/pyzed/guides/rtl/).
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The part to lay out. |
+| `direction` | `"rtl"`, `"ltr"` (a part that stays left to right inside a right-to-left window) or `"auto"` (from the `pz.i18n` language). |
+
+```python
+pz.column([pz.text("مرحبا"), pz.row([pz.icon("chevron-right"), pz.text("التالي")])]).direction("rtl")
+pz.text("+1 555 0100").direction("ltr")
+```
+
+### `set_direction`
+
+```python
+set_direction(direction)
+```
+
+Sets the writing direction of every window that doesn't set its own `direction`. It starts as `"auto"`: right to left when the `pz.i18n` language is written that way.
+
+| Parameter | Description |
+| --- | --- |
+| `direction` | `"ltr"`, `"rtl"` or `"auto"`. |
+
+### `get_direction`
+
+```python
+get_direction()
+```
+
+The direction windows use when they don't set their own: `"ltr"` or `"rtl"` (`"auto"` resolved).
+
+### `is_rtl`
+
+```python
+is_rtl()
+```
+
+Whether the window being drawn is right to left (inside `view`), else whether windows are by default. For components that place things themselves (a canvas, a pin at a computed x).
+
+### `is_rtl_language`
+
+```python
+is_rtl_language(language)
+```
+
+Whether a language is written right to left: `"ar"`, `"he-IL"`, `"fa_IR"`, `"ur"`...
+
+| Parameter | Description |
+| --- | --- |
+| `language` | A language code. |
+
+### `mirrored_icon`
+
+```python
+mirrored_icon(name)
+```
+
+The icon shown for `name` in a right-to-left part: `"chevron-left"` for `"chevron-right"`, `"redo"` for `"undo"`; `name` itself for an icon that isn't mirrored.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | A Lucide icon name. |
+
+### `RTL_LANGUAGES`
+
+The language codes written right to left: Arabic, Hebrew, Persian, Urdu, Pashto, Sindhi, Sorani Kurdish, Uyghur, Dhivehi, Yiddish, Syriac and N'Ko.
 
 ## Built-in reference
 

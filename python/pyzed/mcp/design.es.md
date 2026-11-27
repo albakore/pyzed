@@ -253,6 +253,10 @@ un botón Limpiar), sin conexión / sin permiso, y valores muy largos o ausentes
   (`pz.system_reduced_motion()`); no transmitas información solo con movimiento.
 - **Sitio para otros idiomas**: el español y el alemán ocupan ~30 % más que el inglés. No fijes el ancho de botones
   y etiquetas al texto en inglés; usa `pz.t()` para cada texto (`get_guide("i18n")`).
+- **Idiomas de derecha a izquierda**: el árabe, el hebreo, el persa y el urdu reflejan la ventana entera solos
+  (`get_guide("rtl")`). Piensa los diseños en inicio y final (`align_x="left"` y el padding izquierdo son el lado de
+  inicio), no coloques con `pz.pin`/x del canvas en interfaces con texto y envuelve en `.direction("ltr")` los
+  teléfonos o el código que deban leerse de izquierda a derecha.
 - Objetivos ≥ 24 px, `App.min_size` fijado, y la interfaz escala con `App.scale` y el DPI del sistema.
 
 ## 12. Movimiento
