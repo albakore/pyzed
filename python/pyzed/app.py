@@ -9,6 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 from . import _core
 from . import _platform
 from . import animation as _animation
+from . import bidi as _bidi
 from . import component as _component
 from . import devices as _devices
 from . import style as _style
@@ -130,6 +131,10 @@ class Window:
     app_id: Optional[str] = None
     safe_area: bool = True
     isolated: bool = False
+    #: The writing direction: ``"ltr"``, ``"rtl"`` (right to left: Arabic, Hebrew...), ``"auto"``
+    #: (from ``pz.i18n``'s language) or ``None`` to use the app's, then ``pz.set_direction``'s.
+    #: See ``pyzed.bidi``.
+    direction: Optional[str] = None
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -226,6 +231,22 @@ class Window:
         windows are drawn after every update anyway."""
         _core.refresh_window(self)
 
+    def set_direction(self, direction: Optional[str]) -> None:
+        """Sets the window's writing direction (``"ltr"``, ``"rtl"``, ``"auto"`` or ``None``) and draws
+        it again: ``app.set_direction("rtl")`` mirrors the whole layout. See ``pyzed.bidi``."""
+        if direction is not None:
+            _bidi._check(direction)
+        self.direction = direction
+        self.refresh()
+
+    def resolved_direction(self) -> str:
+        """The writing direction this window uses right now, ``"ltr"`` or ``"rtl"``: its own
+        ``direction``, else the app's, else ``pz.set_direction``'s (``"auto"`` by default)."""
+        value = self.direction
+        if value is None and self.app is not None and self.app is not self:
+            value = self.app.direction
+        return _bidi._resolve(value)
+
     def frame_menus(self) -> Optional[Sequence[Any]]:
         """The menus on the left of a custom frame's title bar (``frame = "custom"``): a list of ``ui.Menu``."""
         return None
@@ -283,14 +304,22 @@ class Window:
             _style._viewport = tuple(self.window_size or _style._screen or self.size)
         from .ui import frame as _frame
 
-        with _component.render_pass(self), _frame.drawing(self) as drawing:
-            root = self.view()
-            if drawing.style is not None and not drawing.drawn:
-                root = _frame.window_frame(root, menus=self.frame_menus())
-            root = _style.apply_global(root, self.resolved_style())
+        direction = self.resolved_direction()
+        _bidi._drawing = direction
+        try:
+            with _component.render_pass(self), _frame.drawing(self) as drawing:
+                root = self.view()
+                if drawing.style is not None and not drawing.drawn:
+                    root = _frame.window_frame(root, menus=self.frame_menus())
+                root = _style.apply_global(root, self.resolved_style())
+        finally:
+            _bidi._drawing = None
         if design is not None and self.stretch == "fit":
             root = _core.container(_core.container(root, width=design[0], height=design[1], clip=True),
                                    width="fill", height="fill", center=True)
+        if direction == "rtl":
+            # The whole window is the box mirrored, so content that doesn't fill it sits on the right.
+            root = _core.direction(_core.container(root, width="fill", height="fill"), "rtl")
         return _animation._window_root(self, root)
 
     def __pyzed_frame__(self) -> Optional[str]:

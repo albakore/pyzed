@@ -6,6 +6,7 @@ mod animation;
 mod app;
 mod audio;
 mod crash;
+mod direction;
 mod dnd;
 mod editor;
 mod editor_widgets;
@@ -62,6 +63,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     serial::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
+    m.add_function(wrap_pyfunction!(direction::_set_mirrored_icons, m)?)?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;
     m.add_function(wrap_pyfunction!(app::listen, m)?)?;
     m.add_function(wrap_pyfunction!(app::frames, m)?)?;

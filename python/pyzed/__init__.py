@@ -96,6 +96,7 @@ from .workers import background
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
+from .bidi import direction, get_direction, is_rtl, set_direction
 from .hints import Color, FilePath, FolderPath, Icon, Multiline, Range
 from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
                     stylesheet, viewport)
@@ -109,7 +110,7 @@ from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
 from . import dnd  # noqa: E402
-from . import accessibility, animation, animation_player, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
+from . import accessibility, animation, animation_player, bidi, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
 from . import brand
 
 # Loaded on first use, so ``import pyzed`` stays fast (an app that never opens the designer
@@ -358,6 +359,11 @@ __all__ = [
     "is_pressed",
     "hspace",
     "i18n",
+    "bidi",
+    "direction",
+    "get_direction",
+    "is_rtl",
+    "set_direction",
     "icon",
     "icons",
     "image",

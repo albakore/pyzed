@@ -1,6 +1,8 @@
 //! Bundled fonts: IBM Plex Sans/Mono (UI and code, like Zed) and Lucide (icons). The italic faces
 //! are there for emphasis (Markdown's `*text*`, a theme's italic code): without them it showed upright,
-//! or in another family.
+//! or in another family. IBM Plex Sans Arabic and Hebrew (only their own letters) draw those
+//! scripts in the same style on every system: Plex Sans has no such letters, so the text engine
+//! falls back to them before the system's fonts.
 
 use std::borrow::Cow;
 use std::sync::Once;
@@ -19,6 +21,20 @@ const BUNDLED: &[&[u8]] = &[
     include_bytes!("../assets/fonts/IBMPlexMono-Medium.ttf"),
     include_bytes!("../assets/fonts/IBMPlexMono-Italic.ttf"),
     include_bytes!("../assets/fonts/lucide.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansArabic-Regular.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansArabic-Medium.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansArabic-SemiBold.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansArabic-Bold.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansHebrew-Regular.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansHebrew-Medium.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansHebrew-SemiBold.ttf"),
+    include_bytes!("../assets/fonts/IBMPlexSansHebrew-Bold.ttf"),
+];
+
+/// The bundled families tried first for the letters of a script Plex Sans lacks.
+const SCRIPT_FALLBACKS: &[(&str, &str)] = &[
+    ("Arab", "IBM Plex Sans Arabic"),
+    ("Hebr", "IBM Plex Sans Hebrew"),
 ];
 
 fn load(bytes: Cow<'static, [u8]>) {
@@ -31,6 +47,9 @@ fn load(bytes: Cow<'static, [u8]>) {
 pub fn ensure_loaded() {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
+        for (script, family) in SCRIPT_FALLBACKS {
+            iced::advanced::graphics::text::prefer_fallback(script, family);
+        }
         for font in BUNDLED {
             load(Cow::Borrowed(font));
         }
