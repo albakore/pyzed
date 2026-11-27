@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use elsa::FrozenMap;
 use iced::advanced::text::Wrapping;
+use iced::alignment::Horizontal;
 use iced::widget::text::LineHeight;
 use iced::widget::{
     self, Space, button, checkbox, column, container, markdown, mouse_area, progress_bar, qr_code,
@@ -263,6 +264,8 @@ pub struct Ctx<'a> {
     pad_slot: bool,
     /// Texts follow the animated font size of an `Animated` ancestor (`SizedText`).
     font_slot: bool,
+    /// Inside a right-to-left part (`pz.direction(..., "rtl")`, `App.direction`).
+    rtl: bool,
 }
 
 impl<'a> Ctx<'a> {
@@ -273,7 +276,31 @@ impl<'a> Ctx<'a> {
             text_defaults: Default::default(),
             pad_slot: false,
             font_slot: false,
+            rtl: false,
         }
+    }
+}
+
+/// `"left"` and `"right"` swapped inside a right-to-left part (they mean the start and the end).
+fn flip_x(rtl: bool, align: Horizontal) -> Horizontal {
+    match (rtl, align) {
+        (true, Horizontal::Left) => Horizontal::Right,
+        (true, Horizontal::Right) => Horizontal::Left,
+        (_, align) => align,
+    }
+}
+
+/// A widget that places things from its own numbers (a split's divider, a scrollbar, a pin's
+/// x) inside a right-to-left part: `build` gets a function that mirrors its content, and the
+/// widget itself is mirrored back, so it works as in left to right with its content mirrored.
+fn keep_ltr<'a>(
+    ctx: Ctx<'a>,
+    build: impl FnOnce(&dyn Fn(Element<'a, Message>) -> Element<'a, Message>) -> Element<'a, Message>,
+) -> Element<'a, Message> {
+    if ctx.rtl {
+        crate::direction::Mirror::new(build(&|e| crate::direction::Mirror::new(e).into())).into()
+    } else {
+        build(&|e| e)
     }
 }
 
@@ -561,9 +588,23 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             if let Some(name) = &t.selectable {
                 return selectable_text(t, name, font, size, color, line_height);
             }
-            let content = t.content.clone();
-            let (align_x, align_y, width, height, wrap) =
-                (t.align_x, t.align_y, t.width, t.height, t.wrap);
+            let (content, align_x) = if ctx.rtl {
+                // Lines start on the right; arrows and chevrons point the other way.
+                let icons = iced::font::Family::Name(ICONS);
+                let content = if t.font.or(font).is_some_and(|f| f.family == icons) {
+                    t.content
+                        .chars()
+                        .map(crate::direction::mirrored_icon)
+                        .collect()
+                } else {
+                    crate::direction::rtl_text(&t.content).into_owned()
+                };
+                let align = flip_x(true, t.align_x.unwrap_or(Horizontal::Left));
+                (content, Some(align))
+            } else {
+                (t.content.clone(), t.align_x)
+            };
+            let (align_y, width, height, wrap) = (t.align_y, t.width, t.height, t.wrap);
             let make = move |size: Option<f32>| {
                 let mut w = text(content.clone());
                 if let Some(size) = size {
@@ -674,7 +715,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             style,
         } => {
             let mut t = text_input(placeholder, value).secure(*secure);
-            if let Some(a) = align_x {
+            if ctx.rtl {
+                t = t.align_x(flip_x(true, align_x.unwrap_or(Horizontal::Left)));
+            } else if let Some(a) = align_x {
                 t = t.align_x(*a);
             }
             if let Some(cb) = on_input.clone() {
@@ -776,7 +819,18 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 Some(p) => container(build(py, child, ctx)).padding(p).into(),
                 None => build(py, child, ctx),
             };
+            // Right to left: the scrollbar stays where it is and the content is mirrored inside
+            // (`keep_ltr`), starting from its right end when it scrolls sideways.
+            let rtl = ctx.rtl;
+            let content = if rtl {
+                crate::direction::Mirror::new(content).into()
+            } else {
+                content
+            };
             let mut s = widget::Scrollable::with_direction(content, dir);
+            if rtl && direction != "vertical" {
+                s = s.anchor_right();
+            }
             if let Some(w) = layout.width {
                 s = s.width(w);
             }
@@ -822,7 +876,11 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 }
                 crate::animation::fade_scrollable(out)
             });
-            s.into()
+            if rtl {
+                crate::direction::Mirror::new(s).into()
+            } else {
+                s.into()
+            }
         }
         Kind::Space { width, height } => Space::new().width(*width).height(*height).into(),
         Kind::Rule {
@@ -912,6 +970,14 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             s.into()
         }
         Kind::Opaque { child } => widget::opaque(build(py, child, ctx)),
+        Kind::Direction { child, rtl } => {
+            let content = build(py, child, Ctx { rtl: *rtl, ..ctx });
+            if *rtl == ctx.rtl {
+                content
+            } else {
+                crate::direction::Mirror::new(content).into()
+            }
+        }
         Kind::Scrub {
             child,
             on_scrub,
@@ -1011,15 +1077,28 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             side,
             align,
             gap,
-        } => crate::popup::Popup::new(
-            build(py, child, ctx),
-            content.as_ref().map(|c| build(py, c, ctx)),
-            on_dismiss.clone().map(Message::Py),
-            *side,
-            *align,
-            *gap,
-        )
-        .into(),
+        } => {
+            use crate::popup::{Align, Side};
+            // Right to left: "left" and "right" are the start and end sides, and a pop-up below
+            // or above lines up with the base's right edge.
+            let (side, align) = match (ctx.rtl, *side, *align) {
+                (false, side, align) => (side, align),
+                (true, Side::Left, align) => (Side::Right, align),
+                (true, Side::Right, align) => (Side::Left, align),
+                (true, side, Align::Start) => (side, Align::End),
+                (true, side, Align::End) => (side, Align::Start),
+                (true, side, align) => (side, align),
+            };
+            crate::popup::Popup::new(
+                build(py, child, ctx),
+                content.as_ref().map(|c| build(py, c, ctx)),
+                on_dismiss.clone().map(Message::Py),
+                side,
+                align,
+                *gap,
+            )
+            .into()
+        }
         Kind::Tooltip {
             child,
             tip,
@@ -1027,11 +1106,11 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             gap,
             style,
         } => {
-            let position = match position.as_str() {
-                "top" => tooltip::Position::Top,
-                "left" => tooltip::Position::Left,
-                "right" => tooltip::Position::Right,
-                "cursor" => tooltip::Position::FollowCursor,
+            let position = match (position.as_str(), ctx.rtl) {
+                ("top", _) => tooltip::Position::Top,
+                ("left", false) | ("right", true) => tooltip::Position::Left,
+                ("right", false) | ("left", true) => tooltip::Position::Right,
+                ("cursor", _) => tooltip::Position::FollowCursor,
                 _ => tooltip::Position::Bottom,
             };
             let style = style.container();
@@ -1158,11 +1237,17 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             vertical,
             style,
         } => {
+            // Right to left, a horizontal slider grows from the right: it shows the value
+            // mirrored in its range (and the rail's colors swapped) and mirrors it back.
+            let flip = ctx.rtl && !*vertical;
+            let (lo, hi) = (*min, *max);
+            let mirrored = move |v: f32| if flip { lo + hi - v } else { v };
             let cb = on_change.clone();
             let on_change = move |v| match &cb {
-                Some(cb) => Message::Slide(cb.clone(), v),
+                Some(cb) => Message::Slide(cb.clone(), mirrored(v)),
                 None => Message::Noop,
             };
+            let shown = mirrored(*value);
             let st = style.clone();
             let style = move |theme: &Theme, status| {
                 let mut out = slider::default(theme, status);
@@ -1179,6 +1264,10 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 if let Some(b) = st.border_color {
                     out.handle.border_color = b;
                     out.handle.border_width = 1.0;
+                }
+                if flip {
+                    let (filled, empty) = out.rail.backgrounds;
+                    out.rail.backgrounds = (empty, filled);
                 }
                 crate::animation::fade_slider(out)
             };
@@ -1197,7 +1286,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 }
                 s.into()
             } else {
-                let mut s = slider(*min..=*max, *value, on_change)
+                let mut s = slider(*min..=*max, shown, on_change)
                     .step(*step)
                     .style(style);
                 if let Some(m) = on_release.clone() {
@@ -1221,7 +1310,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             style,
             radius,
         } => {
-            let mut p = progress_bar(*min..=*max, *value);
+            let mut p = progress_bar(*min..=*max, *value).rtl(ctx.rtl);
             if let Some(w) = width {
                 p = p.length(*w);
             }
@@ -1244,7 +1333,15 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             })
             .into()
         }
-        Kind::Editor(props) => editor::view(ctx.caches.editor(&props.id, &props.text), props),
+        Kind::Editor(props) => {
+            // Code reads left to right in any direction.
+            let view = editor::view(ctx.caches.editor(&props.id, &props.text), props);
+            if ctx.rtl {
+                crate::direction::Mirror::new(view).into()
+            } else {
+                view
+            }
+        }
         Kind::Svg {
             source,
             width,
@@ -1322,18 +1419,40 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     as Box<dyn Fn(f32) -> Message + 'a>
             });
             let color = props.color.unwrap_or(Color::from_rgb8(0x46, 0x4b, 0x57));
+            let style = SplitStyle {
+                color,
+                hover_color: props.hover_color.unwrap_or(color),
+                line: props.thickness,
+                handle: props.handle,
+            };
+            if ctx.rtl && !props.vertical {
+                // Side by side, right to left: the first pane on the right. The split works
+                // left to right with the panes swapped and the ratio counted from the right.
+                let on_resize = props.on_resize.clone().map(|cb| {
+                    Box::new(move |ratio: f32| Message::Slide(cb.clone(), 1.0 - ratio))
+                        as Box<dyn Fn(f32) -> Message + 'a>
+                });
+                return keep_ltr(ctx, |mirror| {
+                    Split::new(
+                        mirror(build(py, &props.second, ctx)),
+                        mirror(build(py, &props.first, ctx)),
+                        false,
+                        1.0 - props.ratio,
+                        (props.min.1, props.min.0),
+                        style,
+                        on_resize,
+                        (props.width, props.height),
+                    )
+                    .into()
+                });
+            }
             Split::new(
                 build(py, &props.first, ctx),
                 build(py, &props.second, ctx),
                 props.vertical,
                 props.ratio,
                 props.min,
-                SplitStyle {
-                    color,
-                    hover_color: props.hover_color.unwrap_or(color),
-                    line: props.thickness,
-                    handle: props.handle,
-                },
+                style,
                 on_resize,
                 (props.width, props.height),
             )
@@ -1345,12 +1464,15 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             y,
             width,
             height,
-        } => widget::pin(build(py, child, ctx))
-            .x(*x)
-            .y(*y)
-            .width(*width)
-            .height(*height)
-            .into(),
+        } => keep_ltr(ctx, |mirror| {
+            // `x` is from the left edge in any direction (it usually comes from the mouse).
+            widget::pin(mirror(build(py, child, ctx)))
+                .x(*x)
+                .y(*y)
+                .width(*width)
+                .height(*height)
+                .into()
+        }),
         Kind::Grid {
             children,
             columns,
@@ -1419,21 +1541,29 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     as Box<dyn Fn(f32) -> Message + 'a>
             });
             let color = props.color.unwrap_or(Color::from_rgb8(0x46, 0x4b, 0x57));
-            crate::layout::Resizable::new(
-                build(py, &props.child, ctx),
-                props.edge,
-                props.size,
-                (props.min, props.max),
-                crate::layout::ResizeStyle {
-                    color,
-                    hover_color: props.hover_color.unwrap_or(color),
-                    line: props.thickness,
-                    handle: props.handle,
-                },
-                props.cross,
-                on_resize,
-            )
-            .into()
+            // Right to left, a panel on the start side is on the right: its other edge moves.
+            let edge = match (ctx.rtl, props.edge) {
+                (true, crate::layout::Edge::Left) => crate::layout::Edge::Right,
+                (true, crate::layout::Edge::Right) => crate::layout::Edge::Left,
+                (_, edge) => edge,
+            };
+            keep_ltr(ctx, |mirror| {
+                crate::layout::Resizable::new(
+                    mirror(build(py, &props.child, ctx)),
+                    edge,
+                    props.size,
+                    (props.min, props.max),
+                    crate::layout::ResizeStyle {
+                        color,
+                        hover_color: props.hover_color.unwrap_or(color),
+                        line: props.thickness,
+                        handle: props.handle,
+                    },
+                    props.cross,
+                    on_resize,
+                )
+                .into()
+            })
         }
         Kind::Focus { child, props } => {
             crate::focus::KeyFocus::new(build(py, child, ctx), props).into()

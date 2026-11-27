@@ -368,6 +368,11 @@ class Widget:
         ``style()`` call afterwards goes on top. See ``pyzed.style``.
         """
         ...
+    def direction(self, direction: Any) -> Any:
+        """Lays the widget out in a writing direction, ``"rtl"``, ``"ltr"`` or ``"auto"``, and returns the
+        wrapped widget: ``pz.column(...).direction("rtl")``. See ``pz.direction``.
+        """
+        ...
     def on(self, *, cursor: Any = ..., **handlers: Any) -> Any:
         """Attaches common event handlers and returns the wrapped widget.
 
@@ -491,6 +496,19 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
     ...
 def column(children: Any = ..., *, spacing: Any = ..., padding: Any = ..., width: Any = ..., height: Any = ..., align: Any = ..., max_width: Any = ..., clip: Any = ...) -> Any: ...
 def container(content: Any = ..., *, padding: Any = ..., width: Any = ..., height: Any = ..., max_width: Any = ..., max_height: Any = ..., align_x: Any = ..., align_y: Any = ..., center: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ..., clip: Any = ..., gradient: Any = ...) -> Any: ...
+def direction(content: Any, direction: Any) -> Any:
+    """Lays `content` out in a writing direction: ``"rtl"`` (right to left: Arabic, Hebrew,
+    Persian, Urdu...), ``"ltr"`` (left to right) or ``"auto"`` (from `pz.i18n`'s language).
+
+    Right to left mirrors the layout: rows run from the right, ``"left"`` alignment, padding and
+    margins mean the start side, tooltips and pop-ups on the ``"left"`` open on the right, sliders
+    and progress bars grow from the right, and arrow and chevron icons point the other way. Text
+    keeps its own order (mixed Arabic, Latin and numbers follow the Unicode bidirectional
+    algorithm) and lines up on the right. A ``"ltr"`` part inside it goes back to left to right
+    (code, phone numbers, media controls); code editors always are. ``App.direction`` sets it for
+    a whole window.
+    """
+    ...
 def drag_handle(content: Any, *, cursor: Any = ...) -> Any:
     """The part of a draggable (made with `handle=True`) that starts the drag.
 

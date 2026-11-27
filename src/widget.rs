@@ -303,6 +303,12 @@ pub enum Kind {
     Opaque {
         child: Py<Widget>,
     },
+    /// `pz.direction(content, "rtl")`: the content laid out right to left (or back to left to
+    /// right inside a right-to-left part).
+    Direction {
+        child: Py<Widget>,
+        rtl: bool,
+    },
     Scrub {
         child: Py<Widget>,
         on_scrub: Option<PyMsg>,
@@ -492,6 +498,8 @@ impl Widget {
             Kind::MouseArea { .. } => "mouse_area",
             Kind::Stack { .. } => "stack",
             Kind::Opaque { .. } => "opaque",
+            Kind::Direction { rtl: true, .. } => "direction rtl",
+            Kind::Direction { rtl: false, .. } => "direction ltr",
             Kind::Scrub { .. } => "scrub",
             Kind::Hover { .. } => "hover",
             Kind::Tooltip { .. } => "tooltip",
@@ -620,6 +628,7 @@ impl Widget {
             Kind::Events { child, .. }
             | Kind::Animated { child, .. }
             | Kind::Focus { child, .. }
+            | Kind::Direction { child, .. }
             | Kind::Draggable { child, .. }
             | Kind::DragHandle { child, .. }
             | Kind::Droppable { child, .. } => {
@@ -636,6 +645,20 @@ impl Widget {
                 Length::Fixed(v) => v.into_py_any(py),
             })
             .transpose()
+    }
+
+    /// Lays the widget out in a writing direction, ``"rtl"``, ``"ltr"`` or ``"auto"``, and returns the
+    /// wrapped widget: ``pz.column(...).direction("rtl")``. See ``pz.direction``.
+    #[pyo3(name = "direction")]
+    fn with_direction(slf: &Bound<'_, Self>, direction: &str) -> PyResult<Py<Widget>> {
+        let py = slf.py();
+        new(
+            py,
+            Kind::Direction {
+                child: slf.clone().unbind(),
+                rtl: parse_direction(py, direction)?,
+            },
+        )
     }
 
     /// Gives the widget stylesheet classes (and an ``id``) and returns it styled by the
@@ -1391,6 +1414,47 @@ pub fn opaque(py: Python<'_>, content: &Bound<'_, PyAny>) -> PyResult<Py<Widget>
     )
 }
 
+/// Lays `content` out in a writing direction: ``"rtl"`` (right to left: Arabic, Hebrew,
+/// Persian, Urdu...), ``"ltr"`` (left to right) or ``"auto"`` (from `pz.i18n`'s language).
+///
+/// Right to left mirrors the layout: rows run from the right, ``"left"`` alignment, padding and
+/// margins mean the start side, tooltips and pop-ups on the ``"left"`` open on the right, sliders
+/// and progress bars grow from the right, and arrow and chevron icons point the other way. Text
+/// keeps its own order (mixed Arabic, Latin and numbers follow the Unicode bidirectional
+/// algorithm) and lines up on the right. A ``"ltr"`` part inside it goes back to left to right
+/// (code, phone numbers, media controls); code editors always are. ``App.direction`` sets it for
+/// a whole window.
+#[pyfunction]
+pub fn direction(
+    py: Python<'_>,
+    content: &Bound<'_, PyAny>,
+    direction: &str,
+) -> PyResult<Py<Widget>> {
+    new(
+        py,
+        Kind::Direction {
+            child: child(content)?,
+            rtl: parse_direction(py, direction)?,
+        },
+    )
+}
+
+/// `true` for ``"rtl"``, `false` for ``"ltr"``; ``"auto"`` follows `pz.i18n`'s language.
+pub fn parse_direction(py: Python<'_>, direction: &str) -> PyResult<bool> {
+    match direction.to_ascii_lowercase().as_str() {
+        "rtl" => Ok(true),
+        "ltr" => Ok(false),
+        "auto" => Ok(py
+            .import("pyzed.direction")?
+            .getattr("is_rtl_language")?
+            .call1((py.import("pyzed.i18n")?.getattr("language")?.call0()?,))?
+            .is_truthy()?),
+        _ => Err(PyValueError::new_err(format!(
+            "direction must be 'ltr', 'rtl' or 'auto', not {direction:?}"
+        ))),
+    }
+}
+
 /// Lets the mouse change a number field by dragging over it, like Figma's.
 ///
 /// Pressing the left button over `content` and moving sideways calls `on_scrub(dx)` with the
@@ -2017,6 +2081,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(event_names, m)?)?;
     m.add_function(wrap_pyfunction!(stack, m)?)?;
     m.add_function(wrap_pyfunction!(opaque, m)?)?;
+    m.add_function(wrap_pyfunction!(direction, m)?)?;
     m.add_function(wrap_pyfunction!(scrub, m)?)?;
     m.add_function(wrap_pyfunction!(hover, m)?)?;
     m.add_function(wrap_pyfunction!(tooltip, m)?)?;

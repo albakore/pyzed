@@ -1276,9 +1276,8 @@ impl Widget<Message, Theme, Renderer> for Minimap<'_> {
             let count = metrics.starts.len().saturating_sub(1);
             let mut cache = state.runs.borrow_mut();
             let mut last = first;
-            for line in first..count {
+            for (line, &row) in metrics.starts.iter().enumerate().take(count).skip(first) {
                 last = line;
-                let row = metrics.starts[line];
                 let y = bounds.y + row as f32 * MINI_LINE - g.offset;
                 if y > bounds.y + bounds.height {
                     break;

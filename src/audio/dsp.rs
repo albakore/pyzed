@@ -335,7 +335,7 @@ struct Noise {
 impl Dsp for Noise {
     fn process(&mut self, io: &mut Io, _: &mut Ctx, _: &[AtomicU32]) {
         let (color, level) = (io.p[0] as usize, io.p[1]);
-        for i in 0..BLOCK {
+        for out in io.outs[0].iter_mut().take(BLOCK) {
             let white = self.rng.next();
             let x = match color {
                 0 => white,
@@ -357,7 +357,7 @@ impl Dsp for Noise {
                     self.brown * 3.5
                 }
             };
-            io.outs[0][i] = x * level;
+            *out = x * level;
         }
     }
 }

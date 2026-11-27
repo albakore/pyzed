@@ -1140,6 +1140,7 @@ reenvía a `app.update()`.
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
 | `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
 | `isolated` | `False` | `True` promete que solo sus propios mensajes cambian lo que muestra: los mensajes de otras ventanas y los temporizadores de la app no llaman a su `view()` ni la vuelven a maquetar o dibujar. Ver [Muchas ventanas](/pyzed/es/guides/performance/#muchas-ventanas). |
+| `direction` | `None` | Dirección de escritura: `"ltr"`, `"rtl"` (árabe, hebreo...), `"auto"` (según el idioma de `pz.i18n`) o `None` para usar la de la app y luego la de `pz.set_direction`. `set_direction()` la cambia. Ver [Derecha a izquierda](/pyzed/es/guides/rtl/). |
 
 | Método | Descripción |
 | --- | --- |
@@ -2925,6 +2926,8 @@ MEMBERS = {
     "pyzed.Monitor.size": "`(ancho, alto)` en píxeles lógicos.",
     "pyzed.Monitor.position": "`(x, y)` de la esquina superior izquierda en el escritorio.",
     "pyzed.Window.refresh": "Vuelve a dibujar una ventana `isolated` en la próxima actualización (desde cualquier hilo); las demás ventanas se dibujan tras cada actualización de todos modos.",
+    "pyzed.Window.set_direction": "Fija la dirección de escritura de la ventana (`\"ltr\"`, `\"rtl\"`, `\"auto\"` o `None`) y la vuelve a dibujar: `app.set_direction(\"rtl\")` refleja todo el diseño. Ver `pyzed.bidi`.",
+    "pyzed.Window.resolved_direction": "La dirección de escritura que usa ahora esta ventana, `\"ltr\"` o `\"rtl\"`: su propia `direction`, si no la de la app y si no la de `pz.set_direction` (`\"auto\"` por defecto).",
     "pyzed.Window.resolved_style": "El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.",
     "pyzed.Event.position": "`(x, y)`.",
     "pyzed.Event.size": "`(width, height)`.",
@@ -3709,3 +3712,23 @@ _section("ui", "Datos y feedback", {
         "example": "ui.description_list({\"Nombre\": \"informe.pdf\", \"Tamaño\": \"2,4 MB\", \"Estado\": ui.badge(\"Sincronizado\", tint=\"success\")})",
     },
 })
+
+_section("app", "Dirección de escritura", {
+    "pyzed.direction": {
+        "desc": "Maqueta `content` en una dirección de escritura. De derecha a izquierda refleja el diseño: las filas empiezan por la derecha, la alineación `\"left\"`, el relleno y los márgenes pasan al lado del inicio, los pop-ups y tooltips a la `\"left\"` se abren a la derecha, los sliders y barras de progreso crecen desde la derecha y las flechas y chevrones apuntan al otro lado. El texto conserva su propio orden (el algoritmo bidireccional de Unicode) y se alinea a la derecha. `widget.direction(\"rtl\")` hace lo mismo. Ver [Derecha a izquierda](/pyzed/es/guides/rtl/).",
+        "params": {"content": "La parte a maquetar.", "direction": "`\"rtl\"`, `\"ltr\"` (una parte que sigue de izquierda a derecha dentro de una ventana de derecha a izquierda) o `\"auto\"` (según el idioma de `pz.i18n`)."},
+        "example": """
+            pz.column([pz.text("مرحبا"), pz.row([pz.icon("chevron-right"), pz.text("التالي")])]).direction("rtl")
+            pz.text("+1 555 0100").direction("ltr")
+        """,
+    },
+    "pyzed.set_direction": {
+        "desc": "Fija la dirección de escritura de todas las ventanas que no fijan la suya. Empieza en `\"auto\"`: de derecha a izquierda cuando el idioma de `pz.i18n` se escribe así.",
+        "params": {"direction": "`\"ltr\"`, `\"rtl\"` o `\"auto\"`."},
+    },
+    "pyzed.get_direction": {"desc": "La dirección que usan las ventanas que no fijan la suya: `\"ltr\"` o `\"rtl\"` (con `\"auto\"` ya resuelto)."},
+    "pyzed.is_rtl": {"desc": "Si la ventana que se está dibujando es de derecha a izquierda (dentro de `view`); si no, si lo son las ventanas por defecto. Para componentes que colocan cosas por su cuenta (un canvas, un pin en una x calculada)."},
+    "pyzed.bidi.is_rtl_language": {"desc": "Si un idioma se escribe de derecha a izquierda: `\"ar\"`, `\"he-IL\"`, `\"fa_IR\"`, `\"ur\"`...", "params": {"language": "Un código de idioma."}},
+    "pyzed.bidi.mirrored_icon": {"desc": "El icono que se muestra en lugar de `name` en una parte de derecha a izquierda: `\"chevron-left\"` por `\"chevron-right\"`, `\"redo\"` por `\"undo\"`; el propio `name` si el icono no se refleja.", "params": {"name": "Un nombre de icono de Lucide."}},
+    "pyzed.bidi.RTL_LANGUAGES": {"desc": "Los códigos de los idiomas que se escriben de derecha a izquierda: árabe, hebreo, persa, urdu, pastún, sindhi, kurdo sorani, uigur, dhivehi, ídish, siríaco y n'ko.", "no_signature": True},
+}, before="Referencia integrada")
