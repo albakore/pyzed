@@ -1,11 +1,16 @@
 """pz.Workbook (the spreadsheet engine), pz.sheet (the grid) and ui.Spreadsheet."""
 
 import datetime as dt
+import sys
 
 import pytest
 
 import pyzed as pz
 from pyzed import _core, ui
+
+
+#: The modifier of the grid's shortcuts: Cmd on macOS, Ctrl elsewhere.
+CMD = "cmd" if sys.platform == "darwin" else "ctrl"
 
 
 def book_with(rows, at="A1"):
@@ -317,8 +322,8 @@ def test_keyboard_shortcuts_of_the_grid():
     book = book_with([[1], [2], [3]])
     app = Grid(book)
     drive(app, [("move", 90, 68), ("down", "left"), ("up", "left"),
-                ("key", "ArrowDown", "shift"), ("key", "ArrowDown", "shift"), ("key", "b", "ctrl"),
-                ("key", "Delete", ""), ("key", "z", "ctrl")])
+                ("key", "ArrowDown", "shift"), ("key", "ArrowDown", "shift"), ("key", "b", CMD),
+                ("key", "Delete", ""), ("key", "z", CMD)])
     assert book.style("A1").get("bold") is True
     assert book["A3"] == 3
     assert book.selection == "A1:A3"
@@ -375,7 +380,7 @@ def test_double_click_on_a_tab_renames_the_sheet():
 def test_ctrl_f_types_into_the_find_field():
     app = Sheets()
     drive(app, [("move", 90, 150), ("down", "left"), ("up", "left"),
-                ("key", "f", "ctrl"), ("type", "pear"), ("key", "Enter", "")], size=(900, 500))
+                ("key", "f", CMD), ("type", "pear"), ("key", "Enter", "")], size=(900, 500))
     assert app.book["A1"] == "apple"  # nothing was typed into a cell
     assert app.book.active_cell == "A2"
 
