@@ -2847,6 +2847,44 @@ PAGES.append({
     ],
 })
 
+# -- Routing -------------------------------------------------------------------------------------
+_R = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "routing",
+    "title": "Routing (pyzed.routing)",
+    "description": "API reference for pyzed.routing: Next.js-style routes in folders for Python desktop apps, with RouterApp, Router, links, navigation hooks, not_found and redirect.",
+    "order": 10.8,
+    "intro": """
+        Pages as folders of `app/`, like Next.js' App Router: `page.py`, `layout.py`, `template.py`,
+        `loading.py`, `error.py`, `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]` and `(group)`.
+        See the [routing guide](/pyzed/guides/routing/).
+
+        ```python
+        pz.run(pz.RouterApp("app", title="Shop"))
+        ```
+    """,
+    "sections": [
+        ("The router", {
+            "pyzed.RouterApp": {**_R, "example": 'class Shop(pz.RouterApp):\n    routes = "app"\n    title = "Shop"'},
+            "pyzed.Router": {**_R, "example": 'self.router = pz.Router("app")\n# in view(): return self.router.view()'},
+        }),
+        ("Links and hooks", {
+            "pyzed.link": {**_R, "example": 'pz.link("/products/3", "See the monitor")'},
+            "pyzed.nav_link": {**_R, "example": 'pz.nav_link("/settings", "Settings", icon="settings")'},
+            "pyzed.use_router": {**_R, "example": 'pz.use_router().push("/cart")'},
+            "pyzed.use_pathname": {**_R},
+            "pyzed.use_params": {**_R},
+            "pyzed.use_search_params": {**_R},
+        }),
+        ("Inside pages", {
+            "pyzed.not_found": {**_R},
+            "pyzed.redirect": {**_R, "example": 'pz.redirect("/login")'},
+            "pyzed.routing.Location": {**_R},
+            "pyzed.routing.SearchParams": {**_R},
+        }),
+    ],
+})
+
 # -- More components: ratings, ranges, tags, steps, pages, loading and data ------------------------
 _section("ui", "Controls", {
     "pyzed.ui.rating": {
