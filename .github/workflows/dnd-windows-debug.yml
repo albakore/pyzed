@@ -1,4 +1,4 @@
-# Temporary: finds why tests/test_dnd.py fails now and then on Windows. Removed before merging.
+# Temporary: finds why tests/test_dnd.py fails now and then on Windows (with the trace of src/dnd.rs). Removed before merging.
 name: DnD on Windows (debug)
 on:
   push:
@@ -25,9 +25,10 @@ jobs:
         shell: bash
         env:
           PYTHONPATH: .github
+          PYZED_DND_TRACE: "1"
         run: |
           for i in $(seq 6); do
             python -m pytest -q -p no:cacheprovider -p dnd_debug -n auto tests > out.txt 2>&1 || true
             grep -E "^FAILED|passed|failed" out.txt || true
-            if grep -q "^FAILED tests/test_dnd" out.txt; then sed -n '/= FAILURES =/,/short test summary/p' out.txt | grep -v "^E  \|^    " | head -400; fi
+            if grep -q "^FAILED tests/test_dnd" out.txt; then sed -n '/= FAILURES =/,/short test summary/p' out.txt | grep -v "^E  \|^    " | head -700; fi
           done
