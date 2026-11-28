@@ -50,6 +50,9 @@ TOPICS = {
     "rendering": "routing/data/rendering", "middleware": "routing/advanced/middleware",
     "notifications": "routing/advanced/notifications", "routes-in-code": "routing/advanced/routes-in-code",
     "routing-best-practices": "routing/advanced/best-practices", "nextjs": "routing/advanced/nextjs",
+    "spreadsheet": "spreadsheet/index", "workbook": "spreadsheet/workbook",
+    "spreadsheet-component": "spreadsheet/component", "formulas": "spreadsheet/formulas",
+    "spreadsheet-files": "spreadsheet/files",
 }
 
 #: The section of each top-level widget in ``list_components``.
@@ -71,6 +74,7 @@ WIDGET_CATEGORIES = {
     "Window": ("window_edges",),
     "Game loop": ("frames", "pressed", "is_pressed"),
     "Drag and drop": ("draggable", "droppable", "sortable", "drag_handle"),
+    "Spreadsheet": ("sheet", "Workbook"),
 }
 
 #: ``pz.ui`` modules and the section they appear under.
@@ -79,6 +83,7 @@ UI_CATEGORIES = {
     "navigation": "Navigation", "overlays": "Overlays", "dialogs": "Dialogs", "workspace": "Workspace",
     "editor": "Code", "color": "Color", "console": "Console", "help": "Help", "frame": "Window",
     "icon_picker": "Icons", "agent": "Agent", "dates": "Dates and times", "system": "System",
+    "sheet": "Spreadsheet",
 }
 
 
@@ -461,6 +466,11 @@ _HINTS = {
     "route": "routing", "routes": "routing", "router": "routing", "routing": "routing", "nextjs": "routing",
     "next": "routing", "pages": "routing", "rutas": "routing", "ruta": "routing", "navigation": "routing",
     "navegacion": "routing", "navegación": "routing", "multipage": "routing", "url": "routing",
+    "spreadsheet": "spreadsheet", "sheet": "spreadsheet", "sheets": "spreadsheet", "excel": "spreadsheet",
+    "xlsx": "spreadsheet spreadsheet-files", "csv": "spreadsheet-files", "workbook": "workbook",
+    "formula": "formulas", "formulas": "formulas", "datasheet": "spreadsheet", "datagrid": "spreadsheet",
+    "hoja": "spreadsheet", "calculo": "spreadsheet", "cálculo": "spreadsheet", "planilla": "spreadsheet",
+    "celdas": "spreadsheet", "cells": "spreadsheet", "formula_bar": "spreadsheet-component",
 }
 
 

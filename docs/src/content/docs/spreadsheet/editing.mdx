@@ -1,0 +1,144 @@
+---
+title: Editing and shortcuts
+description: How to type, select, copy, paste, autofill and move around a Pyzed spreadsheet with the mouse and the keyboard — the same shortcuts as Excel and Google Sheets.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Typing a formula in a cell: suggestions appear, the arrows pick a range and Enter shows the result](/pyzed/media/spreadsheet/editing.webp)
+
+The grid behaves like Excel and Google Sheets, so your users already know how to use it. This
+page lists what the mouse and the keyboard do. On macOS, <kbd>Ctrl</kbd> is
+<kbd>Cmd</kbd>.
+
+## Typing into cells
+
+Select a cell and start typing: what you type replaces its content. Press <kbd>Enter</kbd> to
+save and go down, <kbd>Tab</kbd> to save and go right, <kbd>Esc</kbd> to cancel. To change
+what a cell already has, double-click it, press <kbd>F2</kbd> or click the formula bar above
+the grid.
+
+What you type is read like a spreadsheet would:
+
+| You type | The cell holds | Shown as |
+| --- | --- | --- |
+| `42` | the number 42 | `42` |
+| `12.5%` | the number 0.125, as a percentage | `12.50%` |
+| `$1,200.50` | the number 1200.5, as currency | `$1,200.50` |
+| `2026-03-04` or `3/4/2026` | a date | `2026-03-04` |
+| `14:30` | a time | `14:30` |
+| `TRUE` | the logical value TRUE | `TRUE` |
+| `=A1*2` | a [formula](/pyzed/spreadsheet/formulas/) | its result |
+| `'00123` | the text `00123` (the apostrophe keeps it as text) | `00123` |
+
+<Aside type="tip">
+Dates like `03/04/2026` are read month first, as in the US. Set `book.month_first = False` to
+read them day first.
+</Aside>
+
+While a cell is being edited:
+
+| Keys | What they do |
+| --- | --- |
+| <kbd>Enter</kbd> / <kbd>Shift</kbd>+<kbd>Enter</kbd> | Save and go down / up. |
+| <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Save and go right / left. |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Save the same value in every selected cell. |
+| <kbd>Alt</kbd>+<kbd>Enter</kbd> | A new line inside the cell. |
+| <kbd>Esc</kbd> | Cancel (closes the suggestions first). |
+| <kbd>F2</kbd> | Switch between moving the caret with the arrows and picking cells with them. |
+| <kbd>F4</kbd> | Cycle the reference under the caret: `A1` → `$A$1` → `A$1` → `$A1`. |
+| <kbd>Ctrl</kbd>+<kbd>;</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>;</kbd> | Insert today's date / the time. |
+| <kbd>Ctrl</kbd>+<kbd>←</kbd> <kbd>→</kbd>, <kbd>Ctrl</kbd>+<kbd>Backspace</kbd> | Move or delete by words. |
+
+## Formulas as you type
+
+Type `=` and the name of a function: a list of matching functions appears with what each one
+does. <kbd>↑</kbd> <kbd>↓</kbd> choose, <kbd>Tab</kbd> or <kbd>Enter</kbd> accept. Inside the
+parentheses, a hint shows the function's arguments and highlights the one you are on.
+
+Each reference in the formula gets its own color, and the cells it points to are outlined in
+the same color in the grid. Right after `(`, `,`, an operator or `=`, the arrows and the mouse
+**pick** cells instead of moving the caret: click a cell or drag over a range and its address
+is written for you; hold <kbd>Shift</kbd> with the arrows to stretch it into a range. A
+missing `)` or `"` is added when you press <kbd>Enter</kbd>.
+
+## Selecting
+
+| Mouse | Selects |
+| --- | --- |
+| Click, drag | One cell, a range. |
+| <kbd>Shift</kbd>+click | From the active cell to the clicked one. |
+| <kbd>Ctrl</kbd>+click or drag | Adds another range (several ranges at once). |
+| Click a column letter or row number, drag over them | Whole columns or rows. |
+| The corner above the row numbers | The whole sheet. |
+
+| Keys | What they do |
+| --- | --- |
+| Arrows | Move one cell (hidden rows and columns are skipped). |
+| <kbd>Shift</kbd>+arrows | Extend the selection. |
+| <kbd>Ctrl</kbd>+arrows | Jump to the edge of the data, like in Excel. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+arrows extends to it. |
+| <kbd>Home</kbd> / <kbd>Ctrl</kbd>+<kbd>Home</kbd> / <kbd>Ctrl</kbd>+<kbd>End</kbd> | Start of the row / `A1` / the last used cell. |
+| <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | One screen up or down. |
+| <kbd>Ctrl</kbd>+<kbd>A</kbd> | The table around the active cell; again for the whole sheet. |
+| <kbd>Ctrl</kbd>+<kbd>Space</kbd> / <kbd>Shift</kbd>+<kbd>Space</kbd> | The whole column / row. |
+| <kbd>Enter</kbd> and <kbd>Tab</kbd> inside a selected range | Move cell by cell inside it, wrapping at the edges. |
+
+The name box at the left of the formula bar shows the active cell. Click it, type an address or
+a range (`B4`, `C2:F20`, `Team!A1`) and press <kbd>Enter</kbd> to go there.
+
+At the bottom of [`ui.Spreadsheet`](/pyzed/spreadsheet/component/), the status bar shows the
+sum, the average and the count of the selected cells, like Google Sheets.
+
+## Copy, cut and paste
+
+<kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd> and <kbd>Ctrl</kbd>+<kbd>V</kbd> use
+the system clipboard as tab-separated text, the format Google Sheets, Excel, LibreOffice and
+most tables on the web use. So you can copy a range from Excel and paste it into your app, or
+the other way round. A dashed border marks what you copied until you paste or press
+<kbd>Esc</kbd>.
+
+Inside the app, pasting keeps formulas and formats, and relative references move with the
+cells (copy `=A1*2` from `C1`, paste in `C2`: you get `=A2*2`). Cutting and pasting moves
+the cells, and formulas that pointed at them follow. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
+pastes values only. Pasting one value over a larger selection fills all of it.
+
+## Autofill
+
+The small square at the bottom-right corner of the selection is the **fill handle**. Drag it
+down or to the side to continue what is selected:
+
+- Numbers continue their step: `1, 2` gives `3, 4, 5`; `10, 20` gives `30, 40`.
+- Dates, days and months continue: `2026-01-31` gives the next days, `Mon` gives `Tue, Wed`,
+  `January` gives `February`.
+- Text with a number continues the number: `Item 1` gives `Item 2, Item 3`.
+- Anything else, and formulas, are copied, with their relative references moved.
+
+<kbd>Ctrl</kbd>+<kbd>D</kbd> fills down and <kbd>Ctrl</kbd>+<kbd>R</kbd> fills right, copying
+the first row or column of the selection (or the cell above / to the left).
+
+## Other shortcuts
+
+| Keys | What they do |
+| --- | --- |
+| <kbd>Delete</kbd> | Clear the contents of the selection (formats stay). |
+| <kbd>Backspace</kbd> | Clear the active cell and start typing in it. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>) | Undo / redo. |
+| <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd> / <kbd>5</kbd> | Bold / italic / underline / strikethrough. |
+| <kbd>Ctrl</kbd>+<kbd>\\</kbd> | Clear formatting (the number format stays). |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd> … <kbd>6</kbd> | Number, time, date, currency, percent, scientific format. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>~</kbd> goes back to General. |
+| <kbd>Alt</kbd>+<kbd>=</kbd> | AutoSum: a `SUM` of the numbers above (or to the left). |
+| <kbd>Alt</kbd>+<kbd>↓</kbd> | Open the dropdown of a cell with a list. |
+| <kbd>Space</kbd> | Tick or untick a checkbox cell. |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Find / find and replace. |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Turn the filter on or off. |
+| Right click | The context menu: cut, copy, paste, insert and delete rows and columns, sort, notes and more. |
+
+## Mouse on the headers
+
+- Drag the border between two column letters (or row numbers) to resize; double-click it to
+  fit the content.
+- Right-click a header for insert, delete, hide, resize and sort.
+- The mouse wheel scrolls; with <kbd>Shift</kbd> it scrolls sideways. Dragging a selection to
+  the edge scrolls too. The grid grows as you scroll past the last row or column.

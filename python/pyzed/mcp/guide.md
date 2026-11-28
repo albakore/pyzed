@@ -222,6 +222,12 @@ Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guide
   (between lists with the same `group`), `pz.draggable` + `pz.droppable` for anything else (`accepts`,
   `can_drop`, `snap`, `guides`, `preview="wire"`), `pz.drag_handle`; `pz.dnd.move(lists, event)` applies a
   drop. Kanban boards, form and page builders, Figma-style canvases and node editors: `get_guide("dnd")`.
+- **Spreadsheets (like Google Sheets or Excel)**: `ui.Spreadsheet(book=self.book, on_change=...)` is a whole
+  spreadsheet (toolbar, formula bar, menus, sheet tabs); `pz.sheet(book)` is the bare grid. The data lives in a
+  `pz.Workbook` kept in the app: `book["B2"] = "=SUM(A1:A9)"`, `book["A1:C3"]`, `book.write(rows, at="A1")`,
+  `book.records()`, `book.format(...)`, `book.sort/filter/validate/conditional_format`, `book.undo()`,
+  `pz.Workbook.open("x.xlsx")` / `book.save("x.xlsx")` (also CSV). 146 functions; changes made by code don't fire
+  `on_change`, `book.changes()` lists every changed cell: `get_guide("spreadsheet")`.
 - **Pages and navigation (like Next.js)**: `pyzed.routing` makes every folder of `app/` a page:
   `page.py`, `layout.py` (keeps its state), `template.py` (starts over), `loading.py`, `error.py`,
   `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]`, `(group)`. Route files define `page(params, query, data)`

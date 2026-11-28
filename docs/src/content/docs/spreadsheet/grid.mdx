@@ -1,0 +1,90 @@
+---
+title: The grid on its own
+description: pz.sheet, the bare spreadsheet grid of Pyzed — cells, headers and formula bar without the toolbar, with your own colors, menus and events, to build a custom spreadsheet or an editable table.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`pz.sheet(book)` is the grid by itself: cells, column letters, row numbers and the formula
+bar, with all the [editing, selection and keyboard shortcuts](/pyzed/spreadsheet/editing/).
+It is drawn by Rust and only paints the cells on screen, so a million rows scroll as fast as
+ten. [`ui.Spreadsheet`](/pyzed/spreadsheet/component/) is this grid plus a toolbar, menus
+and tabs written in Python; use `pz.sheet` when you want your own.
+
+```python
+import pyzed as pz
+
+
+class Grades(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook.from_rows([
+            {"Student": "Ada", "Exam 1": 9, "Exam 2": 8.5},
+            {"Student": "Alan", "Exam 1": 7, "Exam 2": 9},
+        ])
+        self.book["D1"] = "Average"
+        self.book["D2"] = "=AVERAGE(B2:C2)"
+        self.book.fill("D2", "D2:D3")
+
+    def view(self):
+        return pz.sheet(self.book, formula_bar=False, height=200,
+                        on_change=lambda e: print(e["action"], e["range"]))
+
+
+pz.run(Grades)
+```
+
+## Options
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `book` | | The `pz.Workbook` to show. |
+| `formula_bar` | `True` | The name box and the formula bar above the cells. |
+| `headers` | `True` | Column letters and row numbers. |
+| `readonly` | `False` | Select and copy only. |
+| `text_size` | `13` | Pixel size of 10 pt text; other sizes scale from it. |
+| `colors` | Google Sheets' light colors | A dict of colors (below); `ui.sheet_colors(theme)` makes one from a theme. |
+| `width`, `height` | `"fill"` | The size of the grid. |
+
+## Events
+
+Each event receives a dict. They all have `sheet` (the active sheet) and the grid's size as
+`view_width` and `view_height`, so menus you open at `x`, `y` can be kept inside it.
+
+| Event | When | Keys |
+| --- | --- | --- |
+| `on_change` | The user changed cells, formats or the structure. | `action`, `range` |
+| `on_select` | The selection changed. | (read `book.selection`) |
+| `on_context` | Right click. | `kind` (`"cell"`, `"row"`, `"column"`), `cell`, `x`, `y` |
+| `on_dropdown` | A cell's dropdown should open (its arrow, <kbd>Alt</kbd>+<kbd>↓</kbd>). | `cell`, `options`, `x`, `y`, `width` |
+| `on_filter` | A filter button was clicked. | `column`, `x`, `y` |
+| `on_find` | <kbd>Ctrl</kbd>+<kbd>F</kbd> or <kbd>Ctrl</kbd>+<kbd>H</kbd>. | `mode` (`"find"`, `"replace"`) |
+| `on_invalid` | A value broke a strict validation rule (the editor stays open). | `cell`, `value`, `message` |
+| `on_edit` | Typing in a cell started or ended. | `editing` |
+
+`x` and `y` are relative to the grid's top-left corner. The grid doesn't draw menus itself:
+it tells you where the user clicked, and you show whatever you want there (a `ui.menu` in a
+`pz.stack` with `pz.pin`, like `ui.Spreadsheet` does). Without `on_dropdown`, list cells
+still validate but no list opens.
+
+## Colors
+
+```python
+pz.sheet(book, colors={
+    "background": "#1e1f22", "grid": "#2b2d31", "text": "#e6e6e6",
+    "header": "#26272b", "header_text": "#9aa0a6", "accent": "#4c8bf5",
+})
+```
+
+The keys are `background`, `grid`, `header`, `header_text`, `header_active`,
+`header_active_text`, `text`, `muted`, `accent` (selection border, fill handle, checkboxes),
+`selection` (the tint of selected cells), `frozen` (the line under frozen panes), `editor`,
+`border`, `error`, `note`, `popup`, `popup_text`, `popup_selected` and `refs` (a list of
+colors for the references of a formula being typed). Missing keys keep their defaults.
+
+<Aside type="tip">
+The workbook remembers the selection, the scroll position, the editor and its own focus, so
+rebuilding the view never loses what the user was doing. Set `book.focused = True` after a
+button of yours to give the keyboard back to the grid.
+</Aside>

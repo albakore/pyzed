@@ -12333,6 +12333,48 @@
   "ms": 3600,
   "width": 480
  },
+ "spreadsheet-1.dark": {
+  "bytes": 25958,
+  "frames": 4,
+  "height": 400,
+  "ms": 4150,
+  "width": 1200
+ },
+ "spreadsheet-1.light": {
+  "bytes": 25884,
+  "frames": 4,
+  "height": 400,
+  "ms": 4150,
+  "width": 1200
+ },
+ "spreadsheet.dark": {
+  "bytes": 62030,
+  "frames": 49,
+  "height": 800,
+  "ms": 5750,
+  "width": 1600
+ },
+ "spreadsheet.light": {
+  "bytes": 62614,
+  "frames": 49,
+  "height": 800,
+  "ms": 5750,
+  "width": 1600
+ },
+ "spreadsheet.thumb.dark": {
+  "bytes": 22814,
+  "frames": 31,
+  "height": 240,
+  "ms": 5800,
+  "width": 480
+ },
+ "spreadsheet.thumb.light": {
+  "bytes": 23290,
+  "frames": 31,
+  "height": 240,
+  "ms": 5800,
+  "width": 480
+ },
  "stack-v1-1.dark": {
   "bytes": 3292,
   "frames": 4,

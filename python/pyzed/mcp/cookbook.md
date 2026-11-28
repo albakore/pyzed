@@ -545,6 +545,47 @@ pz.run(Board)
 
 Docs: `dnd/index`, `dnd/basics/sortable`, `dnd/guides/free-canvas`, `dnd/tutorials/kanban`.
 
+## Spreadsheets and Excel files
+
+A grid with formulas, formats, filters and sheet tabs like Google Sheets. Keep the `pz.Workbook` in
+the app (a new one in `view()` would lose the data on every rebuild); the user's edits go into it and
+your code reads and writes it like a dict of cells. `book.records()` gives the rows under a header
+as dicts, and `save("x.xlsx")` / `pz.Workbook.open(...)` keep formulas and formats.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Budget(pz.App):
+    title = "Budget"
+    size = (900, 560)
+
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([["Item", "Cost"], ["Rent", 950], ["Food", 320], ["Travel", 180]])
+        self.book["A6"], self.book["B6"] = "Total", "=SUM(B2:B4)"
+        self.book.format("A1:B1", bold=True, fill="#e8f0fe")
+        self.book.format("B2:B6", number_format="$#,##0.00")
+        self.book.format("A6:B6", bold=True)
+        self.book.freeze(rows=1)
+        self.total = self.book["B6"]
+
+    def changed(self, event):
+        self.total = self.book["B6"]  # formulas are already recalculated
+
+    def view(self):
+        return pz.column([
+            ui.label(f"Total: ${self.total:,.2f}", weight="semibold"),
+            ui.Spreadsheet(book=self.book, on_change=self.changed),
+        ], spacing=8, padding=12, width="fill", height="fill")
+
+
+pz.run(Budget)
+```
+
+Docs: `spreadsheet/index`, `spreadsheet/workbook`, `spreadsheet/formulas`, `spreadsheet/files`.
+
 ## Pages with routes in folders (like Next.js)
 
 An app with several screens and addresses: each folder of `app/` is a page (`pyzed new name --router` makes

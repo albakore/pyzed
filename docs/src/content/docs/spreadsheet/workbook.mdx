@@ -1,0 +1,144 @@
+---
+title: The workbook in Python
+description: pz.Workbook, the data and formula engine behind the Pyzed spreadsheet — read and write cells and ranges, records as dicts, formats, selection, undo, changes and recalculation, with or without a window.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`pz.Workbook` holds the sheets, the cells and their formats, and computes the formulas. The
+grid only shows it: everything the user does goes into the workbook, and everything your code
+writes shows up in the grid at once. It needs no window, so it also works in scripts, servers
+and tests, as a small Excel engine.
+
+```python
+import pyzed as pz
+
+book = pz.Workbook()                         # one sheet, "Sheet1"
+book = pz.Workbook(sheets=["Sales", "Team"])  # named sheets
+book = pz.Workbook.open("report.xlsx")        # from a file (see Files)
+```
+
+## Cells
+
+Addresses are written like in the grid: `"B2"`, or `"Team!B2"` for another sheet. Rows and
+columns are 1-based.
+
+```python
+book["A1"] = "Name"            # text
+book["B1"] = 42                # a number
+book["C1"] = "=B1*2"           # a formula
+book["D1"] = "12%"             # read as if typed: the number 0.12, shown as a percentage
+book["E1"] = datetime.date(2026, 3, 4)
+book["F1"] = None              # empty (same as del book["F1"])
+
+book["C1"]                     # 84: the value (a formula gives its result)
+book.formula("C1")             # "=B1*2": what was typed
+book.text("D1")                # "12%": what the cell shows
+```
+
+Values come back as Python types: `int` or `float` for numbers (whole numbers are `int`),
+`str`, `bool`, `datetime.date` or `datetime.datetime` for dates, `None` for empty cells and
+the error text (`"#DIV/0!"`) for errors.
+
+Text you assign is read the way the grid reads typing: numbers, percentages, currencies,
+dates and `TRUE` / `FALSE` become values, and a leading `=` makes a formula. Start with an
+apostrophe (`"'0012"`) to keep text as it is. `book.set("A1", value)` and
+`book.get("A1")` are the same as the brackets.
+
+## Ranges and records
+
+```python
+book.write([
+    ["Name", "Age"],
+    ["Ada", 36],
+    ["Alan", 41],
+], at="A1")                                    # rows of values from a cell
+
+book["A1:B3"]                                  # [["Name", "Age"], ["Ada", 36], ["Alan", 41]]
+book.values()                                  # the whole used range of the active sheet
+book.values("A1:B3", formulas=True)            # formulas instead of results
+book.records()                                 # [{"Name": "Ada", "Age": 36}, ...]
+book.used_range                                # "A1:B3"
+
+pz.Workbook.from_rows([{"name": "Ada", "age": 36}])   # a book from dicts (header row added)
+book.write(rows_of_dicts, at="D1")             # dicts write a header row too
+book.clear("A2:B3")                            # contents and formats ("contents" or "formats" for one)
+```
+
+`records()` reads the rows below a header row (the first row of the range) as dicts, which is
+handy to hand the sheet's data to the rest of your app, a database or a chart.
+
+## Formats and styles
+
+See [Formatting](/pyzed/spreadsheet/formatting/) for everything. In short:
+
+```python
+book.format("A1:B1", bold=True, fill="#e8f0fe")
+book.format("B2:B9", number_format="$#,##0.00")
+book.style("A1")        # {"bold": True, "fill": "#e8f0fe"}
+```
+
+## Undo and redo
+
+Every change, from the user or from your code, can be undone.
+
+```python
+book.undo()        # True if something was undone
+book.redo()
+book.can_undo      # for your own buttons
+book.batch(lambda: (book.set("A1", 1), book.set("A2", 2)))   # one undo step for both
+```
+
+`batch(fn)` runs a function and turns all its changes into one step. Use it for anything
+your app does in one click.
+
+## The selection
+
+The selection lives in the workbook too, so your code can read it and move it.
+
+```python
+book.selection        # "B2:D5" (the last range)
+book.selections       # ["B2:D5", "F1"] with Ctrl+click
+book.active_cell      # "B2"
+book.select("A1:C3")  # select and scroll there
+book.editing          # ("B2", "=SU") while the user types, else None
+book.focused = True   # give the grid the keyboard
+```
+
+## Following changes
+
+```python
+book.version          # grows with every change: cheap to compare
+book.changes()        # ["B4", "Team!C2"]: cells changed since the last call
+```
+
+A spreadsheet that saves to a database can call `changes()` from `on_change` (or a timer)
+and write only those cells. `book.recalculate()` computes all the formulas again, for
+`NOW()`, `TODAY()`, `RAND()` and `RANDBETWEEN()`.
+
+## Settings
+
+| Attribute | What it does |
+| --- | --- |
+| `book.readonly` | The grid refuses edits (the API still works). |
+| `book.month_first` | Typed dates like `03/04/2026` are month first (`True`, the default) or day first. |
+| `book.gridlines` | Gridlines of the active sheet. |
+| `book.active` | The active sheet, by index; set it with a name or an index. |
+| `book.size` | `(rows, columns)` of the active sheet; `resize()` changes it. |
+
+## Helpers
+
+```python
+pz.Workbook.column_name(28)    # "AB"
+pz.Workbook.functions()        # [("ABS", "number", "Absolute value."), ...]
+book.stats("B2:F9")            # {"sum": ..., "average": ..., "count": ..., ...}
+```
+
+<Aside type="tip">
+A workbook is safe to share between the grid and your code because it is behind a lock in
+Rust. Keep one instance per document (`self.book`) and pass the same object to the
+component: making a new `pz.Workbook()` inside `view()` would throw the data away on every
+rebuild.
+</Aside>

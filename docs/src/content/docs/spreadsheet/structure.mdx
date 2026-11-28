@@ -1,0 +1,95 @@
+---
+title: Rows, columns and sheets
+description: Structure of a Pyzed spreadsheet — insert, delete, hide and resize rows and columns, freeze panes, and work with several sheets and their tabs.
+sidebar:
+  order: 7
+---
+
+![Resizing a column, freezing the header row and switching between sheet tabs](/pyzed/media/spreadsheet/structure.webp)
+
+## Inserting and deleting
+
+Right-click a cell, a row number or a column letter for **Insert row above / below**,
+**Insert column left / right** and **Delete**. With several rows or columns selected, as
+many are inserted or deleted.
+
+```python
+book.insert_rows(5)          # a new row 5; the old one becomes row 6
+book.insert_rows(5, 3)       # three rows
+book.delete_rows(2, 2)       # rows 2 and 3
+book.insert_cols("C")        # a new column C
+book.delete_cols("B", 2)     # columns B and C
+```
+
+Formulas follow the cells they point to: inserting a row inside `=SUM(A1:A3)` makes it
+`=SUM(A1:A4)`, and a formula that pointed at a deleted cell shows `#REF!`. Merges, formats,
+validation, conditional formats and the filter move too.
+
+## Size
+
+Drag the border between two column letters or row numbers. Double-click it to fit the
+content. With several columns selected, dragging one resizes all of them.
+
+```python
+book.column_width("A", 120)   # pixels; the default is 100
+book.column_width("A")        # read it
+book.row_height(1, 32)        # the default is 24
+book.autofit(["A", "C"])      # fit columns to their text (all of them without a list)
+```
+
+## Hiding
+
+**Hide row** and **Hide column** in the context menu of the headers. A hidden row or column
+is a double line between the headers; **Unhide** on the rows or columns around it shows it
+again. Formulas still read hidden cells.
+
+```python
+book.hide_rows([4, 5])
+book.show_rows([4, 5])
+book.hide_cols(["D"])
+book.show_cols(["D"])
+```
+
+## Freezing
+
+Frozen rows and columns stay on screen while the rest scrolls, like a table header. The
+freeze menu on the toolbar freezes up to the active cell, or 1 or 2 rows or columns.
+
+```python
+book.freeze(rows=1)            # the header row
+book.freeze(rows=1, cols=1)    # and the first column
+book.frozen                    # (1, 1)
+book.freeze()                  # unfreeze
+```
+
+## Size of the grid
+
+A new sheet has 1000 rows and 26 columns, like Google Sheets, and grows when you scroll or
+move past the end, paste a large range or write beyond it. It can reach Excel's limits:
+1,048,576 rows and 16,384 columns (`A` to `XFD`). `book.size` gives the current
+`(rows, columns)` and `book.resize(rows, cols)` changes it. Only what is on screen is drawn,
+so a large sheet costs no more to show than a small one.
+
+## Sheets
+
+```python
+book = pz.Workbook(sheets=["Sales", "Team"])
+book.sheets                    # ["Sales", "Team"]
+book.active = "Team"           # or an index: book.active = 1
+book.sheet                     # "Team", the active one
+book.add_sheet("Notes")        # at the end; index= to put it elsewhere
+book.rename_sheet("Notes", "Ideas")
+book.move_sheet("Ideas", 0)
+book.duplicate_sheet("Sales")  # "Sales copy"
+book.tab_color("Sales", "#34a853")
+book.remove_sheet("Ideas")
+```
+
+`book["A1"]` reads the active sheet; `book["Team!A1"]` any sheet. Methods that work on one
+sheet take `sheet=` (a name or an index) or a range with the sheet's name
+(`"Team!A1:C9"`).
+
+In [`ui.Spreadsheet`](/pyzed/spreadsheet/component/) the tabs at the bottom do the same:
+**+** adds a sheet, a click switches, a double-click renames, and the right-click menu
+duplicates, deletes, moves and colors. Formulas that mention a sheet are rewritten when you
+rename it.

@@ -1,0 +1,92 @@
+---
+title: La cuadrícula sola
+description: pz.sheet, la cuadrícula desnuda de la hoja de cálculo de Pyzed — celdas, cabeceras y barra de fórmulas sin barra de herramientas, con tus propios colores, menús y eventos, para hacer tu propia hoja o una tabla editable.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`pz.sheet(book)` es la cuadrícula sola: celdas, letras de columna, números de fila y la barra
+de fórmulas, con toda la [edición, la selección y los atajos de teclado](/pyzed/es/spreadsheet/editing/).
+La dibuja Rust y solo pinta las celdas que se ven, así que un millón de filas se desplaza
+igual de rápido que diez. [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/) es esta
+cuadrícula más una barra de herramientas, menús y pestañas escritos en Python; usa `pz.sheet`
+cuando quieras los tuyos.
+
+```python
+import pyzed as pz
+
+
+class Notas(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook.from_rows([
+            {"Alumno": "Ada", "Examen 1": 9, "Examen 2": 8.5},
+            {"Alumno": "Alan", "Examen 1": 7, "Examen 2": 9},
+        ])
+        self.book["D1"] = "Media"
+        self.book["D2"] = "=AVERAGE(B2:C2)"
+        self.book.fill("D2", "D2:D3")
+
+    def view(self):
+        return pz.sheet(self.book, formula_bar=False, height=200,
+                        on_change=lambda e: print(e["action"], e["range"]))
+
+
+pz.run(Notas)
+```
+
+## Opciones
+
+| Opción | Por defecto | Qué hace |
+| --- | --- | --- |
+| `book` | | El `pz.Workbook` que muestra. |
+| `formula_bar` | `True` | El cuadro de nombres y la barra de fórmulas sobre las celdas. |
+| `headers` | `True` | Letras de columna y números de fila. |
+| `readonly` | `False` | Solo seleccionar y copiar. |
+| `text_size` | `13` | El tamaño en píxeles del texto de 10 pt; los demás tamaños se escalan a partir de él. |
+| `colors` | Los colores claros de Google Sheets | Un dict de colores (abajo); `ui.sheet_colors(theme)` crea uno a partir de un tema. |
+| `width`, `height` | `"fill"` | El tamaño de la cuadrícula. |
+
+## Eventos
+
+Cada evento recibe un dict. Todos traen `sheet` (la hoja activa) y el tamaño de la cuadrícula
+en `view_width` y `view_height`, para que los menús que abras en `x`, `y` queden dentro.
+
+| Evento | Cuándo | Claves |
+| --- | --- | --- |
+| `on_change` | El usuario cambió celdas, formatos o la estructura. | `action`, `range` |
+| `on_select` | Cambió la selección. | (lee `book.selection`) |
+| `on_context` | Clic derecho. | `kind` (`"cell"`, `"row"`, `"column"`), `cell`, `x`, `y` |
+| `on_dropdown` | Hay que abrir el desplegable de una celda (su flecha, <kbd>Alt</kbd>+<kbd>↓</kbd>). | `cell`, `options`, `x`, `y`, `width` |
+| `on_filter` | Se pulsó el botón de un filtro. | `column`, `x`, `y` |
+| `on_find` | <kbd>Ctrl</kbd>+<kbd>F</kbd> o <kbd>Ctrl</kbd>+<kbd>H</kbd>. | `mode` (`"find"`, `"replace"`) |
+| `on_invalid` | Un valor incumplió una validación estricta (el editor sigue abierto). | `cell`, `value`, `message` |
+| `on_edit` | Empezó o terminó la escritura en una celda. | `editing` |
+
+`x` e `y` se cuentan desde la esquina superior izquierda de la cuadrícula. La cuadrícula no
+dibuja menús: te dice dónde hizo clic el usuario y tú muestras allí lo que quieras (un
+`ui.menu` en un `pz.stack` con `pz.pin`, como hace `ui.Spreadsheet`). Sin `on_dropdown`, las
+celdas con lista siguen validando, pero no se abre ninguna lista.
+
+## Colores
+
+```python
+pz.sheet(book, colors={
+    "background": "#1e1f22", "grid": "#2b2d31", "text": "#e6e6e6",
+    "header": "#26272b", "header_text": "#9aa0a6", "accent": "#4c8bf5",
+})
+```
+
+Las claves son `background`, `grid`, `header`, `header_text`, `header_active`,
+`header_active_text`, `text`, `muted`, `accent` (el borde de la selección, el controlador de
+relleno y las casillas), `selection` (el tinte de las celdas seleccionadas), `frozen` (la línea
+bajo los paneles inmovilizados), `editor`, `border`, `error`, `note`, `popup`, `popup_text`,
+`popup_selected` y `refs` (una lista de colores para las referencias de la fórmula que se está
+escribiendo). Las claves que faltan conservan su valor por defecto.
+
+<Aside type="tip">
+El libro recuerda la selección, el desplazamiento, el editor y su propio foco, así que
+reconstruir la vista nunca pierde lo que el usuario estaba haciendo. Pon `book.focused = True`
+después de un botón tuyo para devolverle el teclado a la cuadrícula.
+</Aside>

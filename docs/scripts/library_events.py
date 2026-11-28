@@ -58,6 +58,7 @@ HANDLERS = {
     "ui.table.on_sort": "(title)", "ui.table.on_row_press": "(row)", "ui.table.on_row_double_press": "(row)",
     "ui.table.on_row_context": "(row)",
     "ui.tree.*": "(id)",
+    "pz.sheet.*": "(data)",
     "ui.accordion.on_toggle": "(key)",
     "ui.disclosure.on_toggle": "()",
     "ui.console.on_toggle_level": "(level)", "ui.console.on_context": "(line)", "ui.console.on_open": "(line)",
@@ -105,6 +106,8 @@ SHAPES = {
     "(info)": T("A dict (scroll offset and sizes) or a `ui.ErrorInfo`.",
                 "Un dict (desplazamiento y tamaños) o un `ui.ErrorInfo`."),
     "(url)": T("The URL of the link.", "La URL del enlace."),
+    "(data)": T("A dict with the details (`action` and `range`, `cell`, `x` and `y`…), as listed for the event.",
+                "Un dict con los detalles (`action` y `range`, `cell`, `x` e `y`…), según el evento."),
     "(name)": T("A name: of the icon, or of the editor action.", "Un nombre: del icono o de la acción del editor."),
     "(line)": T("The log line (a `ui.LogEntry`).", "La línea del registro (un `ui.LogEntry`)."),
     "(index)": T("The position of what was clicked, 0 for the first.", "La posición de lo pulsado, 0 para lo primero."),
@@ -1125,6 +1128,60 @@ class State:
 
 def view(state, set_state):
     return ui.Calendar(value=state.stay, mode="range", months=2, on_change=lambda e: set_state(stay=e.value))''')
+
+ex("spreadsheet", '''class Budget(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([["Item", "Cost"], ["Rent", 950], ["Food", 320]])
+        self.book["B4"] = "=SUM(B2:B3)"
+        self.total = self.book["B4"]
+
+    def changed(self, event):            # on_change: event.value has action, range and sheet
+        self.total = self.book["B4"]
+
+    def view(self):
+        return pz.column([
+            ui.label(f"Total: {self.total}"),
+            ui.Spreadsheet(book=self.book, toolbar=False, on_change=self.changed),
+        ], spacing=8)''', '''from dataclasses import dataclass
+
+
+@dataclass
+class Edited:
+    range: str
+
+
+class Budget(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([["Item", "Cost"], ["Rent", 950], ["Food", 320]])
+        self.last = ""
+
+    def update(self, message):
+        match message:
+            case Edited(range):
+                self.last = range
+
+    def view(self):
+        return pz.column([
+            ui.label(f"Last change: {self.last}"),
+            ui.Spreadsheet(book=self.book, tabs=False, on_change=lambda e: Edited(e.value.range)),
+        ], spacing=8)''', '''from dataclasses import dataclass
+
+BOOK = pz.Workbook()                     # the data lives in the workbook, not in the state
+BOOK.write([["Item", "Cost"], ["Rent", 950], ["Food", 320]])
+
+
+@dataclass(frozen=True)
+class State:
+    selection: str = "A1"
+
+
+def view(state, set_state):
+    return pz.column([
+        ui.label(f"Selected: {state.selection}"),
+        ui.Spreadsheet(book=BOOK, toolbar=False, on_select=lambda e: set_state(selection=e.value.range)),
+    ], spacing=8)''')
 
 # ------------------------------------------------------------------------------------- system
 

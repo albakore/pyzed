@@ -103,6 +103,7 @@
 			"library/line-chart",
 			"library/settings-group",
 			"library/sparkline",
+			"library/spreadsheet",
 			"library/stat",
 			"library/table",
 			"library/timeline"

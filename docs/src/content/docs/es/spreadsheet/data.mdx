@@ -1,0 +1,129 @@
+---
+title: Ordenar, filtrar y validar
+description: Herramientas de datos de la hoja de cálculo de Pyzed — ordenar por varias columnas, filtros por valor y por condición, buscar y reemplazar, listas desplegables, casillas, validación de números, fechas y texto, autorrelleno y notas.
+sidebar:
+  order: 6
+---
+
+![Filtrando una tabla desde el embudo de su cabecera y ordenándola después de la Z a la A](/pyzed/media/spreadsheet/filter.webp)
+
+## Ordenar
+
+Selecciona un rango y pulsa **Ordenar A → Z** o **Z → A** en la barra de herramientas o en el
+menú contextual: las filas se ordenan por la columna de la celda activa. Si la primera fila
+parece una cabecera (negrita, o texto sobre números), se queda arriba.
+
+```python
+book.sort("A1:G9", "D", header=True)                           # por Unidades, de menor a mayor
+book.sort("A1:G9", "F", descending=True, header=True)          # por Total, de mayor a menor
+book.sort("A2:G9", by=[("B", False), ("F", True)])             # por Región y luego Total descendente
+```
+
+Los números van antes que el texto, el texto no distingue mayúsculas y las celdas vacías van
+siempre al final. Las fórmulas de las filas ordenadas siguen apuntando a su propia fila.
+Ordenar se puede deshacer como todo lo demás.
+
+## Filtros
+
+Un filtro oculta las filas que no quieres ver, sin borrarlas. Actívalo con el embudo de la
+barra de herramientas o con <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>: cada columna de la
+cabecera de la tabla recibe un botoncito. Su menú tiene:
+
+- **Ordenar A → Z / Z → A** para la tabla.
+- **Filtrar por condición**: `>100`, `<=0`, `<>Hecho`, `*norte*` (comodines), `=` para las vacías.
+- **Filtrar por valores**: una lista con casillas de los valores de la columna, con un buscador,
+  **Seleccionar todo** y **Borrar**.
+
+El botón de la cabecera se rellena mientras su columna filtra algo. Las filas ocultas conservan
+sus datos, las fórmulas siguen viéndolas (`SUM` las cuenta, como en Excel) y copiar un rango
+filtrado copia solo las filas visibles.
+
+```python
+book.filter("A1:G9")                                 # la cabecera es la primera fila
+book.filter_column("B", hide=["Oeste"])              # oculta las filas del Oeste
+book.filter_column("F", condition=">100")            # y deja los totales de más de 100
+book.filtered_rows                                   # las filas ocultas (desde 1)
+book.filter_values("B")                              # [("Este", True), ("Norte", True), ...]
+book.filter_column("B")                              # quita el filtro de una columna
+book.filter(None)                                    # quita el filtro
+```
+
+## Buscar y reemplazar
+
+<kbd>Ctrl</kbd>+<kbd>F</kbd> abre la barra de búsqueda sobre la cuadrícula y
+<kbd>Ctrl</kbd>+<kbd>H</kbd> la abre con el campo de reemplazo. <kbd>Enter</kbd> va a la
+siguiente coincidencia y los botones de flecha van adelante y atrás. Tiene opciones para
+distinguir mayúsculas, coincidir con la celda entera, buscar dentro de las fórmulas y buscar en
+todas las hojas.
+
+```python
+book.find("manzana")                            # ["A1", "A2"] (sin distinguir mayúsculas)
+book.find("manzana", match_case=True, whole_cell=True)
+book.find("SUM", formulas=True)                 # celdas cuya fórmula tiene SUM
+book.find("x", all_sheets=True)                 # ["A1", "Equipo!C4"]
+book.replace("Peras", "Pera", whole_cell=True)  # devuelve cuántas celdas cambiaron
+```
+
+## Validación de datos
+
+La validación decide qué puede entrar en un rango. Una celda con lista muestra una flechita y
+abre un desplegable; una celda de casilla muestra una casilla.
+
+```python
+book.validate("B2:B9", options=["Norte", "Sur", "Este", "Oeste"])  # un desplegable
+book.validate("C2:C9", source="Listas!A1:A20")                    # un desplegable a partir de un rango
+book.validate("G2:G9", checkbox=True)                             # casillas TRUE / FALSE
+book.validate("D2:D9", number=(0, 1000), integer=True)            # enteros del 0 al 1000
+book.validate("A2:A9", date=("2026-01-01", None))                 # fechas desde 2026
+book.validate("H2:H9", length=(None, 140))                        # como mucho 140 caracteres
+book.validate("E2:E9", formula="=E2<=D2", message="No puede superar las unidades")
+```
+
+| Argumento | Permite |
+| --- | --- |
+| `options` | Uno de una lista de valores (un desplegable). |
+| `source` | Uno de los valores de un rango, de cualquier hoja (un desplegable que sigue al rango). |
+| `checkbox` | `TRUE` o `FALSE`, dibujado como casilla. Púlsala o usa <kbd>Espacio</kbd>. |
+| `number=(min, max)` | Números en un intervalo (`None` sin límite); `integer=True` para enteros. |
+| `date=(min, max)` | Fechas en un intervalo. |
+| `length=(min, max)` | Texto de una longitud. |
+| `formula` | Valores que hacen TRUE la fórmula (escrita para la primera celda). |
+
+Por defecto la validación es **estricta**: un valor que incumple la regla se rechaza, el editor
+sigue abierto y se muestra `message` (o uno por defecto). Con `strict=False` el valor se queda y
+la celda recibe una marca roja en la esquina, con el mensaje al pasar el ratón.
+
+`book.options("B2")` devuelve la lista de una celda, `book.is_valid("B2")` la comprueba y
+`book.clear_validation("B2:B9")` quita la regla. En
+[`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/) la validación se edita en el panel
+**Validación de datos**.
+
+## Autorrelleno
+
+```python
+book["A1"], book["A2"] = 1, 2
+book.fill("A1:A2", "A1:A10")    # del 1 al 10
+book["B1"] = "Mon"
+book.fill("B1", "B1:B7")        # de Mon a Sun
+book.fill("C1", "C1:C9")        # copia C1, moviendo sus referencias relativas
+```
+
+Es lo que hace el controlador de relleno: los números y las fechas siguen su paso, los días de
+la semana y los meses siguen (`Jan` o `January`), un texto que acaba en número sigue contando
+(`Q1`, `Q2`) y lo demás se copia. Rellenar hacia arriba o a la izquierda cuenta hacia atrás.
+
+## Notas
+
+Una nota es un texto corto pegado a una celda, que aparece cuando el puntero pasa por encima.
+La celda recibe un pequeño triángulo naranja en la esquina superior derecha.
+
+```python
+book.note("F13", "La región de la venta más grande.")
+book.note("F13")          # leerla
+book.note("F13", "")      # quitarla
+```
+
+## Los números de una selección
+
+`book.stats("B2:F9")` devuelve lo que muestra la barra de estado, como dict: `sum`, `average`,
+`min`, `max`, `count` (celdas no vacías) y `numbers` (celdas con números).

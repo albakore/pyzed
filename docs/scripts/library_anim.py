@@ -126,6 +126,26 @@ pz.column([
     # -- data --
     "table": {"steps": [wait(300), hover("render.rs"), hover("app.py"), press(), hover("Lines"),
                         press(after=600), leave()]},
+    # The page's snippet makes a new book on every build, so the clip keeps one in the live ``ui``'s store.
+    # Columns A-D span x=70-470 (100 px each) and rows are 24 px from y=120.
+    "spreadsheet": {
+        "code": '''store = getattr(ui, "store", {})
+book = store.get("spreadsheet-book")
+if book is None:
+    book = store["spreadsheet-book"] = pz.Workbook()
+    book.write([["Item", "Units", "Price", "Total"],
+                ["Apples", 120, 0.5, "=B2*C2"],
+                ["Pears", 80, 0.75, "=B3*C3"],
+                ["Plums", 45, 1.2, "=B4*C4"]])
+    book["A5"], book["D5"] = "Total", "=SUM(D2:D4)"
+    book.format("A1:D1", bold=True, fill="#e8f0fe")
+    book.format("C2:D5", number_format="$#,##0.00")
+    book.format("A5:D5", bold=True)
+    book.select("D5")
+pz.container(ui.Spreadsheet(book=book), width=760, height=360)''',
+        "steps": [wait(300), press((220, 180), after=200), type_text("200", cps=10, after=150),
+                  key("Enter", after=700), drag((420, 156), (420, 204), ms=500, after=900),
+                  press((420, 228), after=900), leave()]},
     "virtual-list": {"fps": 12, "steps": [wait(300), hover("src/module_000003.py"), scroll(8, ms=900), wait(300),
                                scroll(14, ms=900), wait(300), scroll(-22, ms=700), leave()]},
     "stat": {"steps": tour("Users", "Errors", "Build time")},

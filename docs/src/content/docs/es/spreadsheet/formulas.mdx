@@ -1,0 +1,321 @@
+---
+title: Fórmulas
+description: Fórmulas en una hoja de cálculo de Pyzed — referencias, rangos, otras hojas, operadores, criterios, matrices dinámicas, errores y la lista completa de 146 funciones, compatibles con Excel y Google Sheets.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Escribiendo una fórmula: la lista de funciones, la ayuda de argumentos y el rango referenciado marcado en color](/pyzed/media/spreadsheet/formulas.webp)
+
+Una fórmula empieza por `=` y calcula un valor a partir de números, texto y otras celdas. Se
+escribe igual que en Excel y Google Sheets, así que las fórmulas copiadas de cualquiera de los
+dos funcionan aquí, y los archivos que guardas las conservan.
+
+```python
+book["B5"] = "=SUM(B2:B4)"
+book["C2"] = '=IF(B2>100, "Alto", "Bajo")'
+book["D2"] = "=VLOOKUP(A2, Precios!A:B, 2, FALSE)"
+book["B5"]           # el resultado: 1410
+book.formula("B5")   # la fórmula: "=SUM(B2:B4)"
+book.text("B5")      # lo que muestra la celda: "$1,410.00"
+```
+
+Las funciones se escriben con su nombre en inglés, como en Excel en inglés y en Google Sheets:
+`SUM` (SUMA), `IF` (SI), `VLOOKUP` (BUSCARV), `COUNTIF` (CONTAR.SI). Los argumentos se separan
+con comas y los decimales llevan punto.
+
+Cuando una celda cambia, solo se recalculan las fórmulas que dependen de ella, en el orden
+correcto. Una fórmula que acaba dependiendo de sí misma muestra `#CYCLE!` en lugar de colgar
+la app.
+
+<Aside type="note" title="En pocas palabras">
+Una fórmula es un cálculo pequeño que vive en una celda. Escribe `=` y luego lo que hay que
+calcular: `=2+2`, `=B2*1.21` (el valor de B2 más un 21 %), `=SUM(B2:B9)` (suma todo de B2 a
+B9). Si B2 cambia, el resultado cambia también.
+</Aside>
+
+## Referencias
+
+| Referencia | Significa |
+| --- | --- |
+| `B3` | Una celda. |
+| `B2:D9` | Un rango: de B2 a D9. |
+| `A:A`, `A:C` | Columnas enteras. |
+| `2:2`, `2:5` | Filas enteras. |
+| `$B$3`, `B$3`, `$B3` | Referencias absolutas: la parte con `$` no se mueve al copiar o rellenar la fórmula. |
+| `Ventas!B3`, `'Datos brutos'!A1:A9` | Una celda o rango de otra hoja (entre comillas si el nombre tiene espacios). |
+
+Al copiar, rellenar o pegar una fórmula, sus referencias relativas se mueven con ella: `=A1*2`
+copiada una fila más abajo pasa a ser `=A2*2`. Al insertar o eliminar filas y columnas, las
+referencias se actualizan para seguir apuntando a las mismas celdas (una celda eliminada pasa a
+ser `#REF!`). Al renombrar una hoja, las fórmulas que la mencionan se reescriben.
+
+Mientras escribes, pulsa <kbd>F4</kbd> para cambiar una referencia entre `A1`, `$A$1`, `A$1`
+y `$A1`.
+
+## Operadores
+
+| Operador | Hace | Ejemplo |
+| --- | --- | --- |
+| `+` `-` `*` `/` | Aritmética | `=B2*C2-D2` |
+| `^` | Potencia | `=2^10` |
+| `%` | Porcentaje | `=B2*15%` |
+| `&` | Une texto | `=A2&" "&B2` |
+| `=` `<>` `<` `>` `<=` `>=` | Comparan (TRUE o FALSE) | `=B2>=100` |
+| `-` delante de un valor | Negativo | `=-B2` |
+
+El texto va entre comillas dobles (`"Norte"`) y `TRUE` / `FALSE` son valores lógicos. Los
+números escritos como texto (`"12"`) se convierten cuando un operador necesita un número.
+
+## Criterios
+
+`COUNTIF`, `SUMIF`, `AVERAGEIF`, sus versiones `...IFS` y `MAXIFS` / `MINIFS` reciben un
+criterio como texto, igual que en Excel:
+
+| Criterio | Coincide con |
+| --- | --- |
+| `"Norte"` o `"=Norte"` | Igual a Norte (sin distinguir mayúsculas). |
+| `">100"`, `"<=0"`, `"<>Hecho"` | Comparado con un número o un texto. |
+| `"a*"`, `"*norte*"`, `"??-??"` | Comodines: `*` cualquier texto, `?` un carácter. |
+| `">"&B1` | Construido a partir de una celda. |
+
+## Matrices dinámicas
+
+Las funciones que devuelven varios valores (`SEQUENCE`, `FILTER`, `SORT`, `UNIQUE`,
+`TRANSPOSE`, `SPLIT`) se **desbordan** a las celdas de debajo y de la derecha, como en el Excel
+actual y en Google Sheets. Solo la primera celda guarda la fórmula; las demás muestran sus
+valores. Si una celda del camino ya tiene algo, la fórmula muestra `#SPILL!` hasta que se
+vacía.
+
+```python
+book["A1"] = "=SEQUENCE(5)"                        # del 1 al 5 en A1:A5
+book["C1"] = '=FILTER(A2:B20, B2:B20>100)'          # las filas con más de 100
+book["F1"] = "=UNIQUE(Ventas!B2:B9)"                # cada región una vez
+```
+
+## Errores
+
+| Error | Por qué |
+| --- | --- |
+| `#DIV/0!` | Una división entre cero. |
+| `#VALUE!` | Un valor del tipo equivocado (texto donde hacía falta un número). |
+| `#REF!` | Una referencia a celdas que se eliminaron. |
+| `#NAME?` | Una función o un nombre desconocido. |
+| `#N/A` | Una búsqueda que no encontró nada. |
+| `#NUM!` | Un número fuera de rango (la raíz cuadrada de -1). |
+| `#CYCLE!` | La fórmula depende de sí misma. |
+| `#SPILL!` | Una fórmula de matriz no puede desbordarse porque hay celdas en medio. |
+| `#ERROR!` | La fórmula no se puede leer (le falta un paréntesis, por ejemplo). |
+
+Los errores se propagan: una fórmula que usa una celda con un error muestra el mismo error.
+`IFERROR` e `IFNA` los capturan: `=IFERROR(B2/C2, 0)`.
+
+## Fechas y horas
+
+Las fechas son números de días, como en toda hoja de cálculo, así que se pueden restar
+(`=B2-A2` es el número de días entre dos fechas) y se les pueden sumar días (`=A2+30`).
+`TODAY()` y `NOW()` cambian cada vez que se recalcula el libro; llama a `book.recalculate()`
+para actualizarlas.
+
+## Tus datos en las fórmulas
+
+Las fórmulas solo leen celdas. Para usar datos de tu app, escríbelos en una hoja (puede ser una
+hoja auxiliar oculta) con `book.write(filas, at="A1")` y las fórmulas podrán referenciarlos.
+`pz.Workbook.functions()` devuelve la lista de abajo como tuplas
+`(nombre, argumentos, descripción)`, por ejemplo para montar tu propio selector de funciones.
+
+## Todas las funciones
+
+Hay 146 funciones. En los argumentos, los `[corchetes]` marcan los opcionales.
+
+{/* functions:start */}
+
+### Matemáticas
+
+| Función | Descripción |
+| --- | --- |
+| `ABS(number)` | Valor absoluto. |
+| `CEILING(number, [significance])` | Redondea hacia arriba a un múltiplo. |
+| `EVEN(number)` | Redondea, alejándose de cero, a un entero par. |
+| `EXP(number)` | e elevado a una potencia. |
+| `FACT(number)` | Factorial. |
+| `FLOOR(number, [significance])` | Redondea hacia abajo a un múltiplo. |
+| `GCD(number1, [number2, ...])` | Máximo común divisor. |
+| `INT(number)` | Redondea hacia abajo a un entero. |
+| `LCM(number1, [number2, ...])` | Mínimo común múltiplo. |
+| `LN(number)` | Logaritmo natural. |
+| `LOG(number, [base])` | Logaritmo (en base 10 si no se indica). |
+| `LOG10(number)` | Logaritmo en base 10. |
+| `MOD(dividend, divisor)` | Resto de una división (con el signo del divisor). |
+| `MROUND(number, multiple)` | Redondea al múltiplo más cercano. |
+| `ODD(number)` | Redondea, alejándose de cero, a un entero impar. |
+| `PI()` | π. |
+| `POWER(base, exponent)` | Un número elevado a una potencia. |
+| `PRODUCT(number1, [number2, ...])` | Los números multiplicados entre sí. |
+| `QUOTIENT(dividend, divisor)` | Parte entera de una división. |
+| `RAND()` | Un número al azar entre 0 y 1. |
+| `RANDBETWEEN(low, high)` | Un entero al azar entre dos números. |
+| `ROUND(number, [places])` | Redondea a unos decimales. |
+| `ROUNDDOWN(number, [places])` | Redondea hacia cero. |
+| `ROUNDUP(number, [places])` | Redondea alejándose de cero. |
+| `SEQUENCE(rows, [columns], [start], [step])` | Una matriz de números consecutivos. |
+| `SIGN(number)` | 1, 0 o -1. |
+| `SQRT(number)` | Raíz cuadrada. |
+| `SUM(number1, [number2, ...])` | Suma los números. |
+| `SUMIF(range, criterion, [sum_range])` | Suma las celdas que cumplen un criterio. |
+| `SUMIFS(sum_range, range1, criterion1, ...)` | Suma las celdas que cumplen todos los criterios. |
+| `SUMPRODUCT(array1, [array2, ...])` | Suma de los productos de las matrices. |
+| `SUMSQ(number1, [number2, ...])` | Suma de los cuadrados. |
+| `TRUNC(number, [places])` | Corta los decimales. |
+
+### Estadística
+
+| Función | Descripción |
+| --- | --- |
+| `AVERAGE(number1, [number2, ...])` | Media aritmética de los números. |
+| `AVERAGEIF(range, criterion, [average_range])` | Media de las celdas que cumplen un criterio. |
+| `AVERAGEIFS(average_range, range1, criterion1, ...)` | Media de las celdas que cumplen todos los criterios. |
+| `COUNT(value1, [value2, ...])` | Cuántos números hay. |
+| `COUNTA(value1, [value2, ...])` | Cuántos valores no vacíos hay. |
+| `COUNTBLANK(range)` | Cuántas celdas vacías hay. |
+| `COUNTIF(range, criterion)` | Cuántas celdas cumplen un criterio (">5", "manzana", "a*"). |
+| `COUNTIFS(range1, criterion1, [range2, criterion2, ...])` | Cuántas filas cumplen todos los criterios. |
+| `LARGE(range, k)` | El k-ésimo número más grande. |
+| `MAX(number1, [number2, ...])` | El número más grande. |
+| `MAXIFS(max_range, range1, criterion1, ...)` | El mayor de las celdas que cumplen todos los criterios. |
+| `MEDIAN(number1, [number2, ...])` | La mediana. |
+| `MIN(number1, [number2, ...])` | El número más pequeño. |
+| `MINIFS(min_range, range1, criterion1, ...)` | El menor de las celdas que cumplen todos los criterios. |
+| `MODE(number1, [number2, ...])` | El número más frecuente. |
+| `PERCENTILE(range, k)` | El percentil k (de 0 a 1). |
+| `RANK(value, range, [ascending])` | Puesto de un número en una lista (1 = el mayor). |
+| `SMALL(range, k)` | El k-ésimo número más pequeño. |
+| `STDEV(number1, [number2, ...])` | Desviación típica de una muestra. |
+| `STDEV.P(number1, [number2, ...])` | Desviación típica de una población. |
+| `STDEV.S(number1, [number2, ...])` | Desviación típica de una muestra. |
+| `VAR(number1, [number2, ...])` | Varianza de una muestra. |
+| `VAR.P(number1, [number2, ...])` | Varianza de una población. |
+| `VAR.S(number1, [number2, ...])` | Varianza de una muestra. |
+
+### Lógica
+
+| Función | Descripción |
+| --- | --- |
+| `AND(logical1, [logical2, ...])` | TRUE si todos los argumentos son TRUE. |
+| `FALSE()` | El valor lógico FALSE. |
+| `IF(condition, value_if_true, [value_if_false])` | Un valor u otro según una condición. |
+| `IFERROR(value, value_if_error)` | El valor, u otro si es un error. |
+| `IFNA(value, value_if_na)` | El valor, u otro si es #N/A. |
+| `IFS(condition1, value1, [condition2, value2, ...])` | El valor de la primera condición TRUE. |
+| `NOT(logical)` | El contrario de un valor lógico. |
+| `OR(logical1, [logical2, ...])` | TRUE si algún argumento es TRUE. |
+| `SWITCH(expression, case1, value1, [..., default])` | El valor del primer caso igual a la expresión. |
+| `TRUE()` | El valor lógico TRUE. |
+| `XOR(logical1, [logical2, ...])` | TRUE si un número impar de argumentos es TRUE. |
+
+### Búsqueda y referencia
+
+| Función | Descripción |
+| --- | --- |
+| `CHOOSE(index, value1, [value2, ...])` | El valor que está en una posición de la lista. |
+| `COLUMN([reference])` | Número de columna de una referencia. |
+| `COLUMNS(range)` | Número de columnas. |
+| `FILTER(range, include, [if_empty])` | Las filas de un rango donde la condición es TRUE. |
+| `HLOOKUP(key, range, row_index, [is_sorted])` | Busca una clave en la primera fila y devuelve un valor de otra fila. |
+| `INDEX(range, row, [column])` | La celda de una fila y columna de un rango. |
+| `INDIRECT(reference_text)` | La referencia escrita en un texto ("B3", "Hoja2!A1:A9"). |
+| `MATCH(key, range, [match_type])` | Posición de un valor en un rango (1: ≤ ordenado, 0: exacto, -1: ≥). |
+| `OFFSET(reference, rows, columns, [height], [width])` | Una referencia desplazada y redimensionada. |
+| `ROW([reference])` | Número de fila de una referencia. |
+| `ROWS(range)` | Número de filas. |
+| `SORT(range, [column], [ascending], [by_column])` | Las filas de un rango, ordenadas. |
+| `TRANSPOSE(range)` | Las filas pasan a ser columnas. |
+| `UNIQUE(range)` | Las filas distintas de un rango. |
+| `VLOOKUP(key, range, column_index, [is_sorted])` | Busca una clave en la primera columna y devuelve un valor de otra columna. |
+| `XLOOKUP(key, lookup_range, result_range, [if_not_found], [match_mode], [search_mode])` | Busca una clave y devuelve el elemento que le corresponde. |
+
+### Texto
+
+| Función | Descripción |
+| --- | --- |
+| `CHAR(number)` | El carácter con este código. |
+| `CLEAN(text)` | Quita los caracteres que no se imprimen. |
+| `CODE(text)` | El código del primer carácter. |
+| `CONCAT(text1, [text2, ...])` | Une textos. |
+| `CONCATENATE(text1, [text2, ...])` | Une textos. |
+| `EXACT(text1, text2)` | TRUE si los dos textos son idénticos (distingue mayúsculas). |
+| `FIND(find_text, within_text, [start])` | Posición de un texto (distingue mayúsculas). |
+| `LEFT(text, [count])` | Los primeros caracteres de un texto. |
+| `LEN(text)` | Número de caracteres. |
+| `LOWER(text)` | En minúsculas. |
+| `MID(text, start, count)` | Caracteres del medio de un texto. |
+| `PROPER(text)` | Pone En Mayúscula Cada Palabra. |
+| `REPLACE(text, position, length, new_text)` | Reemplaza parte de un texto por posición. |
+| `REPT(text, times)` | Repite un texto. |
+| `RIGHT(text, [count])` | Los últimos caracteres de un texto. |
+| `SEARCH(find_text, within_text, [start])` | Posición de un texto (sin distinguir mayúsculas, admite * y ?). |
+| `SPLIT(text, delimiter)` | Divide un texto en celdas. |
+| `SUBSTITUTE(text, search, replacement, [occurrence])` | Cambia un texto por otro. |
+| `T(value)` | El valor si es texto; si no, "". |
+| `TEXT(value, format)` | Un número como texto con un formato ("0.00", "yyyy-mm-dd"). |
+| `TEXTJOIN(delimiter, ignore_empty, text1, [text2, ...])` | Une textos con un separador. |
+| `TRIM(text)` | Quita los espacios de más. |
+| `UPPER(text)` | En mayúsculas. |
+| `VALUE(text)` | El número que representa un texto. |
+
+### Fecha y hora
+
+| Función | Descripción |
+| --- | --- |
+| `DATE(year, month, day)` | Una fecha a partir de sus partes. |
+| `DATEDIF(start_date, end_date, unit)` | Diferencia entre fechas en "Y", "M", "D", "YM", "MD" o "YD". |
+| `DATEVALUE(date_text)` | La fecha que representa un texto. |
+| `DAY(date)` | Día del mes (1-31). |
+| `DAYS(end_date, start_date)` | Días entre dos fechas. |
+| `EDATE(start_date, months)` | La fecha unos meses antes o después. |
+| `EOMONTH(start_date, months)` | El último día del mes a unos meses de distancia. |
+| `HOUR(time)` | Hora (0-23). |
+| `MINUTE(time)` | Minuto (0-59). |
+| `MONTH(date)` | Mes (1-12). |
+| `NETWORKDAYS(start_date, end_date)` | Días laborables (de lunes a viernes) entre dos fechas. |
+| `NOW()` | La fecha y la hora actuales. |
+| `SECOND(time)` | Segundo (0-59). |
+| `TIME(hour, minute, second)` | Una hora a partir de sus partes. |
+| `TODAY()` | La fecha de hoy. |
+| `WEEKDAY(date, [type])` | Día de la semana (1 = domingo por defecto). |
+| `YEAR(date)` | Año. |
+
+### Información
+
+| Función | Descripción |
+| --- | --- |
+| `ISBLANK(value)` | TRUE si la celda está vacía. |
+| `ISERR(value)` | TRUE para los errores que no son #N/A. |
+| `ISERROR(value)` | TRUE para cualquier error. |
+| `ISEVEN(number)` | TRUE para los números pares. |
+| `ISFORMULA(reference)` | TRUE si la celda tiene una fórmula. |
+| `ISLOGICAL(value)` | TRUE para TRUE o FALSE. |
+| `ISNA(value)` | TRUE para #N/A. |
+| `ISNUMBER(value)` | TRUE para los números. |
+| `ISODD(number)` | TRUE para los números impares. |
+| `ISTEXT(value)` | TRUE para el texto. |
+| `N(value)` | El valor como número (el texto vale 0). |
+| `NA()` | El error #N/A. |
+
+### Trigonometría
+
+| Función | Descripción |
+| --- | --- |
+| `ACOS(number)` | Arcocoseno, en radianes. |
+| `ASIN(number)` | Arcoseno, en radianes. |
+| `ATAN(number)` | Arcotangente, en radianes. |
+| `ATAN2(x, y)` | Arcotangente de y/x, en radianes. |
+| `COS(angle)` | Coseno de un ángulo en radianes. |
+| `DEGREES(angle)` | De radianes a grados. |
+| `RADIANS(angle)` | De grados a radianes. |
+| `SIN(angle)` | Seno de un ángulo en radianes. |
+| `TAN(angle)` | Tangente de un ángulo en radianes. |
+
+{/* functions:end */}

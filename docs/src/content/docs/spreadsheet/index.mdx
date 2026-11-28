@@ -1,0 +1,119 @@
+---
+title: Spreadsheet
+description: A spreadsheet component for Python desktop apps, like Google Sheets or Excel — formulas with 140+ functions, number formats, conditional formatting, validation with dropdowns, sorting, filters, frozen panes, merged cells, several sheets, undo and Excel (.xlsx) and CSV files.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![A spreadsheet in a Pyzed app: a toolbar, formulas, a filter on the header, data bars and colors by value, and tabs for two sheets](/pyzed/media/spreadsheet/overview.webp)
+
+Pyzed has a complete spreadsheet, the kind of grid you know from Google Sheets and Excel. Your
+users type numbers, text, dates and formulas into cells, format them, sort and filter them,
+and open and save Excel files. Your code reads and writes the same cells from Python.
+
+It comes in two pieces:
+
+| Piece | What it is |
+| --- | --- |
+| [`pz.Workbook`](/pyzed/spreadsheet/workbook/) | The data and the engine: sheets, cells, formulas, formats, undo, files. It works without a window, so you can also use it in scripts and tests. |
+| [`ui.Spreadsheet`](/pyzed/spreadsheet/component/) | The component: the grid plus a toolbar, menus, a find bar and sheet tabs. |
+
+Underneath, [`pz.sheet`](/pyzed/spreadsheet/grid/) is the grid on its own (cells, headers,
+formula bar), for when you want your own toolbar or no toolbar at all. The grid and the
+formula engine are written in Rust: only the rows and columns on screen are drawn, so a sheet
+with a million rows scrolls as smoothly as one with ten.
+
+<Aside type="note" title="In plain words">
+A workbook is the file: it has one or more sheets, and each sheet is a grid of cells named by
+column letter and row number (`A1`, `B7`). A cell holds a value (`42`, `Apples`, a date) or a
+formula that starts with `=` and computes its value from other cells (`=SUM(B2:B9)`). When a
+cell changes, every formula that uses it updates by itself.
+</Aside>
+
+## A spreadsheet in a few lines
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Budget(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([
+            ["Item", "Cost"],
+            ["Rent", 950],
+            ["Food", 320],
+            ["Travel", 140],
+        ])
+        self.book["A5"] = "Total"
+        self.book["B5"] = "=SUM(B2:B4)"
+        self.book.format("B2:B5", number_format="$#,##0.00")
+        self.book.format("A1:B1", bold=True, fill="#e8f0fe")
+
+    def view(self):
+        return ui.Spreadsheet(book=self.book)
+
+
+pz.run(Budget)
+```
+
+The workbook belongs to your app, so it keeps its data across view rebuilds. Read it whenever
+you need it: `self.book["B5"]` is `1410`, `self.book.records()` gives the rows as dicts, and
+`self.book.save("budget.xlsx")` writes an Excel file.
+
+## Everything it does
+
+- **Editing**: type in a cell or in the formula bar, <kbd>Enter</kbd> and <kbd>Tab</kbd> to
+  move on, <kbd>F2</kbd> to edit, <kbd>Alt</kbd>+<kbd>Enter</kbd> for a new line inside a
+  cell, double-click to edit in place. Numbers, percentages, currencies, dates and `TRUE` /
+  `FALSE` are recognized as you type. [Editing and shortcuts](/pyzed/spreadsheet/editing/).
+- **Selection and clipboard**: click and drag, <kbd>Shift</kbd> to extend,
+  <kbd>Ctrl</kbd> for several ranges, whole rows and columns from the headers. Copy and paste
+  work with Google Sheets, Excel and any text editor (tab-separated text), and pasted formulas
+  shift their references like in Excel.
+- **Formulas**: more than 140 functions (`SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`,
+  `SUMIFS`, `TEXT`, `DATEDIF`, `FILTER`, `UNIQUE`, `SORT`...), absolute and relative
+  references (`$A$1`), references to other sheets, dynamic arrays that spill into the next
+  cells, and errors like `#DIV/0!` and `#REF!`. While you type, suggestions and the
+  arguments of the function show up, and you can pick references with the mouse or the
+  arrows. [Formulas](/pyzed/spreadsheet/formulas/).
+- **Formatting**: bold, italic, underline, strikethrough, font size, text and fill colors,
+  borders, alignment, wrapping, merged cells and number formats (`$#,##0.00`, `0%`,
+  `yyyy-mm-dd`...). [Formatting](/pyzed/spreadsheet/formatting/).
+- **Conditional formatting**: colors when a value is greater than, between, contains a text,
+  is a duplicate or matches a formula, plus color scales and data bars.
+- **Validation**: dropdown lists, checkboxes, number and date ranges, text lengths and custom
+  formulas, with a warning or a refusal. [Data tools](/pyzed/spreadsheet/data/).
+- **Data tools**: sort by one or more columns, filter with a funnel on the header (by value
+  or by condition), find and replace, autofill series (`1, 2, 3`, `Mon, Tue`, dates) with the
+  fill handle, and a status bar with the sum, average and count of the selection.
+- **Structure**: insert, delete, hide and resize rows and columns (double-click a border to
+  fit), freeze rows and columns, several sheets with tabs you rename, color, reorder and
+  duplicate. [Structure and sheets](/pyzed/spreadsheet/structure/).
+- **Undo and redo** of everything, including formats, sorting and structure changes.
+- **Files**: open and save Excel (`.xlsx`), and read `.xls`, `.ods` and CSV / TSV.
+  [Files](/pyzed/spreadsheet/files/).
+- **Notes** on cells (the little triangle), and a read-only mode.
+
+## Where to start
+
+<CardGrid>
+	<LinkCard title="The component" href="/pyzed/spreadsheet/component/" description="ui.Spreadsheet: props, events, toolbar and menus." />
+	<LinkCard title="The workbook" href="/pyzed/spreadsheet/workbook/" description="Read and write cells, ranges and records from Python." />
+	<LinkCard title="Formulas" href="/pyzed/spreadsheet/formulas/" description="References, ranges, arrays and every function." />
+	<LinkCard title="Editing and shortcuts" href="/pyzed/spreadsheet/editing/" description="Everything the keyboard and the mouse do." />
+</CardGrid>
+
+The full example is [`examples/spreadsheet.py`](https://github.com/albakore/pyzed/blob/main/examples/spreadsheet.py),
+also in the welcome gallery of Pyzed Design.
+
+<Aside type="caution" title="Not included yet">
+Charts drawn inside the sheet, pivot tables, real-time collaboration, macros and scripts,
+named ranges, comments with replies and hyperlinks in cells. For charts, read the values with
+`book.values()` and pass them to a [chart component](/pyzed/library/line-chart/) next to the
+sheet.
+</Aside>

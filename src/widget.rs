@@ -387,6 +387,8 @@ pub enum Kind {
     RichText(Box<extra::RichProps>),
     Markdown(Box<extra::MarkdownProps>),
     QrCode(Box<extra::QrProps>),
+    /// A spreadsheet grid (`pz.sheet`).
+    Sheet(Arc<crate::sheet::view::SheetProps>),
     Shader(Box<crate::shader::ShaderProps>),
     PickList(Box<extra::PickListProps>),
     Radio(Box<extra::RadioProps>),
@@ -515,6 +517,7 @@ impl Widget {
             Kind::RichText(_) => "rich_text",
             Kind::Markdown(_) => "markdown",
             Kind::QrCode(_) => "qr_code",
+            Kind::Sheet(_) => "sheet",
             Kind::Shader(_) => "shader",
             Kind::PickList(_) => "pick_list",
             Kind::Radio(_) => "radio",
