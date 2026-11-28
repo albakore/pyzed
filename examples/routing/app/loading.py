@@ -1,0 +1,7 @@
+import pyzed as pz
+from pyzed import ui
+
+
+def loading():
+    return pz.container(pz.row([ui.spinner(), ui.label("Loading…", color="text_muted")], spacing=8),
+                        padding=8)

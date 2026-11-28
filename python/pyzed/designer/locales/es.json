@@ -1404,6 +1404,8 @@
   "Keyframed animations with pz.AnimationPlayer, like Godot's.": "Animaciones con fotogramas clave con pz.AnimationPlayer, como en Godot.",
   "Styles": "Estilos",
   "CSS-like properties, named styles, gradients, masks and a global style.": "Propiedades tipo CSS, estilos con nombre, degradados, máscaras y un estilo global.",
+  "Routes like Next.js": "Rutas como en Next.js",
+  "A store whose pages are folders: layouts, loading, errors, not found, [id] and links.": "Una tienda cuyas páginas son carpetas: layouts, carga, errores, no encontrado, [id] y enlaces.",
   "Web-style layout": "Diseño estilo web",
   "Boxes, a stylesheet with states, media queries and nested components.": "Cajas, una hoja de estilos con estados, media queries y componentes anidados.",
   "Theming playground": "Laboratorio de temas",
