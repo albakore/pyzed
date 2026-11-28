@@ -30,6 +30,7 @@ const SECTIONS: [string, string, string, string][] = [
 	['why', 'Why Pyzed', 'Por qué Pyzed', 'How Pyzed compares with tkinter, Kivy, PyQt/PySide, Flet and others.'],
 	['routing', 'Routing', 'Rutas', 'Multi-page apps like the Next.js App Router: folders as addresses, layouts, load and loading.py, actions, global state (pz.Store), middleware and native notifications.'],
 	['library', 'Component library', 'Biblioteca de componentes', 'Every Pyzed UI component with usage and API.'],
+	['spreadsheet', 'Spreadsheet', 'Hoja de cálculo', 'A spreadsheet like Google Sheets or Excel: ui.Spreadsheet, the pz.Workbook engine (cells, 146 formula functions, formats, sort, filter, validation) and .xlsx / CSV files.'],
 	['blocks', 'Blocks', 'Bloques', 'Ready-made screens and sections built from components.'],
 	['download', 'Pyzed Design download', 'Descargar Pyzed Design', 'The standalone visual designer.'],
 	['editor', 'Pyzed Design manual', 'Manual de Pyzed Design', 'Every panel of the visual designer.'],
