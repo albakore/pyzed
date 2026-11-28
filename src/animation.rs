@@ -47,15 +47,18 @@ const LOOP_FRAME: std::time::Duration = std::time::Duration::from_micros(33_333)
 
 /// Animations jump to their resting state (`pz.set_reduced_motion(True)`).
 static REDUCED_MOTION: AtomicBool = AtomicBool::new(false);
-/// Off-screen screenshots draw the resting state, so they don't depend on timing.
-static SCREENSHOT: AtomicBool = AtomicBool::new(false);
+thread_local! {
+    /// An off-screen screenshot runs on this thread: it draws the resting state, so it doesn't
+    /// depend on timing (and a recording on another thread keeps its animations).
+    static SCREENSHOT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
 
 pub(crate) fn settled() -> bool {
-    REDUCED_MOTION.load(Ordering::Relaxed) || SCREENSHOT.load(Ordering::Relaxed)
+    REDUCED_MOTION.load(Ordering::Relaxed) || SCREENSHOT.get()
 }
 
 pub fn set_screenshot(on: bool) {
-    SCREENSHOT.store(on, Ordering::Relaxed);
+    SCREENSHOT.set(on);
 }
 
 /// Turns reduced motion on or off: animations show their final state without moving.

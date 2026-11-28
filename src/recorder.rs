@@ -32,7 +32,6 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
@@ -56,16 +55,21 @@ use pyo3::types::{PyBytes, PyList, PyTuple};
 // The clock
 // ---------------------------------------------------------------------------
 
-/// While a recording runs, the time that animations, presences, carets and shaders see.
-static VIRTUAL: Mutex<Option<Instant>> = Mutex::new(None);
+thread_local! {
+    /// While a recording runs on this thread, the time that animations, presences, carets,
+    /// drags and shaders see. Each recording has its own: one running on another thread at
+    /// the same time (a leftover background job, a second recording) must not move it.
+    static VIRTUAL: std::cell::Cell<Option<Instant>> = const { std::cell::Cell::new(None) };
+}
 
-/// The current time: the recording's virtual clock while one runs, the real clock otherwise.
+/// The current time: the virtual clock of the recording this thread runs, the real clock
+/// otherwise.
 pub fn now() -> Instant {
-    VIRTUAL.lock().unwrap().unwrap_or_else(Instant::now)
+    VIRTUAL.get().unwrap_or_else(Instant::now)
 }
 
 fn set_clock(at: Option<Instant>) {
-    *VIRTUAL.lock().unwrap() = at;
+    VIRTUAL.set(at);
 }
 
 // ---------------------------------------------------------------------------
