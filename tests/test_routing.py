@@ -620,6 +620,10 @@ def test_uv_project_with_routes(tmp_path):
     assert "class App(pz.RouterApp)" in (created.root / "main.py").read_text()
     assert 'title_template = "%s · Shop"' in (created.root / "app" / "layout.py").read_text()
     assert Router(created.root / "app").routes() == ["/", "/about", "/favorites", "/items", "/items/[id]"]
+    toml = (created.root / "pyproject.toml").read_text()
+    assert "enable-fallback-search-path = true" in toml  # Pyrefly finds `import helpers` next to a page
+    assert project.route_imports(toml) == toml  # added once
+    __import__("tomllib").loads(toml)
 
 
 def test_form_from_the_designer_as_a_page(tmp_path):
@@ -653,3 +657,15 @@ def test_route_components_stay_out_of_the_toolbox(tmp_path):
     assert _route_file(tmp_path / "app" / "page.py", tmp_path)
     assert _route_file(tmp_path / "x" / "(g)" / "layout.py", tmp_path)
     assert not _route_file(tmp_path / "ui" / "layout.py", tmp_path)
+
+
+def test_lazy_names_are_visible_to_type_checkers():
+    """Every name ``pyzed.__getattr__`` loads on first use is also imported under TYPE_CHECKING, or
+    Pyright and Pyrefly see ``pz.link`` or ``pz.Store`` as ``str | ModuleType`` and flag every use."""
+    import ast
+
+    tree = ast.parse(Path(pz.__file__).read_text(encoding="utf-8"))
+    checked = {alias.asname or alias.name for node in tree.body
+               if isinstance(node, ast.If) and getattr(node.test, "id", "") == "_TYPE_CHECKING"
+               for item in node.body if isinstance(item, ast.ImportFrom) for alias in item.names}
+    assert set(pz._LAZY) <= checked

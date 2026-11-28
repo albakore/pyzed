@@ -104,6 +104,18 @@ mezclarse. Los imports relativos (`from .helpers import x`, `from ..shared impor
 funcionan, pero en estas carpetas solo los entiende Pyright; ty los marca como error, así que es
 mejor importar por nombre.
 
+`pyzed new --router` además escribe los ajustes de imports en `pyproject.toml`, como hace un
+proyecto nuevo de Next.js con su `tsconfig.json`. Pyright, basedpyright, Pylance, ty y Jedi no
+necesitan nada; Pyrefly necesita estas líneas, que puedes copiar en un proyecto anterior:
+
+```toml
+[tool.pyrefly]
+enable-fallback-search-path = true
+
+[tool.pyrefly.errors]
+fallback-search-path-relative-import = false
+```
+
 ## Comandos
 
 `pyzed route add` escribe los archivos de una ruta con código inicial que funciona, y comprueba

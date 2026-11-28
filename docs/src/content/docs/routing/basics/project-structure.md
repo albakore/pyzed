@@ -103,6 +103,18 @@ Each route keeps its own copies: two pages can have a `helpers.py` each without 
 Relative imports (`from .helpers import x`, `from ..shared import y`) also run, but only Pyright
 understands them in these folders; ty marks them as errors, so prefer imports by name.
 
+`pyzed new --router` also writes the import settings to `pyproject.toml`, like a new Next.js
+project does with its `tsconfig.json`. Pyright, basedpyright, Pylance, ty and Jedi need nothing;
+Pyrefly needs these lines, which you can copy into an older project:
+
+```toml
+[tool.pyrefly]
+enable-fallback-search-path = true
+
+[tool.pyrefly.errors]
+fallback-search-path-relative-import = false
+```
+
 ## Commands
 
 `pyzed route add` writes the files of a route with working starter code, and checks the name:
