@@ -31,6 +31,7 @@ shop/
 | lo que escribe o abre un componente | `pz.state` |
 | comprobaciones antes de una página | `middleware.py` |
 | avisar al usuario de que algo pasó | `pz.notify` o un toast |
+| funciones que solo usa una ruta | un archivo junto a su `page.py`, importado por nombre (`import helpers`) |
 
 ## Datos
 

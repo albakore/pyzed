@@ -524,6 +524,38 @@ def test_routes_from_folders(tmp_path):
     assert not any(p.endswith("app") for p in sys.path if p.startswith(str(tmp_path)))  # sys.path left as it was
 
 
+def test_imports_next_to_routes_in_folders_with_brackets(tmp_path):
+    """Code next to a route imports like Pyright and ty resolve it, also in [id] and (group) folders."""
+    write(tmp_path, {
+        "rootmod.py": "NAME = 'root'\n",
+        "app/(shop)/_shared/text.py": "def label(x):\n    return f'<{x}>'\n",
+        "app/(shop)/products/[id]/helpers.py": "import other\ndef slug(x):\n    return other.lower(x)\n",
+        "app/(shop)/products/[id]/other.py": "def lower(x):\n    return x.lower()\n",
+        "app/(shop)/products/[id]/page.py": """
+            import helpers                      # next to the page (Pyright and ty)
+            from _shared.text import label      # a folder above it
+            from .helpers import slug           # relative (Pyright)
+            from ... import _shared
+            import rootmod                      # next to app/
+            def page(params):
+                import helpers as again         # also inside functions, after loading
+                assert again is helpers and _shared.text.label is label
+                return label(slug(params["id"])) + rootmod.NAME
+        """,
+        "app/blog/[slug]/helpers.py": "def slug(x):\n    return 'blog ' + x\n",
+        "app/blog/[slug]/page.py": "import helpers\ndef page(params):\n    return helpers.slug(params['slug'])\n",
+    })
+    router = Router(tmp_path / "app")
+    shop = router.match("/products/AB")
+    page = shop.segments[-1].files["page"].target()
+    assert page({"id": "AB"}) == "<ab>root"
+    blog = router.match("/blog/x").segments[-1].files["page"].target()
+    assert blog({"slug": "x"}) == "blog x"   # its own helpers.py, not the shop's
+    assert "other" not in sys.modules  # kept inside the route's package
+    import json
+    assert sys.modules["json"] is json  # names that aren't next to a route import as usual
+
+
 def test_relative_folder_is_found_next_to_the_caller(tmp_path, monkeypatch):
     write(tmp_path, {"app/page.py": "def page():\n    return 'x'\n", "make.py": "import pyzed as pz\nr = pz.Router('app')\n"})
     monkeypatch.chdir(Path(__file__).parent)  # somewhere else
@@ -588,6 +620,10 @@ def test_uv_project_with_routes(tmp_path):
     assert "class App(pz.RouterApp)" in (created.root / "main.py").read_text()
     assert 'title_template = "%s · Shop"' in (created.root / "app" / "layout.py").read_text()
     assert Router(created.root / "app").routes() == ["/", "/about", "/favorites", "/items", "/items/[id]"]
+    toml = (created.root / "pyproject.toml").read_text()
+    assert "enable-fallback-search-path = true" in toml  # Pyrefly finds `import helpers` next to a page
+    assert project.route_imports(toml) == toml  # added once
+    __import__("tomllib").loads(toml)
 
 
 def test_form_from_the_designer_as_a_page(tmp_path):
@@ -621,3 +657,15 @@ def test_route_components_stay_out_of_the_toolbox(tmp_path):
     assert _route_file(tmp_path / "app" / "page.py", tmp_path)
     assert _route_file(tmp_path / "x" / "(g)" / "layout.py", tmp_path)
     assert not _route_file(tmp_path / "ui" / "layout.py", tmp_path)
+
+
+def test_lazy_names_are_visible_to_type_checkers():
+    """Every name ``pyzed.__getattr__`` loads on first use is also imported under TYPE_CHECKING, or
+    Pyright and Pyrefly see ``pz.link`` or ``pz.Store`` as ``str | ModuleType`` and flag every use."""
+    import ast
+
+    tree = ast.parse(Path(pz.__file__).read_text(encoding="utf-8"))
+    checked = {alias.asname or alias.name for node in tree.body
+               if isinstance(node, ast.If) and getattr(node.test, "id", "") == "_TYPE_CHECKING"
+               for item in node.body if isinstance(item, ast.ImportFrom) for alias in item.names}
+    assert set(pz._LAZY) <= checked

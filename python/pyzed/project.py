@@ -1223,6 +1223,27 @@ def _set_pyzed_keys(project: Project, **values: Optional[str]) -> None:
     project.reload()
 
 
+#: What ``pyzed new --router`` adds to ``pyproject.toml`` so every language server finds the files next to
+#: the routes, like the import settings of a new Next.js project.
+ROUTE_IMPORTS = """
+# Imports in the route folders ([id], (shop)...): `import helpers` and `from _shared.text import x`
+# find the file next to the page or in a folder above it, as the app does when it runs.
+# Pyright, basedpyright, Pylance, ty and Jedi resolve them that way on their own; Pyrefly needs this:
+[tool.pyrefly]
+enable-fallback-search-path = true
+
+[tool.pyrefly.errors]
+fallback-search-path-relative-import = false
+"""
+
+
+def route_imports(text: str) -> str:
+    """``pyproject.toml`` text with :data:`ROUTE_IMPORTS`, unless it already configures Pyrefly."""
+    if re.search(r"^\[tool\.pyrefly[\].]", text, re.M):
+        return text
+    return text.rstrip() + "\n" + ROUTE_IMPORTS
+
+
 def prebuilt(text: str) -> str:
     """``pyproject.toml`` text whose ``[tool.uv]`` installs ``pyzed-ui`` from wheels only (``no-build-package``).
 
@@ -1260,7 +1281,8 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
     - ``git=True`` creates a git repository unless the folder is already inside one.
     - A new project gets an ``AGENTS.md``: how AI agents should build, design and check it.
     - ``template="router"`` makes the pages folders of ``app/`` (``pyzed.routing``, like Next.js) started by
-      ``main.py``, which becomes the project's ``script``, instead of the starter form.
+      ``main.py``, which becomes the project's ``script``, instead of the starter form, and ``pyproject.toml``
+      gets what language servers need to resolve imports in folders like ``[id]`` (``ROUTE_IMPORTS``).
 
     Raises ``RuntimeError`` with uv's message when ``uv init`` fails.
     """
@@ -1294,6 +1316,8 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
             title = re.sub(r"[-_]+", " ", project.name).strip().title() or "My App"
             write_router_app(root, title, main=script)
         _set_pyzed_keys(project, script=script, main=None)
+        file = root / PYPROJECT
+        file.write_text(route_imports(file.read_text(encoding="utf-8")), encoding="utf-8")
     elif fresh and not package:
         (root / "main.py").write_text(
             '"""Opens the main window: `uv run main.py`."""\n\nfrom pyzed import project\n\n'

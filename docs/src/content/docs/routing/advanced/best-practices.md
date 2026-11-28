@@ -31,6 +31,7 @@ shop/
 | what a component types or opens | `pz.state` |
 | checks before a page | `middleware.py` |
 | telling the user something happened | `pz.notify` or a toast |
+| helpers only one route uses | a file next to its `page.py`, imported by name (`import helpers`) |
 
 ## Data
 

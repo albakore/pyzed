@@ -31,7 +31,7 @@ when they change. ``invalidate=["/products"]`` also drops the cached data of oth
 from __future__ import annotations
 
 import functools
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, List, Optional, Sequence, Union, overload
 
 from .store import Store
 
@@ -142,6 +142,14 @@ def _deliver(callback: Callable[[Any], Any], value: Any) -> None:
         callback(value)
 
 
+@overload
+def action(function: Callable[..., Any], *, refresh: bool = True,
+           invalidate: Union[str, Sequence[str], None] = None, on_done: Optional[Callable[[Any], Any]] = None,
+           on_error: Optional[Callable[[BaseException], Any]] = None) -> Action: ...
+@overload
+def action(function: None = None, *, refresh: bool = True,
+           invalidate: Union[str, Sequence[str], None] = None, on_done: Optional[Callable[[Any], Any]] = None,
+           on_error: Optional[Callable[[BaseException], Any]] = None) -> Callable[[Callable[..., Any]], Action]: ...
 def action(function: Optional[Callable[..., Any]] = None, *, refresh: bool = True,
            invalidate: Union[str, Sequence[str], None] = None, on_done: Optional[Callable[[Any], Any]] = None,
            on_error: Optional[Callable[[BaseException], Any]] = None) -> Any:

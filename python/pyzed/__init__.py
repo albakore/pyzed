@@ -177,6 +177,20 @@ _LAZY = {
     "WebSocket": ("iot", "WebSocket"),
 }
 
+from typing import TYPE_CHECKING as _TYPE_CHECKING
+
+if _TYPE_CHECKING:  # what ``__getattr__`` loads, so type checkers and editors see the real names
+    from . import designer, reference, dock, game, shading, services, system, routing, notifications, iot  # noqa: F401
+    from .dock import Dock, DockPanel  # noqa: F401
+    from .game import is_pressed, pressed  # noqa: F401
+    from .services import Clipboard, FileDialog, FileWatcher, HttpRequest, HttpResponse, Notification, Process, Settings, Shortcut, Timer, TrayIcon, TrayItem, Worker  # noqa: F401
+    from .system import Launcher, NetworkMonitor, PowerMonitor, SystemInfo  # noqa: F401
+    from .routing import Router, RouterApp, link, nav_link, not_found, redirect, rewrite, middleware, use_router, use_pathname, use_params, use_search_params  # noqa: F401
+    from .store import Store  # noqa: F401
+    from .actions import action, Action  # noqa: F401
+    from .notifications import notify, DesktopNotification  # noqa: F401
+    from .iot import BluetoothDevice, BluetoothScanner, DeviceDiscovery, ModbusClient, MqttClient, SerialPort, SerialWatcher, TcpClient, UdpSocket, WebSocket  # noqa: F401
+
 
 def _version_key(version):
     """Sorts ``"1.10.0"`` after ``"1.9.0"`` (and a final release after its ``rc``)."""

@@ -56,7 +56,8 @@ What to do for each kind of request:
   state (session, cart), middleware.py guards and redirects, pz.notify shows native notifications whose click
   opens a page; pz.link / pz.use_router() navigate, pz.run(pz.RouterApp("app")). `pyzed new name --router`
   scaffolds it, `pyzed route add /orders/[id] --load --loading` adds a route, `pyzed route list` shows them.
-  Topics: "data-fetching", "actions", "state", "rendering", "middleware", "notifications",
+  Code next to a route imports by name (`import helpers`, `from _shared.text import x`), as Pyright and ty
+  resolve it in [id] and (group) folders; shared code lives next to app/ (`import api`). Topics: "data-fetching", "actions", "state", "rendering", "middleware", "notifications",
   "routing-best-practices", "nextjs".
 - "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
 

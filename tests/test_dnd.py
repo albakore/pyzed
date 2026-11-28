@@ -1,5 +1,7 @@
 """Drag and drop (``pyzed.dnd``): the helpers, and real drags played with the off-screen recorder."""
 
+import threading
+
 import pytest
 
 import pyzed as pz
@@ -126,6 +128,44 @@ def test_reorder_within_a_list():
     assert app.lists["todo"] == ["Test", "Ship", "Write"]
     event = app.events[-1]
     assert (event.from_list, event.from_index, event.target, event.index) == ("todo", 0, "todo", 2)
+
+
+def test_a_recording_on_another_thread_keeps_its_own_clock():
+    """Each recording has its own virtual clock: one that another thread runs at the same time
+    (a background job left by an earlier test, say) must not stop a drop from landing."""
+    ahead, done = threading.Event(), threading.Event()
+
+    class Other(pz.App):
+        def view(self):
+            return pz.text("other")
+
+    def other():
+        def script():
+            yield ("advance", 1000.0)  # this thread's clock is now far ahead of the drag's
+            ahead.set()
+            done.wait(10)
+
+        _core.record(Other(), script(), size=(80, 40), scale=1.0)
+
+    thread = threading.Thread(target=other, daemon=True)
+    app = Board()
+
+    def plan(p):
+        end = (center(p, "Ship")[0], center(p, "Ship")[1] + 6)
+        yield from drag(center(p, "Write"), end, release=False)
+        thread.start()
+        assert ahead.wait(10)
+        yield ("up", "left")  # the drop flies to its place on this recording's clock
+        for _ in range(8):
+            yield ("advance", 0.05)
+            yield ("move", *end)
+
+    try:
+        run(app, plan)
+    finally:
+        done.set()
+        thread.join(10)
+    assert app.lists["todo"] == ["Test", "Ship", "Write"]
 
 
 def test_move_to_another_list():

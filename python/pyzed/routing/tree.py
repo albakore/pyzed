@@ -15,6 +15,11 @@ The special files of a segment (``middleware``, ``page``, ``layout``, ``template
 
 from __future__ import annotations
 
+import builtins
+import hashlib
+import importlib.abc
+import importlib.machinery
+import importlib.util
 import itertools
 import os
 import re
@@ -59,17 +64,126 @@ def parse_name(name: str) -> Tuple[str, Optional[str]]:
     return "static", None
 
 
+def _part(name: str) -> str:
+    """A module name for a folder: ``(shop)`` and ``[id]`` aren't Python names, so they get a safe one."""
+    safe = re.sub(r"\W", "_", name)
+    if safe == name and safe.isidentifier():
+        return safe
+    return f"{safe.strip('_') or 'x'}_{hashlib.sha1(name.encode()).hexdigest()[:6]}"
+
+
+_PREFIX = "pyzed_routes_"
+_TOPS: Dict[str, Path] = {}
+
+
+def package_for(folder: Path, top: Path) -> Optional[str]:
+    """The package a route file in ``folder`` belongs to, so ``from .helpers import x`` (and ``..``)
+    work in folders like ``[id]`` or ``(shop)`` that can't be imported by name.
+
+    Each folder from ``top`` (the one that holds ``app/``) down to ``folder`` becomes a package
+    module whose ``__path__`` is that folder; ``None`` when ``folder`` is not below ``top``.
+    """
+    try:
+        parts = folder.resolve().relative_to(top.resolve()).parts
+    except ValueError:
+        return None
+    name = _PREFIX + hashlib.sha1(str(top.resolve()).encode()).hexdigest()[:8]
+    _TOPS[name] = top.resolve()
+    if not any(isinstance(finder, _RouteFinder) for finder in sys.meta_path):
+        sys.meta_path.insert(0, _RouteFinder())
+    here = top
+    for part in (None, *parts):
+        if part is not None:
+            here = here / part
+            name = f"{name}.{_part(part)}"
+        package = sys.modules.get(name)
+        if package is None or list(getattr(package, "__path__", ())) != [str(here)]:
+            package = types.ModuleType(name)
+            package.__path__ = [str(here)]  # type: ignore[attr-defined]
+            package.__package__ = name
+            sys.modules[name] = package
+    return name
+
+
+def _local(folder: Path, top: Path, first: str) -> Optional[Path]:
+    """The closest folder from ``folder`` up to ``top`` (not included) that has a module ``first``.
+
+    A ``first.py`` file or a ``first/__init__.py`` package always wins, like next to a script; a
+    plain ``first/`` folder only when nothing else is called ``first`` (it would hide ``json``...).
+    """
+    here, top = folder.resolve(), top.resolve()
+    while here != top and top in here.parents:
+        if (here / f"{first}.py").is_file() or (here / first / "__init__.py").is_file():
+            return here
+        if (here / first).is_dir() and first not in sys.modules:
+            try:
+                found = importlib.util.find_spec(first)
+            except (ImportError, ValueError):
+                found = None
+            if found is None:
+                return here
+        here = here.parent
+    return None
+
+
+def route_builtins(folder: Path, top: Path) -> Dict[str, Any]:
+    """Builtins for code in ``folder``: ``import helpers`` and ``from _shared.text import x`` find
+    the modules next to it or in a folder above (up to ``top``), as Pyright and ty resolve them.
+
+    Each folder keeps its own copy, so two routes can have a ``helpers.py`` each.
+    """
+    real = builtins.__import__
+
+    def route_import(name: str, globals: Any = None, locals: Any = None, fromlist: Any = (),
+                     level: int = 0) -> Any:
+        if level == 0 and name and not name.startswith(_PREFIX):
+            here = _local(folder, top, name.partition(".")[0])
+            package = package_for(here, top) if here is not None else None
+            if package is not None:
+                return real(name, {"__package__": package, "__name__": package}, locals, fromlist, 1)
+        return real(name, globals, locals, fromlist, level)
+
+    return {**builtins.__dict__, "__import__": route_import}
+
+
+class _RouteLoader(importlib.machinery.SourceFileLoader):
+    """Runs a module of a route folder with :func:`route_builtins`, so its own imports work too."""
+
+    def exec_module(self, module: types.ModuleType) -> None:
+        top = _TOPS.get(module.__name__.partition(".")[0])
+        if top is not None and module.__file__:
+            module.__dict__["__builtins__"] = route_builtins(Path(module.__file__).parent, top)
+        super().exec_module(module)
+
+
+class _RouteFinder(importlib.abc.MetaPathFinder):
+    """Finds the modules of the packages made by :func:`package_for` with :class:`_RouteLoader`."""
+
+    def find_spec(self, fullname: str, path: Any, target: Any = None) -> Any:
+        if not fullname.startswith(_PREFIX) or "." not in fullname or path is None:
+            return None
+        spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+        if spec is not None and type(spec.loader) is importlib.machinery.SourceFileLoader:
+            spec.loader = _RouteLoader(fullname, spec.origin)
+        return spec
+
+
 def load_module(path: Path, name: str, extra: Tuple[Path, ...] = ()) -> types.ModuleType:
     """Executes the route file at ``path`` as a fresh module (folders like ``[id]`` can't be imported).
 
     The module has no import spec, so hot reload runs it again in place when it is saved (the
-    route's functions get the new code). Its folder and ``extra`` (the folder that holds ``app/``)
-    are importable while it runs, for helpers next to them.
+    route's functions get the new code). ``extra`` (the folder that holds ``app/``) is importable
+    while it runs. Modules next to the file or in a folder above it import by name (``import
+    helpers``, see :func:`route_builtins`) or relatively (``from .helpers import x``): the file
+    belongs to a package made for its folder (see :func:`package_for`).
     """
     module = types.ModuleType(name)
     module.__file__ = str(path)
+    if extra:
+        module.__package__ = package_for(path.parent, extra[0])
+        module.__dict__["__builtins__"] = route_builtins(path.parent, extra[0])
     sys.modules[name] = module  # dataclasses and typing look the module up while it runs
-    added = [str(f) for f in (path.parent, *extra) if str(f) not in sys.path]
+    added = [str(f) for f in (*extra,) if str(f) not in sys.path]
     sys.path[:0] = added
     try:
         exec(compile(path.read_text(encoding="utf-8"), str(path), "exec"), module.__dict__)  # noqa: S102
