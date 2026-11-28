@@ -54,6 +54,11 @@ bytes = "1"
 rustfft = "6.4"
 hound = "3.5"
 rtrb = "0.4"
+# Spreadsheets (pz.Workbook): reading .xlsx/.xls/.ods files and writing .xlsx files.
+calamine = { version = "0.38", default-features = false }
+rust_xlsxwriter = { version = "0.104", default-features = false }
+# Reading the parts of .xlsx files that calamine skips (column widths, frozen panes, validation).
+zip = { version = "9", default-features = false, features = ["deflate"] }
 
 # Audio devices and MIDI on each system's low-latency API. On Linux they link ALSA, whose
 # development files a checkout may not have, so there they come with the `alsa` feature (CI and
@@ -99,7 +104,6 @@ midir = { version = "0.11", optional = true }
 winit = { version = "0.30", features = ["android-native-activity"] }
 # Calls into Java: the safe area (WindowInsets) and the back button (moveTaskToBack).
 jni = "0.22"
-zip = { version = "9", default-features = false, features = ["deflate"] }
 
 [features]
 # Audio devices and MIDI on Linux: needs libasound2-dev and pkg-config (Fedora: alsa-lib-devel).

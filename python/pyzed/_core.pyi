@@ -413,6 +413,243 @@ class Widget:
         """
         ...
 
+
+class Workbook:
+    """A spreadsheet workbook: sheets of cells with values, formulas and formats.
+
+    Read and write cells by address (``book["B2"] = "=SUM(A1:A9)"``; ``book["A1:C3"]`` gives
+    rows of values), format them, sort, filter, undo, and open or save CSV and Excel files.
+    Show it (and edit it) with ``ui.Spreadsheet(book=book)`` or ``pz.sheet(book)``. Addresses may name a sheet
+    (``"Sales!A1"``); without one they use the active sheet. Row and column numbers are
+    1-based, as in the grid; columns are also accepted as letters (``"C"``).
+    """
+    def __init__(self, *, sheets: Any = ...) -> None: ...
+    active: Any
+    active_cell: Any
+    def add_sheet(self, name: Any = ..., *, index: Any = ...) -> Any:
+        """Adds a sheet (named ``Sheet2``... by default) and makes it active; returns its name."""
+        ...
+    def autofit(self, cols: Any = ..., *, sheet: Any = ...) -> Any:
+        """Sets the width of columns to fit their content (approximately, from the text length)."""
+        ...
+    def batch(self, f: Any) -> Any:
+        """Runs ``fn()`` so all its changes undo in one step."""
+        ...
+    can_redo: Any
+    can_undo: Any
+    def change_decimals(self, range: Any, delta: Any) -> Any:
+        """Adds or removes decimal places of a range's number format (the toolbar's buttons)."""
+        ...
+    def changes(self) -> Any:
+        """The cells changed since the last call (``["A1", "Sheet2!B3"]``), and forgets them."""
+        ...
+    def clear(self, range: Any, what: Any = ...) -> Any:
+        """Clears a range: ``what="all"``, ``"contents"`` (keeps the formats) or ``"formats"``."""
+        ...
+    def clear_conditional_formats(self, range: Any = ...) -> Any:
+        """Removes the conditional formats that touch a range (all of the sheet's without one)."""
+        ...
+    def clear_validation(self, range: Any) -> Any:
+        """Removes the validation rules that touch a range."""
+        ...
+    @staticmethod
+    def column_name(col: Any) -> Any:
+        """The column letters of a 1-based number (``column_name(28) == "AB"``)."""
+        ...
+    def column_width(self, col: Any, width: Any = ..., *, sheet: Any = ...) -> Any:
+        """A column's width in pixels, or sets it (``None`` back to the default)."""
+        ...
+    def conditional_format(self, range: Any, rule: Any, value: Any = ..., value2: Any = ..., *, color: Any = ..., fill: Any = ..., bold: Any = ..., italic: Any = ..., strike: Any = ..., underline: Any = ..., colors: Any = ...) -> Any:
+        """Adds conditional formatting to a range. ``rule``: ``"greater"``, ``"less"``,
+        ``"greater_equal"``, ``"less_equal"``, ``"equal"``, ``"not_equal"``, ``"between"``,
+        ``"not_between"`` (with ``value``/``value2``), ``"contains"``, ``"not_contains"``,
+        ``"starts_with"``, ``"ends_with"`` (text in ``value``), ``"empty"``, ``"not_empty"``,
+        ``"duplicate"``, ``"unique"``, ``"formula"`` (``value="=$C2>100"``, written for the
+        range's first cell), ``"color_scale"`` (``colors=[low, (mid,) high]``) or
+        ``"data_bar"`` (``fill`` is the bar's color).
+        """
+        ...
+    def conditional_formats(self) -> Any:
+        """The conditional formats of the active sheet: ``[(range, rule), ...]``."""
+        ...
+    def copy(self, range: Any = ..., *, cut: Any = ...) -> Any:
+        """Copies a range (the selection by default): returns its text as TSV, what other
+        spreadsheets paste. Pasting it back here keeps formulas and formats.
+        """
+        ...
+    def delete_cols(self, at: Any, count: Any = ..., *, sheet: Any = ...) -> Any: ...
+    def delete_rows(self, at: Any, count: Any = ..., *, sheet: Any = ...) -> Any: ...
+    def duplicate_sheet(self, sheet: Any) -> Any:
+        """Copies a sheet next to it; returns the copy's name."""
+        ...
+    editing: Any
+    def fill(self, source: Any, target_range: Any) -> Any:
+        """Extends ``source`` over ``target`` like the fill handle: series continue, formulas move."""
+        ...
+    def filter(self, range: Any = ..., *, sheet: Any = ...) -> Any:
+        """Turns on a filter for a range whose first row is the header (``range=None`` turns it off)."""
+        ...
+    def filter_column(self, col: Any, *, hide: Any = ..., condition: Any = ..., sheet: Any = ...) -> Any:
+        """Filters a column: hides rows whose value (as shown) is in ``hide``, and/or keeps the rows
+        matching ``condition`` (``">100"``, ``"<>done"``, ``"*north*"``). No arguments clears it.
+        """
+        ...
+    filter_range: Any
+    def filter_values(self, col: Any, *, sheet: Any = ...) -> Any:
+        """The distinct values of a filter column and whether each is shown: ``[("North", True), ...]``."""
+        ...
+    filtered_rows: Any
+    def find(self, text: Any, *, match_case: Any = ..., whole_cell: Any = ..., formulas: Any = ..., all_sheets: Any = ...) -> Any:
+        """Addresses of the cells containing ``text`` (``"A1"``, or ``"Sheet2!A1"`` with ``all_sheets``)."""
+        ...
+    focused: Any
+    def format(self, range: Any, *, bold: Any = ..., italic: Any = ..., underline: Any = ..., strike: Any = ..., color: Any = ..., fill: Any = ..., align: Any = ..., valign: Any = ..., wrap: Any = ..., size: Any = ..., mono: Any = ..., number_format: Any = ..., borders: Any = ..., border_color: Any = ...) -> Any:
+        """Formats a range. Colors are ``"#rrggbb"``; ``number_format`` takes Excel codes
+        (``"#,##0.00"``, ``"0%"``, ``"$#,##0"``, ``"yyyy-mm-dd"``; ``"General"`` resets it);
+        ``borders`` is ``"all"``, ``"outer"``, ``"inner"``, ``"none"`` or sides like ``"top bottom"``.
+        """
+        ...
+    def formula(self, cell: Any) -> Any:
+        """What a cell holds as typed: ``"=SUM(A1:A3)"``, ``"12.5"``..."""
+        ...
+    def freeze(self, rows: Any = ..., cols: Any = ..., *, sheet: Any = ...) -> Any:
+        """Keeps the first ``rows`` rows and ``cols`` columns in view while scrolling."""
+        ...
+    @staticmethod
+    def from_bytes(data: Any) -> Any:
+        """A workbook from an Excel or OpenDocument file's bytes."""
+        ...
+    @staticmethod
+    def from_csv(text: Any, delimiter: Any = ...) -> Any:
+        """A workbook from CSV (or TSV) text. ``delimiter=None`` guesses it."""
+        ...
+    @staticmethod
+    def from_rows(rows: Any, *, header: Any = ..., sheet: Any = ...) -> Any:
+        """A workbook from rows of values (lists, or dicts whose keys become the header row)."""
+        ...
+    frozen: Any
+    @staticmethod
+    def functions() -> Any:
+        """The functions formulas can use: ``[(name, arguments, description), ...]``."""
+        ...
+    def get(self, cell: Any) -> Any:
+        """The value of a cell (formulas give their result; dates give ``datetime.date``)."""
+        ...
+    gridlines: Any
+    def hide_cols(self, cols: Any, *, sheet: Any = ...) -> Any: ...
+    def hide_rows(self, rows: Any, *, sheet: Any = ...) -> Any: ...
+    def insert_cols(self, at: Any, count: Any = ..., *, sheet: Any = ...) -> Any:
+        """Inserts ``count`` empty columns before column ``at`` (a number or letters)."""
+        ...
+    def insert_rows(self, at: Any, count: Any = ..., *, sheet: Any = ...) -> Any:
+        """Inserts ``count`` empty rows before row ``at`` (1-based); formulas adjust."""
+        ...
+    def is_valid(self, cell: Any) -> Any:
+        """Whether a cell's value passes its validation rule."""
+        ...
+    def merge(self, range: Any) -> Any:
+        """Merges a range into one cell (only the first cell keeps its content)."""
+        ...
+    def merges(self, sheet: Any = ...) -> Any:
+        """The merged ranges of a sheet."""
+        ...
+    month_first: Any
+    def move_sheet(self, sheet: Any, index: Any) -> Any: ...
+    def note(self, cell: Any, text: Any = ...) -> Any:
+        """A cell's note (``None``: no note), or sets it with ``text`` (``""`` removes it)."""
+        ...
+    @staticmethod
+    def open(path: Any) -> Any:
+        """Opens a file: ``.xlsx``, ``.xlsm``, ``.xls``, ``.ods``, ``.csv``, ``.tsv`` or ``.txt``."""
+        ...
+    def options(self, cell: Any) -> Any:
+        """The dropdown options of a cell (``None`` when it has no dropdown)."""
+        ...
+    def paste(self, text: Any, at: Any = ..., *, values_only: Any = ...) -> Any:
+        """Pastes TSV text (from Google Sheets, Excel or ``copy()``) at a cell (the selection by default)."""
+        ...
+    readonly: Any
+    def recalculate(self) -> Any:
+        """Recalculates every formula (volatile ones like ``NOW()`` and ``RAND()`` change)."""
+        ...
+    def records(self, range: Any = ...) -> Any:
+        """The rows below a header row as dicts (``{"Name": ..., "Total": ...}``)."""
+        ...
+    def redo(self) -> Any: ...
+    def remove_sheet(self, sheet: Any) -> Any: ...
+    def rename_sheet(self, sheet: Any, name: Any) -> Any: ...
+    def replace(self, text: Any, new: Any, *, match_case: Any = ..., whole_cell: Any = ..., all_sheets: Any = ..., cell: Any = ...) -> Any:
+        """Replaces ``text`` with ``new`` in every cell (or only in ``cell``); returns how many changed."""
+        ...
+    def resize(self, rows: Any, cols: Any, *, sheet: Any = ...) -> Any:
+        """Sets how many rows and columns the grid shows."""
+        ...
+    def row_height(self, row: Any, height: Any = ..., *, sheet: Any = ...) -> Any:
+        """A row's height in pixels, or sets it (``None`` back to the default)."""
+        ...
+    def save(self, path: Any) -> Any:
+        """Saves to ``.xlsx`` or ``.csv``/``.tsv`` (the active sheet), by the file's extension."""
+        ...
+    def select(self, range: Any) -> Any:
+        """Selects a range (and shows it); ``"Sheet2!A1"`` also switches sheets."""
+        ...
+    selection: Any
+    selections: Any
+    def set(self, cell: Any, value: Any) -> Any:
+        """Sets a cell, or a range from rows of values. Text is read as if typed: ``"=A1*2"``
+        is a formula, ``"12%"`` a percentage, ``"2025-03-01"`` a date (``"'12"`` keeps text).
+        """
+        ...
+    sheet: Any
+    sheets: Any
+    def show_cols(self, cols: Any, *, sheet: Any = ...) -> Any: ...
+    def show_rows(self, rows: Any, *, sheet: Any = ...) -> Any: ...
+    size: Any
+    def sort(self, range: Any, by: Any, *, descending: Any = ..., header: Any = ...) -> Any:
+        """Sorts the rows of a range by a column (letters or number), or several:
+        ``by=[("B", False), ("C", True)]`` (``True`` = descending).
+        """
+        ...
+    def stats(self, range: Any = ...) -> Any:
+        """Sum, average, count, smallest and largest number of a range (the selection by
+        default), as the status bar of Sheets and Excel shows: a dict with ``sum``,
+        ``average``, ``count`` (cells with a value), ``numbers``, ``min`` and ``max``.
+        """
+        ...
+    def style(self, cell: Any) -> Any:
+        """The format of a cell as a dict (only what differs from the default)."""
+        ...
+    def tab_color(self, sheet: Any, color: Any = ...) -> Any:
+        """A sheet's tab color (``"#rrggbb"``), or sets it (``None`` removes it)."""
+        ...
+    def text(self, cell: Any) -> Any:
+        """The text a cell shows, in its number format (``"$1,234.50"``, ``"2025-03-01"``)."""
+        ...
+    def to_csv(self, sheet: Any = ..., *, delimiter: Any = ...) -> Any:
+        """A sheet (the active one by default) as CSV text, with values as shown."""
+        ...
+    def to_xlsx(self) -> Any:
+        """The workbook as the bytes of an ``.xlsx`` file."""
+        ...
+    def undo(self) -> Any: ...
+    def unmerge(self, range: Any) -> Any: ...
+    used_range: Any
+    def validate(self, range: Any, *, options: Any = ..., source: Any = ..., number: Any = ..., integer: Any = ..., date: Any = ..., length: Any = ..., checkbox: Any = ..., formula: Any = ..., strict: Any = ..., message: Any = ...) -> Any:
+        """Validates what can go in a range: ``options=[...]`` (a dropdown) or ``source="Sheet2!A1:A9"``
+        (a dropdown with a range's values), ``number=(min, max)`` (``integer=True`` for whole
+        numbers), ``date=(min, max)``, ``length=(min, max)``, ``checkbox=True`` (TRUE/FALSE
+        shown as checkboxes) or ``formula="=B2<=C2"``. ``strict=False`` keeps invalid values but
+        marks them; ``message`` is shown when a value is refused.
+        """
+        ...
+    def values(self, range: Any = ..., *, formulas: Any = ...) -> Any:
+        """Rows of values of a range (the used range of the active sheet by default)."""
+        ...
+    version: Any
+    def write(self, rows: Any, at: Any = ..., *, header: Any = ...) -> Any:
+        """Writes rows of values starting at a cell (``"A1"`` by default); dicts write a header row."""
+        ...
+
 def audio_devices(host: Any = ...) -> Any: ...
 def audio_hosts() -> Any: ...
 def audio_modules() -> Any:
@@ -844,6 +1081,26 @@ def shader(code: Any, *, uniforms: Any = ..., textures: Any = ..., width: Any = 
 def shader_module(code: Any, *, uniforms: Any = ..., textures: Any = ...) -> Any:
     """The whole WGSL module `pz.shader` builds around `code` (with the uniforms' and textures'
     functions), without checking it: to map a compiler error's line back to your code.
+    """
+    ...
+def sheet(book: Any, *, colors: Any = ..., text_size: Any = ..., formula_bar: Any = ..., headers: Any = ..., width: Any = ..., height: Any = ..., readonly: Any = ..., on_change: Any = ..., on_select: Any = ..., on_context: Any = ..., on_dropdown: Any = ..., on_filter: Any = ..., on_find: Any = ..., on_invalid: Any = ..., on_edit: Any = ...) -> Any:
+    """The spreadsheet grid of a :class:`Workbook` (the cells only; ``ui.Spreadsheet`` adds the
+    toolbar, the menus and the sheet tabs).
+
+    It draws only the visible cells, so a sheet can have a million rows. Click, drag, Shift
+    and Ctrl select; typing or a double click edits; the keyboard shortcuts of Sheets and
+    Excel work (copy and paste, undo, Ctrl+arrows, F2, F4, Ctrl+D, Alt+=...).
+
+    - `on_change(event)`: cells changed (``event["action"]``: ``"edit"``, ``"paste"``,
+      ``"fill"``, ``"clear"``, ``"undo"``, ``"redo"``, ``"format"``, ``"resize"``, ``"filter"``;
+      ``event["range"]``).
+    - `on_select(event)`: the selection changed.
+    - `on_context(event)`: right click (``kind``: ``"cell"``, ``"row"`` or ``"column"``; ``x``, ``y``).
+    - `on_dropdown(event)`: a cell's dropdown opened (``cell``, ``options``, ``x``, ``y``, ``width``).
+    - `on_filter(event)`: a filter button was clicked (``column``, ``x``, ``y``).
+    - `on_find(event)`: Ctrl+F or Ctrl+H (``mode``: ``"find"`` or ``"replace"``).
+    - `on_invalid(event)`: a value broke a strict validation rule (``cell``, ``value``, ``message``).
+    - `on_edit(event)`: typing started or ended (``editing``).
     """
     ...
 def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any:

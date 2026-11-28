@@ -28,6 +28,7 @@ mod select;
 mod selectable;
 mod serial;
 mod shader;
+mod sheet;
 mod sticky;
 mod style;
 mod styled;
@@ -62,6 +63,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     dnd::register(m)?;
     audio::register(m)?;
     serial::register(m)?;
+    sheet::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(direction::_set_mirrored_icons, m)?)?;

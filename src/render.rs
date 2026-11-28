@@ -1398,6 +1398,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             };
             extra::render_markdown(props, items)
         }
+        Kind::Sheet(props) => crate::sheet::view::SheetView::new(props.clone()).into(),
         Kind::QrCode(props) => {
             let data = match ctx.caches.qr.get(&props.key) {
                 Some(data) => Some(data),
