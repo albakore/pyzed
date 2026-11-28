@@ -73,6 +73,8 @@ CATALOG: Tuple[Sample, ...] = (
            "Apps", "pomodoro.py"),
     Sample("markdown_viewer", "Markdown viewer", "Write Markdown on the left and read it rendered on the right.",
            "Apps", "markdown_viewer.py"),
+    Sample("spreadsheet", "Spreadsheet", "A sales sheet like Google Sheets: formulas, formats, filters, dropdowns, "
+           "several sheets and .xlsx files.", "Apps", "spreadsheet.py"),
     Sample("game_of_life", "Game of Life", "Conway's cellular automaton drawn on a canvas, with patterns.", "Apps",
            "game_of_life.py"),
     Sample("clock", "Analog clock", "A clock drawn on a canvas that ticks every second.", "Apps", "clock.py"),

@@ -87,6 +87,7 @@ from .inputs import (
     switch,
 )
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree, virtual_list
+from .sheet import Spreadsheet, sheet_colors
 from .navigation import Tab, breadcrumbs, pagination, stepper, tab, tab_bar, toolbar
 from .overlays import (
     PaletteItem,
@@ -228,6 +229,8 @@ __all__ = [
     "slider",
     "sparkline",
     "spinner",
+    "Spreadsheet",
+    "sheet_colors",
     "split",
     "split_button",
     "stat",
