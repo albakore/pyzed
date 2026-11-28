@@ -1,5 +1,11 @@
 //! What a notification shows and what can happen to it, shared by every system's implementation.
 
+// Android and other systems have no notification server here: they only fail, so most of this is unused.
+#![cfg_attr(
+    not(any(target_os = "linux", target_os = "macos", target_os = "windows")),
+    allow(dead_code)
+)]
+
 use std::sync::Arc;
 
 /// Everything a notification shows.
