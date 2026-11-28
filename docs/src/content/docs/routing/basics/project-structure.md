@@ -78,6 +78,31 @@ from state import cart           # state.py next to app/
 from app._components.price import price_tag
 ```
 
+### Files inside route folders
+
+A folder like `[id]` or `(shop)` can't be written in an `import`, so import the files next to a
+route by their own name. Pyzed looks next to the route file first, then in each folder above it
+up to `app/`, the same way Pyright, basedpyright and ty (the language servers of Zed and VS Code)
+resolve them, so autocompletion and "go to definition" work with no setup:
+
+```text
+app/(shop)/
+├── _shared/text.py         used by every page of the group
+└── products/[id]/
+    ├── page.py
+    └── helpers.py          used only by this page
+```
+
+```python
+# app/(shop)/products/[id]/page.py
+import helpers                    # helpers.py next to this page
+from _shared.text import label    # _shared/ in a folder above
+```
+
+Each route keeps its own copies: two pages can have a `helpers.py` each without mixing them up.
+Relative imports (`from .helpers import x`, `from ..shared import y`) also run, but only Pyright
+understands them in these folders; ty marks them as errors, so prefer imports by name.
+
 ## Commands
 
 `pyzed route add` writes the files of a route with working starter code, and checks the name:

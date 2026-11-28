@@ -524,6 +524,38 @@ def test_routes_from_folders(tmp_path):
     assert not any(p.endswith("app") for p in sys.path if p.startswith(str(tmp_path)))  # sys.path left as it was
 
 
+def test_imports_next_to_routes_in_folders_with_brackets(tmp_path):
+    """Code next to a route imports like Pyright and ty resolve it, also in [id] and (group) folders."""
+    write(tmp_path, {
+        "rootmod.py": "NAME = 'root'\n",
+        "app/(shop)/_shared/text.py": "def label(x):\n    return f'<{x}>'\n",
+        "app/(shop)/products/[id]/helpers.py": "import other\ndef slug(x):\n    return other.lower(x)\n",
+        "app/(shop)/products/[id]/other.py": "def lower(x):\n    return x.lower()\n",
+        "app/(shop)/products/[id]/page.py": """
+            import helpers                      # next to the page (Pyright and ty)
+            from _shared.text import label      # a folder above it
+            from .helpers import slug           # relative (Pyright)
+            from ... import _shared
+            import rootmod                      # next to app/
+            def page(params):
+                import helpers as again         # also inside functions, after loading
+                assert again is helpers and _shared.text.label is label
+                return label(slug(params["id"])) + rootmod.NAME
+        """,
+        "app/blog/[slug]/helpers.py": "def slug(x):\n    return 'blog ' + x\n",
+        "app/blog/[slug]/page.py": "import helpers\ndef page(params):\n    return helpers.slug(params['slug'])\n",
+    })
+    router = Router(tmp_path / "app")
+    shop = router.match("/products/AB")
+    page = shop.segments[-1].files["page"].target()
+    assert page({"id": "AB"}) == "<ab>root"
+    blog = router.match("/blog/x").segments[-1].files["page"].target()
+    assert blog({"slug": "x"}) == "blog x"   # its own helpers.py, not the shop's
+    assert "other" not in sys.modules  # kept inside the route's package
+    import json
+    assert sys.modules["json"] is json  # names that aren't next to a route import as usual
+
+
 def test_relative_folder_is_found_next_to_the_caller(tmp_path, monkeypatch):
     write(tmp_path, {"app/page.py": "def page():\n    return 'x'\n", "make.py": "import pyzed as pz\nr = pz.Router('app')\n"})
     monkeypatch.chdir(Path(__file__).parent)  # somewhere else

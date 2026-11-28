@@ -77,6 +77,33 @@ from state import cart           # state.py junto a app/
 from app._components.price import price_tag
 ```
 
+### Archivos dentro de las carpetas de rutas
+
+Una carpeta como `[id]` o `(shop)` no se puede escribir en un `import`, así que importa los
+archivos que están junto a una ruta por su propio nombre. Pyzed busca primero junto al archivo de
+la ruta y después en cada carpeta superior hasta `app/`, igual que los resuelven Pyright,
+basedpyright y ty (los servidores de lenguaje de Zed y VS Code), así que el autocompletado e "ir a
+la definición" funcionan sin configurar nada:
+
+```text
+app/(shop)/
+├── _shared/text.py         lo usan todas las páginas del grupo
+└── products/[id]/
+    ├── page.py
+    └── helpers.py          solo lo usa esta página
+```
+
+```python
+# app/(shop)/products/[id]/page.py
+import helpers                    # helpers.py junto a esta página
+from _shared.text import label    # _shared/ en una carpeta superior
+```
+
+Cada ruta tiene sus propias copias: dos páginas pueden tener un `helpers.py` cada una sin
+mezclarse. Los imports relativos (`from .helpers import x`, `from ..shared import y`) también
+funcionan, pero en estas carpetas solo los entiende Pyright; ty los marca como error, así que es
+mejor importar por nombre.
+
 ## Comandos
 
 `pyzed route add` escribe los archivos de una ruta con código inicial que funciona, y comprueba
