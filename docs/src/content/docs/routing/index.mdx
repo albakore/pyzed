@@ -1,0 +1,122 @@
+---
+title: Routing
+description: "Multi-page Python desktop apps with Next.js' App Router workflow: folders as addresses, nested layouts, loading and error files, data loading, actions, global state, middleware and native notifications in Pyzed."
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+![Going through the example store: the product list loads, a product opens, back with Alt+Left, the docs and the settings](/pyzed/media/routing/navigation.webp)
+
+Pyzed's router lets you build an app with many screens the way the Next.js App Router builds a
+website: **every folder of `app/` is a part of the address**, and a few files with fixed names
+say what each address shows. If you know Next.js, you already know how to use it; if you don't,
+it takes ten minutes to learn, and the same folders keep working as the app grows to fifty
+screens.
+
+```text
+app/
+├── layout.py               wraps every page (a sidebar, a header) and keeps its state
+├── page.py                 /
+├── loading.py              shown while a page loads its data
+├── error.py                shown when something fails, with "Try again"
+├── not_found.py            addresses that don't exist
+├── middleware.py           runs before every navigation (a login check)
+├── products/
+│   ├── page.py             /products
+│   └── [id]/page.py        /products/3      params["id"] == "3"
+└── settings/
+    ├── layout.py           tabs around the settings pages
+    └── profile/page.py     /settings/profile
+```
+
+<Aside type="note" title="In plain words">
+An *address* is where you are in the app, like a web page's URL: `/products/3` is the product
+number 3. Going to another address is *navigating*. A *page* is what one address shows, and a
+*layout* is the frame around pages (a sidebar, a menu) that stays put while you move.
+</Aside>
+
+## Start in one minute
+
+<Steps>
+
+1. Create a project with the router starter:
+
+   ```bash
+   pyzed new shop --router            # a uv project
+   pyzed new shop --script --router   # or just main.py and app/, without uv
+   ```
+
+2. Run it with hot reload: saved files show up at once and new folders become new pages.
+
+   ```bash
+   cd shop
+   uv run pyzed dev main.py           # or: python main.py
+   ```
+
+3. Add pages from the command line, or by creating the folders yourself:
+
+   ```bash
+   pyzed route add /orders/[id] --load --loading
+   pyzed route list
+   ```
+
+</Steps>
+
+`main.py` only starts the router; everything else lives in `app/`:
+
+```python
+import pyzed as pz
+
+
+class Shop(pz.RouterApp):
+    routes = "app"        # the folder, next to this file
+    title = "Shop"        # the window's title when a page has none
+    size = (1000, 680)
+
+
+if __name__ == "__main__":
+    pz.run(Shop)
+```
+
+## What you get
+
+- **Folders are addresses**: static parts, `[id]`, `[...slug]` and `[[...slug]]`, `(groups)` that
+  only organize and `_private` folders for helpers.
+- **Layouts that keep their state** (a collapsed sidebar stays collapsed) and **templates** that
+  start over on every navigation.
+- **Data loading off the UI thread**: `async def load(params)` next to a page; the closest
+  `loading.py` shows meanwhile, and the data is cached and refreshed like Next.js does.
+- **Actions** for changes (`@pz.action`): `pending`, `result` and `error` for the button, and the
+  page's data reloads when it is done.
+- **Global state** (`pz.Store`): the cart, the session, the preferences, read by any page; only
+  what read it draws again.
+- **Middleware** (`middleware.py`): redirects, rewrites and guards before a page shows.
+- **Native notifications** (`pz.notify`) whose click opens a page of the app.
+- **History**: back and forward with Alt+Left/Right, the mouse's side buttons and Android's back
+  button, and the window's title follows the page.
+- **Addresses are URLs**, so the same `app/` folder maps to a browser's address bar when the app
+  goes to the web.
+
+## Read next
+
+<CardGrid>
+	<LinkCard title="Folders and files" href="/pyzed/routing/basics/project-structure/" description="Every file name, dynamic folders, groups and the commands that create them." />
+	<LinkCard title="Pages, layouts and templates" href="/pyzed/routing/basics/pages-and-layouts/" description="What a page receives, layouts that keep their state, titles." />
+	<LinkCard title="Navigating" href="/pyzed/routing/basics/navigation/" description="Links, the router, history, keys and hooks." />
+	<LinkCard title="Errors and missing pages" href="/pyzed/routing/basics/errors/" description="error.py, not_found.py, redirects." />
+	<LinkCard title="Calling the server" href="/pyzed/routing/data/data-fetching/" description="load, loading.py, caching, refreshing and prefetching." />
+	<LinkCard title="Changing data: actions" href="/pyzed/routing/data/actions/" description="@pz.action: pending, errors and fresh data after a change." />
+	<LinkCard title="State" href="/pyzed/routing/data/state/" description="Component state, the address, context and the global pz.Store." />
+	<LinkCard title="How a page is drawn" href="/pyzed/routing/data/rendering/" description="The order of the files, threads, and what draws again." />
+	<LinkCard title="Middleware" href="/pyzed/routing/advanced/middleware/" description="Login checks, redirects and rewrites before a page shows." />
+	<LinkCard title="Desktop notifications" href="/pyzed/routing/advanced/notifications/" description="pz.notify on Windows, macOS and Linux, with buttons and clicks that open pages." />
+	<LinkCard title="Routes in code" href="/pyzed/routing/advanced/routes-in-code/" description="A dict of pages, a router inside your own app, forms and the web." />
+	<LinkCard title="Good practices" href="/pyzed/routing/advanced/best-practices/" description="Where each piece of code goes, testing and performance." />
+	<LinkCard title="Coming from Next.js" href="/pyzed/routing/advanced/nextjs/" description="Every Next.js concept and its Pyzed name." />
+</CardGrid>
+
+The example used in these pages is the store in `examples/routing/` (also in the welcome screen's
+gallery of Pyzed Design): run it with `python examples/routing/main.py`.

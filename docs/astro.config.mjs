@@ -60,6 +60,18 @@ const topics = [
 		],
 	},
 	{
+		id: 'routing',
+		label: { en: 'Routing', es: 'Rutas' },
+		link: '/routing/',
+		icon: 'random',
+		items: [
+			{ slug: 'routing' },
+			group('Fundamentals', 'Fundamentos', 'routing/basics'),
+			group('Data and state', 'Datos y estado', 'routing/data'),
+			group('Advanced', 'Avanzado', 'routing/advanced'),
+		],
+	},
+	{
 		id: 'library',
 		label: { en: 'Library', es: 'Biblioteca' },
 		link: '/library/',
@@ -277,6 +289,7 @@ const MOVED = {
 	'tutorials/todo-app': 'tutorials/basic/todo-app',
 	'tutorials/background-tasks': 'tutorials/intermediate/background-tasks',
 	'tutorials/zed-like-editor': 'tutorials/advanced/code-editor',
+	'guides/routing': 'routing',
 };
 const redirects = Object.fromEntries(
 	Object.entries(MOVED).flatMap(([from, to]) => [

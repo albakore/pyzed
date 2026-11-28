@@ -9,7 +9,7 @@ sidebar:
 
 Pages as folders of `app/`, like Next.js' App Router: `page.py`, `layout.py`, `template.py`,
 `loading.py`, `error.py`, `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]` and `(group)`.
-See the [routing guide](/pyzed/guides/routing/).
+See the [Routing section](/pyzed/routing/).
 
 ```python
 pz.run(pz.RouterApp("app", title="Shop"))
@@ -56,7 +56,9 @@ Routes in folders, like Next.js' App Router, or in a dict; see `pyzed.routing`.
 `routes` is the `app/` folder (a relative path is looked for next to the file that creates the
 router, then in the current folder), or a dict such as `{"/": home, "/users/[id]": user}`.
 `initial` is the first location and `stale_time` how many seconds the data of a page stays
-fresh: after that, going to it again (not back or forward) loads it again.
+fresh: after that, going to it again (not back or forward) loads it again. `middleware` is a
+function (or a list) that runs before every navigation, before the `middleware.py` files of the
+folders (see `pz.middleware`).
 
 ```python
 self.router = pz.Router("app")
@@ -185,3 +187,156 @@ class SearchParams
 The query of the URL (`?tab=reviews&tag=a&tag=b`) as a dict of the first values.
 
 `get_all("tag")` gives every value of a repeated key, `str()` the encoded query.
+
+## Middleware
+
+### `middleware`
+
+```python
+middleware(function=None, *, matcher=None)
+```
+
+Marks a function as middleware for `Router(middleware=[...])`, with the addresses it runs for:
+
+```python
+@pz.middleware(matcher="/admin/:path*")
+def admins_only(request):
+    if not session.is_admin:
+        return request.redirect("/")
+```
+
+A plain function works too; `matcher` only narrows where it runs.
+
+```python
+@pz.middleware(matcher="/admin/:path*")
+def admins_only(request):
+    if not session.is_admin:
+        return request.redirect("/")
+```
+
+### `rewrite`
+
+```python
+rewrite(href)
+```
+
+In middleware: keeps the address but shows the route at `href` (`NextResponse.rewrite`).
+
+Return it, or raise it: `return pz.rewrite("/maintenance")`.
+
+```python
+return pz.rewrite("/maintenance")
+```
+
+### `Request`
+
+```python
+@dataclass
+class Request(location, previous, action, router, route=None, params={}, locals={})
+```
+
+A navigation that middleware can let through, send elsewhere or stop.
+
+`location` is where it goes (`pathname`, `query`, `hash` and `href` are its parts),
+`previous` where the router is now (`None` at the start), `action` what started it (`"start"`,
+`"push"`, `"replace"`, `"back"`, `"forward"` or `"refresh"`), `route` the pattern that
+answers it (`"/products/[id]"`, `None` when no page does) and `params` its values.
+`locals` is a dict the pages, layouts and `load` functions of that location receive as `locals`.
+
+## Data and state
+
+### `action`
+
+```python
+action(function=None, *, refresh=True, invalidate=None, on_done=None, on_error=None)
+```
+
+Makes `function` an :class:`Action` (see `pyzed.actions`): `@pz.action` or
+`@pz.action(refresh=False, invalidate="/products")`.
+
+```python
+@pz.action(invalidate="/orders")
+async def place(item):
+    await api.place(item)
+```
+
+### `Action`
+
+```python
+class Action
+```
+
+A function that changes data, with its state: `pending`, `result`, `error` and `calls`.
+
+Calling it starts the function and returns a `concurrent.futures.Future`; `run(...)`
+calls it and waits (for tests and scripts). `reset()` clears `result` and `error`.
+
+### `Store`
+
+```python
+class Store
+```
+
+Values shared by the whole app (see `pyzed.store`).
+
+Fields are annotated class attributes with their defaults; `Cart(items=[...])` sets some.
+`subscribe(callback)` calls `callback(store)` after each change, `batch()` groups several
+changes into one, `reset()` goes back to the defaults and `to_dict()` gives the values.
+Changing a list or dict in place (`cart.items.append(x)`) is seen by the next drawing; call
+`changed()` after it so subscribers (and `persist`) hear about it too.
+
+```python
+class Cart(pz.Store):
+    items: list = []
+
+cart = Cart()
+```
+
+## Notifications
+
+### `notify`
+
+```python
+notify(
+    title,
+    body='',
+    *,
+    icon=None,
+    image=None,
+    actions=None,
+    href=None,
+    on_click=None,
+    on_action=None,
+    on_close=None,
+    urgency='normal',
+    sound=True,
+    timeout=None,
+    tag=None,
+)
+```
+
+Shows a native desktop notification and returns it (see `pyzed.notifications`).
+
+`icon` and `image` are paths or PNG bytes. `actions` are buttons, as `{id: label}` or a
+list of labels; an id that starts with `/` (or `?`) opens that page. `href` is the page a
+click opens; `on_click(notification)`, `on_action(id)` and `on_close(reason)` run on the UI
+thread. `urgency` is `"low"`, `"normal"` or `"critical"` (stays until answered),
+`sound` `True` (the system's), `False` or a sound's name, and `timeout` the seconds on
+screen (`0`: until dismissed; `None`: the system's default). A new notification with the
+`tag` of one still shown replaces it, like a download's progress.
+
+```python
+pz.notify("Order shipped", "On its way", href="/orders/3")
+```
+
+### `DesktopNotification`
+
+```python
+class DesktopNotification
+```
+
+A notification shown with `pz.notify`: `close()` takes it away, `update(...)` changes it.
+
+`native` is `False` when it was shown without the system's notifications (no buttons or
+clicks then), `closed` once it left the screen and `reason` why: `"expired"`,
+`"dismissed"`, `"closed"` or `"unknown"`.

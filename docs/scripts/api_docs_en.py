@@ -2857,7 +2857,7 @@ PAGES.append({
     "intro": """
         Pages as folders of `app/`, like Next.js' App Router: `page.py`, `layout.py`, `template.py`,
         `loading.py`, `error.py`, `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]` and `(group)`.
-        See the [routing guide](/pyzed/guides/routing/).
+        See the [Routing section](/pyzed/routing/).
 
         ```python
         pz.run(pz.RouterApp("app", title="Shop"))
@@ -2881,6 +2881,20 @@ PAGES.append({
             "pyzed.redirect": {**_R, "example": 'pz.redirect("/login")'},
             "pyzed.routing.Location": {**_R},
             "pyzed.routing.SearchParams": {**_R},
+        }),
+        ("Middleware", {
+            "pyzed.middleware": {**_R, "example": '@pz.middleware(matcher="/admin/:path*")\ndef admins_only(request):\n    if not session.is_admin:\n        return request.redirect("/")'},
+            "pyzed.rewrite": {**_R, "example": 'return pz.rewrite("/maintenance")'},
+            "pyzed.routing.Request": {**_R},
+        }),
+        ("Data and state", {
+            "pyzed.action": {**_R, "example": '@pz.action(invalidate="/orders")\nasync def place(item):\n    await api.place(item)'},
+            "pyzed.Action": {**_R},
+            "pyzed.Store": {**_R, "example": 'class Cart(pz.Store):\n    items: list = []\n\ncart = Cart()'},
+        }),
+        ("Notifications", {
+            "pyzed.notify": {**_R, "example": 'pz.notify("Order shipped", "On its way", href="/orders/3")'},
+            "pyzed.DesktopNotification": {**_R},
         }),
     ],
 })
