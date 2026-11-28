@@ -49,6 +49,10 @@ What to do for each kind of request:
 - "Drag and drop" (Kanban, reorderable lists, builders, canvases, node wires): pz.sortable, pz.draggable,
   pz.droppable and pz.drag_handle with pz.dnd.move / pz.dnd.reorder in the handler (get_guide("dnd"), cookbook
   "Drag and drop"); never build it from mouse_area events.
+- "Several pages / screens" or "like Next.js" (an app with addresses, a web app moved to the desktop): routes in
+  folders with pyzed.routing (get_guide("routing")): app/ with page.py, layout.py, loading.py, error.py,
+  not_found.py, [id], [...slug] and (group); `async def load(params)` for data, pz.link / pz.use_router() to
+  navigate, pz.run(pz.RouterApp("app")); `pyzed new name --router` scaffolds it.
 - "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
 
 Knowledge: get_guide("overview"), "best-practices", "design" (UI/UX), "app-architecture" and "cookbook"

@@ -222,6 +222,14 @@ Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guide
   (between lists with the same `group`), `pz.draggable` + `pz.droppable` for anything else (`accepts`,
   `can_drop`, `snap`, `guides`, `preview="wire"`), `pz.drag_handle`; `pz.dnd.move(lists, event)` applies a
   drop. Kanban boards, form and page builders, Figma-style canvases and node editors: `get_guide("dnd")`.
+- **Pages and navigation (like Next.js)**: `pyzed.routing` makes every folder of `app/` a page:
+  `page.py`, `layout.py` (keeps its state), `template.py` (starts over), `loading.py`, `error.py`,
+  `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]`, `(group)`. Route files define `page(params, query, data)`
+  (only the arguments they name) or a `pz.Component`; data goes in `async def load(params)` (runs off the UI
+  thread, `loading.py` shows meanwhile; the page itself is never `async`). Navigate with `pz.link(href, content)`,
+  `pz.nav_link` and `pz.use_router()` (`push`, `replace`, `back`, `forward`, `refresh`); `pz.not_found()` and
+  `pz.redirect(href)` inside pages. Start with `pz.run(pz.RouterApp("app"))` or `pyzed new name --router`:
+  `get_guide("routing")`.
 - **Anchored layouts**: `pz.anchor_layout` with `pz.anchor(widget, x=, y=, width=, height=, anchor=)`,
   like the designer.
 - **Forms and backends**: `ui.field(..., error=)` and `pz.validation_errors(error)` for Pydantic,

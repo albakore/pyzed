@@ -103,9 +103,12 @@ def update(self, message):
   their own look in their class `stylesheet` (`&`). No inline hex colors, no repeated keyword styles.
 - **Designer forms**: layout in the `.pzform`, handlers thin. A handler reads the controls, calls the
   application layer and writes the result back; it holds no business rules.
-- **Screens and routing**: the app keeps `self.screen` (an Enum or a small dataclass with parameters) and
-  `view()` picks the screen; each screen is a function or a component of its feature folder. Lazy-load heavy
-  features by importing their module inside the branch that shows them.
+- **Screens and routing**: with a few screens, the app keeps `self.screen` (an Enum or a small dataclass with
+  parameters) and `view()` picks the screen; each screen is a function or a component of its feature folder.
+  With many screens, addresses or a web app to port, use routes in folders (`pyzed.routing`, like Next.js):
+  `app/` holds only `page.py`/`layout.py`/`loading.py`/`error.py` files that call the application layer, data
+  comes from `async def load(params)`, and shared widgets live in `ui/` or `app/_components/`. Lazy-load heavy
+  features by importing their module inside the branch (or the page) that shows them.
 - **Isolate failures**: wrap independent regions (a plugin panel, a chart from external data) in
   `ui.error_boundary(lambda: ...)` so one broken part never takes the window down.
 

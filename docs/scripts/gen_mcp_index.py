@@ -71,6 +71,7 @@ def examples() -> list:
     for kind in ("tutorial", "blocks", "games", "showcase"):
         found += sorted(EXAMPLES.glob(f"{kind}/*.py"))
     found += sorted(EXAMPLES.glob("designer/*.py")) + sorted(EXAMPLES.glob("designer/*.pzform"))
+    found += sorted((EXAMPLES / "routing").rglob("*.py"))  # an app with routes in folders (pyzed.routing)
     integrations = EXAMPLES / "integrations"
     found += [integrations / "README.md"] if (integrations / "README.md").is_file() else []
     for path in sorted(integrations.rglob("*")):

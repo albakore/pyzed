@@ -961,6 +961,12 @@
    "path": "docs/src/content/docs/guides/recording.mdx"
   },
   {
+   "slug": "guides/routing",
+   "title": "Routing with folders",
+   "description": "Next.js-style App Router for Python desktop apps: pages, nested layouts, templates, loading, error and not-found files, dynamic segments, catch-alls, groups, async data and navigation in Pyzed.",
+   "path": "docs/src/content/docs/guides/routing.md"
+  },
+  {
    "slug": "guides/rtl",
    "title": "Right-to-left languages",
    "description": "Lay out a Pyzed desktop app from right to left for Arabic, Hebrew, Persian and Urdu: mirrored layout, bidirectional text, text fields and per-component direction.",
@@ -1939,6 +1945,12 @@
    "path": "docs/src/content/docs/reference/iot.md"
   },
   {
+   "slug": "reference/routing",
+   "title": "Routing (pyzed.routing)",
+   "description": "API reference for pyzed.routing: Next.js-style routes in folders for Python desktop apps, with RouterApp, Router, links, navigation hooks, not_found and redirect.",
+   "path": "docs/src/content/docs/reference/routing.md"
+  },
+  {
    "slug": "reference/services",
    "title": "Services (pyzed.services)",
    "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps.",
@@ -2821,6 +2833,108 @@
    "kind": "designer",
    "summary": "A form made with the visual designer (.pzform layout).",
    "path": "examples/designer/tasks.pzform"
+  },
+  {
+   "name": "routing/app/(shop)/products/[id]/loading",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/(shop)/products/[id]/loading.py"
+  },
+  {
+   "name": "routing/app/(shop)/products/[id]/page",
+   "kind": "app",
+   "summary": "/products/[id]: ``params[\"id\"]`` is the part of the URL; a product that doesn't exist is a 404.",
+   "path": "examples/routing/app/(shop)/products/[id]/page.py"
+  },
+  {
+   "name": "routing/app/(shop)/products/page",
+   "kind": "app",
+   "summary": "/products: the list comes from an async ``load``; ``?sort=price`` changes the order.",
+   "path": "examples/routing/app/(shop)/products/page.py"
+  },
+  {
+   "name": "routing/app/about/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/about/page.py"
+  },
+  {
+   "name": "routing/app/docs/[[...slug]]/page",
+   "kind": "app",
+   "summary": "/docs, /docs/guide, /docs/guide/routing...: an optional catch-all takes any number of parts.",
+   "path": "examples/routing/app/docs/[[...slug]]/page.py"
+  },
+  {
+   "name": "routing/app/error",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/error.py"
+  },
+  {
+   "name": "routing/app/layout",
+   "kind": "app",
+   "summary": "The shell around every page: a sidebar that keeps its state, and the page on its right.",
+   "path": "examples/routing/app/layout.py"
+  },
+  {
+   "name": "routing/app/loading",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/loading.py"
+  },
+  {
+   "name": "routing/app/not_found",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/not_found.py"
+  },
+  {
+   "name": "routing/app/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/page.py"
+  },
+  {
+   "name": "routing/app/settings/layout",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/layout.py"
+  },
+  {
+   "name": "routing/app/settings/notifications/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/notifications/page.py"
+  },
+  {
+   "name": "routing/app/settings/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/page.py"
+  },
+  {
+   "name": "routing/app/settings/profile/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/profile/page.py"
+  },
+  {
+   "name": "routing/app/settings/template",
+   "kind": "app",
+   "summary": "A template is drawn again from scratch on every navigation: its state starts over on each tab.",
+   "path": "examples/routing/app/settings/template.py"
+  },
+  {
+   "name": "routing/main",
+   "kind": "app",
+   "summary": "A small store with routes in folders, like Next.js' App Router.",
+   "path": "examples/routing/main.py"
+  },
+  {
+   "name": "routing/store",
+   "kind": "app",
+   "summary": "A pretend backend: async functions that take a moment, like a web API would.",
+   "path": "examples/routing/store.py"
   },
   {
    "name": "integrations/README.md",
@@ -6872,7 +6986,31 @@
    },
    "pyzed.dnd.reorder": {},
    "pyzed.dnd.current": {},
-   "pyzed.dnd.cancel": {}
+   "pyzed.dnd.cancel": {},
+   "pyzed.RouterApp": {
+    "example": "class Shop(pz.RouterApp):\n    routes = \"app\"\n    title = \"Shop\""
+   },
+   "pyzed.Router": {
+    "example": "self.router = pz.Router(\"app\")\n# in view(): return self.router.view()"
+   },
+   "pyzed.link": {
+    "example": "pz.link(\"/products/3\", \"See the monitor\")"
+   },
+   "pyzed.nav_link": {
+    "example": "pz.nav_link(\"/settings\", \"Settings\", icon=\"settings\")"
+   },
+   "pyzed.use_router": {
+    "example": "pz.use_router().push(\"/cart\")"
+   },
+   "pyzed.use_pathname": {},
+   "pyzed.use_params": {},
+   "pyzed.use_search_params": {},
+   "pyzed.not_found": {},
+   "pyzed.redirect": {
+    "example": "pz.redirect(\"/login\")"
+   },
+   "pyzed.routing.Location": {},
+   "pyzed.routing.SearchParams": {}
   }
  }
 }

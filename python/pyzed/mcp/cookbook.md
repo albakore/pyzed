@@ -545,6 +545,80 @@ pz.run(Board)
 
 Docs: `dnd/index`, `dnd/basics/sortable`, `dnd/guides/free-canvas`, `dnd/tutorials/kanban`.
 
+## Pages with routes in folders (like Next.js)
+
+An app with several screens and addresses: each folder of `app/` is a page (`pyzed new name --router` makes
+one). Layouts keep their state, `load` runs off the UI thread while `loading.py` shows, and `pz.not_found()`
+shows the closest `not_found.py`. Each file below is a function (or a `pz.Component`) named like the file:
+
+```text
+main.py                             pz.run(pz.RouterApp("app", title="Shop"))
+app/layout.py                       def layout(children): sidebar + children; title_template = "%s · Shop"
+app/page.py                         def page(): ...                       /
+app/loading.py                      def loading(): ...                    while a load runs
+app/not_found.py                    def not_found(pathname): ...          unknown addresses, pz.not_found()
+app/(shop)/products/[id]/page.py    async def load(params) + def page(data)   /products/3
+```
+
+The same app in one file, with the routes in a dict (the values are the same functions):
+
+```python
+import asyncio
+
+import pyzed as pz
+from pyzed import ui
+
+PRODUCTS = {"1": "Desk lamp", "2": "Keyboard"}
+
+
+class Shell(pz.Component):                            # the layout: its state survives navigation
+    children: list = ()
+    designer = False
+
+    def render(self):
+        side = pz.column([pz.nav_link("/", "Home", icon="house"),
+                          pz.nav_link("/products/1", "Lamp", icon="lamp-desk"),
+                          pz.nav_link("/products/2", "Keyboard", icon="keyboard")], width=200, padding=12)
+        page = pz.container(pz.column(self.children), padding=24, width="fill")
+        return pz.row([side, ui.divider(vertical=True), page], height="fill").style(background="background")
+
+
+def home():
+    return pz.column([ui.heading("Shop"), pz.link("/products/1", "See the lamp →")], spacing=12)
+
+
+async def load_product(params):                       # runs off the UI thread
+    await asyncio.sleep(0.2)
+    if params["id"] not in PRODUCTS:
+        pz.not_found()
+    return PRODUCTS[params["id"]]
+
+
+def product(data):                                     # sync: it only builds widgets
+    return pz.column([pz.link("/", "← Home"), ui.heading(data)], spacing=12)
+
+
+def loading():
+    return pz.row([ui.spinner(), ui.label("Loading…", color="text_muted")], spacing=8)
+
+
+class Shop(pz.RouterApp):
+    title = "Shop"
+    size = (900, 560)
+
+    def __init__(self):
+        super().__init__({
+            "/": {"page": home, "layout": Shell, "loading": loading},
+            "/products/[id]": {"page": product, "load": load_product, "title": "Product"},
+        })
+
+
+if __name__ == "__main__":
+    pz.run(Shop)
+```
+
+Docs: `guides/routing`; example: `examples/routing` (folders, groups, templates, catch-all, errors).
+
 ## States of components
 
 Components carry their own states: buttons take `loading`, `disabled`, `selected`, `tooltip`

@@ -118,9 +118,12 @@ def update(self, message):
   componentes llevan su propio aspecto en su `stylesheet` de clase (`&`). Nada de hex en línea ni estilos repetidos.
 - **Formularios del diseñador**: la maquetación en el `.pzform`, los handlers finos. Un handler lee los controles,
   llama a la capa de aplicación y escribe el resultado; no contiene reglas de negocio.
-- **Pantallas y navegación**: la app guarda `self.screen` (un Enum o una dataclass pequeña con parámetros) y
-  `view()` elige la pantalla; cada pantalla es una función o un componente de su carpeta. Carga tarde las
-  funcionalidades pesadas importando su módulo dentro de la rama que las muestra.
+- **Pantallas y navegación**: con pocas pantallas, la app guarda `self.screen` (un Enum o una dataclass pequeña
+  con parámetros) y `view()` elige la pantalla; cada pantalla es una función o un componente de su carpeta. Con
+  muchas pantallas, direcciones o una app web que portar, usa rutas en carpetas (`pyzed.routing`, como Next.js):
+  `app/` solo tiene archivos `page.py`/`layout.py`/`loading.py`/`error.py` que llaman a la capa de aplicación,
+  los datos vienen de `async def load(params)` y los widgets compartidos viven en `ui/` o `app/_components/`.
+  Carga tarde las funcionalidades pesadas importando su módulo dentro de la rama (o la página) que las muestra.
 - **Aísla los fallos**: envuelve las regiones independientes (un panel de plugin, un gráfico con datos externos) en
   `ui.error_boundary(lambda: ...)` para que una parte rota nunca tumbe la ventana.
 
