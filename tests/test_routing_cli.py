@@ -16,7 +16,7 @@ def test_route_add_writes_files_that_run(tmp_path, capsys):
     assert cli.main(["route", "add", "/products/[id]", "--load", "--loading", "--app", str(app)]) == 0
     assert cli.main(["route", "add", "/docs/[...slug]", "--load", "sync", "--app", str(app)]) == 0
     assert cli.main(["route", "add", "/(shop)/cart", "--middleware", "--template", "--app", str(app)]) == 0
-    out = capsys.readouterr().out
+    out = capsys.readouterr().out.replace("\\", "/")
     assert "created" in out and "products/[id]/page.py" in out
     router = Router(app)
     assert router.routes() == ["/", "/cart", "/docs/[...slug]", "/products/[id]"]

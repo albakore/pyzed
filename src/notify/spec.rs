@@ -25,6 +25,8 @@ pub(crate) struct Spec {
     pub sound: Option<String>,
     /// Milliseconds on screen: -1 the system's default, 0 until dismissed.
     pub timeout_ms: i32,
+    /// The name the notification server shows (Linux; Windows and macOS take it from `app_id`).
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
     pub app_name: String,
     /// The app's identity: the desktop entry on Linux, the AppUserModelID on Windows and the
     /// bundle identifier on macOS.
