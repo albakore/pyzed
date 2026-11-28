@@ -1,18 +1,15 @@
 """/items: the data comes from `load`, which runs in the background (loading.py shows meanwhile)."""
 
-import asyncio
-
 import pyzed as pz
 from pyzed import ui
 
-title = "Items"
+import api
 
-ITEMS = {"1": "First item", "2": "Second item", "3": "Third item"}
+title = "Items"
 
 
 async def load():
-    await asyncio.sleep(0.3)  # an API call, a database query...
-    return ITEMS
+    return await api.items()  # a call to the server: off the UI thread
 
 
 def page(data):

@@ -55,11 +55,13 @@ from .. import i18n as _i18n
 from ..app import App
 from .router import (Location, NotFound, Redirect, Router, SearchParams, not_found, redirect,  # noqa: F401
                      resolve_href)
+from ._middleware import Request, Rewrite, middleware, rewrite  # noqa: F401
 from .tree import FILES, Match, RouteError, RouteFile, Segment, build_href, from_mapping, parse_name, scan  # noqa: F401
 from . import router as _router
 
-__all__ = ["Location", "NotFound", "Redirect", "Router", "RouterApp", "SearchParams", "RouteError", "FILES",
-           "build_href", "link", "nav_link", "not_found", "redirect", "use_params", "use_pathname", "use_router",
+__all__ = ["Location", "NotFound", "Redirect", "Request", "Rewrite", "Router", "RouterApp", "SearchParams",
+           "RouteError", "FILES", "build_href", "link", "middleware", "nav_link", "not_found", "redirect", "rewrite",
+           "use_params", "use_pathname", "use_router",
            "use_search_params"]
 
 _i18n.add("en", {"pyzed": {"routing": {
@@ -163,6 +165,8 @@ class RouterApp(App):
 
     routes: Any = "app"
     initial: str = "/"
+    #: Middleware that runs before every navigation (see ``pz.middleware``).
+    middleware: Any = ()
     _pyzed_defined_in: Optional[str] = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -180,6 +184,9 @@ class RouterApp(App):
             where = Path(defined).resolve().parent / source if defined else None
             if where is not None and where.is_dir():
                 source = where
+        if "middleware" not in options and type(self).middleware:
+            declared = self.middleware  # a list of functions, or a method
+            options["middleware"] = [declared] if callable(declared) else list(declared)
         self.router = Router(source, initial=initial or type(self).initial, _depth=2, **options)
         self.router.window = self
         self.router.listen(self._navigated)

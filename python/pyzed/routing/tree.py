@@ -9,8 +9,8 @@ A folder of the ``app/`` directory is a :class:`Segment`. Its name decides what 
 - ``(group)``: nothing, it only groups routes (and can hold a layout of its own),
 - ``_private``: skipped, for code next to the routes that is not a route.
 
-The special files of a segment (``page``, ``layout``, ``template``, ``loading``, ``error``,
-``not_found``) are kept as :class:`RouteFile` objects and imported on first use.
+The special files of a segment (``middleware``, ``page``, ``layout``, ``template``, ``loading``,
+``error``, ``not_found``) are kept as :class:`RouteFile` objects and imported on first use.
 """
 
 from __future__ import annotations
@@ -24,12 +24,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, Union
 
-#: The files a segment can have, in the order Next.js nests them (outermost first).
-FILES = ("layout", "template", "error", "loading", "not_found", "page")
+#: The files a segment can have, in the order Next.js nests them (outermost first). ``middleware`` runs
+#: before any of them is drawn, on every navigation to an address below its folder.
+FILES = ("middleware", "layout", "template", "error", "loading", "not_found", "page")
 
 #: Names of the components each file may define instead of a function (``class Page(pz.Component)``).
 COMPONENT_NAMES = {"page": "Page", "layout": "Layout", "template": "Template", "loading": "Loading",
-                   "error": "Error", "not_found": "NotFound"}
+                   "error": "Error", "not_found": "NotFound", "middleware": "Middleware"}
 
 _counter = itertools.count()
 _PARAM = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -247,8 +248,8 @@ def from_mapping(routes: Mapping[str, Any]) -> Segment:
     """The route tree of routes given in code: ``{"/": home, "/users/[id]": {"page": user, "loading": wait}}``.
 
     A value is the page (a function or component class), or a dict of the segment's files
-    (``page``, ``layout``, ``template``, ``loading``, ``error``, ``not_found``) plus the page's
-    ``load``, ``title`` and ``metadata``. A module (or any object) with those attributes works too.
+    (``page``, ``layout``, ``template``, ``loading``, ``error``, ``not_found``, ``middleware``) plus the
+    page's ``load``, ``title`` and ``metadata``. A module (or any object) with those attributes works too.
     """
     root = Segment("")
     for pattern, value in routes.items():
@@ -263,7 +264,7 @@ def from_mapping(routes: Mapping[str, Any]) -> Segment:
             if kind not in FILES:
                 continue
             route_file = RouteFile(kind, target, segment)
-            if kind == "page":
+            if kind in ("page", "middleware"):
                 route_file._extra = extra  # type: ignore[attr-defined]
             segment.files[kind] = route_file
     check(root)
@@ -272,7 +273,7 @@ def from_mapping(routes: Mapping[str, Any]) -> Segment:
 
 def _entries(value: Any) -> Dict[str, Any]:
     if isinstance(value, Mapping):
-        unknown = [k for k in value if k not in FILES and k not in ("load", "title", "metadata", "provide")]
+        unknown = [k for k in value if k not in FILES and k not in ("load", "title", "metadata", "provide", "matcher")]
         if unknown:
             raise RouteError(f"unknown route entries {unknown}: use {', '.join(FILES)}, load, title, metadata")
         return dict(value)

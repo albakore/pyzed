@@ -3,11 +3,13 @@
 import pyzed as pz
 from pyzed import ui
 
+from state import cart, session
+
 title_template = "%s · Pyzed Store"
 default_title = "Pyzed Store"
 
-LINKS = [("/", "Home", "house"), ("/products", "Products", "shopping-bag"), ("/docs", "Docs", "book-open"),
-         ("/settings", "Settings", "settings"), ("/about", "About", "info")]
+LINKS = [("/", "Home", "house"), ("/products", "Products", "shopping-bag"), ("/account", "Account", "user"),
+         ("/docs", "Docs", "book-open"), ("/settings", "Settings", "settings"), ("/about", "About", "info")]
 
 
 class Layout(pz.Component):
@@ -24,6 +26,8 @@ class Layout(pz.Component):
                            tooltip="Forward (Alt+Right)"),
             ui.label(router.url, color="text_muted", mono=True),
             pz.hspace(),
+            ui.badge(f"Cart · {cart.count}", icon="shopping-cart"),
+            ui.label(session.user.get("name", "Guest"), color="text_muted"),
             ui.icon_button("panel-left", self.toggle, tooltip="Toggle the sidebar"),
         ], spacing=4, align="center", padding=(6, 12))
         side = pz.column([

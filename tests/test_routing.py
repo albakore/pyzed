@@ -587,7 +587,7 @@ def test_uv_project_with_routes(tmp_path):
     assert created.startup == created.root / "main.py"
     assert "class App(pz.RouterApp)" in (created.root / "main.py").read_text()
     assert 'title_template = "%s · Shop"' in (created.root / "app" / "layout.py").read_text()
-    assert Router(created.root / "app").routes() == ["/", "/about", "/items", "/items/[id]"]
+    assert Router(created.root / "app").routes() == ["/", "/about", "/favorites", "/items", "/items/[id]"]
 
 
 def test_form_from_the_designer_as_a_page(tmp_path):

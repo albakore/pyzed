@@ -19,6 +19,7 @@ mod highlighter;
 mod imaging;
 mod layout;
 mod min_size;
+mod notify;
 mod popup;
 mod recorder;
 mod render;
@@ -88,6 +89,10 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(tray::tray_set, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_remove, m)?)?;
     m.add_function(wrap_pyfunction!(tray::tray_supported, m)?)?;
+    m.add_function(wrap_pyfunction!(notify::notify_show, m)?)?;
+    m.add_function(wrap_pyfunction!(notify::notify_close, m)?)?;
+    m.add_function(wrap_pyfunction!(notify::notify_supported, m)?)?;
+    m.add_function(wrap_pyfunction!(notify::notify_capabilities, m)?)?;
     m.add_function(wrap_pyfunction!(crash::set_crash_file, m)?)?;
     m.add("UNCHANGED", Py::new(m.py(), app::Unchanged)?)?;
     m.add_function(wrap_pyfunction!(fonts::load_font, m)?)?;

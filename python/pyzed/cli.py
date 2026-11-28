@@ -298,6 +298,38 @@ def windows(action: str, path: str = ".") -> int:
     return 0
 
 
+def route(args: argparse.Namespace) -> int:
+    """``pyzed route add`` and ``pyzed route list``."""
+    from .routing import scaffold
+    from .routing.tree import RouteError
+
+    app = Path(args.app) if args.app else scaffold.find_app()
+    try:
+        if args.route_command == "list":
+            if not app.is_dir():
+                print(f"no routes folder at {app}: create one with `pyzed new NAME --router` or "
+                      f"`pyzed route add /`", file=sys.stderr)
+                return 1
+            print(scaffold.format_table(app))
+            return 0
+        kinds = [] if args.no_page else ["page"]
+        kinds += [k for k in ("layout", "template", "loading", "error", "not_found", "middleware")
+                  if getattr(args, k)]
+        if not kinds:
+            print("nothing to create: drop --no-page or add --layout, --loading...", file=sys.stderr)
+            return 1
+        written = scaffold.add(args.route, kinds, app=app, load=args.load, force=args.force)
+    except RouteError as err:
+        print(f"error: {err}", file=sys.stderr)
+        return 1
+    for path in written:
+        print(f"created {path}")
+    skipped = len(kinds) - len(written)
+    if skipped:
+        print(f"kept {skipped} file(s) that exist (--force overwrites them)")
+    return 0
+
+
 def main(argv=None) -> int:
     """The ``pyzed`` command line: parses ``argv`` (``sys.argv`` by default) and runs the subcommand.
 
@@ -317,6 +349,21 @@ def main(argv=None) -> int:
         p.add_argument("--no-sync", action="store_true", help="only edit pyproject.toml; install nothing")
         p.add_argument("--router", action="store_true",
                        help="pages as folders of app/ (page.py, layout.py, [id]...), like Next.js")
+    p_route = sub.add_parser("route", help="routes in folders: add pages, layouts... or list the routes",
+                             description="Create the files of a route in app/, or list every route. "
+                                         "Example: pyzed route add /products/[id] --load --loading")
+    route_sub = p_route.add_subparsers(dest="route_command", required=True)
+    p_route_add = route_sub.add_parser("add", help="create a route's files (a page.py by default)")
+    p_route_add.add_argument("route", help='the address, e.g. /products/[id], /docs/[...slug] or "/(shop)/cart"')
+    for kind in ("layout", "template", "loading", "error", "not-found", "middleware"):
+        p_route_add.add_argument(f"--{kind}", action="store_true", help=f"also a {kind.replace('-', '_')}.py")
+    p_route_add.add_argument("--no-page", action="store_true", help="no page.py (only the other files)")
+    p_route_add.add_argument("--load", choices=("async", "sync"), nargs="?", const="async",
+                             help="give the page a load function (async by default)")
+    p_route_add.add_argument("--force", action="store_true", help="overwrite files that exist")
+    p_route_list = route_sub.add_parser("list", help="every route of app/ and the files that answer it")
+    for p in (p_route_add, p_route_list):
+        p.add_argument("--app", help="the routes folder (default: ./app)")
     p_add = sub.add_parser("add", help="add or change dependencies (uv add)")
     p_add.add_argument("packages", nargs="+", metavar="PACKAGE", help='e.g. httpx or "httpx==0.27"')
     p_add.add_argument("--editable", action="store_true", help="install a local path in editable mode")
@@ -389,6 +436,8 @@ def main(argv=None) -> int:
         if args.command == "upgrade":
             return _report(project.upgrade(*args.packages))
         return _report(project.sync())
+    if args.command == "route":
+        return route(args)
     if args.command == "deps":
         return deps(args.outdated)
     if args.command == "check":

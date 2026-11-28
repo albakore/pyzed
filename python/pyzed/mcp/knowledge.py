@@ -43,7 +43,13 @@ TOPICS = {
     "blocks": "blocks/index", "stability": "guides/stability",
     "shading": "shading/index", "shader-graphs": "shading/shader-graphs", "tutorials": "tutorials/index",
     "dnd": "dnd/index", "sortable": "dnd/basics/sortable", "dnd-canvas": "dnd/guides/free-canvas",
-    "routing": "guides/routing",
+    "routing": "routing/index", "routing-files": "routing/basics/project-structure",
+    "pages-and-layouts": "routing/basics/pages-and-layouts", "navigation": "routing/basics/navigation",
+    "routing-errors": "routing/basics/errors", "data-fetching": "routing/data/data-fetching",
+    "actions": "routing/data/actions", "state": "routing/data/state", "store": "routing/data/state",
+    "rendering": "routing/data/rendering", "middleware": "routing/advanced/middleware",
+    "notifications": "routing/advanced/notifications", "routes-in-code": "routing/advanced/routes-in-code",
+    "routing-best-practices": "routing/advanced/best-practices", "nextjs": "routing/advanced/nextjs",
 }
 
 #: The section of each top-level widget in ``list_components``.

@@ -17,6 +17,7 @@ from urllib.parse import parse_qsl, quote, unquote, urlencode, urlsplit
 
 from .. import _core
 from .. import component as _component
+from . import _middleware
 from . import tree as _tree
 
 RoutesLike = Union[str, Path, Mapping[str, Any], _tree.Segment]
@@ -129,6 +130,10 @@ class Location:
 
     def __str__(self) -> str:
         return self.href
+
+
+#: What a rewrite to "not found" points at (``pz.not_found()`` in middleware).
+_NOT_FOUND = Location("/\x00not-found")
 
 
 def _normalize(path: str) -> str:
@@ -264,11 +269,15 @@ class Router:
     ``routes`` is the ``app/`` folder (a relative path is looked for next to the file that creates the
     router, then in the current folder), or a dict such as ``{"/": home, "/users/[id]": user}``.
     ``initial`` is the first location and ``stale_time`` how many seconds the data of a page stays
-    fresh: after that, going to it again (not back or forward) loads it again.
+    fresh: after that, going to it again (not back or forward) loads it again. ``middleware`` is a
+    function (or a list) that runs before every navigation, before the ``middleware.py`` files of the
+    folders (see ``pz.middleware``).
     """
 
     def __init__(self, routes: RoutesLike = "app", *, initial: str = "/", stale_time: float = 30.0,
-                 history_size: int = 100, cache_size: int = 64, _depth: int = 1) -> None:
+                 history_size: int = 100, cache_size: int = 64,
+                 middleware: Union[Callable[..., Any], List[Callable[..., Any]], Tuple[Callable[..., Any], ...], None] = None,
+                 _depth: int = 1) -> None:
         self.source: Any = routes
         if isinstance(routes, (str, Path)):
             self.source = self._find_folder(Path(routes), _depth + 1)
@@ -285,6 +294,15 @@ class Router:
         self._last_ok: Optional[Location] = None
         self._lock = threading.Lock()
         self._watched: set = set()
+        #: Middleware given in code, run before the folders' ``middleware.py`` files.
+        self.middleware: List[Callable[..., Any]] = (
+            [] if middleware is None else [middleware] if callable(middleware) else list(middleware))
+        self._started = False
+        self._navigation: Optional[object] = None  # the navigation whose async middleware is running
+        self._navigation_future: Any = None
+        self._rewrites: Dict[Location, Location] = {}
+        self._locals: Dict[Location, Dict[str, Any]] = {}
+        self._failures: Dict[Location, BaseException] = {}
         #: The window the router draws in (set by ``RouterApp``; forms made in the designer use it).
         self.window: Any = None
 
@@ -419,8 +437,8 @@ class Router:
 
     @property
     def pending(self) -> bool:
-        """Whether a ``load`` is running."""
-        return any(e.state == "pending" for e in list(self._cache.values()))
+        """Whether a ``load`` or an ``async`` middleware is running."""
+        return self._navigation is not None or any(e.state == "pending" for e in list(self._cache.values()))
 
     def is_active(self, href: Any, *, exact: bool = False) -> bool:
         """Whether ``href`` is the current page, or (unless ``exact``) one of its parents: ``/docs`` is active
@@ -453,12 +471,15 @@ class Router:
         return self.go(1)
 
     def go(self, delta: int) -> bool:
-        """Moves ``delta`` entries in the history (negative goes back); ``False`` when out of range."""
+        """Moves ``delta`` entries in the history (negative goes back); ``False`` when out of range.
+
+        Middleware runs first and may stop it, so ``True`` means only that the entry exists.
+        """
         target = self._index + delta
         if delta == 0 or not 0 <= target < len(self._entries):
             return False
-        self._index = target
-        self._changed()
+        action = "back" if delta < 0 else "forward"
+        self._navigate(self._entries[target], action, lambda final: self._commit_go(target, final))
         return True
 
     def refresh(self) -> None:
@@ -468,6 +489,31 @@ class Router:
                 if entry.state != "pending":
                     entry.stale = True
         self._forms.clear()
+        if self._started and (self.middleware or any("middleware" in s.files for s in self.root.walk())):
+            self._navigate(self.location, "refresh", lambda _location: None)
+
+    def invalidate(self, *hrefs: Any) -> None:
+        """Marks the data of the pages at ``hrefs`` (every page without arguments) as old: the next time
+        one is shown its ``load`` runs again, showing the old data meanwhile (``revalidatePath``).
+        A pattern works too: ``router.invalidate("/products/[id]")`` covers every product."""
+        targets: List[Tuple[str, Optional[tuple]]] = []
+        for href in hrefs:
+            text = str(href)
+            if "[" in text:
+                segment = next((s for s in self.root.walk() if s.pattern == text.split("?")[0]), None)
+                if segment is not None:
+                    targets.append((segment.id, None))
+                continue
+            found = _tree.match(self.root, resolve_href(text, self.location).parts)
+            if found is not None:
+                targets.append((found.page.id, self._frozen(found.params)))
+        with self._lock:
+            for key, entry in self._cache.items():
+                if entry.state == "pending" or entry.kind != "page":
+                    continue
+                if not hrefs or any(key[1] == sid and (params is None or key[2] == params) for sid, params in targets):
+                    entry.stale = True
+        _redraw()
 
     def prefetch(self, href: Any) -> None:
         """Starts the ``load`` calls of the page at ``href`` (and of its layouts) before going there."""
@@ -499,6 +545,8 @@ class Router:
         deadline = None if timeout is None else time.monotonic() + timeout
         while True:
             futures = [e.future for e in list(self._cache.values()) if e.state == "pending" and e.future is not None]
+            if self._navigation is not None and self._navigation_future is not None:
+                futures.append(self._navigation_future)
             if not futures:
                 return True
             for future in futures:
@@ -508,7 +556,7 @@ class Router:
                 except Exception:  # noqa: BLE001 - the entry holds it
                     pass
                 if deadline is not None and time.monotonic() >= deadline:
-                    return not any(e.state == "pending" for e in self._cache.values())
+                    return not self.pending
             time.sleep(0.001)  # the done callbacks run right after the futures resolve
 
     def listen(self, callback: Callable[[Location], Any]) -> Callable[[], None]:
@@ -517,22 +565,197 @@ class Router:
         return lambda: self._listeners.remove(callback) if callback in self._listeners else None
 
     def _go(self, location: Location, *, replace: bool) -> None:
-        if location == self.location and not replace:
+        if location == self.location and not replace and self._navigation is None:
             return
         if replace:
-            self._entries[self._index] = location
+            self._navigate(location, "replace", self._commit_replace)
         else:
-            del self._entries[self._index + 1:]
-            self._entries.append(location)
-            if len(self._entries) > self.history_size:
-                del self._entries[0]
-            self._index = len(self._entries) - 1
+            self._navigate(location, "push", self._commit_push)
+
+    def _commit_push(self, location: Location) -> None:
+        if location == self.location:
+            self._changed()
+            return
+        del self._entries[self._index + 1:]
+        self._entries.append(location)
+        if len(self._entries) > self.history_size:
+            del self._entries[0]
+        self._index = len(self._entries) - 1
+        self._expire()
+        self._changed()
+
+    def _commit_replace(self, location: Location) -> None:
+        self._entries[self._index] = location
+        self._expire()
+        self._changed()
+
+    def _commit_go(self, index: int, location: Location) -> None:
+        if 0 <= index < len(self._entries):
+            self._index = index
+            self._entries[index] = location
+        self._changed()
+
+    def _expire(self) -> None:
         now = time.monotonic()
         with self._lock:
             for key in [k for k, e in self._cache.items()
                         if e.kind == "page" and e.state != "pending" and now - e.started > self.stale_time]:
                 del self._cache[key]
-        self._changed()
+
+    # -- middleware ---------------------------------------------------------------------------------
+    def _middleware_for(self, location: Location) -> Tuple[List[Tuple[Callable[..., Any], Any]], Optional[_tree.Match]]:
+        """The middleware that runs for ``location`` with its matchers: the router's, then the folders'."""
+        chain: List[Tuple[Callable[..., Any], Any]] = [(fn, getattr(fn, "matcher", None)) for fn in self.middleware]
+        found = _tree.match(self.root, location.parts)
+        segments = found.segments if found is not None else [self.root]
+        for segment in segments:
+            route_file = segment.files.get("middleware")
+            if route_file is not None:
+                target = route_file.target()
+                matcher = route_file.attr("matcher", getattr(target, "matcher", None))
+                chain.append((target, matcher))
+        return chain, found
+
+    def _navigate(self, location: Location, action: str, commit: Callable[[Location], None], *,
+                  depth: int = 0) -> None:
+        """Runs the middleware for ``location`` and then ``commit``s where it ended up (or nothing)."""
+        if depth > 10:
+            raise _tree.RouteError(f"too many redirects in middleware (last: {location.href})")
+        token = object()
+        self._navigation = None
+        chain, found = self._middleware_for(location)
+        self._rewrites.pop(location, None)
+        self._failures.pop(location, None)
+        if not chain:
+            self._locals.pop(location, None)
+            commit(location)
+            return
+        request = _middleware.Request(location=location, previous=self.location if self._started else None,
+                                      action=action, router=self,
+                                      route=found.segments[-1].pattern if found is not None else None,
+                                      params=dict(found.params) if found is not None else {})
+        self._step(token, request, chain, 0, commit, depth)
+
+    def _step(self, token: object, request: _middleware.Request, chain: List[Tuple[Callable[..., Any], Any]],
+              index: int, commit: Callable[[Location], None], depth: int) -> None:
+        from .. import _async
+
+        while index < len(chain):
+            function, matcher = chain[index]
+            index += 1
+            try:
+                if not _middleware.applies(matcher, request):
+                    continue
+                result = _call_with(function, {"request": request, "router": self, "params": request.params,
+                                               "query": request.query, "pathname": request.pathname,
+                                               "previous": request.previous, "action": request.action,
+                                               "locals": request.locals})
+            except (Redirect, _middleware.Rewrite, NotFound) as answer:
+                result = answer
+            except Exception as err:  # noqa: BLE001 - shown by the error file of the page
+                self._fail(request, err, commit)
+                return
+            if _async._isawaitable(result):
+                self._wait_for(token, result, request, chain, index, commit, depth)
+                return
+            if self._decide(result, request, commit, depth):
+                return
+        self._finish(request, commit)
+
+    def _wait_for(self, token: object, awaitable: Any, request: _middleware.Request,
+                  chain: List[Tuple[Callable[..., Any], Any]], index: int, commit: Callable[[Location], None],
+                  depth: int) -> None:
+        """Waits for an ``async`` middleware off the UI thread, then goes on with the rest of the chain."""
+        from .. import _async
+
+        self._navigation = token
+
+        def run() -> Any:
+            try:
+                return _async.run(awaitable)
+            except (Redirect, _middleware.Rewrite, NotFound) as answer:
+                return answer
+
+        def resume(result: Any, error: Optional[BaseException]) -> None:
+            if self._navigation is not token:
+                return  # a newer navigation took over
+            self._navigation = None
+            if error is not None:
+                self._fail(request, error, commit)
+            elif not self._decide(result, request, commit, depth):
+                self._step(token, request, chain, index, commit, depth)
+            _redraw()
+
+        def done(future: Any) -> None:
+            try:
+                result, error = future.result(), None
+            except BaseException as err:  # noqa: BLE001
+                result, error = None, err
+            try:
+                _core.post(lambda: resume(result, error))
+            except RuntimeError:  # no app running (tests): go on right here
+                resume(result, error)
+
+        self._navigation_future = _executor().submit(run)
+        self._navigation_future.add_done_callback(done)
+
+    def _decide(self, result: Any, request: _middleware.Request, commit: Callable[[Location], None],
+                depth: int) -> bool:
+        """Acts on what a middleware returned; ``True`` when the navigation ends there."""
+        if result is None or result is True:
+            return False
+        if result is False:
+            return True  # stays where it is
+        if isinstance(result, Redirect):
+            target = resolve_href(result.href, request.location)
+            if result.push and request.action in ("push", "replace", "start"):
+                if request.action == "push":
+                    self._commit_push(request.location)
+                self._navigate(target, "push", self._commit_push, depth=depth + 1)
+            else:
+                self._navigate(target, request.action if request.action != "start" else "replace", commit,
+                               depth=depth + 1)
+            return True
+        if isinstance(result, _middleware.Rewrite):
+            self._rewrites[request.location] = resolve_href(result.href, request.location)
+            self._finish(request, commit)
+            return True
+        if isinstance(result, NotFound):
+            self._rewrites[request.location] = _NOT_FOUND
+            self._finish(request, commit)
+            return True
+        raise TypeError(f"middleware returned {result!r}: return None to go on, False to stay, "
+                        f"request.redirect(href) or request.rewrite(href)")
+
+    def _finish(self, request: _middleware.Request, commit: Callable[[Location], None]) -> None:
+        if request.locals:
+            self._locals[request.location] = request.locals
+            shown = self._rewrites.get(request.location)
+            if shown is not None and shown is not _NOT_FOUND:
+                self._locals[shown] = request.locals
+            while len(self._locals) > self.history_size * 2:
+                del self._locals[next(iter(self._locals))]
+        else:
+            self._locals.pop(request.location, None)
+        commit(request.location)
+
+    def _fail(self, request: _middleware.Request, err: BaseException, commit: Callable[[Location], None]) -> None:
+        self._failures[request.location] = err
+        commit(request.location)
+
+    def _start_navigation(self) -> None:
+        """Runs the middleware for the first location (on the first view)."""
+        if not self.middleware and not any("middleware" in s.files for s in self.root.walk()):
+            self._started = True
+            return
+
+        def commit(location: Location) -> None:
+            self._entries[self._index] = location
+
+        try:
+            self._navigate(self.location, "start", commit)
+        finally:
+            self._started = True
 
     def _changed(self) -> None:
         for listener in list(self._listeners):
@@ -581,7 +804,7 @@ class Router:
         if previous is not _NO_DATA:
             entry.previous, entry.has_previous = previous, True
         available = {"params": dict(params), "query": location.query, "search_params": location.query,
-                     "router": self}
+                     "router": self, "locals": self._locals.get(location, {})}
 
         def run() -> Any:
             from .. import _async
@@ -632,6 +855,8 @@ class Router:
     def _forget_errors(self, segment: _tree.Segment) -> None:
         """Drops the failed loads of ``segment`` and below, so they run again (an error file's ``reset``)."""
         prefix = segment.id
+        if self._failures.pop(self.location, None) is not None:
+            self._navigate(self.location, "refresh", lambda _location: None)
         with self._lock:
             for key in [k for k, e in self._cache.items()
                         if e.state == "error" and (k[1] == prefix or k[1].startswith(prefix + "/") or not prefix)]:
@@ -642,6 +867,8 @@ class Router:
         """Draws the current location: the page inside its layouts, templates and boundaries."""
         global _current
         _current = self
+        if not self._started:
+            self._start_navigation()
         for _attempt in range(10):
             try:
                 return self._draw(self.location)
@@ -658,9 +885,16 @@ class Router:
 
     def _draw(self, location: Location) -> Any:
         root = self.root
-        found = _tree.match(root, location.parts)
+        shown = self._rewrites.get(location, location)
+        found = None if shown is _NOT_FOUND else _tree.match(root, shown.parts)
         values = {_ROUTER: self, _LOCATION: (location.href, self._index)}
         with _component.provide(**values):
+            if self._navigation is not None and self._last_ok is None:
+                # the first location waits for an async middleware: the root's loading file, if any
+                loading = root.files.get("loading")
+                widget = self._render(loading, "loading", {}, location) if loading is not None else _core.space(
+                    width="fill", height="fill")
+                return widget.on(mouse_down=self._mouse)
             try:
                 if found is None:
                     widget = self._level([root], 0, {}, location, missing=True)
@@ -680,7 +914,8 @@ class Router:
         return widget.on(mouse_down=self._mouse)
 
     def _draw_previous(self, location: Location) -> Any:
-        found = _tree.match(self.root, location.parts)
+        shown = self._rewrites.get(location, location)
+        found = None if shown is _NOT_FOUND else _tree.match(self.root, shown.parts)
         if found is None:
             return self._level([self.root], 0, {}, location, missing=True)
         return self._level(found.segments, 0, found.params, location)
@@ -698,9 +933,14 @@ class Router:
         provided = None
         if layout is not None and layout.attr("provide") is not None:
             provided = _call_with(layout.attr("provide"), {"params": own, "query": location.query,
+                                                            "locals": self._locals.get(location, {}),
                                                             "data": None if layout_data is _NO_DATA else layout_data})
 
         def inner() -> Any:
+            if last or missing:
+                failure = self._failures.get(location)
+                if failure is not None:
+                    raise failure  # a middleware failed: the closest error file shows it
             if missing:
                 raise NotFound()
             if last:
@@ -773,7 +1013,8 @@ class Router:
                             f"`async def load(params)` and take its result as `data`")
         available: Dict[str, Any] = {"params": dict(params), "query": location.query,
                                      "search_params": location.query, "router": self,
-                                     "pathname": location.pathname, **extra}
+                                     "pathname": location.pathname, "locals": self._locals.get(location, {}),
+                                     **extra}
         if available.get("data", None) is _NO_DATA:
             available["data"] = None
         if isinstance(target, type) and issubclass(target, _component.Component):
@@ -801,7 +1042,8 @@ class Router:
 
     def _compute_title(self, location: Location) -> Optional[str]:
         root = self.root
-        found = _tree.match(root, location.parts)
+        shown = self._rewrites.get(location, location)
+        found = None if shown is _NOT_FOUND else _tree.match(root, shown.parts)
         segments = found.segments if found is not None else [root]
         params = found.params if found is not None else {}
         parts: List[Tuple[str, _tree.RouteFile, Dict[str, Any], Any]] = []

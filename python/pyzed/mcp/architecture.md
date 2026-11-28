@@ -107,7 +107,9 @@ def update(self, message):
   parameters) and `view()` picks the screen; each screen is a function or a component of its feature folder.
   With many screens, addresses or a web app to port, use routes in folders (`pyzed.routing`, like Next.js):
   `app/` holds only `page.py`/`layout.py`/`loading.py`/`error.py` files that call the application layer, data
-  comes from `async def load(params)`, and shared widgets live in `ui/` or `app/_components/`. Lazy-load heavy
+  comes from `async def load(params)`, changes go through `@pz.action`, the session and the cart live in
+  `pz.Store` instances in `state.py`, guards in `middleware.py`, and shared widgets in `ui/` or
+  `app/_components/`. Keep HTTP and SQL in `api.py` (the infrastructure layer). Lazy-load heavy
   features by importing their module inside the branch (or the page) that shows them.
 - **Isolate failures**: wrap independent regions (a plugin panel, a chart from external data) in
   `ui.error_boundary(lambda: ...)` so one broken part never takes the window down.

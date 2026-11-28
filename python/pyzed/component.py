@@ -267,7 +267,21 @@ def use_context(name: str, default: Any = None) -> Any:
     return value
 
 
+#: Shared objects components can read outside the context (``pz.Store``), by their read name.
+_sources: Dict[str, Any] = {}
+
+
+def _note_source(name: str, source: Any) -> None:
+    """Records that the components being drawn read ``source`` (a store): they draw again when it changes."""
+    _sources[name] = source
+    for _depth, reads in _reads:
+        if name not in reads:
+            reads[name] = (None, source)
+
+
 def _lookup(name: str, default: Any) -> Tuple[int, Any]:
+    if name in _sources:
+        return -2, _sources[name]
     for index in range(len(_context) - 1, -1, -1):
         if name in _context[index]:
             return index, _context[index][name]

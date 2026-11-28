@@ -1,4 +1,7 @@
-"""A pretend backend: async functions that take a moment, like a web API would."""
+"""A pretend backend: async functions that take a moment, like a web API would.
+
+The pages read with `load` and change data with `pz.action`; swap these bodies for your HTTP client
+(httpx, aiohttp) or your database and nothing else changes."""
 
 import asyncio
 from dataclasses import dataclass
@@ -35,3 +38,26 @@ async def products(sort: str = "name") -> list:
 async def product(product_id: str):
     await asyncio.sleep(DELAY)
     return next((p for p in PRODUCTS if str(p.id) == product_id), None)
+
+
+#: Products that fail the first time they load, to show error.py and its "Try again".
+FLAKY = {"6"}
+
+
+async def product_or_fail(product_id: str):
+    """Like ``product``, but the desk lamp fails once, as a real network sometimes does."""
+    if product_id in FLAKY:
+        FLAKY.discard(product_id)
+        await asyncio.sleep(DELAY)
+        raise ConnectionError("the store didn't answer (it works the next time)")
+    return await product(product_id)
+
+
+async def sign_in(name: str) -> dict:
+    await asyncio.sleep(DELAY)
+    return {"name": name or "Ada", "email": f"{(name or 'ada').lower()}@example.com"}
+
+
+async def place_order(items: list) -> int:
+    await asyncio.sleep(DELAY)
+    return 1000 + len(items)

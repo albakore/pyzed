@@ -40,8 +40,11 @@ like the Zed editor). Instructions for the AI coding agents working on it.
 - Drag and drop uses `pz.sortable` (lists, boards, grids), `pz.draggable` / `pz.droppable` and
   `pz.drag_handle`; the handler applies the drop with `pz.dnd.move(lists, event)`. Never rebuild it from mouse events.
 - Several screens with addresses (like Next.js) use `pyzed.routing`: every folder of `app/` is a page (`page.py`,
-  `layout.py`, `loading.py`, `error.py`, `not_found.py`, `[id]`); data comes from `async def load(params)`, never
-  from the page itself; navigate with `pz.link` and `pz.use_router().push(...)`.
+  `layout.py`, `loading.py`, `error.py`, `not_found.py`, `middleware.py`, `[id]`); data comes from
+  `async def load(params)`, never from the page itself; changes go through `@pz.action` (`pending`, `error`);
+  shared state (session, cart) is one `pz.Store` instance in `state.py`; filters and tabs live in the query;
+  login checks go in `middleware.py`; `pz.notify(..., href=...)` for native notifications; navigate with
+  `pz.link` and `pz.use_router().push(...)`. `pyzed route add /path --load --loading` adds a route.
 - Settings in `pz.Settings`, secrets in the keychain or environment variables, user-facing text through `pz.t`,
   `logging` instead of `print`.
 

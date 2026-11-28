@@ -10,6 +10,9 @@ Every folder of ``app/`` is a part of the URL:
   ``loading.py`` shows a skeleton, and ``pz.not_found()`` shows ``not_found.py``.
 - ``docs/[[...slug]]`` takes any number of parts (``/docs``, ``/docs/guide/routing``).
 - ``settings/template.py`` starts over on every tab, its ``layout.py`` doesn't.
+- ``middleware.py`` sends ``/account`` to ``/login`` until you sign in (``state.session``).
+- ``api.py`` is the pretend server: pages read it in ``load``; "Add to cart" changes it with a
+  ``pz.action``, updates the global cart (``state.py``) and shows a desktop notification.
 
 Alt+Left / Alt+Right and the mouse's side buttons go back and forward.
 """

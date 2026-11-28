@@ -3,13 +3,13 @@
 import pyzed as pz
 from pyzed import ui
 
-import store
+import api
 
 title = "Products"
 
 
 async def load(query):
-    return await store.products(query.get("sort", "name"))
+    return await api.products(query.get("sort", "name"))
 
 
 def page(data, query):

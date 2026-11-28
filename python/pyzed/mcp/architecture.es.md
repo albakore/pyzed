@@ -111,7 +111,9 @@ def update(self, message):
   con parámetros) y `view()` elige la pantalla; cada pantalla es una función o un componente de su carpeta. Con
   muchas pantallas, direcciones o una app web que portar, usa rutas en carpetas (`pyzed.routing`, como Next.js):
   `app/` solo tiene archivos `page.py`/`layout.py`/`loading.py`/`error.py` que llaman a la capa de aplicación,
-  los datos vienen de `async def load(params)` y los widgets compartidos viven en `ui/` o `app/_components/`.
+  los datos vienen de `async def load(params)`, los cambios pasan por `@pz.action`, la sesión y el carrito viven
+  en instancias de `pz.Store` en `state.py`, las comprobaciones en `middleware.py` y los widgets compartidos en
+  `ui/` o `app/_components/`. El HTTP y el SQL van en `api.py` (la capa de infraestructura).
   Carga tarde las funcionalidades pesadas importando su módulo dentro de la rama (o la página) que las muestra.
 - **Aísla los fallos**: envuelve las regiones independientes (un panel de plugin, un gráfico con datos externos) en
   `ui.error_boundary(lambda: ...)` para que una parte rota nunca tumbe la ventana.
