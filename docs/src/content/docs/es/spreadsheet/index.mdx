@@ -1,0 +1,125 @@
+---
+title: Hoja de cálculo
+description: Un componente de hoja de cálculo para apps de escritorio en Python, como Google Sheets o Excel — fórmulas con más de 140 funciones, formatos de número, formato condicional, validación con listas, orden, filtros, inmovilizar filas, celdas combinadas, varias hojas, deshacer y archivos de Excel (.xlsx) y CSV.
+sidebar:
+  order: 0
+  label: Introducción
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![Una hoja de cálculo en una app de Pyzed: barra de herramientas, fórmulas, un filtro en la cabecera, barras de datos y colores según el valor, y pestañas para dos hojas](/pyzed/media/spreadsheet/overview.webp)
+
+Pyzed tiene una hoja de cálculo completa, la cuadrícula que conoces de Google Sheets y Excel.
+Tus usuarios escriben números, texto, fechas y fórmulas en las celdas, les dan formato, las
+ordenan y filtran, y abren y guardan archivos de Excel. Tu código lee y escribe las mismas
+celdas desde Python.
+
+Viene en dos piezas:
+
+| Pieza | Qué es |
+| --- | --- |
+| [`pz.Workbook`](/pyzed/es/spreadsheet/workbook/) | Los datos y el motor: hojas, celdas, fórmulas, formatos, deshacer, archivos. Funciona sin ventana, así que también sirve en scripts y tests. |
+| [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/) | El componente: la cuadrícula más barra de herramientas, menús, barra de búsqueda y pestañas de hojas. |
+
+Por debajo, [`pz.sheet`](/pyzed/es/spreadsheet/grid/) es la cuadrícula sola (celdas,
+cabeceras, barra de fórmulas), para cuando quieres tu propia barra de herramientas o ninguna.
+La cuadrícula y el motor de fórmulas están escritos en Rust: solo se dibujan las filas y
+columnas visibles, así que una hoja con un millón de filas se desplaza igual de fluida que una
+con diez.
+
+<Aside type="note" title="En pocas palabras">
+Un libro es el archivo: tiene una o varias hojas, y cada hoja es una cuadrícula de celdas que
+se nombran por la letra de la columna y el número de fila (`A1`, `B7`). Una celda guarda un
+valor (`42`, `Manzanas`, una fecha) o una fórmula que empieza por `=` y calcula su valor a
+partir de otras celdas (`=SUM(B2:B9)`). Cuando una celda cambia, todas las fórmulas que la usan
+se actualizan solas.
+</Aside>
+
+## Una hoja de cálculo en pocas líneas
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Presupuesto(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([
+            ["Concepto", "Coste"],
+            ["Alquiler", 950],
+            ["Comida", 320],
+            ["Viajes", 140],
+        ])
+        self.book["A5"] = "Total"
+        self.book["B5"] = "=SUM(B2:B4)"
+        self.book.format("B2:B5", number_format="#,##0.00 €")
+        self.book.format("A1:B1", bold=True, fill="#e8f0fe")
+
+    def view(self):
+        return ui.Spreadsheet(book=self.book)
+
+
+pz.run(Presupuesto)
+```
+
+El libro pertenece a tu app, así que conserva sus datos aunque la vista se reconstruya. Léelo
+cuando lo necesites: `self.book["B5"]` vale `1410`, `self.book.records()` da las filas como
+dicts y `self.book.save("presupuesto.xlsx")` escribe un archivo de Excel.
+
+## Todo lo que hace
+
+- **Edición**: escribe en una celda o en la barra de fórmulas, <kbd>Enter</kbd> y
+  <kbd>Tab</kbd> para avanzar, <kbd>F2</kbd> para editar, <kbd>Alt</kbd>+<kbd>Enter</kbd> para
+  una línea nueva dentro de la celda, doble clic para editar en el sitio. Números,
+  porcentajes, monedas, fechas y `TRUE` / `FALSE` se reconocen al escribir.
+  [Edición y atajos](/pyzed/es/spreadsheet/editing/).
+- **Selección y portapapeles**: clic y arrastrar, <kbd>Shift</kbd> para ampliar,
+  <kbd>Ctrl</kbd> para varios rangos, filas y columnas enteras desde las cabeceras. Copiar y
+  pegar funciona con Google Sheets, Excel y cualquier editor de texto (texto separado por
+  tabuladores), y las fórmulas pegadas mueven sus referencias como en Excel.
+- **Fórmulas**: más de 140 funciones (`SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`,
+  `SUMIFS`, `TEXT`, `DATEDIF`, `FILTER`, `UNIQUE`, `SORT`...), referencias absolutas y
+  relativas (`$A$1`), referencias a otras hojas, matrices dinámicas que se desbordan a las
+  celdas siguientes y errores como `#DIV/0!` y `#REF!`. Al escribir aparecen sugerencias y los
+  argumentos de la función, y puedes elegir referencias con el ratón o las flechas.
+  [Fórmulas](/pyzed/es/spreadsheet/formulas/).
+- **Formato**: negrita, cursiva, subrayado, tachado, tamaño de letra, colores de texto y de
+  relleno, bordes, alineación, ajuste de texto, celdas combinadas y formatos de número
+  (`$#,##0.00`, `0%`, `yyyy-mm-dd`...). [Formato](/pyzed/es/spreadsheet/formatting/).
+- **Formato condicional**: colores cuando un valor es mayor que, está entre, contiene un
+  texto, está repetido o cumple una fórmula, además de escalas de color y barras de datos.
+- **Validación**: listas desplegables, casillas, rangos de números y fechas, longitudes de
+  texto y fórmulas propias, con aviso o rechazo. [Datos](/pyzed/es/spreadsheet/data/).
+- **Herramientas de datos**: ordenar por una o varias columnas, filtrar con el embudo de la
+  cabecera (por valor o por condición), buscar y reemplazar, autorrellenar series (`1, 2, 3`,
+  `Mon, Tue`, fechas) con el controlador de relleno y una barra de estado con la suma, la
+  media y el recuento de la selección.
+- **Estructura**: insertar, eliminar, ocultar y cambiar el tamaño de filas y columnas (doble
+  clic en un borde para ajustar), inmovilizar filas y columnas, varias hojas con pestañas que
+  se renombran, colorean, reordenan y duplican.
+  [Filas, columnas y hojas](/pyzed/es/spreadsheet/structure/).
+- **Deshacer y rehacer** de todo, incluidos formatos, ordenaciones y cambios de estructura.
+- **Archivos**: abrir y guardar Excel (`.xlsx`) y leer `.xls`, `.ods` y CSV / TSV.
+  [Archivos](/pyzed/es/spreadsheet/files/).
+- **Notas** en las celdas (el triangulito) y un modo de solo lectura.
+
+## Por dónde empezar
+
+<CardGrid>
+	<LinkCard title="El componente" href="/pyzed/es/spreadsheet/component/" description="ui.Spreadsheet: propiedades, eventos, barra de herramientas y menús." />
+	<LinkCard title="El libro" href="/pyzed/es/spreadsheet/workbook/" description="Leer y escribir celdas, rangos y registros desde Python." />
+	<LinkCard title="Fórmulas" href="/pyzed/es/spreadsheet/formulas/" description="Referencias, rangos, matrices y todas las funciones." />
+	<LinkCard title="Edición y atajos" href="/pyzed/es/spreadsheet/editing/" description="Todo lo que hacen el teclado y el ratón." />
+</CardGrid>
+
+El ejemplo completo es [`examples/spreadsheet.py`](https://github.com/albakore/pyzed/blob/main/examples/spreadsheet.py),
+también en la galería de bienvenida de Pyzed Design.
+
+<Aside type="caution" title="Todavía no incluye">
+Gráficos dibujados dentro de la hoja, tablas dinámicas, colaboración en tiempo real, macros y
+scripts, rangos con nombre, comentarios con respuestas e hipervínculos en celdas. Para un
+gráfico, lee los valores con `book.values()` y pásalos a un
+[componente de gráfico](/pyzed/es/library/line-chart/) junto a la hoja.
+</Aside>

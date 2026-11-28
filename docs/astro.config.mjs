@@ -82,6 +82,7 @@ const topics = [
 				translations: { es: 'Componentes' },
 				items: [{ slug: 'library' }, { slug: 'library/events' }, ...libraryGroups],
 			},
+			group('Spreadsheet', 'Hoja de cálculo', 'spreadsheet'),
 			group('Blocks', 'Bloques', 'blocks'),
 		],
 	},

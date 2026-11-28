@@ -16,8 +16,8 @@ Pyzed widgets react to events in two layers:
 - **The common events**: 18 events every widget has, whatever it is, attached with `.on(...)`:
   clicks, hover, drag, focus, keys and size. A `pz.Component` also raises `on_mount` and `on_unmount`.
 
-So a component can have up to its own events plus 18 common ones. Across the 125 components of
-the library there are **169 own events**; the ones with the most are listed first in the table at the end.
+So a component can have up to its own events plus 18 common ones. Across the 126 components of
+the library there are **177 own events**; the ones with the most are listed first in the table at the end.
 
 ```python
 ui.list_item("main.py", self.open, icon="file").on(   # on_press is its own event
@@ -76,6 +76,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | `()` | Nothing: the event is the news (a press, a close, Enter). | `ui.alert(on_close=)`, `ui.badge(on_press=)`, `ui.breadcrumbs(on_more=)`, `ui.button(on_press=)`… |
 | `(event)` | A `pz.Event`: its `value` holds the data, `source` the component. | `ui.Calendar(on_change=)`, `ui.Calendar(on_month=)`, `ui.Catalog(on_install=)`, `ui.ColorPicker(on_change=)`… |
 | `(text)` | The new text, on every keystroke. | `ui.command_palette(on_query=)`, `ui.console(on_query=)`, `ui.editor(on_change=)`, `ui.input(on_input=)`… |
+| `(data)` | A dict with the details (`action` and `range`, `cell`, `x` and `y`…), as listed for the event. | `pz.sheet(on_context=)`, `pz.sheet(on_dropdown=)`, `pz.sheet(on_filter=)`, `pz.sheet(on_find=)`… |
 | `(x, y)` | The pointer position, relative to the widget. | `pz.canvas(on_press=)`, `pz.canvas(on_release=)`, `pz.canvas(on_right_press=)`, `pz.canvas(on_move=)`… |
 | `(info)` | A dict (scroll offset and sizes) or a `ui.ErrorInfo`. | `ui.editor(on_scroll=)`, `ui.error_boundary(on_error=)`, `ui.error_boundary(on_details=)`, `pz.scrollable(on_scroll=)`… |
 | `(value)` | The new value: a number, a color, an option… | `ui.file_input(on_change=)`, `ui.number_field(on_change=)`, `ui.radio_group(on_select=)`, `ui.slider(on_change=)`… |
@@ -99,6 +100,7 @@ Controls that produce a value call your callable with it. The most common shapes
 | --- | --- | --- | --- |
 | [Mouse area](/pyzed/library/mouse-area/#events) | 10 | 28 | `on_press`, `on_release`, `on_right_press`, `on_double_click`, `on_enter`, `on_exit`, `on_move`, `on_scroll`, `on_middle_press`, `on_middle_release` |
 | [Console](/pyzed/library/console/#events) | 8 | 26 | `on_query`, `on_toggle_level`, `on_clear`, `on_copy`, `on_context`, `on_open`, `on_source`, `on_write` |
+| [Spreadsheet](/pyzed/library/spreadsheet/#events) | 8 | 28 | `on_change`, `on_select`, `on_context`, `on_dropdown`, `on_filter`, `on_find`, `on_invalid`, `on_edit` |
 | [Editor](/pyzed/library/editor/#events) | 7 | 25 | `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` |
 | [Tab bar](/pyzed/library/tab-bar/#events) | 7 | 25 | `on_select`, `on_close`, `on_drag`, `on_drop`, `on_drag_over`, `on_context`, `on_new` |
 | [Canvas](/pyzed/library/canvas/#events) | 5 | 23 | `on_press`, `on_release`, `on_right_press`, `on_move`, `on_scroll` |

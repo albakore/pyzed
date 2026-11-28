@@ -1,0 +1,97 @@
+---
+title: Filas, columnas y hojas
+description: Estructura de una hoja de cálculo de Pyzed — insertar, eliminar, ocultar y redimensionar filas y columnas, inmovilizar paneles y trabajar con varias hojas y sus pestañas.
+sidebar:
+  order: 7
+---
+
+![Cambiando el ancho de una columna, inmovilizando la fila de cabecera y pasando de una pestaña de hoja a otra](/pyzed/media/spreadsheet/structure.webp)
+
+## Insertar y eliminar
+
+Clic derecho en una celda, un número de fila o una letra de columna para **Insertar fila
+encima / debajo**, **Insertar columna a la izquierda / derecha** y **Eliminar**. Con varias
+filas o columnas seleccionadas, se insertan o eliminan tantas como haya.
+
+```python
+book.insert_rows(5)          # una fila 5 nueva; la antigua pasa a ser la 6
+book.insert_rows(5, 3)       # tres filas
+book.delete_rows(2, 2)       # las filas 2 y 3
+book.insert_cols("C")        # una columna C nueva
+book.delete_cols("B", 2)     # las columnas B y C
+```
+
+Las fórmulas siguen a las celdas a las que apuntan: insertar una fila dentro de
+`=SUM(A1:A3)` la convierte en `=SUM(A1:A4)`, y una fórmula que apuntaba a una celda eliminada
+muestra `#REF!`. Las celdas combinadas, los formatos, la validación, el formato condicional y
+el filtro también se mueven.
+
+## Tamaño
+
+Arrastra el borde entre dos letras de columna o números de fila. Doble clic para ajustarlo al
+contenido. Con varias columnas enteras seleccionadas, arrastrar una cambia todas.
+
+```python
+book.column_width("A", 120)   # píxeles; por defecto 100
+book.column_width("A")        # leerlo
+book.row_height(1, 32)        # por defecto 24
+book.autofit(["A", "C"])      # ajusta columnas a su texto (todas si no hay lista)
+```
+
+## Ocultar
+
+**Ocultar fila** y **Ocultar columna** en el menú contextual de las cabeceras. Una fila o
+columna oculta se ve como una doble línea entre las cabeceras; **Mostrar** en las filas o
+columnas de alrededor la vuelve a enseñar. Las fórmulas siguen leyendo las celdas ocultas.
+
+```python
+book.hide_rows([4, 5])
+book.show_rows([4, 5])
+book.hide_cols(["D"])
+book.show_cols(["D"])
+```
+
+## Inmovilizar
+
+Las filas y columnas inmovilizadas se quedan en pantalla mientras el resto se desplaza, como la
+cabecera de una tabla. El menú de inmovilizar de la barra de herramientas inmoviliza hasta la
+celda activa, o 1 o 2 filas o columnas.
+
+```python
+book.freeze(rows=1)            # la fila de cabecera
+book.freeze(rows=1, cols=1)    # y la primera columna
+book.frozen                    # (1, 1)
+book.freeze()                  # movilizar
+```
+
+## Tamaño de la cuadrícula
+
+Una hoja nueva tiene 1000 filas y 26 columnas, como en Google Sheets, y crece cuando te
+desplazas o te mueves más allá del final, pegas un rango grande o escribes fuera. Puede llegar
+a los límites de Excel: 1.048.576 filas y 16.384 columnas (de `A` a `XFD`). `book.size` da las
+`(filas, columnas)` actuales y `book.resize(filas, columnas)` las cambia. Solo se dibuja lo
+que está en pantalla, así que una hoja grande no cuesta más de mostrar que una pequeña.
+
+## Hojas
+
+```python
+book = pz.Workbook(sheets=["Ventas", "Equipo"])
+book.sheets                     # ["Ventas", "Equipo"]
+book.active = "Equipo"          # o un índice: book.active = 1
+book.sheet                      # "Equipo", la activa
+book.add_sheet("Notas")         # al final; index= para ponerla en otro sitio
+book.rename_sheet("Notas", "Ideas")
+book.move_sheet("Ideas", 0)
+book.duplicate_sheet("Ventas")  # "Ventas copy"
+book.tab_color("Ventas", "#34a853")
+book.remove_sheet("Ideas")
+```
+
+`book["A1"]` lee la hoja activa; `book["Equipo!A1"]`, cualquier hoja. Los métodos que trabajan
+sobre una hoja aceptan `sheet=` (un nombre o un índice) o un rango con el nombre de la hoja
+(`"Equipo!A1:C9"`).
+
+En [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/) las pestañas de abajo hacen lo mismo:
+**+** añade una hoja, un clic cambia de hoja, un doble clic la renombra y el menú del clic
+derecho la duplica, elimina, mueve y colorea. Las fórmulas que mencionan una hoja se reescriben
+al renombrarla.

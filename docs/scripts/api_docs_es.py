@@ -3792,3 +3792,81 @@ _section("app", "Dirección de escritura", {
     "pyzed.bidi.mirrored_icon": {"desc": "El icono que se muestra en lugar de `name` en una parte de derecha a izquierda: `\"chevron-left\"` por `\"chevron-right\"`, `\"redo\"` por `\"undo\"`; el propio `name` si el icono no se refleja.", "params": {"name": "Un nombre de icono de Lucide."}},
     "pyzed.bidi.RTL_LANGUAGES": {"desc": "Los códigos de los idiomas que se escriben de derecha a izquierda: árabe, hebreo, persa, urdu, pastún, sindhi, kurdo sorani, uigur, dhivehi, ídish, siríaco y n'ko.", "no_signature": True},
 }, before="Referencia integrada")
+
+# -- Hoja de cálculo -----------------------------------------------------------------------------
+_SHEET_EVENTS = {
+    "on_change": "Recibe un dict cuando el usuario cambia celdas, formatos o la estructura: `action` (`\"edit\"`, `\"paste\"`, `\"fill\"`, `\"clear\"`, `\"format\"`, `\"sort\"`, `\"undo\"`...), `range` y `sheet`.",
+    "on_select": "Recibe un dict cuando cambia la selección (lee `book.selection`).",
+    "on_context": "Recibe, con un clic derecho, `kind` (`\"cell\"`, `\"row\"` o `\"column\"`), `cell`, `x` e `y` (relativas a la cuadrícula): muestra ahí un menú.",
+    "on_dropdown": "Se llama cuando debe abrirse la lista de una celda: `cell`, `options`, `x`, `y`, `width`.",
+    "on_filter": "Se llama al pulsar un botón de filtro de la cabecera: `column`, `x`, `y`.",
+    "on_find": "Se llama con Ctrl+F o Ctrl+H: `mode` (`\"find\"` o `\"replace\"`).",
+    "on_invalid": "Se llama cuando un valor escrito incumple una validación estricta: `cell`, `value`, `message`.",
+    "on_edit": "Se llama cuando empieza o termina la escritura en una celda: `editing`.",
+}
+PAGES.append({
+    "slug": "spreadsheet",
+    "title": "Hoja de cálculo (pz.Workbook, ui.Spreadsheet)",
+    "description": "Referencia de la API de la hoja de cálculo de Pyzed: pz.Workbook (celdas, fórmulas, formatos, archivos), la cuadrícula pz.sheet y el componente ui.Spreadsheet.",
+    "order": 10.9,
+    "intro": """
+        Una hoja de cálculo como Google Sheets o Excel. `pz.Workbook` guarda los datos y calcula las
+        fórmulas, `pz.sheet` dibuja la cuadrícula y `ui.Spreadsheet` añade barra de herramientas,
+        menús y pestañas de hojas. Ver la [sección Hoja de cálculo](/pyzed/es/spreadsheet/).
+
+        ```python
+        book = pz.Workbook()
+        book["A1"], book["A2"], book["A3"] = 2, 3, "=A1*A2"
+        ui.Spreadsheet(book=book)
+        ```
+    """,
+    "sections": [
+        ("Libro", {
+            "pyzed.Workbook": {
+                "desc": "Un libro de hoja de cálculo: hojas de celdas con valores, fórmulas y formatos. Las celdas se leen y escriben por su dirección (`book[\"B2\"] = \"=SUM(A1:A9)\"`; `book[\"A1:C3\"]` da filas de valores); además da formato, ordena, filtra, deshace y abre y guarda archivos CSV y Excel. Se muestra (y edita) con `ui.Spreadsheet(book=book)` o `pz.sheet(book)`. Las direcciones pueden nombrar una hoja (`\"Ventas!A1\"`); sin ella usan la hoja activa. Las filas y columnas empiezan en 1, como en la cuadrícula; las columnas también se aceptan como letras (`\"C\"`).",
+                "params": {"sheets": "Nombres de las hojas con que empieza (una `\"Sheet1\"` si no se indica)."},
+                "example": """
+                    book = pz.Workbook(sheets=["Ventas", "Equipo"])
+                    book["Ventas!B2"] = "=SUM(C2:C9)"
+                    book.format("A1:G1", bold=True, fill="#e8f0fe")
+                    book.save("informe.xlsx")
+                """,
+                "extra": "Cada método se explica en [El libro en Python](/pyzed/es/spreadsheet/workbook/), [Formato](/pyzed/es/spreadsheet/formatting/), [Ordenar, filtrar y validar](/pyzed/es/spreadsheet/data/), [Filas, columnas y hojas](/pyzed/es/spreadsheet/structure/) y [Archivos](/pyzed/es/spreadsheet/files/); `help(pz.Workbook)` los lista con su documentación.",
+            },
+        }),
+        ("Mostrarlo", {
+            "pyzed.ui.Spreadsheet": {
+                "desc": "Un componente: la hoja de cálculo entera, con la cuadrícula y su barra de fórmulas, una barra de herramientas, menús con el clic derecho, una barra de búsqueda, paneles de formato condicional, validación y notas, pestañas de hojas y una barra de estado con la suma de la selección. Todo lo que hace el usuario va a `book`. Ver [El componente Spreadsheet](/pyzed/es/spreadsheet/component/).",
+                "params": {"book": "El `pz.Workbook` que muestra y edita (uno nuevo y vacío si es `None`). Guárdalo en tu app para que sus datos sobrevivan a las reconstrucciones de la vista.",
+                           "toolbar": "Muestra la barra de herramientas.", "formula_bar": "Muestra el cuadro de nombres y la barra de fórmulas.",
+                           "tabs": "Muestra las pestañas de hojas y la barra de estado.", "headers": "Muestra las letras de columna y los números de fila.",
+                           "readonly": "Se puede seleccionar, copiar y buscar, pero no cambiar nada.",
+                           "text_size": "Tamaño en píxeles del texto de 10 pt.",
+                           "on_change": "Recibe `event.value` con `action`, `range` y `sheet` cuando el usuario cambia algo.",
+                           "on_select": "Recibe `event.value` con `range` y `sheet` cuando cambia la selección."},
+                "members": False,
+                "example": "ui.Spreadsheet(book=self.book, on_change=lambda e: print(e.value.action, e.value.range))",
+            },
+            "pyzed.sheet": {
+                "desc": "La cuadrícula de la hoja de cálculo sola: celdas, cabeceras y barra de fórmulas, con selección, edición, fórmulas, el controlador de relleno, copiar y pegar y los atajos de Sheets y Excel. Solo dibuja las celdas visibles. No dibuja menús: sus eventos dicen dónde pulsó el usuario. Ver [La cuadrícula sola](/pyzed/es/spreadsheet/grid/).",
+                "params": {"book": "El `pz.Workbook` que muestra.", "colors": "Un dict de colores (`background`, `grid`, `header`, `text`, `accent`, `selection`...); `ui.sheet_colors(theme)` crea uno a partir de un tema.",
+                           "text_size": "Tamaño en píxeles del texto de 10 pt.", "formula_bar": "Muestra el cuadro de nombres y la barra de fórmulas.",
+                           "headers": "Muestra las letras de columna y los números de fila.", "readonly": "Solo seleccionar y copiar.", **_SHEET_EVENTS},
+                "example": "pz.sheet(self.book, formula_bar=False, on_change=lambda e: print(e[\"action\"], e[\"range\"]))",
+            },
+            "pyzed.ui.sheet_colors": {
+                "desc": "Los colores que `ui.Spreadsheet` da a su cuadrícula para un tema, como el dict que recibe `pz.sheet(colors=...)`.",
+                "params": {"theme": "Un tema (el actual si no se indica)."},
+            },
+        }),
+    ],
+})
+
+MEMBERS.update({
+    "pyzed.Workbook.open": "Abre un archivo: `.xlsx`, `.xlsm`, `.xls`, `.ods`, `.csv`, `.tsv` o `.txt`.",
+    "pyzed.Workbook.from_bytes": "Un libro a partir de los bytes de un archivo de Excel u OpenDocument.",
+    "pyzed.Workbook.from_csv": "Un libro con el texto CSV en su hoja (el separador se detecta si no se indica).",
+    "pyzed.Workbook.from_rows": "Un libro con filas (listas o dicts; los dicts escriben una fila de cabecera).",
+    "pyzed.Workbook.functions": "Las funciones que pueden usar las fórmulas: `[(nombre, argumentos, descripción), ...]`.",
+    "pyzed.Workbook.column_name": "Las letras de una columna a partir de su número, empezando en 1 (`column_name(28) == \"AB\"`).",
+})

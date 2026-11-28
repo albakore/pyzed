@@ -1,0 +1,127 @@
+---
+title: The Spreadsheet component
+description: ui.Spreadsheet, the complete spreadsheet component of Pyzed — props, events, the toolbar, menus, sheet tabs, the status bar, read-only mode and how to react to changes.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![The toolbar of ui.Spreadsheet: undo, number formats, font size, bold, colors, borders, merge, alignment, sort, filter, freeze, functions, conditional formatting, validation, notes and find](/pyzed/media/spreadsheet/toolbar.webp)
+
+`ui.Spreadsheet` is a whole spreadsheet in one component: the [grid](/pyzed/spreadsheet/grid/)
+with its formula bar, a toolbar, right-click menus, a find bar, side panels for conditional
+formatting, validation and notes, sheet tabs and a status bar. Give it a
+[`pz.Workbook`](/pyzed/spreadsheet/workbook/) and it shows and edits it.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Inventory(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook.open("inventory.xlsx")
+
+    def changed(self, event):
+        print(event.value.action, event.value.range)   # "edit" "B4"
+
+    def view(self):
+        return ui.Spreadsheet(book=self.book, on_change=self.changed)
+
+
+pz.run(Inventory)
+```
+
+It is in the **Display** category of the designer's toolbox, so you can also drop it on a
+form and connect its events there.
+
+## Props
+
+| Prop | Default | What it does |
+| --- | --- | --- |
+| `book` | a new empty workbook | The `pz.Workbook` to show and edit. Keep it in your app (`self.book`) so the data survives view rebuilds. A path (`"sales.xlsx"`) opens that file, which is handy in the designer. |
+| `toolbar` | `True` | The toolbar above the grid. |
+| `formula_bar` | `True` | The name box and the formula bar. |
+| `tabs` | `True` | The sheet tabs and the status bar at the bottom. |
+| `headers` | `True` | Column letters and row numbers. |
+| `readonly` | `False` | Users can select, scroll, copy and find, but not change anything. Your code still can. |
+| `text_size` | `13` | The size of the cells' text, in pixels, for 10 pt cells. |
+| `width`, `height` | `"fill"` | The size of the component. |
+
+With `toolbar=False, formula_bar=False, tabs=False` it is a bare grid, for a table of
+editable values inside a larger form.
+
+## Events
+
+| Event | When | `event.value` |
+| --- | --- | --- |
+| `on_change` | Cells, formats or the structure changed, by the user. | `action`, `range` and `sheet`. |
+| `on_select` | The selection changed. | `range` and `sheet`. |
+
+`action` says what happened: `"edit"`, `"paste"`, `"cut"`, `"fill"`, `"clear"`,
+`"format"`, `"sort"`, `"filter"`, `"resize"`, `"structure"`, `"sheets"`, `"undo"`,
+`"redo"`...
+
+Changes made from your code don't fire `on_change`: you already know about them. To follow
+every change, wherever it comes from, ask the workbook: `book.changes()` returns the cells
+changed since the last call, and `book.version` grows with each change.
+
+```python
+def changed(self, event):
+    for cell in self.book.changes():      # ["B4", "C4", "Team!A2"]
+        ...
+    self.saved = False
+```
+
+## The toolbar
+
+From left to right:
+
+- **Undo** and **redo**.
+- **Currency**, **percent**, fewer and more **decimals**, and **123**, the menu of number
+  formats (number, percent, scientific, financial, currency, date, time, duration, plain
+  text).
+- **Font size**.
+- **Bold**, **italic**, **strikethrough**, **underline**, **text color** and **fill color**
+  (a palette like Google Sheets', and *Reset*).
+- **Borders** (all, inner, outer, top, bottom, left, right, none), **merge** (toggles) and
+  **alignment** (left, center, right, top, middle, bottom).
+- **Wrap text**.
+- **Sort A → Z** and **Z → A** (a header row is detected and kept on top).
+- **Filter** on and off, and **freeze** (rows, columns, up to the active cell, unfreeze).
+- **Functions** (Σ): `SUM`, `AVERAGE`, `COUNT`, `MAX`, `MIN`, which start a formula in the active
+  cell, and *All functions…*, the full list.
+- **Conditional formatting**, **data validation** and **note**: they open a side panel.
+- **Find and replace**, at the right end.
+
+The buttons light up for the style of the active cell. With `readonly=True` the buttons that
+change things are disabled; find still works.
+
+## Menus
+
+Right-clicking a cell, a row number or a column letter opens a context menu with cut, copy,
+paste, paste values only, insert and delete rows and columns, hide and unhide, fit to data,
+clear contents and formatting, sort, and the note, conditional formatting and validation
+panels. A cell with a list opens its dropdown with a click on its arrow or
+<kbd>Alt</kbd>+<kbd>↓</kbd>, and the funnel on a filtered header opens the
+[filter menu](/pyzed/spreadsheet/data/#filters).
+
+## Sheet tabs and status bar
+
+At the bottom, **+** adds a sheet, and each tab switches to its sheet. Double-click a tab to
+rename it; right-click it to rename, duplicate, delete, move left or right, or color it. On
+the right, the status bar shows the **sum**, **average** and **count** of the selection when
+it has numbers.
+
+## Theme
+
+The component reads its colors from the current theme (light or dark, and any custom
+theme). `ui.sheet_colors(theme)` returns the colors it gives the grid, if you want the same
+look on a [`pz.sheet`](/pyzed/spreadsheet/grid/) of your own.
+
+<Aside type="tip">
+`ui.Spreadsheet` is written in Python on top of `pz.sheet`, in
+[`pyzed/ui/sheet.py`](https://github.com/albakore/pyzed/blob/main/python/pyzed/ui/sheet.py).
+If you need a different toolbar, it is a good starting point to copy.
+</Aside>

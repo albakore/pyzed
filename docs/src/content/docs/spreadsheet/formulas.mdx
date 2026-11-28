@@ -1,0 +1,313 @@
+---
+title: Formulas
+description: Formulas in a Pyzed spreadsheet — references, ranges, other sheets, operators, criteria, dynamic arrays, errors and the full list of 146 functions, compatible with Excel and Google Sheets.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A formula being typed: the function list, the argument hint and the referenced range outlined in color](/pyzed/media/spreadsheet/formulas.webp)
+
+A formula starts with `=` and computes a value from numbers, text and other cells. It is written
+the same way as in Excel and Google Sheets, so formulas copied from either one work here, and
+files you save keep them.
+
+```python
+book["B5"] = "=SUM(B2:B4)"
+book["C2"] = '=IF(B2>100, "High", "Low")'
+book["D2"] = "=VLOOKUP(A2, Prices!A:B, 2, FALSE)"
+book["B5"]           # the result: 1410
+book.formula("B5")   # the formula: "=SUM(B2:B4)"
+book.text("B5")      # what the cell shows: "$1,410.00"
+```
+
+When a cell changes, only the formulas that depend on it are computed again, in the right
+order. A formula that ends up depending on itself shows `#CYCLE!` instead of freezing the app.
+
+<Aside type="note" title="In plain words">
+A formula is a small calculation that lives in a cell. Write `=` and then what to compute:
+`=2+2`, `=B2*1.21` (the value of B2 plus 21 %), `=SUM(B2:B9)` (add everything from B2 to B9).
+If B2 changes, the result changes too.
+</Aside>
+
+## References
+
+| Reference | Means |
+| --- | --- |
+| `B3` | One cell. |
+| `B2:D9` | A range: from B2 to D9. |
+| `A:A`, `A:C` | Whole columns. |
+| `2:2`, `2:5` | Whole rows. |
+| `$B$3`, `B$3`, `$B3` | Absolute references: the part with `$` does not move when the formula is copied or filled. |
+| `Sales!B3`, `'Raw data'!A1:A9` | A cell or range of another sheet (quotes when the name has spaces). |
+
+When you copy, fill, or paste a formula, its relative references move with it: `=A1*2` copied
+one row down becomes `=A2*2`. When you insert or delete rows and columns, references are
+updated so they keep pointing at the same cells (a deleted cell becomes `#REF!`). When you
+rename a sheet, the formulas that mention it are rewritten.
+
+While typing, press <kbd>F4</kbd> to cycle a reference between `A1`, `$A$1`, `A$1` and `$A1`.
+
+## Operators
+
+| Operator | Does | Example |
+| --- | --- | --- |
+| `+` `-` `*` `/` | Arithmetic | `=B2*C2-D2` |
+| `^` | Power | `=2^10` |
+| `%` | Percent | `=B2*15%` |
+| `&` | Joins text | `=A2&" "&B2` |
+| `=` `<>` `<` `>` `<=` `>=` | Compare (TRUE or FALSE) | `=B2>=100` |
+| `-` before a value | Negative | `=-B2` |
+
+Text goes in double quotes (`"North"`), and `TRUE` / `FALSE` are logical values. Numbers
+that are text (`"12"`) are converted when an operator needs a number.
+
+## Criteria
+
+`COUNTIF`, `SUMIF`, `AVERAGEIF`, their `...IFS` versions and `MAXIFS` / `MINIFS` take a
+criterion as text, like Excel:
+
+| Criterion | Matches |
+| --- | --- |
+| `"North"` or `"=North"` | Equal to North (case does not matter). |
+| `">100"`, `"<=0"`, `"<>Done"` | Compared with a number or text. |
+| `"a*"`, `"*north*"`, `"??-??"` | Wildcards: `*` any text, `?` one character. |
+| `">"&B1` | Built from a cell. |
+
+## Dynamic arrays
+
+Functions that return several values (`SEQUENCE`, `FILTER`, `SORT`, `UNIQUE`,
+`TRANSPOSE`, `SPLIT`) **spill** into the cells below and to the right, like in current Excel
+and Google Sheets. Only the first cell holds the formula; the others show its values. If a
+cell in the way already has something, the formula shows `#SPILL!` until it is cleared.
+
+```python
+book["A1"] = "=SEQUENCE(5)"                       # 1 to 5 in A1:A5
+book["C1"] = '=FILTER(A2:B20, B2:B20>100)'         # the rows with more than 100
+book["F1"] = "=UNIQUE(Sales!B2:B9)"                # each region once
+```
+
+## Errors
+
+| Error | Why |
+| --- | --- |
+| `#DIV/0!` | A division by zero. |
+| `#VALUE!` | A value of the wrong type (text where a number was needed). |
+| `#REF!` | A reference to cells that were deleted. |
+| `#NAME?` | An unknown function or name. |
+| `#N/A` | A lookup that found nothing. |
+| `#NUM!` | A number out of range (the square root of -1). |
+| `#CYCLE!` | The formula depends on itself. |
+| `#SPILL!` | An array formula can't spill because cells are in the way. |
+| `#ERROR!` | The formula can't be read (a missing parenthesis, for example). |
+
+Errors travel: a formula that uses a cell with an error shows the same error. `IFERROR` and
+`IFNA` catch them: `=IFERROR(B2/C2, 0)`.
+
+## Dates and times
+
+Dates are numbers of days, like in every spreadsheet, so you can subtract them (`=B2-A2` is
+the number of days between two dates) and add days to them (`=A2+30`). `TODAY()` and `NOW()`
+change every time the book is recalculated; call `book.recalculate()` to update them.
+
+## Your own data in formulas
+
+Formulas only read cells. To use data from your app, write it into a sheet (it can be a
+hidden helper sheet) with `book.write(rows, at="A1")`, and formulas can reference it.
+`pz.Workbook.functions()` returns the list below as `(name, arguments, description)`
+tuples, for example to build your own function picker.
+
+## All the functions
+
+There are 146 functions. In the arguments, `[brackets]` mark the optional ones.
+
+{/* functions:start */}
+
+### Math
+
+| Function | Description |
+| --- | --- |
+| `ABS(number)` | Absolute value. |
+| `CEILING(number, [significance])` | Rounds up to a multiple of significance. |
+| `EVEN(number)` | Rounds away from zero to an even integer. |
+| `EXP(number)` | e raised to a power. |
+| `FACT(number)` | Factorial. |
+| `FLOOR(number, [significance])` | Rounds down to a multiple of significance. |
+| `GCD(number1, [number2, ...])` | Greatest common divisor. |
+| `INT(number)` | Rounds down to an integer. |
+| `LCM(number1, [number2, ...])` | Least common multiple. |
+| `LN(number)` | Natural logarithm. |
+| `LOG(number, [base])` | Logarithm (base 10 by default). |
+| `LOG10(number)` | Base-10 logarithm. |
+| `MOD(dividend, divisor)` | Remainder of a division (with the divisor's sign). |
+| `MROUND(number, multiple)` | Rounds to the nearest multiple. |
+| `ODD(number)` | Rounds away from zero to an odd integer. |
+| `PI()` | π. |
+| `POWER(base, exponent)` | A number raised to a power. |
+| `PRODUCT(number1, [number2, ...])` | The numbers multiplied together. |
+| `QUOTIENT(dividend, divisor)` | Integer part of a division. |
+| `RAND()` | A random number between 0 and 1. |
+| `RANDBETWEEN(low, high)` | A random integer between two numbers. |
+| `ROUND(number, [places])` | Rounds to some decimal places. |
+| `ROUNDDOWN(number, [places])` | Rounds towards zero. |
+| `ROUNDUP(number, [places])` | Rounds away from zero. |
+| `SEQUENCE(rows, [columns], [start], [step])` | An array of consecutive numbers. |
+| `SIGN(number)` | 1, 0 or -1. |
+| `SQRT(number)` | Square root. |
+| `SUM(number1, [number2, ...])` | Adds the numbers. |
+| `SUMIF(range, criterion, [sum_range])` | Adds the cells that match a criterion. |
+| `SUMIFS(sum_range, range1, criterion1, ...)` | Adds the cells that match every criterion. |
+| `SUMPRODUCT(array1, [array2, ...])` | Sum of the products of the arrays. |
+| `SUMSQ(number1, [number2, ...])` | Sum of the squares. |
+| `TRUNC(number, [places])` | Cuts off the decimals. |
+
+### Statistics
+
+| Function | Description |
+| --- | --- |
+| `AVERAGE(number1, [number2, ...])` | Arithmetic mean of the numbers. |
+| `AVERAGEIF(range, criterion, [average_range])` | Mean of the cells that match a criterion. |
+| `AVERAGEIFS(average_range, range1, criterion1, ...)` | Mean of the cells that match every criterion. |
+| `COUNT(value1, [value2, ...])` | How many numbers. |
+| `COUNTA(value1, [value2, ...])` | How many non-empty values. |
+| `COUNTBLANK(range)` | How many empty cells. |
+| `COUNTIF(range, criterion)` | How many cells match a criterion (">5", "apple", "a*"). |
+| `COUNTIFS(range1, criterion1, [range2, criterion2, ...])` | How many rows match every criterion. |
+| `LARGE(range, k)` | The k-th largest number. |
+| `MAX(number1, [number2, ...])` | Largest number. |
+| `MAXIFS(max_range, range1, criterion1, ...)` | Largest of the cells that match every criterion. |
+| `MEDIAN(number1, [number2, ...])` | Middle number. |
+| `MIN(number1, [number2, ...])` | Smallest number. |
+| `MINIFS(min_range, range1, criterion1, ...)` | Smallest of the cells that match every criterion. |
+| `MODE(number1, [number2, ...])` | Most frequent number. |
+| `PERCENTILE(range, k)` | The k-th percentile (0 to 1). |
+| `RANK(value, range, [ascending])` | Rank of a number in a list (1 = largest). |
+| `SMALL(range, k)` | The k-th smallest number. |
+| `STDEV(number1, [number2, ...])` | Standard deviation of a sample. |
+| `STDEV.P(number1, [number2, ...])` | Standard deviation of a population. |
+| `STDEV.S(number1, [number2, ...])` | Standard deviation of a sample. |
+| `VAR(number1, [number2, ...])` | Variance of a sample. |
+| `VAR.P(number1, [number2, ...])` | Variance of a population. |
+| `VAR.S(number1, [number2, ...])` | Variance of a sample. |
+
+### Logic
+
+| Function | Description |
+| --- | --- |
+| `AND(logical1, [logical2, ...])` | TRUE when every argument is TRUE. |
+| `FALSE()` | The logical value FALSE. |
+| `IF(condition, value_if_true, [value_if_false])` | One value or another depending on a condition. |
+| `IFERROR(value, value_if_error)` | The value, or another one if it is an error. |
+| `IFNA(value, value_if_na)` | The value, or another one if it is #N/A. |
+| `IFS(condition1, value1, [condition2, value2, ...])` | The value of the first TRUE condition. |
+| `NOT(logical)` | The opposite of a logical value. |
+| `OR(logical1, [logical2, ...])` | TRUE when any argument is TRUE. |
+| `SWITCH(expression, case1, value1, [..., default])` | The value of the first case equal to the expression. |
+| `TRUE()` | The logical value TRUE. |
+| `XOR(logical1, [logical2, ...])` | TRUE when an odd number of arguments are TRUE. |
+
+### Lookup and reference
+
+| Function | Description |
+| --- | --- |
+| `CHOOSE(index, value1, [value2, ...])` | The value at a position in the list. |
+| `COLUMN([reference])` | Column number of a reference. |
+| `COLUMNS(range)` | Number of columns. |
+| `FILTER(range, include, [if_empty])` | The rows of a range where include is TRUE. |
+| `HLOOKUP(key, range, row_index, [is_sorted])` | Looks up a key in the first row and returns a value from another row. |
+| `INDEX(range, row, [column])` | The cell at a row and column of a range. |
+| `INDIRECT(reference_text)` | The reference written in a text ("B3", "Sheet2!A1:A9"). |
+| `MATCH(key, range, [match_type])` | Position of a value in a range (1: ≤ sorted, 0: exact, -1: ≥). |
+| `OFFSET(reference, rows, columns, [height], [width])` | A reference moved and resized. |
+| `ROW([reference])` | Row number of a reference. |
+| `ROWS(range)` | Number of rows. |
+| `SORT(range, [column], [ascending], [by_column])` | The rows of a range, sorted. |
+| `TRANSPOSE(range)` | Rows become columns. |
+| `UNIQUE(range)` | The distinct rows of a range. |
+| `VLOOKUP(key, range, column_index, [is_sorted])` | Looks up a key in the first column and returns a value from another column. |
+| `XLOOKUP(key, lookup_range, result_range, [if_not_found], [match_mode], [search_mode])` | Looks up a key and returns the matching item. |
+
+### Text
+
+| Function | Description |
+| --- | --- |
+| `CHAR(number)` | The character with this code. |
+| `CLEAN(text)` | Removes non-printable characters. |
+| `CODE(text)` | The code of the first character. |
+| `CONCAT(text1, [text2, ...])` | Joins texts. |
+| `CONCATENATE(text1, [text2, ...])` | Joins texts. |
+| `EXACT(text1, text2)` | TRUE when both texts are identical (case-sensitive). |
+| `FIND(find_text, within_text, [start])` | Position of a text (case-sensitive). |
+| `LEFT(text, [count])` | The first characters of a text. |
+| `LEN(text)` | Number of characters. |
+| `LOWER(text)` | Lowercase. |
+| `MID(text, start, count)` | Characters from the middle of a text. |
+| `PROPER(text)` | Capitalizes Each Word. |
+| `REPLACE(text, position, length, new_text)` | Replaces part of a text by position. |
+| `REPT(text, times)` | Repeats a text. |
+| `RIGHT(text, [count])` | The last characters of a text. |
+| `SEARCH(find_text, within_text, [start])` | Position of a text (ignores case, allows * and ?). |
+| `SPLIT(text, delimiter)` | Splits a text into cells. |
+| `SUBSTITUTE(text, search, replacement, [occurrence])` | Replaces a text with another. |
+| `T(value)` | The value if it is text, otherwise "". |
+| `TEXT(value, format)` | A number as text in a format ("0.00", "yyyy-mm-dd"). |
+| `TEXTJOIN(delimiter, ignore_empty, text1, [text2, ...])` | Joins texts with a delimiter. |
+| `TRIM(text)` | Removes extra spaces. |
+| `UPPER(text)` | Uppercase. |
+| `VALUE(text)` | The number a text stands for. |
+
+### Date and time
+
+| Function | Description |
+| --- | --- |
+| `DATE(year, month, day)` | A date from its parts. |
+| `DATEDIF(start_date, end_date, unit)` | Difference between dates in "Y", "M", "D", "YM", "MD" or "YD". |
+| `DATEVALUE(date_text)` | The date a text stands for. |
+| `DAY(date)` | Day of the month (1-31). |
+| `DAYS(end_date, start_date)` | Days between two dates. |
+| `EDATE(start_date, months)` | The date some months before or after. |
+| `EOMONTH(start_date, months)` | The last day of the month some months away. |
+| `HOUR(time)` | Hour (0-23). |
+| `MINUTE(time)` | Minute (0-59). |
+| `MONTH(date)` | Month (1-12). |
+| `NETWORKDAYS(start_date, end_date)` | Working days (Monday to Friday) between two dates. |
+| `NOW()` | The current date and time. |
+| `SECOND(time)` | Second (0-59). |
+| `TIME(hour, minute, second)` | A time from its parts. |
+| `TODAY()` | Today's date. |
+| `WEEKDAY(date, [type])` | Day of the week (1 = Sunday by default). |
+| `YEAR(date)` | Year. |
+
+### Information
+
+| Function | Description |
+| --- | --- |
+| `ISBLANK(value)` | TRUE when the cell is empty. |
+| `ISERR(value)` | TRUE for errors other than #N/A. |
+| `ISERROR(value)` | TRUE for any error. |
+| `ISEVEN(number)` | TRUE for even numbers. |
+| `ISFORMULA(reference)` | TRUE when the cell has a formula. |
+| `ISLOGICAL(value)` | TRUE for TRUE or FALSE. |
+| `ISNA(value)` | TRUE for #N/A. |
+| `ISNUMBER(value)` | TRUE for numbers. |
+| `ISODD(number)` | TRUE for odd numbers. |
+| `ISTEXT(value)` | TRUE for text. |
+| `N(value)` | The value as a number (text is 0). |
+| `NA()` | The #N/A error. |
+
+### Trigonometry
+
+| Function | Description |
+| --- | --- |
+| `ACOS(number)` | Arccosine, in radians. |
+| `ASIN(number)` | Arcsine, in radians. |
+| `ATAN(number)` | Arctangent, in radians. |
+| `ATAN2(x, y)` | Arctangent of y/x, in radians. |
+| `COS(angle)` | Cosine of an angle in radians. |
+| `DEGREES(angle)` | Radians to degrees. |
+| `RADIANS(angle)` | Degrees to radians. |
+| `SIN(angle)` | Sine of an angle in radians. |
+| `TAN(angle)` | Tangent of an angle in radians. |
+
+{/* functions:end */}

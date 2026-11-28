@@ -1715,6 +1715,78 @@ pz.container(ui.table(
 )
 
 add(
+    slug="spreadsheet",
+    name=T("Spreadsheet", "Hoja de cálculo"),
+    category="data",
+    api=["pyzed.ui.Spreadsheet", "pyzed.Workbook", "pyzed.sheet", "pyzed.ui.sheet_colors"],
+    badge="new",
+    blurb=T("A spreadsheet like Google Sheets or Excel: formulas, formats, filters and .xlsx files.",
+            "Una hoja de cálculo como Google Sheets o Excel: fórmulas, formatos, filtros y archivos .xlsx."),
+    desc=T(
+        "A complete spreadsheet: a grid of cells with formulas (146 functions), number formats, conditional "
+        "formatting, dropdowns and checkboxes, sorting and filters, frozen panes, merged cells, several sheets, "
+        "undo, autofill and copy and paste with Sheets and Excel, plus a toolbar, menus and sheet tabs. The data "
+        "lives in a `pz.Workbook`, which your code reads and writes (`book[\"B2\"]`, `book.records()`) and "
+        "which opens and saves `.xlsx` and CSV files. It has its own section: "
+        "[Spreadsheet](/pyzed/spreadsheet/).",
+        "Una hoja de cálculo completa: una cuadrícula de celdas con fórmulas (146 funciones), formatos de número, "
+        "formato condicional, listas desplegables y casillas, orden y filtros, filas y columnas inmovilizadas, "
+        "celdas combinadas, varias hojas, deshacer, autorrelleno y copiar y pegar con Sheets y Excel, más una "
+        "barra de herramientas, menús y pestañas de hojas. Los datos viven en un `pz.Workbook`, que tu código lee "
+        "y escribe (`book[\"B2\"]`, `book.records()`) y que abre y guarda archivos `.xlsx` y CSV. Tiene su propia "
+        "sección: [Hoja de cálculo](/pyzed/es/spreadsheet/).",
+    ),
+    when=T(
+        ["When users enter, calculate or review tabular data: budgets, inventories, grades, price lists, imports.",
+         "To show records that are only read and sorted, a [Table](/pyzed/library/table/) is simpler."],
+        ["Cuando los usuarios introducen, calculan o revisan datos en tabla: presupuestos, inventarios, notas, "
+         "listas de precios, importaciones.",
+         "Para mostrar registros que solo se leen y ordenan, una [tabla](/pyzed/es/library/table/) es más sencilla."],
+    ),
+    preview={"code": """book = pz.Workbook()
+book.write([["Item", "Units", "Price", "Total"],
+            ["Apples", 120, 0.5, "=B2*C2"],
+            ["Pears", 80, 0.75, "=B3*C3"],
+            ["Plums", 45, 1.2, "=B4*C4"]])
+book["A5"], book["D5"] = "Total", "=SUM(D2:D4)"
+book.format("A1:D1", bold=True, fill="#e8f0fe")
+book.format("C2:D5", number_format="$#,##0.00")
+book.format("A5:D5", bold=True)
+book.select("D5")
+pz.container(ui.Spreadsheet(book=book), width=760, height=360)""", "size": (800, 400)},
+    usage="""class Budget(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.book.write([["Item", "Cost"], ["Rent", 950], ["Food", 320]])
+        self.book["B4"] = "=SUM(B2:B3)"
+
+    def changed(self, event):
+        print(event.value.action, event.value.range, self.book["B4"])
+
+    def view(self):
+        return ui.Spreadsheet(book=self.book, on_change=self.changed)""",
+    examples=[
+        {"title": T("Just the grid", "Solo la cuadrícula"),
+         "text": T("Without the toolbar and the tabs it is an editable table with formulas.",
+                   "Sin la barra ni las pestañas es una tabla editable con fórmulas."),
+         "code": """book = pz.Workbook.from_rows([
+    {"Student": "Ada", "Exam 1": 9, "Exam 2": 8.5},
+    {"Student": "Alan", "Exam 1": 7, "Exam 2": 9},
+])
+book["D1"], book["D2"], book["D3"] = "Average", "=AVERAGE(B2:C2)", "=AVERAGE(B3:C3)"
+pz.container(ui.Spreadsheet(book=book, toolbar=False, tabs=False), width=520, height=160)""",
+         "size": (600, 200)},
+    ],
+    notes=T(
+        "Keep the workbook in your app (`self.book`): a `pz.Workbook()` made inside `view()` would start empty on "
+        "every rebuild.",
+        "Guarda el libro en tu app (`self.book`): un `pz.Workbook()` creado dentro de `view()` empezaría vacío en "
+        "cada reconstrucción.",
+    ),
+    related=["table", "virtual-list", "line-chart"],
+)
+
+add(
     slug="virtual-list",
     name=T("Virtual list", "Lista virtual"),
     category="lists",
@@ -4318,6 +4390,8 @@ PLAIN = {
                          "Una línea discreta que enseña un atajo: “Abrir archivo  Ctrl P”."),
     "table": T("Rows and columns of data, like a spreadsheet you can sort by clicking a column.",
                "Filas y columnas de datos, como una hoja de cálculo que ordenas pulsando una columna."),
+    "spreadsheet": T("A grid like Excel where you type numbers and formulas, and the totals update by themselves.",
+                     "Una cuadrícula como Excel donde escribes números y fórmulas, y los totales se calculan solos."),
     "virtual-list": T("A list that stays fast even with millions of rows, because it only draws what you see.",
                       "Una lista que sigue siendo rápida con millones de filas, porque solo dibuja lo que ves."),
     "stat": T("A big number with its name and whether it went up or down, like on a dashboard.",

@@ -1,0 +1,121 @@
+---
+title: Files
+description: Open and save Excel (.xlsx), OpenDocument (.ods), legacy .xls and CSV / TSV files with the Pyzed spreadsheet, from a file dialog or from bytes, keeping formulas and formats.
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opening
+
+```python
+book = pz.Workbook.open("sales.xlsx")     # .xlsx, .xlsm, .xls, .ods
+book = pz.Workbook.open("data.csv")       # .csv, .tsv, .txt
+book = pz.Workbook.from_bytes(data)       # an Excel or OpenDocument file already in memory
+book = pz.Workbook.from_csv(text)         # CSV text; the delimiter is detected (, ; tab |)
+book = pz.Workbook.from_csv(text, delimiter=";")
+```
+
+From an Excel or OpenDocument file the workbook reads every sheet with its values, formulas,
+number formats, fonts, colors, borders, alignment and merged cells. From `.xlsx` files it
+also reads column widths, row heights, hidden rows and columns, frozen panes, the filter
+range, gridlines, tab colors and data validation. Formulas are computed again by Pyzed's
+engine once the file is open.
+
+CSV and TSV fields are read as if typed: numbers, percentages, currencies and dates become
+values, and quoted fields can contain delimiters and line breaks. The sheet is named after
+the file.
+
+## Saving
+
+```python
+book.save("sales.xlsx")       # every sheet
+book.save("sales.csv")        # the active sheet, as shown (or .tsv)
+data = book.to_xlsx()         # the bytes of an .xlsx file, to send or store
+text = book.to_csv()          # CSV text of the active sheet (to_csv("Team") for another)
+```
+
+An `.xlsx` file keeps:
+
+- values and formulas (with their last results, so other programs show them before
+  recalculating),
+- number formats, fonts, bold, italic, underline, strikethrough, colors, fills, borders and
+  alignment,
+- merged cells, column widths, row heights, hidden rows and columns,
+- frozen rows and columns, the filter range and hidden gridlines,
+- notes, tab colors,
+- data validation (dropdowns, numbers, dates, lengths, formulas; checkboxes are written as
+  `TRUE` / `FALSE` lists) and conditional formatting (including color scales and data bars).
+
+So a book you make in Pyzed opens in Excel, Google Sheets, LibreOffice and Numbers looking
+the same.
+
+<Aside type="caution">
+Notes and conditional formatting are saved to `.xlsx` files but not read back from them yet,
+and `.xls` and `.ods` files are read without their layout (sizes, frozen panes, validation).
+</Aside>
+
+## Open and save dialogs
+
+`pz.Command.pick_files` and `pz.Command.save_file` show the system's file dialogs. This is
+the title bar of [`examples/spreadsheet.py`](https://github.com/albakore/pyzed/blob/main/examples/spreadsheet.py):
+
+```python
+class SpreadsheetApp(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook()
+        self.path = None
+
+    def open(self):
+        def opened(paths):
+            if paths:
+                self.book = pz.Workbook.open(paths[0])
+                self.path = paths[0]
+
+        return pz.Command.pick_files(opened, multiple=False,
+                                     filters=[("Spreadsheets", ["xlsx", "xls", "ods", "csv", "tsv"])])
+
+    def save(self):
+        def chosen(paths):
+            if paths:
+                self.book.save(paths[0])
+                self.path = paths[0]
+
+        return pz.Command.save_file(chosen, file_name="book.xlsx",
+                                    filters=[("Excel", ["xlsx"]), ("CSV", ["csv"])])
+
+    def view(self):
+        bar = ui.toolbar(
+            [ui.label(self.path or "Untitled spreadsheet", weight="semibold")],
+            [ui.button("Open…", self.open, icon="folder-open", size="sm"),
+             ui.button("Save as…", self.save, icon="save", size="sm")],
+        )
+        return pz.column([bar, ui.Spreadsheet(book=self.book)], width="fill", height="fill")
+```
+
+## Without a window
+
+The workbook doesn't need a window, so it can turn data into Excel reports in a script or a
+server:
+
+```python
+import pyzed as pz
+
+book = pz.Workbook.from_rows(orders)            # a list of dicts
+book["F1"] = "Total"
+book.write([[f"=D{r}*E{r}"] for r in range(2, len(orders) + 2)], at="F2")
+book.format("A1:F1", bold=True, fill="#e8f0fe")
+book.format("F2:F999", number_format="$#,##0.00")
+book.freeze(rows=1)
+book.autofit()
+book.save("orders.xlsx")
+```
+
+Or read a file that someone filled in Excel:
+
+```python
+book = pz.Workbook.open("survey.xlsx")
+for row in book.records():
+    print(row["Name"], row["Score"])
+```

@@ -1,0 +1,132 @@
+---
+title: El componente Spreadsheet
+description: ui.Spreadsheet, el componente de hoja de cálculo completo de Pyzed — propiedades, eventos, barra de herramientas, menús, pestañas de hojas, barra de estado, modo de solo lectura y cómo reaccionar a los cambios.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![La barra de herramientas de ui.Spreadsheet: deshacer, formatos de número, tamaño de letra, negrita, colores, bordes, combinar, alineación, ordenar, filtro, inmovilizar, funciones, formato condicional, validación, notas y buscar](/pyzed/media/spreadsheet/toolbar.webp)
+
+`ui.Spreadsheet` es una hoja de cálculo entera en un componente: la
+[cuadrícula](/pyzed/es/spreadsheet/grid/) con su barra de fórmulas, una barra de
+herramientas, menús con el clic derecho, una barra de búsqueda, paneles laterales para el
+formato condicional, la validación y las notas, pestañas de hojas y una barra de estado. Dale un
+[`pz.Workbook`](/pyzed/es/spreadsheet/workbook/) y lo muestra y lo edita.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Inventario(pz.App):
+    def __init__(self):
+        self.book = pz.Workbook.open("inventario.xlsx")
+
+    def changed(self, event):
+        print(event.value.action, event.value.range)   # "edit" "B4"
+
+    def view(self):
+        return ui.Spreadsheet(book=self.book, on_change=self.changed)
+
+
+pz.run(Inventario)
+```
+
+Está en la categoría **Display** de la caja de herramientas del diseñador, así que también
+puedes soltarlo en un formulario y conectar allí sus eventos.
+
+## Propiedades
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `book` | un libro vacío nuevo | El `pz.Workbook` que muestra y edita. Guárdalo en tu app (`self.book`) para que los datos sobrevivan a las reconstrucciones de la vista. Una ruta (`"ventas.xlsx"`) abre ese archivo, algo práctico en el diseñador. |
+| `toolbar` | `True` | La barra de herramientas sobre la cuadrícula. |
+| `formula_bar` | `True` | El cuadro de nombres y la barra de fórmulas. |
+| `tabs` | `True` | Las pestañas de hojas y la barra de estado de abajo. |
+| `headers` | `True` | Letras de columna y números de fila. |
+| `readonly` | `False` | Se puede seleccionar, desplazar, copiar y buscar, pero no cambiar nada. Tu código sí puede. |
+| `text_size` | `13` | El tamaño del texto de las celdas, en píxeles, para celdas de 10 pt. |
+| `width`, `height` | `"fill"` | El tamaño del componente. |
+
+Con `toolbar=False, formula_bar=False, tabs=False` es una cuadrícula desnuda, para una tabla
+de valores editables dentro de un formulario más grande.
+
+## Eventos
+
+| Evento | Cuándo | `event.value` |
+| --- | --- | --- |
+| `on_change` | El usuario cambió celdas, formatos o la estructura. | `action`, `range` y `sheet`. |
+| `on_select` | Cambió la selección. | `range` y `sheet`. |
+
+`action` dice qué pasó: `"edit"`, `"paste"`, `"cut"`, `"fill"`, `"clear"`, `"format"`,
+`"sort"`, `"filter"`, `"resize"`, `"structure"`, `"sheets"`, `"undo"`, `"redo"`...
+
+Los cambios que hace tu código no disparan `on_change`: ya los conoces. Para seguir cada
+cambio, venga de donde venga, pregunta al libro: `book.changes()` devuelve las celdas cambiadas
+desde la última llamada, y `book.version` crece con cada cambio.
+
+```python
+def changed(self, event):
+    for cell in self.book.changes():      # ["B4", "C4", "Equipo!A2"]
+        ...
+    self.saved = False
+```
+
+## La barra de herramientas
+
+De izquierda a derecha:
+
+- **Deshacer** y **rehacer**.
+- **Moneda**, **porcentaje**, menos y más **decimales**, y **123**, el menú de formatos de
+  número (número, porcentaje, científico, financiero, moneda, fecha, hora, duración, texto).
+- **Tamaño de letra**.
+- **Negrita**, **cursiva**, **tachado**, **subrayado**, **color de texto** y **color de
+  relleno** (una paleta como la de Google Sheets, y *Restablecer*).
+- **Bordes** (todos, interiores, exteriores, arriba, abajo, izquierda, derecha, ninguno),
+  **combinar** (alterna) y **alineación** (izquierda, centro, derecha, arriba, en medio,
+  abajo).
+- **Ajustar texto**.
+- **Ordenar A → Z** y **Z → A** (detecta una fila de cabecera y la deja arriba).
+- **Filtro** activado o no, e **inmovilizar** (filas, columnas, hasta la celda activa,
+  movilizar).
+- **Funciones** (Σ): `SUM`, `AVERAGE`, `COUNT`, `MAX`, `MIN`, que empiezan una fórmula en la
+  celda activa, y *All functions…*, la lista completa.
+- **Formato condicional**, **validación de datos** y **nota**: abren un panel lateral.
+- **Buscar y reemplazar**, al final a la derecha.
+
+Los botones se iluminan según el estilo de la celda activa. Con `readonly=True` los botones que
+cambian cosas se desactivan; buscar sigue funcionando.
+
+<Aside type="note">
+Los textos del componente (botones, menús, paneles) están en inglés por ahora.
+</Aside>
+
+## Menús
+
+El clic derecho en una celda, un número de fila o una letra de columna abre un menú contextual
+con cortar, copiar, pegar, pegar solo valores, insertar y eliminar filas y columnas, ocultar y
+mostrar, ajustar a los datos, borrar contenido y formato, ordenar, y los paneles de nota,
+formato condicional y validación. Una celda con lista abre su desplegable con un clic en su
+flecha o con <kbd>Alt</kbd>+<kbd>↓</kbd>, y el embudo de una cabecera filtrada abre el
+[menú del filtro](/pyzed/es/spreadsheet/data/#filtros).
+
+## Pestañas de hojas y barra de estado
+
+Abajo, **+** añade una hoja y cada pestaña cambia a su hoja. Doble clic en una pestaña para
+renombrarla; clic derecho para renombrar, duplicar, eliminar, mover a la izquierda o a la
+derecha, o darle color. A la derecha, la barra de estado muestra la **suma**, la **media** y el
+**recuento** de la selección cuando tiene números.
+
+## Tema
+
+El componente toma sus colores del tema actual (claro u oscuro, y cualquier tema propio).
+`ui.sheet_colors(theme)` devuelve los colores que da a la cuadrícula, por si quieres el mismo
+aspecto en un [`pz.sheet`](/pyzed/es/spreadsheet/grid/) propio.
+
+<Aside type="tip">
+`ui.Spreadsheet` está escrito en Python sobre `pz.sheet`, en
+[`pyzed/ui/sheet.py`](https://github.com/albakore/pyzed/blob/main/python/pyzed/ui/sheet.py).
+Si necesitas otra barra de herramientas, es un buen punto de partida para copiar.
+</Aside>

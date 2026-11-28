@@ -1,0 +1,129 @@
+---
+title: Sort, filter and validate
+description: Data tools of the Pyzed spreadsheet — sort by several columns, filters by value and condition, find and replace, dropdown lists, checkboxes, number, date and text validation, autofill and notes.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Filtering a table from the funnel on its header, then sorting it from Z to A](/pyzed/media/spreadsheet/filter.webp)
+
+## Sorting
+
+Select a range and press **Sort A → Z** or **Z → A** on the toolbar or in the context menu:
+the rows are sorted by the column of the active cell. If the first row looks like a header
+(bold, or text over numbers), it stays on top.
+
+```python
+book.sort("A1:G9", "D", header=True)                           # by Units, smallest first
+book.sort("A1:G9", "F", descending=True, header=True)          # by Total, largest first
+book.sort("A2:G9", by=[("B", False), ("F", True)])             # by Region, then Total down
+```
+
+Numbers sort before text, text ignores case, and empty cells always go last. Formulas inside
+the sorted rows keep pointing at their own row. Sorting can be undone like everything else.
+
+## Filters
+
+A filter hides the rows you don't want to see, without deleting them. Turn it on with the
+funnel on the toolbar or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>: every column of the
+table's header gets a small button. Its menu has:
+
+- **Sort A → Z / Z → A** for the table.
+- **Filter by condition**: `>100`, `<=0`, `<>Done`, `*north*` (wildcards), `=` for empty.
+- **Filter by values**: a checklist of the column's values, with a search box, **Select all**
+  and **Clear**.
+
+The header button turns solid while its column filters something. Hidden rows keep their
+data, formulas still see them (`SUM` counts them, like in Excel), and copying a filtered
+range copies only the visible rows.
+
+```python
+book.filter("A1:G9")                                 # the header is the first row
+book.filter_column("B", hide=["West"])               # hide the West rows
+book.filter_column("F", condition=">100")            # and keep totals over 100
+book.filtered_rows                                   # the hidden rows (1-based)
+book.filter_values("B")                              # [("East", True), ("North", True), ...]
+book.filter_column("B")                              # clear the filter of a column
+book.filter(None)                                    # remove the filter
+```
+
+## Find and replace
+
+<kbd>Ctrl</kbd>+<kbd>F</kbd> opens the find bar above the grid, <kbd>Ctrl</kbd>+<kbd>H</kbd>
+opens it with the replace field. <kbd>Enter</kbd> goes to the next match and the arrow
+buttons go back and forth. It has options to match case, match the whole cell, search inside
+formulas and search all the sheets.
+
+```python
+book.find("apple")                              # ["A1", "A2"] (case does not matter)
+book.find("apple", match_case=True, whole_cell=True)
+book.find("SUM", formulas=True)                 # cells whose formula has SUM
+book.find("x", all_sheets=True)                 # ["A1", "Team!C4"]
+book.replace("Pears", "Pear", whole_cell=True)  # returns how many cells changed
+```
+
+## Data validation
+
+Validation decides what can go into a range. A cell with a list shows a small arrow and
+opens a dropdown; a checkbox cell shows a checkbox.
+
+```python
+book.validate("B2:B9", options=["North", "South", "East", "West"])  # a dropdown
+book.validate("C2:C9", source="Lists!A1:A20")                      # a dropdown from a range
+book.validate("G2:G9", checkbox=True)                              # TRUE / FALSE checkboxes
+book.validate("D2:D9", number=(0, 1000), integer=True)             # whole numbers 0 to 1000
+book.validate("A2:A9", date=("2026-01-01", None))                  # dates from 2026 on
+book.validate("H2:H9", length=(None, 140))                         # at most 140 characters
+book.validate("E2:E9", formula="=E2<=D2", message="Can't be more than the units")
+```
+
+| Argument | Allows |
+| --- | --- |
+| `options` | One of a list of values (a dropdown). |
+| `source` | One of the values of a range, on any sheet (a dropdown that follows the range). |
+| `checkbox` | `TRUE` or `FALSE`, drawn as a checkbox. Click it or press <kbd>Space</kbd>. |
+| `number=(min, max)` | Numbers in a range (`None` for no limit); `integer=True` for whole numbers. |
+| `date=(min, max)` | Dates in a range. |
+| `length=(min, max)` | Text of a length. |
+| `formula` | Values that make the formula TRUE (written for the first cell). |
+
+By default validation is **strict**: a value that breaks the rule is refused, the editor
+stays open and `message` (or a default one) is shown. With `strict=False` the value is kept
+and the cell gets a red mark in its corner, with the message when you hover it.
+
+`book.options("B2")` returns a cell's list, `book.is_valid("B2")` checks it and
+`book.clear_validation("B2:B9")` removes the rule. In
+[`ui.Spreadsheet`](/pyzed/spreadsheet/component/) validation is edited in the **Data
+validation** panel.
+
+## Autofill
+
+```python
+book["A1"], book["A2"] = 1, 2
+book.fill("A1:A2", "A1:A10")    # 1 to 10
+book["B1"] = "Mon"
+book.fill("B1", "B1:B7")        # Mon to Sun
+book.fill("C1", "C1:C9")        # copies C1, moving its relative references
+```
+
+This is what the fill handle does: numbers and dates continue their step, weekdays and month
+names continue (`Jan` or `January`), text ending in a number counts on (`Q1`, `Q2`), and the
+rest is copied. Filling up or to the left counts backwards.
+
+## Notes
+
+A note is a short text attached to a cell, shown when the pointer is over it. The cell gets a
+small orange triangle in its top-right corner.
+
+```python
+book.note("F13", "The region of the largest sale.")
+book.note("F13")          # read it
+book.note("F13", "")      # remove it
+```
+
+## The numbers of a selection
+
+`book.stats("B2:F9")` returns what the status bar shows, as a dict: `sum`, `average`, `min`,
+`max`, `count` (non-empty cells) and `numbers` (cells with numbers).

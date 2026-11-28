@@ -3007,3 +3007,72 @@ _section("app", "Writing direction", {
     "pyzed.bidi.mirrored_icon": {"desc": "The icon shown for `name` in a right-to-left part: `\"chevron-left\"` for `\"chevron-right\"`, `\"redo\"` for `\"undo\"`; `name` itself for an icon that isn't mirrored.", "params": {"name": "A Lucide icon name."}},
     "pyzed.bidi.RTL_LANGUAGES": {"desc": "The language codes written right to left: Arabic, Hebrew, Persian, Urdu, Pashto, Sindhi, Sorani Kurdish, Uyghur, Dhivehi, Yiddish, Syriac and N'Ko.", "no_signature": True},
 }, before="Built-in reference")
+
+# -- Spreadsheet ----------------------------------------------------------------------------------
+_SHEET_EVENTS = {
+    "on_change": "Called with a dict when the user changes cells, formats or the structure: `action` (`\"edit\"`, `\"paste\"`, `\"fill\"`, `\"clear\"`, `\"format\"`, `\"sort\"`, `\"undo\"`...), `range` and `sheet`.",
+    "on_select": "Called with a dict when the selection changes (read `book.selection`).",
+    "on_context": "Called on a right click with `kind` (`\"cell\"`, `\"row\"` or `\"column\"`), `cell`, `x` and `y` (relative to the grid): show a menu there.",
+    "on_dropdown": "Called when a list cell's dropdown should open: `cell`, `options`, `x`, `y`, `width`.",
+    "on_filter": "Called when a filter button of the header is clicked: `column`, `x`, `y`.",
+    "on_find": "Called on Ctrl+F or Ctrl+H: `mode` (`\"find\"` or `\"replace\"`).",
+    "on_invalid": "Called when a typed value breaks a strict validation rule: `cell`, `value`, `message`.",
+    "on_edit": "Called when typing in a cell starts or ends: `editing`.",
+}
+PAGES.append({
+    "slug": "spreadsheet",
+    "title": "Spreadsheet (pz.Workbook, ui.Spreadsheet)",
+    "description": "API reference for the Pyzed spreadsheet: pz.Workbook (cells, formulas, formats, files), the pz.sheet grid and the ui.Spreadsheet component.",
+    "order": 10.9,
+    "intro": """
+        A spreadsheet like Google Sheets or Excel. `pz.Workbook` holds the data and computes the
+        formulas, `pz.sheet` draws the grid and `ui.Spreadsheet` adds a toolbar, menus and sheet
+        tabs. See the [Spreadsheet section](/pyzed/spreadsheet/).
+
+        ```python
+        book = pz.Workbook()
+        book["A1"], book["A2"], book["A3"] = 2, 3, "=A1*A2"
+        ui.Spreadsheet(book=book)
+        ```
+    """,
+    "sections": [
+        ("Workbook", {
+            "pyzed.Workbook": {
+                "docstring": True,
+                "params": {"sheets": "Names of the sheets to start with (one `\"Sheet1\"` by default)."},
+                "example": """
+                    book = pz.Workbook(sheets=["Sales", "Team"])
+                    book["Sales!B2"] = "=SUM(C2:C9)"
+                    book.format("A1:G1", bold=True, fill="#e8f0fe")
+                    book.save("report.xlsx")
+                """,
+                "extra": "Every method is described in [The workbook in Python](/pyzed/spreadsheet/workbook/), [Formatting](/pyzed/spreadsheet/formatting/), [Sort, filter and validate](/pyzed/spreadsheet/data/), [Rows, columns and sheets](/pyzed/spreadsheet/structure/) and [Files](/pyzed/spreadsheet/files/); `help(pz.Workbook)` lists them with their docstrings.",
+            },
+        }),
+        ("Showing it", {
+            "pyzed.ui.Spreadsheet": {
+                "desc": "A component: the whole spreadsheet, with the grid and its formula bar, a toolbar, right-click menus, a find bar, panels for conditional formatting, validation and notes, sheet tabs and a status bar with the selection's sum. Everything the user does goes to `book`. See [The Spreadsheet component](/pyzed/spreadsheet/component/).",
+                "params": {"book": "The `pz.Workbook` to show and edit (a new empty one when `None`). Keep it in your app so its data survives view rebuilds.",
+                           "toolbar": "Shows the toolbar.", "formula_bar": "Shows the name box and the formula bar.",
+                           "tabs": "Shows the sheet tabs and the status bar.", "headers": "Shows the column letters and row numbers.",
+                           "readonly": "Users can select, copy and find, but not change anything.",
+                           "text_size": "Pixel size of 10 pt text.",
+                           "on_change": "Receives `event.value` with `action`, `range` and `sheet` when the user changes something.",
+                           "on_select": "Receives `event.value` with `range` and `sheet` when the selection changes."},
+                "members": False,
+                "example": "ui.Spreadsheet(book=self.book, on_change=lambda e: print(e.value.action, e.value.range))",
+            },
+            "pyzed.sheet": {
+                "desc": "The spreadsheet grid on its own: cells, headers and formula bar, with selection, editing, formulas, the fill handle, copy and paste and the keyboard shortcuts of Sheets and Excel. It draws only the cells in view. The grid doesn't draw menus: its events say where the user clicked. See [The grid on its own](/pyzed/spreadsheet/grid/).",
+                "params": {"book": "The `pz.Workbook` to show.", "colors": "A dict of colors (`background`, `grid`, `header`, `text`, `accent`, `selection`...); `ui.sheet_colors(theme)` makes one from a theme.",
+                           "text_size": "Pixel size of 10 pt text.", "formula_bar": "Shows the name box and the formula bar.",
+                           "headers": "Shows the column letters and row numbers.", "readonly": "Select and copy only.", **_SHEET_EVENTS},
+                "example": "pz.sheet(self.book, formula_bar=False, on_change=lambda e: print(e[\"action\"], e[\"range\"]))",
+            },
+            "pyzed.ui.sheet_colors": {
+                "desc": "The colors `ui.Spreadsheet` gives its grid for a theme, as the dict `pz.sheet(colors=...)` takes.",
+                "params": {"theme": "A theme (the current one by default)."},
+            },
+        }),
+    ],
+})

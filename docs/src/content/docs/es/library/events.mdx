@@ -17,8 +17,8 @@ Los widgets de Pyzed reaccionan a eventos en dos capas:
   `.on(...)`: clics, paso del puntero, arrastre, foco, teclas y tamaño. Un `pz.Component` además lanza
   `on_mount` y `on_unmount`.
 
-Así que un componente puede tener sus eventos propios más los 18 comunes. Entre los 125
-componentes de la biblioteca hay **169 eventos propios**; los que más tienen aparecen primero en la tabla
+Así que un componente puede tener sus eventos propios más los 18 comunes. Entre los 126
+componentes de la biblioteca hay **177 eventos propios**; los que más tienen aparecen primero en la tabla
 del final.
 
 ```python
@@ -78,6 +78,7 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | `()` | Nada: el evento ya es la noticia (una pulsación, un cierre, Enter). | `ui.alert(on_close=)`, `pz.mouse_area(on_press=)`, `pz.mouse_area(on_release=)`, `pz.mouse_area(on_right_press=)`… |
 | `(event)` | Un `pz.Event`: su `value` trae el dato y `source` el componente. | `ui.AuthPrompt(on_pick=)`, `ui.AuthPrompt(on_cancel=)`, `ui.AuthPrompt(on_open_url=)`, `ui.AuthPrompt(on_copy=)`… |
 | `(text)` | El texto nuevo, en cada pulsación de tecla. | `ui.shortcuts(on_query=)`, `ui.picker(on_query=)`, `ui.search_input(on_input=)`, `ui.tag_input(on_input=)`… |
+| `(data)` | Un dict con los detalles (`action` y `range`, `cell`, `x` e `y`…), según el evento. | `pz.sheet(on_context=)`, `pz.sheet(on_dropdown=)`, `pz.sheet(on_filter=)`, `pz.sheet(on_find=)`… |
 | `(x, y)` | La posición del puntero, relativa al widget. | `pz.mouse_area(on_move=)`, `pz.canvas(on_press=)`, `pz.canvas(on_release=)`, `pz.canvas(on_right_press=)`… |
 | `(value)` | El valor nuevo: un número, un color, una opción… | `ui.number_field(on_change=)`, `ui.slider(on_change=)`, `ui.toggle_group(on_select=)`, `ui.radio_group(on_select=)`… |
 | `(info)` | Un dict (desplazamiento y tamaños) o un `ui.ErrorInfo`. | `pz.scrollable(on_scroll=)`, `ui.editor(on_scroll=)`, `ui.error_boundary(on_error=)`, `ui.error_boundary(on_details=)`… |
@@ -101,6 +102,7 @@ Los controles que producen un valor llaman a tu función con él. Las formas má
 | --- | --- | --- | --- |
 | [Área de ratón](/pyzed/es/library/mouse-area/#eventos) | 10 | 28 | `on_press`, `on_release`, `on_right_press`, `on_double_click`, `on_enter`, `on_exit`, `on_move`, `on_scroll`, `on_middle_press`, `on_middle_release` |
 | [Consola](/pyzed/es/library/console/#eventos) | 8 | 26 | `on_query`, `on_toggle_level`, `on_clear`, `on_copy`, `on_context`, `on_open`, `on_source`, `on_write` |
+| [Hoja de cálculo](/pyzed/es/library/spreadsheet/#eventos) | 8 | 28 | `on_change`, `on_select`, `on_context`, `on_dropdown`, `on_filter`, `on_find`, `on_invalid`, `on_edit` |
 | [Barra de pestañas](/pyzed/es/library/tab-bar/#eventos) | 7 | 25 | `on_select`, `on_close`, `on_drag`, `on_drop`, `on_drag_over`, `on_context`, `on_new` |
 | [Editor](/pyzed/es/library/editor/#eventos) | 7 | 25 | `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action`, `on_paste`, `on_hover` |
 | [Barra de cambios](/pyzed/es/library/edits-bar/#eventos) | 5 | 25 | `on_keep`, `on_reject`, `on_keep_file`, `on_reject_file`, `on_open` |

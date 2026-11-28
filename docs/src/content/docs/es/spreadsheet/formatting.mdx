@@ -1,0 +1,118 @@
+---
+title: Formato
+description: Dar formato a las celdas en una hoja de cálculo de Pyzed — negrita, colores, bordes, alineación, ajuste de texto, celdas combinadas, formatos de número de Excel para monedas, porcentajes y fechas, y formato condicional con escalas de color y barras de datos.
+sidebar:
+  order: 5
+---
+
+![Dando formato a celdas desde la barra de herramientas: negrita, un color de relleno, moneda, bordes y un título combinado](/pyzed/media/spreadsheet/formatting.webp)
+
+Todo lo que hay en la barra de herramientas de [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/)
+es también una llamada a `book.format()`, así que tu código puede preparar una hoja que se vea
+terminada antes de que el usuario la abra. Los formatos se guardan en los archivos `.xlsx` y se
+leen de ellos.
+
+## Estilos de celda
+
+```python
+book.format("A1:G1", bold=True, fill="#e8f0fe", borders="bottom")
+book.format("E2:F12", number_format="#,##0.00 €", align="right")
+book.format("A14", italic=True, color="#5f6368", size=9, wrap=True)
+```
+
+| Argumento | Valores |
+| --- | --- |
+| `bold`, `italic`, `underline`, `strike` | `True` / `False`. |
+| `color` | El color del texto, `"#rrggbb"` (o un nombre de color como `"red"`). |
+| `fill` | El color de fondo. |
+| `size` | El tamaño de letra en puntos (10 por defecto, como en Sheets). |
+| `mono` | Una fuente monoespaciada, para códigos e identificadores. |
+| `align` | `"left"`, `"center"` o `"right"`. Sin él, los números van a la derecha, el texto a la izquierda y `TRUE` / `FALSE` al centro, como en toda hoja de cálculo. |
+| `valign` | `"top"`, `"middle"` o `"bottom"` (por defecto). |
+| `wrap` | `True` parte el texto largo en líneas (doble clic en el borde bajo el número de fila para que la fila se ajuste, o `book.row_height()`). Sin él, el texto se extiende sobre las celdas vacías de la derecha. |
+| `number_format` | Un código de formato de Excel (siguiente apartado). `"General"` lo quita. |
+| `borders` | `"all"`, `"outer"`, `"inner"`, `"none"` o lados como `"top bottom"`. |
+| `border_color` | El color de los bordes. |
+
+Los argumentos que no pasas no se tocan, así que puedes añadir negrita sin perder el relleno.
+Lee el estilo de una celda con `book.style("A1")` (un dict solo con lo que tiene puesto) y
+quita formatos con `book.clear("A1:C9", "formats")`.
+
+El texto sin color propio se dibuja con el color de texto del tema, o en negro sobre un relleno
+claro cuando el tema es oscuro, así una fila de cabecera clara se lee bien en los dos temas.
+
+## Formatos de número
+
+Un formato de número decide cómo se **muestra** un valor; el valor en sí no cambia.
+`book["B2"]` sigue valiendo `0.5` aunque la celda muestre `0,50 €`. Los ejemplos muestran
+1234,5 salvo que digan otra cosa.
+
+| Código | Se ve | Para |
+| --- | --- | --- |
+| `#,##0.00` | `1,234.50` | Números con separador de miles. |
+| `0` / `0.0` | `1235` / `1234.5` | Decimales fijos. |
+| `$#,##0.00` | `$1,234.50` | Moneda (cualquier símbolo: `€#,##0.00`, `#,##0.00 €`). |
+| `0%` / `0.00%` | `25%` / `25.00%` para 0,25 | Porcentajes. |
+| `0.00E+00` | `1.23E+03` | Científico. |
+| `#,##0.00;(#,##0.00)` | `1,234.50`, y `(1,234.50)` si es negativo | Contabilidad: una segunda sección para los negativos. |
+| `0.00;[Red]-0.00` | `1234.50`, los negativos en rojo | Colores por sección: `[Red]`, `[Blue]`, `[Green]`... |
+| `yyyy-mm-dd` | `2026-03-04` para esa fecha | Fechas (`dd/mm/yyyy`, `d mmm yyyy`, `mmmm d`...). |
+| `h:mm AM/PM`, `hh:mm:ss` | `2:30 PM`, `14:30:00` para las 14:30 | Horas. |
+| `[h]:mm:ss` | `30:00:00` para 1,25 días | Duraciones de más de 24 horas. |
+| `"Total: "0` | `Total: 1235` | Texto alrededor del número. |
+| `@` | tal como se escribe | Texto: lo que se escribe nunca se convierte en número. |
+
+Los códigos usan el punto para los decimales y la coma para los miles, como Excel en inglés.
+Escribir `$12`, `12%` o una fecha pone solo el formato que corresponde, como en Excel. Los
+botones <kbd>$</kbd>, <kbd>%</kbd> y los de decimales de la barra aplican los más comunes, y
+`book.change_decimals("B2:B9", 1)` añade o quita un decimal.
+
+## Celdas combinadas
+
+```python
+book["A1"] = "Informe trimestral"
+book.merge("A1:F1")
+book.format("A1", align="center", bold=True, size=14)
+book.merges()     # ["A1:F1"]
+book.unmerge("A1:F1")
+```
+
+Un rango combinado muestra el contenido de su celda de arriba a la izquierda en todo su ancho.
+Al seleccionar cualquier parte se selecciona entero, y las flechas lo saltan.
+
+## Formato condicional
+
+El formato condicional colorea las celdas según su valor, y se actualiza cuando los valores
+cambian.
+
+```python
+book.conditional_format("F2:F9", ">", 150, fill="#fce8b2")
+book.conditional_format("C2:C9", "contains", "Peras", color="#188038", bold=True)
+book.conditional_format("D2:D9", "data_bar", fill="#a8dab5")
+book.conditional_format("E2:E9", "color_scale", colors=["#f4c7c3", "#ffffff", "#b7e1cd"])
+book.conditional_format("A2:G9", "formula", "=$G2=FALSE", color="#9aa0a6")
+```
+
+| Regla | Colorea las celdas que |
+| --- | --- |
+| `">"`, `"<"`, `">="`, `"<="`, `"="`, `"<>"` (o `"greater"`, `"less"`...) | Se comparan con `value`. |
+| `"between"`, `"not_between"` | Están entre `value` y `value2`. |
+| `"contains"`, `"not_contains"`, `"starts_with"`, `"ends_with"` | Tienen un texto (sin distinguir mayúsculas). |
+| `"empty"`, `"not_empty"` | Están vacías o no. |
+| `"duplicate"`, `"unique"` | Repiten un valor del rango, o no. |
+| `"formula"` | Hacen TRUE una fórmula. Escríbela para la primera celda del rango; se mueve a las demás como una fórmula copiada (`$G2` fija la columna). |
+| `"color_scale"` | Todas: un color de menor a mayor, con `colors=[bajo, alto]` o `[bajo, medio, alto]`. |
+| `"data_bar"` | Todas: una barra tan larga como el valor, del color `fill`. |
+
+El estilo de una regla puede poner `color`, `fill`, `bold`, `italic`, `underline` y
+`strike`. Si varias reglas coinciden en una celda, la primera que se añadió gana en cada
+propiedad. `book.conditional_formats()` las lista como `(rango, regla)` y
+`book.clear_conditional_formats("F2:F9")` quita las que tocan un rango.
+
+En [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/) se editan en el panel **Formato
+condicional** (la brocha de la barra de herramientas).
+
+## Líneas de la cuadrícula
+
+`book.gridlines = False` oculta las líneas de la hoja activa, para hacer un formulario o un
+informe que no parezca una cuadrícula.

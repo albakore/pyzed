@@ -1,0 +1,145 @@
+---
+title: El libro en Python
+description: pz.Workbook, el motor de datos y fórmulas de la hoja de cálculo de Pyzed — leer y escribir celdas y rangos, registros como dicts, formatos, selección, deshacer, cambios y recálculo, con o sin ventana.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`pz.Workbook` guarda las hojas, las celdas y sus formatos, y calcula las fórmulas. La cuadrícula
+solo lo muestra: todo lo que hace el usuario va al libro, y todo lo que escribe tu código
+aparece en la cuadrícula al momento. No necesita ventana, así que también funciona en scripts,
+servidores y tests, como un pequeño motor de Excel.
+
+```python
+import pyzed as pz
+
+book = pz.Workbook()                            # una hoja, "Sheet1"
+book = pz.Workbook(sheets=["Ventas", "Equipo"])  # hojas con nombre
+book = pz.Workbook.open("informe.xlsx")          # desde un archivo (ver Archivos)
+```
+
+## Celdas
+
+Las direcciones se escriben como en la cuadrícula: `"B2"`, o `"Equipo!B2"` para otra hoja.
+Filas y columnas empiezan en 1.
+
+```python
+book["A1"] = "Nombre"          # texto
+book["B1"] = 42                # un número
+book["C1"] = "=B1*2"           # una fórmula
+book["D1"] = "12%"             # se lee como si se escribiera: el número 0,12, como porcentaje
+book["E1"] = datetime.date(2026, 3, 4)
+book["F1"] = None              # vacía (igual que del book["F1"])
+
+book["C1"]                     # 84: el valor (una fórmula da su resultado)
+book.formula("C1")             # "=B1*2": lo que se escribió
+book.text("D1")                # "12%": lo que muestra la celda
+```
+
+Los valores vuelven como tipos de Python: `int` o `float` para los números (los enteros son
+`int`), `str`, `bool`, `datetime.date` o `datetime.datetime` para las fechas, `None` para las
+celdas vacías y el texto del error (`"#DIV/0!"`) para los errores.
+
+El texto que asignas se interpreta como lo que se escribe en la cuadrícula: números,
+porcentajes, monedas, fechas y `TRUE` / `FALSE` se convierten en valores, y un `=` al principio
+crea una fórmula. Empieza con un apóstrofo (`"'0012"`) para dejar el texto tal cual.
+`book.set("A1", valor)` y `book.get("A1")` son lo mismo que los corchetes.
+
+## Rangos y registros
+
+```python
+book.write([
+    ["Nombre", "Edad"],
+    ["Ada", 36],
+    ["Alan", 41],
+], at="A1")                                    # filas de valores a partir de una celda
+
+book["A1:B3"]                                  # [["Nombre", "Edad"], ["Ada", 36], ["Alan", 41]]
+book.values()                                  # todo el rango usado de la hoja activa
+book.values("A1:B3", formulas=True)            # las fórmulas en lugar de los resultados
+book.records()                                 # [{"Nombre": "Ada", "Edad": 36}, ...]
+book.used_range                                # "A1:B3"
+
+pz.Workbook.from_rows([{"nombre": "Ada", "edad": 36}])   # un libro a partir de dicts (con cabecera)
+book.write(filas_de_dicts, at="D1")            # los dicts también escriben una cabecera
+book.clear("A2:B3")                            # contenido y formato ("contents" o "formats" para uno)
+```
+
+`records()` lee las filas bajo una fila de cabecera (la primera del rango) como dicts, muy
+práctico para pasar los datos de la hoja al resto de tu app, a una base de datos o a un
+gráfico.
+
+## Formatos y estilos
+
+Todo está en [Formato](/pyzed/es/spreadsheet/formatting/). En resumen:
+
+```python
+book.format("A1:B1", bold=True, fill="#e8f0fe")
+book.format("B2:B9", number_format="#,##0.00 €")
+book.style("A1")        # {"bold": True, "fill": "#e8f0fe"}
+```
+
+## Deshacer y rehacer
+
+Cada cambio, del usuario o de tu código, se puede deshacer.
+
+```python
+book.undo()        # True si deshizo algo
+book.redo()
+book.can_undo      # para tus propios botones
+book.batch(lambda: (book.set("A1", 1), book.set("A2", 2)))   # un solo paso para los dos
+```
+
+`batch(fn)` ejecuta una función y convierte todos sus cambios en un paso. Úsalo para todo lo que
+tu app hace con un solo clic.
+
+## La selección
+
+La selección también vive en el libro, así que tu código puede leerla y moverla.
+
+```python
+book.selection        # "B2:D5" (el último rango)
+book.selections       # ["B2:D5", "F1"] con Ctrl+clic
+book.active_cell      # "B2"
+book.select("A1:C3")  # selecciona y desplaza hasta allí
+book.editing          # ("B2", "=SU") mientras el usuario escribe; si no, None
+book.focused = True   # da el teclado a la cuadrícula
+```
+
+## Seguir los cambios
+
+```python
+book.version          # crece con cada cambio: barato de comparar
+book.changes()        # ["B4", "Equipo!C2"]: celdas cambiadas desde la última llamada
+```
+
+Una hoja que guarda en una base de datos puede llamar a `changes()` desde `on_change` (o un
+temporizador) y escribir solo esas celdas. `book.recalculate()` vuelve a calcular todas las
+fórmulas, para `NOW()`, `TODAY()`, `RAND()` y `RANDBETWEEN()`.
+
+## Ajustes
+
+| Atributo | Qué hace |
+| --- | --- |
+| `book.readonly` | La cuadrícula rechaza las ediciones (la API sigue funcionando). |
+| `book.month_first` | Las fechas escritas como `03/04/2026` llevan el mes primero (`True`, por defecto) o el día. |
+| `book.gridlines` | Las líneas de la hoja activa. |
+| `book.active` | La hoja activa, por índice; se cambia con un nombre o un índice. |
+| `book.size` | `(filas, columnas)` de la hoja activa; `resize()` lo cambia. |
+
+## Utilidades
+
+```python
+pz.Workbook.column_name(28)    # "AB"
+pz.Workbook.functions()        # [("ABS", "number", "Absolute value."), ...]
+book.stats("B2:F9")            # {"sum": ..., "average": ..., "count": ..., ...}
+```
+
+<Aside type="tip">
+Se puede compartir un libro entre la cuadrícula y tu código sin peligro porque está tras un
+cerrojo en Rust. Ten una instancia por documento (`self.book`) y pasa ese mismo objeto al
+componente: crear un `pz.Workbook()` nuevo dentro de `view()` tiraría los datos en cada
+reconstrucción.
+</Aside>

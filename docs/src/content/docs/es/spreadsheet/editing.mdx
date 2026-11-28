@@ -1,0 +1,148 @@
+---
+title: Edición y atajos
+description: Cómo escribir, seleccionar, copiar, pegar, autorrellenar y moverse por una hoja de cálculo de Pyzed con el ratón y el teclado — los mismos atajos que Excel y Google Sheets.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Escribiendo una fórmula en una celda: aparecen sugerencias, las flechas eligen un rango y Enter muestra el resultado](/pyzed/media/spreadsheet/editing.webp)
+
+La cuadrícula se comporta como Excel y Google Sheets, así que tus usuarios ya saben usarla.
+Esta página recoge lo que hacen el ratón y el teclado. En macOS, <kbd>Ctrl</kbd> es
+<kbd>Cmd</kbd>.
+
+## Escribir en las celdas
+
+Selecciona una celda y empieza a escribir: lo que escribes sustituye su contenido. Pulsa
+<kbd>Enter</kbd> para guardar y bajar, <kbd>Tab</kbd> para guardar e ir a la derecha y
+<kbd>Esc</kbd> para cancelar. Para cambiar lo que ya tiene una celda, haz doble clic, pulsa
+<kbd>F2</kbd> o pulsa en la barra de fórmulas sobre la cuadrícula.
+
+Lo que escribes se interpreta como en una hoja de cálculo:
+
+| Escribes | La celda guarda | Se ve |
+| --- | --- | --- |
+| `42` | el número 42 | `42` |
+| `12.5%` | el número 0,125, como porcentaje | `12.50%` |
+| `$1,200.50` | el número 1200,5, como moneda | `$1,200.50` |
+| `2026-03-04` o `3/4/2026` | una fecha | `2026-03-04` |
+| `14:30` | una hora | `14:30` |
+| `TRUE` | el valor lógico TRUE | `TRUE` |
+| `=A1*2` | una [fórmula](/pyzed/es/spreadsheet/formulas/) | su resultado |
+| `'00123` | el texto `00123` (el apóstrofo lo mantiene como texto) | `00123` |
+
+<Aside type="tip">
+Las fechas como `03/04/2026` se leen con el mes primero, como en Estados Unidos. Pon
+`book.month_first = False` para leerlas con el día primero.
+</Aside>
+
+Mientras editas una celda:
+
+| Teclas | Qué hacen |
+| --- | --- |
+| <kbd>Enter</kbd> / <kbd>Shift</kbd>+<kbd>Enter</kbd> | Guardar y bajar / subir. |
+| <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Guardar e ir a la derecha / izquierda. |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Guardar el mismo valor en todas las celdas seleccionadas. |
+| <kbd>Alt</kbd>+<kbd>Enter</kbd> | Una línea nueva dentro de la celda. |
+| <kbd>Esc</kbd> | Cancelar (primero cierra las sugerencias). |
+| <kbd>F2</kbd> | Alterna entre mover el cursor con las flechas y elegir celdas con ellas. |
+| <kbd>F4</kbd> | Cambia la referencia bajo el cursor: `A1` → `$A$1` → `A$1` → `$A1`. |
+| <kbd>Ctrl</kbd>+<kbd>;</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>;</kbd> | Inserta la fecha de hoy / la hora. |
+| <kbd>Ctrl</kbd>+<kbd>←</kbd> <kbd>→</kbd>, <kbd>Ctrl</kbd>+<kbd>Retroceso</kbd> | Moverse o borrar por palabras. |
+
+## Fórmulas mientras escribes
+
+Escribe `=` y el nombre de una función: aparece una lista con las funciones que coinciden y lo
+que hace cada una. <kbd>↑</kbd> <kbd>↓</kbd> eligen y <kbd>Tab</kbd> o <kbd>Enter</kbd>
+aceptan. Dentro de los paréntesis, una ayuda muestra los argumentos de la función y resalta
+aquel en el que estás.
+
+Cada referencia de la fórmula tiene su color, y las celdas a las que apunta se marcan con el
+mismo color en la cuadrícula. Justo después de `(`, `,`, un operador o `=`, las flechas y el
+ratón **eligen** celdas en lugar de mover el cursor: pulsa una celda o arrastra sobre un rango
+y su dirección se escribe sola; mantén <kbd>Shift</kbd> con las flechas para estirarla en un
+rango. Un `)` o `"` que falte se añade al pulsar <kbd>Enter</kbd>.
+
+## Seleccionar
+
+| Ratón | Selecciona |
+| --- | --- |
+| Clic, arrastrar | Una celda, un rango. |
+| <kbd>Shift</kbd>+clic | Desde la celda activa hasta la pulsada. |
+| <kbd>Ctrl</kbd>+clic o arrastrar | Añade otro rango (varios rangos a la vez). |
+| Pulsar una letra de columna o un número de fila, arrastrar sobre ellos | Columnas o filas enteras. |
+| La esquina sobre los números de fila | Toda la hoja. |
+
+| Teclas | Qué hacen |
+| --- | --- |
+| Flechas | Mueven una celda (saltan las filas y columnas ocultas). |
+| <kbd>Shift</kbd>+flechas | Amplían la selección. |
+| <kbd>Ctrl</kbd>+flechas | Saltan al borde de los datos, como en Excel. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+flechas amplían hasta ahí. |
+| <kbd>Inicio</kbd> / <kbd>Ctrl</kbd>+<kbd>Inicio</kbd> / <kbd>Ctrl</kbd>+<kbd>Fin</kbd> | Principio de la fila / `A1` / la última celda usada. |
+| <kbd>Re Pág</kbd> / <kbd>Av Pág</kbd> | Una pantalla arriba o abajo. |
+| <kbd>Ctrl</kbd>+<kbd>A</kbd> | La tabla alrededor de la celda activa; otra vez, toda la hoja. |
+| <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> / <kbd>Shift</kbd>+<kbd>Espacio</kbd> | La columna / fila entera. |
+| <kbd>Enter</kbd> y <kbd>Tab</kbd> dentro de un rango seleccionado | Recorren sus celdas una a una, volviendo al principio en los bordes. |
+
+El cuadro de nombres, a la izquierda de la barra de fórmulas, muestra la celda activa. Púlsalo,
+escribe una dirección o un rango (`B4`, `C2:F20`, `Equipo!A1`) y pulsa <kbd>Enter</kbd> para
+ir allí.
+
+Abajo, en [`ui.Spreadsheet`](/pyzed/es/spreadsheet/component/), la barra de estado muestra la
+suma, la media y el recuento de las celdas seleccionadas, como Google Sheets.
+
+## Copiar, cortar y pegar
+
+<kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd> y <kbd>Ctrl</kbd>+<kbd>V</kbd> usan
+el portapapeles del sistema como texto separado por tabuladores, el formato que usan Google
+Sheets, Excel, LibreOffice y la mayoría de las tablas de la web. Así puedes copiar un rango de
+Excel y pegarlo en tu app, o al revés. Un borde discontinuo marca lo copiado hasta que pegas o
+pulsas <kbd>Esc</kbd>.
+
+Dentro de la app, pegar conserva fórmulas y formatos, y las referencias relativas se mueven
+con las celdas (copia `=A1*2` de `C1`, pégalo en `C2`: obtienes `=A2*2`). Cortar y pegar mueve
+las celdas, y las fórmulas que apuntaban a ellas las siguen.
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> pega solo los valores. Pegar un valor sobre una
+selección mayor la llena entera.
+
+## Autorrelleno
+
+El cuadradito de la esquina inferior derecha de la selección es el **controlador de
+relleno**. Arrástralo hacia abajo o hacia un lado para continuar lo seleccionado:
+
+- Los números siguen su paso: `1, 2` da `3, 4, 5`; `10, 20` da `30, 40`.
+- Las fechas, los días y los meses siguen: `2026-01-31` da los días siguientes, `Mon` da
+  `Tue, Wed` y `January` da `February`.
+- Un texto con un número sigue el número: `Item 1` da `Item 2, Item 3`.
+- Todo lo demás, y las fórmulas, se copian, con sus referencias relativas movidas.
+
+<kbd>Ctrl</kbd>+<kbd>D</kbd> rellena hacia abajo y <kbd>Ctrl</kbd>+<kbd>R</kbd> hacia la
+derecha, copiando la primera fila o columna de la selección (o la celda de arriba / de la
+izquierda).
+
+## Otros atajos
+
+| Teclas | Qué hacen |
+| --- | --- |
+| <kbd>Supr</kbd> | Borra el contenido de la selección (el formato se queda). |
+| <kbd>Retroceso</kbd> | Borra la celda activa y empieza a escribir en ella. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> (o <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>) | Deshacer / rehacer. |
+| <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd> / <kbd>5</kbd> | Negrita / cursiva / subrayado / tachado. |
+| <kbd>Ctrl</kbd>+<kbd>\\</kbd> | Quita el formato (el formato de número se queda). |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd> … <kbd>6</kbd> | Formato número, hora, fecha, moneda, porcentaje, científico. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>~</kbd> vuelve a General. |
+| <kbd>Alt</kbd>+<kbd>=</kbd> | Autosuma: un `SUM` de los números de arriba (o de la izquierda). |
+| <kbd>Alt</kbd>+<kbd>↓</kbd> | Abre la lista de una celda con lista. |
+| <kbd>Espacio</kbd> | Marca o desmarca una casilla. |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Buscar / buscar y reemplazar. |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Activa o quita el filtro. |
+| Clic derecho | El menú contextual: cortar, copiar, pegar, insertar y eliminar filas y columnas, ordenar, notas y más. |
+
+## El ratón en las cabeceras
+
+- Arrastra el borde entre dos letras de columna (o números de fila) para cambiar el tamaño;
+  doble clic para ajustarlo al contenido.
+- Clic derecho en una cabecera para insertar, eliminar, ocultar, ajustar y ordenar.
+- La rueda desplaza; con <kbd>Shift</kbd>, de lado. Arrastrar una selección hasta el borde
+  también desplaza. La cuadrícula crece al pasar de la última fila o columna.
