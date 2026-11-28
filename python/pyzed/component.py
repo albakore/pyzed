@@ -490,7 +490,8 @@ class Component:
             from . import style as _style
 
             _style.stylesheet({str(k).replace("&", cls.__name__): v for k, v in sheet.items()})
-        if cls.designer and not cls.__name__.startswith("_"):
+        # The components of route files (``app/**/page.py``, see ``pyzed.routing``) are pages, not toolbox items.
+        if cls.designer and not cls.__name__.startswith("_") and not cls.__module__.startswith("pyzed_route_"):
             _REGISTRY[cls.type_name] = cls
             designer = sys.modules.get("pyzed.designer.components")
             if designer is not None:
