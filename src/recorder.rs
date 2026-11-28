@@ -183,6 +183,8 @@ struct Driver<P: Program> {
     clock: Instant,
     /// The clock moved and the view hasn't seen it yet (the next event or frame delivers it).
     stale: bool,
+    /// The app's window has opened (until then `window` is a stand-in id).
+    opened: bool,
 }
 
 impl<P: Program<Theme = Theme> + 'static> Driver<P> {
@@ -203,9 +205,17 @@ impl<P: Program<Theme = Theme> + 'static> Driver<P> {
             cache: Some(user_interface::Cache::default()),
             clock,
             stale: false,
+            opened: false,
         };
         driver.spawn(task);
         driver.settle(program);
+        // The window opens through a task, which a busy machine can deliver after the first
+        // events. The view would then change windows halfway (a drag in progress belongs to the
+        // old one and never lands), so wait for it.
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while !driver.opened && Instant::now() < deadline {
+            driver.settle_for(program, 1);
+        }
         driver
     }
 
@@ -266,6 +276,7 @@ impl<P: Program<Theme = Theme> + 'static> Driver<P> {
                 match action {
                     W::Open(id, _settings, sender) => {
                         self.window = id;
+                        self.opened = true;
                         let _ = sender.send(id);
                     }
                     W::GetOldest(sender) | W::GetLatest(sender) => {

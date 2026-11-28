@@ -39,16 +39,6 @@ use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 
 use crate::app::Message;
-
-// TEMPORARY (Windows drag test investigation): PYZED_DND_TRACE=1 prints what drags do.
-static TRACE: std::sync::LazyLock<bool> =
-    std::sync::LazyLock::new(|| std::env::var_os("PYZED_DND_TRACE").is_some());
-
-fn trace(what: impl FnOnce() -> String) {
-    if *TRACE {
-        eprintln!("[dnd] {}", what());
-    }
-}
 use crate::widget::{Kind, PyMsg, Widget as Node};
 
 type Renderer = iced::Renderer;
@@ -1227,23 +1217,10 @@ impl Root<'_> {
             (Some(t), true) => t.landing.map_or(session.preview, |l| l.position()),
             _ => session.origin.position(),
         };
-        trace(|| {
-            format!(
-                "release at clock {:?}",
-                now.saturating_duration_since(Instant::now())
-            )
-        });
         let quick = crate::animation::settled()
             || session.props.drop_ms <= 0.0
             || session.props.preview != Preview::Item
             || (dropped && session.over.as_ref().is_some_and(|t| t.landing.is_none()));
-        trace(|| {
-            format!(
-                "release {:?} dropped={dropped} over={:?} quick={quick}",
-                session.source,
-                session.over.as_ref().map(|t| t.id.clone())
-            )
-        });
         if quick {
             Self::finish(session, dropped, now, shell);
         } else {
@@ -1258,7 +1235,6 @@ impl Root<'_> {
     }
 
     fn finish(session: &mut Session, dropped: bool, now: Instant, shell: &mut Shell<'_, Message>) {
-        trace(|| format!("finish {:?} dropped={dropped}", session.source));
         if dropped && let Some(target) = session.over.clone() {
             let landed = target.landing.map_or(session.preview, |l| l.position());
             LANDED.with(|l| {
@@ -1430,9 +1406,6 @@ impl Widget<Message, Theme, Renderer> for Root<'_> {
             tree, event, layout, cursor, renderer, clipboard, shell, viewport,
         );
         if !mine && here(|_| ()).is_none() {
-            if with_session(|_| ()).is_some() {
-                trace(|| "a session that is not this window's".into());
-            }
             return;
         }
         let mut pass = PASS.with(|p| std::mem::take(&mut *p.borrow_mut()));
@@ -1445,12 +1418,6 @@ impl Widget<Message, Theme, Renderer> for Root<'_> {
                 session.window = Some(self.window);
             }
             if session.window != Some(self.window) {
-                trace(|| {
-                    format!(
-                        "session of window {:?} seen by {:?}",
-                        session.window, self.window
-                    )
-                });
                 return;
             }
             let escape = matches!(
@@ -1503,19 +1470,9 @@ impl Widget<Message, Theme, Renderer> for Root<'_> {
                     start,
                     dropped,
                 } => {
-                    if !matches!(event, Event::Window(window::Event::RedrawRequested(_))) {
-                        trace(|| format!("flying sees {event:?}"));
-                    }
                     if let Event::Window(window::Event::RedrawRequested(now)) = event {
                         let total = session.props.drop_ms.max(1.0) / 1000.0;
                         let t = now.saturating_duration_since(start).as_secs_f32() / total;
-                        trace(|| {
-                            format!(
-                                "flying redraw t={t} now-start={:?} start-now={:?}",
-                                now.saturating_duration_since(start),
-                                start.saturating_duration_since(*now)
-                            )
-                        });
                         session.preview = lerp(from, to, ease_out(t));
                         session.lifted = 1.0 + (session.props.lift - 1.0) * (1.0 - ease_out(t));
                         if t >= 1.0 {
@@ -1656,7 +1613,6 @@ impl<'a> Draggable<'a> {
         shell: &mut Shell<'_, Message>,
     ) {
         let props = &self.props;
-        trace(|| format!("start {:?} pressed={pressed:?}", props.id));
         let window_at = pressed - shift;
         let now_at = POINTER.get().unwrap_or(window_at);
         let constraint = match props.bounds {
@@ -1824,16 +1780,6 @@ impl Widget<Message, Theme, Renderer> for Draggable<'_> {
                 && cursor.is_over(*viewport)
                 && (!self.props.handle || handle)
                 && (self.props.handle || self.props.from_children || !captured);
-            trace(|| {
-                format!(
-                    "press {:?} at {at:?} ok={ok} claimed={claimed} handle={handle} captured={captured} \
-                             captured_before={captured_before} over_viewport={} session={} delay={:?}",
-                    self.props.id,
-                    cursor.is_over(*viewport),
-                    with_session(|_| ()).is_some(),
-                    self.props.delay
-                )
-            });
             if ok && with_session(|_| ()).is_none() {
                 state.press = Some((at, now));
                 PASS.with(|p| p.borrow_mut().claimed = true);
@@ -1884,12 +1830,7 @@ impl Widget<Message, Theme, Renderer> for Draggable<'_> {
                     }
                 }
             }
-            Some(Pointer::Release) => {
-                if state.press.is_some() {
-                    trace(|| format!("release before the drag started {:?}", self.props.id));
-                }
-                state.press = None;
-            }
+            Some(Pointer::Release) => state.press = None,
             None => {}
         }
     }
