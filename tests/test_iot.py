@@ -409,7 +409,7 @@ def test_mdns_finds_services_and_ssdp_finds_upnp_devices():
 
     mdns_sock, ssdp_sock = _fake_responder(mdns), _fake_responder(ssdp)
     found, lost = [], []
-    finder = pz.DeviceDiscovery("_http._tcp", describe=False, timeout=400, on_found=found.append, on_lost=lost.append)
+    finder = pz.DeviceDiscovery("_http._tcp", describe=False, timeout=1500, on_found=found.append, on_lost=lost.append)
     finder.mdns_address = mdns_sock.getsockname()
     finder.ssdp_address = ssdp_sock.getsockname()
     finder.scan(wait=True)

@@ -28,6 +28,7 @@ const SECTIONS: [string, string, string, string][] = [
 	['guides', 'Guides', 'Guías', 'Layout, architecture, events, animation, async, windows, testing and more.'],
 	['animation', 'Animation', 'Animación', 'Animating any widget: presets, keyframes, transitions, timelines like Godot\'s AnimationPlayer and effects.'],
 	['why', 'Why Pyzed', 'Por qué Pyzed', 'How Pyzed compares with tkinter, Kivy, PyQt/PySide, Flet and others.'],
+	['routing', 'Routing', 'Rutas', 'Multi-page apps like the Next.js App Router: folders as addresses, layouts, load and loading.py, actions, global state (pz.Store), middleware and native notifications.'],
 	['library', 'Component library', 'Biblioteca de componentes', 'Every Pyzed UI component with usage and API.'],
 	['blocks', 'Blocks', 'Bloques', 'Ready-made screens and sections built from components.'],
 	['download', 'Pyzed Design download', 'Descargar Pyzed Design', 'The standalone visual designer.'],
@@ -51,7 +52,7 @@ const SECTIONS: [string, string, string, string][] = [
 /** Sections listed under "## Optional" in llms.txt (an agent can skip them). */
 const OPTIONAL = new Set(['components', 'contributing', 'changelog']);
 /** Sections in llms-small.txt: what you need to write a Pyzed app, without the long reference pages. */
-const SMALL = new Set(['getting-started', 'why', 'tutorials', 'guides', 'theming', 'shading', 'packaging', 'ai', 'faq']);
+const SMALL = new Set(['getting-started', 'why', 'tutorials', 'guides', 'routing', 'theming', 'shading', 'packaging', 'ai', 'faq']);
 
 export function sectionOf(slug: string): string {
 	return slug.split('/')[0] ?? '';

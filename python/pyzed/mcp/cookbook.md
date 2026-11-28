@@ -545,6 +545,164 @@ pz.run(Board)
 
 Docs: `dnd/index`, `dnd/basics/sortable`, `dnd/guides/free-canvas`, `dnd/tutorials/kanban`.
 
+## Pages with routes in folders (like Next.js)
+
+An app with several screens and addresses: each folder of `app/` is a page (`pyzed new name --router` makes
+one). Layouts keep their state, `load` runs off the UI thread while `loading.py` shows, and `pz.not_found()`
+shows the closest `not_found.py`. Each file below is a function (or a `pz.Component`) named like the file:
+
+```text
+main.py                             pz.run(pz.RouterApp("app", title="Shop"))
+app/layout.py                       def layout(children): sidebar + children; title_template = "%s · Shop"
+app/page.py                         def page(): ...                       /
+app/loading.py                      def loading(): ...                    while a load runs
+app/not_found.py                    def not_found(pathname): ...          unknown addresses, pz.not_found()
+app/(shop)/products/[id]/page.py    async def load(params) + def page(data)   /products/3
+```
+
+The same app in one file, with the routes in a dict (the values are the same functions):
+
+```python
+import asyncio
+
+import pyzed as pz
+from pyzed import ui
+
+PRODUCTS = {"1": "Desk lamp", "2": "Keyboard"}
+
+
+class Shell(pz.Component):                            # the layout: its state survives navigation
+    children: list = ()
+    designer = False
+
+    def render(self):
+        side = pz.column([pz.nav_link("/", "Home", icon="house"),
+                          pz.nav_link("/products/1", "Lamp", icon="lamp-desk"),
+                          pz.nav_link("/products/2", "Keyboard", icon="keyboard")], width=200, padding=12)
+        page = pz.container(pz.column(self.children), padding=24, width="fill")
+        return pz.row([side, ui.divider(vertical=True), page], height="fill").style(background="background")
+
+
+def home():
+    return pz.column([ui.heading("Shop"), pz.link("/products/1", "See the lamp →")], spacing=12)
+
+
+async def load_product(params):                       # runs off the UI thread
+    await asyncio.sleep(0.2)
+    if params["id"] not in PRODUCTS:
+        pz.not_found()
+    return PRODUCTS[params["id"]]
+
+
+def product(data):                                     # sync: it only builds widgets
+    return pz.column([pz.link("/", "← Home"), ui.heading(data)], spacing=12)
+
+
+def loading():
+    return pz.row([ui.spinner(), ui.label("Loading…", color="text_muted")], spacing=8)
+
+
+class Shop(pz.RouterApp):
+    title = "Shop"
+    size = (900, 560)
+
+    def __init__(self):
+        super().__init__({
+            "/": {"page": home, "layout": Shell, "loading": loading},
+            "/products/[id]": {"page": product, "load": load_product, "title": "Product"},
+        })
+
+
+if __name__ == "__main__":
+    pz.run(Shop)
+```
+
+Docs: `routing` (`get_guide("routing")`); example: `examples/routing` (folders, groups, templates, catch-all,
+errors, middleware, actions, a store and notifications).
+
+## Server calls, global state, middleware and notifications
+
+Read in `load`, change with `@pz.action`, share with `pz.Store`, guard with middleware and tell the user with
+`pz.notify`. In a project each part has its file: `api.py`, `state.py`, `app/middleware.py` (with
+`matcher = ["/orders/:path*"]`) and `app/orders/page.py`; here they share one file:
+
+```python
+import asyncio
+
+import pyzed as pz
+from pyzed import ui
+
+ORDERS = ["Mouse"]
+
+
+async def fetch_orders():                    # api.py: swap the body for httpx or your database
+    await asyncio.sleep(0.3)
+    return list(ORDERS)
+
+
+class Session(pz.Store):                     # state.py: the global state
+    user: str = ""
+
+
+session = Session()
+
+
+@pz.middleware(matcher="/orders/:path*")     # app/middleware.py: before every navigation to /orders
+def signed_in_only(request):
+    if not session.user:
+        return request.redirect(f"/login?next={request.pathname}")
+    request.locals["user"] = session.user
+
+
+@pz.action                                   # off the UI thread; the page reloads when it ends
+async def place(item):
+    await asyncio.sleep(0.3)
+    ORDERS.append(item)
+    pz.notify("Order placed", item, href="/orders")
+
+
+async def load_orders():
+    return await fetch_orders()
+
+
+def orders(data, locals):
+    return pz.column([
+        ui.heading(f"Orders of {locals['user']}"),
+        *[ui.label(item) for item in data],
+        ui.button("Order a keyboard", lambda: place("Keyboard"), loading=place.pending),
+        ui.label(str(place.error), color="danger") if place.error else None,
+    ], spacing=8, padding=16)
+
+
+def login(query, router):
+    def sign_in():
+        session.user = "Ada"
+        router.replace(query.get("next", "/orders"))
+
+    return pz.column([ui.heading("Sign in"), ui.button("Sign in as Ada", sign_in, variant="solid")],
+                     spacing=8, padding=16)
+
+
+class Shop(pz.RouterApp):
+    title = "Shop"
+    size = (480, 320)
+    initial = "/orders"
+    middleware = [signed_in_only]
+
+    def __init__(self):
+        super().__init__({
+            "/login": login,
+            "/orders": {"page": orders, "load": load_orders, "title": "Orders"},
+        })
+
+
+if __name__ == "__main__":
+    pz.run(Shop)
+```
+
+`get_guide("data-fetching")`, `"actions"`, `"state"`, `"middleware"`, `"notifications"` and `"rendering"`
+explain each part.
+
 ## States of components
 
 Components carry their own states: buttons take `loading`, `disabled`, `selected`, `tooltip`

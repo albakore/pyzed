@@ -1035,6 +1035,8 @@ def _import_components(root: Path, roots: List[Path], limit: int, imported: List
             path = Path(folder) / name
             if not name.endswith(".py") or path.with_suffix(SUFFIX).exists():
                 continue  # the class of a designed component: ``discover`` imports it
+            if _route_file(path, root):
+                continue  # a page or layout of pyzed.routing: the router runs it
             seen += 1
             if seen > limit:
                 return
@@ -1062,6 +1064,14 @@ def _import_components(root: Path, roots: List[Path], limit: int, imported: List
             finally:
                 _modules[path] = (stamp, module)
             imported.append(module)
+
+
+def _route_file(path: Path, root: Path) -> bool:
+    if path.stem not in ("page", "layout", "template", "loading", "error", "not_found"):
+        return False
+    from ..routing.tree import is_route_file
+
+    return is_route_file(path, root)
 
 
 def _forget_other(module: str, path: Path) -> None:

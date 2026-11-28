@@ -222,6 +222,24 @@ Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guide
   (between lists with the same `group`), `pz.draggable` + `pz.droppable` for anything else (`accepts`,
   `can_drop`, `snap`, `guides`, `preview="wire"`), `pz.drag_handle`; `pz.dnd.move(lists, event)` applies a
   drop. Kanban boards, form and page builders, Figma-style canvases and node editors: `get_guide("dnd")`.
+- **Pages and navigation (like Next.js)**: `pyzed.routing` makes every folder of `app/` a page:
+  `page.py`, `layout.py` (keeps its state), `template.py` (starts over), `loading.py`, `error.py`,
+  `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]`, `(group)`. Route files define `page(params, query, data)`
+  (only the arguments they name) or a `pz.Component`; data goes in `async def load(params)` (runs off the UI
+  thread, `loading.py` shows meanwhile; the page itself is never `async`). Navigate with `pz.link(href, content)`,
+  `pz.nav_link` and `pz.use_router()` (`push`, `replace`, `back`, `forward`, `refresh`); `pz.not_found()` and
+  `pz.redirect(href)` inside pages. Start with `pz.run(pz.RouterApp("app"))` or `pyzed new name --router`:
+  `get_guide("routing")`.
+- **Server calls, changes and global state**: read in `load` (`async def` for httpx/aiohttp, a plain `def` runs
+  in a worker thread for requests/SQLAlchemy; cached per page, params and query for `stale_time`; `router.refresh()`
+  and `router.invalidate("/products")` reload). Change with `@pz.action` (`pending`, `result`, `error`; the page
+  reloads afterwards; `invalidate=`, `on_done=`, `on_error=` run on the UI thread). Share with a `pz.Store` (one
+  instance in `state.py`; only components that read a field draw again; `persist="name"` keeps it between
+  runs). Filters and tabs go in the query, not in a store. `get_guide("state")`, `get_guide("actions")`.
+- **Middleware and notifications**: `app/middleware.py` (`matcher = ["/account/:path*"]`) returns
+  `request.redirect(...)`, `request.rewrite(...)`, `False` or nothing, and fills `request.locals` for the pages;
+  `pz.notify(title, body, href="/orders/3", actions={"/cart": "See cart"})` shows a native notification (Windows,
+  macOS, Linux) whose click opens a page. `get_guide("middleware")`, `get_guide("notifications")`.
 - **Anchored layouts**: `pz.anchor_layout` with `pz.anchor(widget, x=, y=, width=, height=, anchor=)`,
   like the designer.
 - **Forms and backends**: `ui.field(..., error=)` and `pz.validation_errors(error)` for Pydantic,

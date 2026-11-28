@@ -1939,6 +1939,12 @@
    "path": "docs/src/content/docs/reference/iot.md"
   },
   {
+   "slug": "reference/routing",
+   "title": "Routing (pyzed.routing)",
+   "description": "API reference for pyzed.routing: Next.js-style routes in folders for Python desktop apps, with RouterApp, Router, links, navigation hooks, not_found and redirect.",
+   "path": "docs/src/content/docs/reference/routing.md"
+  },
+  {
    "slug": "reference/services",
    "title": "Services (pyzed.services)",
    "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs, notifications and tray icons for Python desktop apps.",
@@ -1967,6 +1973,90 @@
    "title": "Core widgets",
    "description": "API reference for Pyzed's native widgets: layout, text, controls, the code editor, SVG and icons, all rendered in Rust by Iced.",
    "path": "docs/src/content/docs/reference/widgets.md"
+  },
+  {
+   "slug": "routing/advanced/best-practices",
+   "title": "Good practices",
+   "description": "How to organize a routed Pyzed app: where each piece of code goes, reading and changing data, global state, middleware, testing pages and keeping the window fast.",
+   "path": "docs/src/content/docs/routing/advanced/best-practices.md"
+  },
+  {
+   "slug": "routing/advanced/middleware",
+   "title": "Middleware",
+   "description": "middleware.py in Pyzed: login checks, redirects, rewrites and guards that run before a page shows, with matchers, async checks and values passed to the pages.",
+   "path": "docs/src/content/docs/routing/advanced/middleware.md"
+  },
+  {
+   "slug": "routing/advanced/nextjs",
+   "title": "Coming from Next.js",
+   "description": "Every Next.js App Router concept and its Pyzed name: files, data fetching, server actions, middleware, hooks, metadata and what is not supported.",
+   "path": "docs/src/content/docs/routing/advanced/nextjs.md"
+  },
+  {
+   "slug": "routing/advanced/notifications",
+   "title": "Desktop notifications",
+   "description": "pz.notify shows native notifications on Windows, macOS and Linux, with buttons, urgency, sounds, replacement by tag and clicks that open a page of the app.",
+   "path": "docs/src/content/docs/routing/advanced/notifications.md"
+  },
+  {
+   "slug": "routing/advanced/routes-in-code",
+   "title": "Routes in code",
+   "description": "Pyzed routes without folders: a dict of pages for a single-file app, a router inside your own app or one region of it, forms from Pyzed Design as pages, and URLs for the web.",
+   "path": "docs/src/content/docs/routing/advanced/routes-in-code.md"
+  },
+  {
+   "slug": "routing/basics/errors",
+   "title": "Errors and missing pages",
+   "description": "error.py boundaries with Try again, not_found.py and pz.not_found(), redirects, and what Pyzed shows without these files.",
+   "path": "docs/src/content/docs/routing/basics/errors.md"
+  },
+  {
+   "slug": "routing/basics/navigation",
+   "title": "Navigating",
+   "description": "Links, sidebar links, the router's push, replace, back and forward, history keys, relative addresses and the hooks that read the current address.",
+   "path": "docs/src/content/docs/routing/basics/navigation.md"
+  },
+  {
+   "slug": "routing/basics/pages-and-layouts",
+   "title": "Pages, layouts and templates",
+   "description": "Pages as functions or components, the arguments they receive, nested layouts that keep their state, templates that start over, sharing values with provide, and window titles.",
+   "path": "docs/src/content/docs/routing/basics/pages-and-layouts.md"
+  },
+  {
+   "slug": "routing/basics/project-structure",
+   "title": "Folders and files",
+   "description": "The project structure of a Pyzed app with routes in folders: special file names, static and dynamic folders, catch-alls, groups, private folders, matching order and the pyzed route commands.",
+   "path": "docs/src/content/docs/routing/basics/project-structure.md"
+  },
+  {
+   "slug": "routing/data/actions",
+   "title": "Changing data: actions",
+   "description": "pz.action for saves, orders and sign-ins: pending, result and error for the button, fresh data afterwards, invalidating other pages and running code when it ends.",
+   "path": "docs/src/content/docs/routing/data/actions.md"
+  },
+  {
+   "slug": "routing/data/data-fetching",
+   "title": "Calling the server",
+   "description": "How a Pyzed page gets its data: async and sync load functions, loading.py, the cache, refreshing, prefetching and parallel requests with httpx or a database.",
+   "path": "docs/src/content/docs/routing/data/data-fetching.md"
+  },
+  {
+   "slug": "routing/data/rendering",
+   "title": "How a page is drawn",
+   "description": "What Pyzed does on every navigation: the middleware, the order the route files wrap each other, which thread runs what, what draws again after a change, and the rules that keep a routed app fast.",
+   "path": "docs/src/content/docs/routing/data/rendering.md"
+  },
+  {
+   "slug": "routing/data/state",
+   "title": "State",
+   "description": "Where each value of a Pyzed app lives: component state, the address, layouts, context, the page's data and the global pz.Store with persistence and subscriptions.",
+   "path": "docs/src/content/docs/routing/data/state.md"
+  },
+  {
+   "slug": "routing/index",
+   "title": "Routing",
+   "description": "Multi-page Python desktop apps with Next.js' App Router workflow: folders as addresses, nested layouts, loading and error files, data loading, actions, global state, middleware and native notifications in Pyzed.",
+   "path": "docs/src/content/docs/routing/index.mdx"
   },
   {
    "slug": "shading/getting-started",
@@ -2821,6 +2911,132 @@
    "kind": "designer",
    "summary": "A form made with the visual designer (.pzform layout).",
    "path": "examples/designer/tasks.pzform"
+  },
+  {
+   "name": "routing/api",
+   "kind": "app",
+   "summary": "A pretend backend: async functions that take a moment, like a web API would.",
+   "path": "examples/routing/api.py"
+  },
+  {
+   "name": "routing/app/(shop)/products/[id]/loading",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/(shop)/products/[id]/loading.py"
+  },
+  {
+   "name": "routing/app/(shop)/products/[id]/page",
+   "kind": "app",
+   "summary": "/products/[id]: ``params[\"id\"]`` is the part of the URL; a product that doesn't exist is a 404.",
+   "path": "examples/routing/app/(shop)/products/[id]/page.py"
+  },
+  {
+   "name": "routing/app/(shop)/products/page",
+   "kind": "app",
+   "summary": "/products: the list comes from an async ``load``; ``?sort=price`` changes the order.",
+   "path": "examples/routing/app/(shop)/products/page.py"
+  },
+  {
+   "name": "routing/app/about/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/about/page.py"
+  },
+  {
+   "name": "routing/app/account/page",
+   "kind": "app",
+   "summary": "/account: only reached through the middleware, which hands over the user in `locals`.",
+   "path": "examples/routing/app/account/page.py"
+  },
+  {
+   "name": "routing/app/docs/[[...slug]]/page",
+   "kind": "app",
+   "summary": "/docs, /docs/guide, /docs/guide/routing...: an optional catch-all takes any number of parts.",
+   "path": "examples/routing/app/docs/[[...slug]]/page.py"
+  },
+  {
+   "name": "routing/app/error",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/error.py"
+  },
+  {
+   "name": "routing/app/layout",
+   "kind": "app",
+   "summary": "The shell around every page: a sidebar that keeps its state, and the page on its right.",
+   "path": "examples/routing/app/layout.py"
+  },
+  {
+   "name": "routing/app/loading",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/loading.py"
+  },
+  {
+   "name": "routing/app/login/page",
+   "kind": "app",
+   "summary": "/login: signs in with an action, then goes where the middleware stopped you.",
+   "path": "examples/routing/app/login/page.py"
+  },
+  {
+   "name": "routing/app/middleware",
+   "kind": "app",
+   "summary": "Runs before every navigation to /account: without a session, the login page instead.",
+   "path": "examples/routing/app/middleware.py"
+  },
+  {
+   "name": "routing/app/not_found",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/not_found.py"
+  },
+  {
+   "name": "routing/app/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/page.py"
+  },
+  {
+   "name": "routing/app/settings/layout",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/layout.py"
+  },
+  {
+   "name": "routing/app/settings/notifications/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/notifications/page.py"
+  },
+  {
+   "name": "routing/app/settings/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/page.py"
+  },
+  {
+   "name": "routing/app/settings/profile/page",
+   "kind": "app",
+   "summary": "",
+   "path": "examples/routing/app/settings/profile/page.py"
+  },
+  {
+   "name": "routing/app/settings/template",
+   "kind": "app",
+   "summary": "A template is drawn again from scratch on every navigation: its state starts over on each tab.",
+   "path": "examples/routing/app/settings/template.py"
+  },
+  {
+   "name": "routing/main",
+   "kind": "app",
+   "summary": "A small store with routes in folders, like Next.js' App Router.",
+   "path": "examples/routing/main.py"
+  },
+  {
+   "name": "routing/state",
+   "kind": "app",
+   "summary": "The app's global state: who is signed in and what is in the cart.",
+   "path": "examples/routing/state.py"
   },
   {
    "name": "integrations/README.md",
@@ -6872,7 +7088,49 @@
    },
    "pyzed.dnd.reorder": {},
    "pyzed.dnd.current": {},
-   "pyzed.dnd.cancel": {}
+   "pyzed.dnd.cancel": {},
+   "pyzed.RouterApp": {
+    "example": "class Shop(pz.RouterApp):\n    routes = \"app\"\n    title = \"Shop\""
+   },
+   "pyzed.Router": {
+    "example": "self.router = pz.Router(\"app\")\n# in view(): return self.router.view()"
+   },
+   "pyzed.link": {
+    "example": "pz.link(\"/products/3\", \"See the monitor\")"
+   },
+   "pyzed.nav_link": {
+    "example": "pz.nav_link(\"/settings\", \"Settings\", icon=\"settings\")"
+   },
+   "pyzed.use_router": {
+    "example": "pz.use_router().push(\"/cart\")"
+   },
+   "pyzed.use_pathname": {},
+   "pyzed.use_params": {},
+   "pyzed.use_search_params": {},
+   "pyzed.not_found": {},
+   "pyzed.redirect": {
+    "example": "pz.redirect(\"/login\")"
+   },
+   "pyzed.routing.Location": {},
+   "pyzed.routing.SearchParams": {},
+   "pyzed.middleware": {
+    "example": "@pz.middleware(matcher=\"/admin/:path*\")\ndef admins_only(request):\n    if not session.is_admin:\n        return request.redirect(\"/\")"
+   },
+   "pyzed.rewrite": {
+    "example": "return pz.rewrite(\"/maintenance\")"
+   },
+   "pyzed.routing.Request": {},
+   "pyzed.action": {
+    "example": "@pz.action(invalidate=\"/orders\")\nasync def place(item):\n    await api.place(item)"
+   },
+   "pyzed.Action": {},
+   "pyzed.Store": {
+    "example": "class Cart(pz.Store):\n    items: list = []\n\ncart = Cart()"
+   },
+   "pyzed.notify": {
+    "example": "pz.notify(\"Order shipped\", \"On its way\", href=\"/orders/3\")"
+   },
+   "pyzed.DesktopNotification": {}
   }
  }
 }

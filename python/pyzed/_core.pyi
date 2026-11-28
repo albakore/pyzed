@@ -628,6 +628,26 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
     - `on_middle_release()`: Middle button released (pan gestures, for example).
     """
     ...
+def notify_capabilities() -> Any:
+    """What the system's notifications can do: `"actions"`, `"body"`, `"body-markup"`, `"icon"`,
+    `"image"`, `"sound"`, `"persistence"`... (the freedesktop names, filled in on Windows and macOS).
+    """
+    ...
+def notify_close(id: Any) -> Any:
+    """Removes notification `id` from the screen (nothing when it is gone, or where the system
+    doesn't let apps close them).
+    """
+    ...
+def notify_show(id: Any, on_event: Any, title: Any, body: Any = ..., *, icon: Any = ..., image: Any = ..., actions: Any = ..., urgency: Any = ..., sound: Any = ..., timeout_ms: Any = ..., app_name: Any = ..., app_id: Any = ...) -> Any:
+    """Shows notification `id` (or updates it, when it is already shown). Raises `RuntimeError` when
+    the system can't show it, so Python falls back to its own way.
+    """
+    ...
+def notify_supported() -> Any:
+    """Whether this system can show native notifications (on Linux, whether a notification server
+    runs or can be started).
+    """
+    ...
 def offscreen_gpu() -> Any:
     """The GPU an off-screen renderer would draw with: `(name, kind)`, where `kind` is
     `"discrete"`, `"integrated"`, `"virtual"`, `"cpu"` (a software driver such as lavapipe or

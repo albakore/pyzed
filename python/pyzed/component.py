@@ -267,7 +267,21 @@ def use_context(name: str, default: Any = None) -> Any:
     return value
 
 
+#: Shared objects components can read outside the context (``pz.Store``), by their read name.
+_sources: Dict[str, Any] = {}
+
+
+def _note_source(name: str, source: Any) -> None:
+    """Records that the components being drawn read ``source`` (a store): they draw again when it changes."""
+    _sources[name] = source
+    for _depth, reads in _reads:
+        if name not in reads:
+            reads[name] = (None, source)
+
+
 def _lookup(name: str, default: Any) -> Tuple[int, Any]:
+    if name in _sources:
+        return -2, _sources[name]
     for index in range(len(_context) - 1, -1, -1):
         if name in _context[index]:
             return index, _context[index][name]
@@ -490,7 +504,8 @@ class Component:
             from . import style as _style
 
             _style.stylesheet({str(k).replace("&", cls.__name__): v for k, v in sheet.items()})
-        if cls.designer and not cls.__name__.startswith("_"):
+        # The components of route files (``app/**/page.py``, see ``pyzed.routing``) are pages, not toolbox items.
+        if cls.designer and not cls.__name__.startswith("_") and not cls.__module__.startswith("pyzed_route_"):
             _REGISTRY[cls.type_name] = cls
             designer = sys.modules.get("pyzed.designer.components")
             if designer is not None:

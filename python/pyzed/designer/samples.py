@@ -89,6 +89,8 @@ CATALOG: Tuple[Sample, ...] = (
            "buttons.", "Apps", "window_frame.py"),
     Sample("store_admin", "Store admin", "Filters, pages, an order's steps and timeline, and the numbers of the week.",
            "Apps", "store_admin.py"),
+    Sample("routing_store", "Routes like Next.js", "A store whose pages are folders: layouts, loading, errors, "
+           "not found, [id] and links.", "Apps", "routing", entry="main.py"),
     Sample("gallery", "Component gallery", "A tour of the ready-made components in pyzed.ui.", "Apps",
            "gallery.py"),
     Sample("mini_editor", "Mini editor", "A Zed-like editor in about 150 lines: tree, tabs, code, docks and palette.",

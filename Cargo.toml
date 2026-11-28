@@ -79,6 +79,13 @@ midir = "0.11"
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tray-icon = { version = "0.24", default-features = false }
 
+# Desktop notifications (pz.notify): toasts on Windows, the Notification Center on macOS. Linux
+# speaks D-Bus through zbus, below.
+[target.'cfg(target_os = "windows")'.dependencies]
+tauri-winrt-notification = "0.8"
+[target.'cfg(target_os = "macos")'.dependencies]
+mac-notification-sys = "0.6"
+
 # PulseAudio is a pure-Rust client (it also reaches PipeWire); ALSA is the fallback.
 [target.'cfg(target_os = "linux")'.dependencies]
 # Tray icons over D-Bus (StatusNotifierItem), without GTK.

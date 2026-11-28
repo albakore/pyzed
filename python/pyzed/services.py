@@ -961,32 +961,68 @@ class FileDialog(Service):
 
 # -- Notification --------------------------------------------------------------------------------------------------
 class Notification(Service):
-    """A desktop notification (Windows' balloon, macOS' Notification Center, ``notify-send`` on Linux).
+    """A native desktop notification (toasts on Windows, the Notification Center on macOS, the
+    notification server on Linux; see ``pz.notify``).
 
     ``show()`` shows ``text`` under ``title``, or what it is given, and returns whether it could;
-    ``shown`` and ``failed`` follow with the text.
+    ``shown`` and ``failed`` follow with the text. ``actions`` are its buttons (one label per
+    line, or a list); ``clicked``, ``action`` (with the button's label) and ``closed`` (with the
+    reason) follow what the user does. ``href`` is the page of the app's routes a click opens.
 
     Events:
         ``on_shown()``:
         ``on_failed()``:
+        ``on_clicked()``:
+        ``on_action(value)``: Callable that receives the label of the button pressed.
+        ``on_closed(value)``: Callable that receives why it closed: ``"expired"``, ``"dismissed"``...
     """
 
-    events = ("shown", "failed")
+    events = ("shown", "failed", "clicked", "action", "closed")
 
-    def __init__(self, title: str = "", text: str = "", *, on_shown: Optional[Handler] = None,
-                 on_failed: Optional[Handler] = None) -> None:
-        super().__init__(on_shown=on_shown, on_failed=on_failed)
+    def __init__(self, title: str = "", text: str = "", *, actions: Any = None, href: str = "",
+                 urgency: str = "normal", sound: bool = True, icon: str = "",
+                 on_shown: Optional[Handler] = None, on_failed: Optional[Handler] = None,
+                 on_clicked: Optional[Handler] = None, on_action: Optional[Handler] = None,
+                 on_closed: Optional[Handler] = None) -> None:
+        super().__init__(on_shown=on_shown, on_failed=on_failed, on_clicked=on_clicked, on_action=on_action,
+                         on_closed=on_closed)
         self.title = title
         self.text = text
+        self.actions = actions
+        self.href = href
+        self.urgency = urgency
+        self.sound = sound
+        self.icon = icon
+        self.last: Any = None
+
+    def _labels(self) -> List[str]:
+        if not self.actions:
+            return []
+        if isinstance(self.actions, str):
+            return [line.strip() for line in self.actions.splitlines() if line.strip()]
+        return [str(a) for a in self.actions]
 
     def show(self, text: Optional[str] = None, *, title: Optional[str] = None) -> bool:
         """Shows the notification; returns ``False`` when this system has no way to."""
-        from ._platform import notify
+        from .notifications import notify
 
         body = str(self.text if text is None else text)
-        ok = self.enabled and notify(str(title or self.title or "Pyzed"), body)
+        if not self.enabled:
+            self.emit("failed", body)
+            return False
+        self.last = notify(str(title or self.title or "Pyzed"), body, actions=self._labels() or None,
+                           href=self.href or None, urgency=self.urgency, sound=self.sound, icon=self.icon or None,
+                           on_click=lambda: self.emit("clicked"),
+                           on_action=lambda label: self.emit("action", label),
+                           on_close=lambda reason: self.emit("closed", reason))
+        ok = self.last.shown
         self.emit("shown" if ok else "failed", body)
         return ok
+
+    def close(self) -> None:
+        """Takes the last notification off the screen (where the system lets apps)."""
+        if self.last is not None:
+            self.last.close()
 
 
 # -- TrayIcon ------------------------------------------------------------------------------------------------------

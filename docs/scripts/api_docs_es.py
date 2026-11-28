@@ -3624,6 +3624,66 @@ PAGES.append({
     ],
 })
 
+# -- Rutas ---------------------------------------------------------------------------------------
+_R = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "routing",
+    "title": "Rutas (pyzed.routing)",
+    "description": "Referencia de la API de pyzed.routing: rutas en carpetas al estilo de Next.js para apps de escritorio en Python, con RouterApp, Router, enlaces, hooks de navegación, not_found y redirect.",
+    "order": 10.8,
+    "intro": """
+        Páginas como carpetas de `app/`, como el App Router de Next.js: `page.py`, `layout.py`,
+        `template.py`, `loading.py`, `error.py`, `not_found.py`, `[id]`, `[...slug]`, `[[...slug]]` y
+        `(grupo)`. Mira la [sección Rutas](/pyzed/es/routing/).
+
+        ```python
+        pz.run(pz.RouterApp("app", title="Tienda"))
+        ```
+    """,
+    "sections": [
+        ("El router", {
+            "pyzed.RouterApp": {**_R, "desc": "Una app cuya ventana muestra sus rutas: `routes` es la carpeta `app/` (junto al archivo que define la clase) o un dict de rutas en código. El título de la ventana sigue el de la página (`title`, `title(data)` o `metadata`, con el `title_template` del layout más cercano) y usa el `title` de la app cuando la página no tiene. Alt+Izquierda/Derecha, los botones laterales del ratón y el botón atrás de Android se mueven por el historial; `on_navigate(location)` se llama después de cada navegación.",
+                                "example": 'class Tienda(pz.RouterApp):\n    routes = "app"\n    title = "Tienda"'},
+            "pyzed.Router": {**_R, "desc": "Las rutas de una carpeta `app/` (una ruta relativa se busca junto al archivo que crea el router) o de un dict como `{\"/\": inicio, \"/users/[id]\": usuario}`. `view()` dibuja la ubicación actual con sus layouts, templates, carga, errores y no encontrado. Navega con `push`, `replace`, `back`, `forward`, `go`, `refresh` y `prefetch`; lee `location`, `pathname`, `params`, `query`, `url`, `history`, `title` y `pending`. `initial` es la primera ubicación y `stale_time` los segundos que los datos de una página siguen frescos.",
+                             "example": 'self.router = pz.Router("app")\n# en view(): return self.router.view()'},
+        }),
+        ("Enlaces y hooks", {
+            "pyzed.link": {**_R, "desc": "Un enlace a `href` (`<Link>` en Next.js): un texto en el color de acento, o cualquier widget, que navega al pulsarlo. `href` es una ruta (`\"/products/3\"`), relativa a la página actual (`\"../\"`, `\"reviews\"`), una query (`\"?page=2\"`) o `(\"/users/[id]\", {\"id\": 7})`. `replace` reemplaza la entrada del historial; `prefetch` empieza el `load` de la página cuando el ratón pasa por encima.",
+                           "example": 'pz.link("/products/3", "Ver el monitor")'},
+            "pyzed.nav_link": {**_R, "desc": "Una fila de barra lateral o menú (`ui.list_item`) que va a `href` y se ve seleccionada mientras esa página, o una que cuelga de ella, está abierta (`exact=True`: solo esa página; la raíz `/` es exacta).",
+                               "example": 'pz.nav_link("/settings", "Ajustes", icon="settings")'},
+            "pyzed.use_router": {**_R, "desc": "El router que dibuja esta vista (`useRouter()`). Fuera de una vista (un callback, un manejador de formulario) es el último router que dibujó.", "example": 'pz.use_router().push("/cart")'},
+            "pyzed.use_pathname": {**_R, "desc": "La ruta actual, como `/products/3` (`usePathname()`)."},
+            "pyzed.use_params": {**_R, "desc": "Los parámetros de la página actual: `{\"id\": \"3\"}` en `/products/[id]` (`useParams()`)."},
+            "pyzed.use_search_params": {**_R, "desc": "La query actual como dict, con `get_all(clave)` para claves repetidas (`useSearchParams()`)."},
+        }),
+        ("Dentro de las páginas", {
+            "pyzed.not_found": {**_R, "desc": "Deja de dibujar la página (o su `load`) y muestra el `not_found` más cercano, como `notFound()` de Next.js."},
+            "pyzed.redirect": {**_R, "desc": "Va a `href` en lugar de la página que se está dibujando (desde una página, un layout o un `load`). Reemplaza la entrada actual del historial; `push=True` añade una.", "example": 'pz.redirect("/login")'},
+            "pyzed.routing.Location": {**_R, "desc": "Dónde está el router: `pathname` (`/products/3`), la query `search` sin `?` y el `hash` sin `#`. Las mismas partes que una URL del navegador, así que una ruta se corresponde tal cual con una dirección web. `query` la da como dict y `href` como texto."},
+            "pyzed.routing.SearchParams": {**_R, "desc": "La query de la URL (`?tab=reviews&tag=a&tag=b`) como dict de los primeros valores. `get_all(\"tag\")` da todos los valores de una clave repetida y `str()` la query codificada."},
+        }),
+        ("Middleware", {
+            "pyzed.middleware": {**_R, "desc": "Marca una función como middleware para `Router(middleware=[...])` o `RouterApp.middleware`, con las direcciones donde corre (`matcher`: `\"/admin/:path*\"`, `\"/products/[id]\"`, una lista o una función). Una función normal también sirve; `matcher` solo limita dónde corre.",
+                                 "example": '@pz.middleware(matcher="/admin/:path*")\ndef solo_admins(request):\n    if not session.is_admin:\n        return request.redirect("/")'},
+            "pyzed.rewrite": {**_R, "desc": "Desde un middleware: muestra la ruta de `href` mientras la dirección sigue igual (devuélvelo o lánzalo), como `NextResponse.rewrite`.", "example": 'return pz.rewrite("/maintenance")'},
+            "pyzed.routing.Request": {**_R, "desc": "Una navegación que el middleware puede dejar pasar, mandar a otro sitio o parar. `location` es adónde va (`pathname`, `query`, `hash` y `href` son sus partes), `previous` dónde está ahora (`None` al arrancar), `action` qué la empezó (`\"start\"`, `\"push\"`, `\"replace\"`, `\"back\"`, `\"forward\"` o `\"refresh\"`), `route` el patrón que la responde y `params` sus valores. `locals` es un dict que reciben como `locals` las páginas, layouts y `load` de esa dirección. `redirect(href)`, `rewrite(href)` y `matches(*patrones)` deciden."},
+        }),
+        ("Datos y estado", {
+            "pyzed.action": {**_R, "desc": "Convierte una función que cambia datos en una `Action` (las server actions de Next.js con `useActionState`): corre fuera del hilo de la interfaz, `pending` es `True` mientras tanto y al terminar recarga la página actual (`refresh=True`) y marca como viejas las de `invalidate`. `on_done(result)` y `on_error(error)` corren en el hilo de la interfaz.",
+                             "example": '@pz.action(invalidate="/orders")\nasync def pedir(item):\n    await api.place(item)'},
+            "pyzed.Action": {**_R, "desc": "Una función que cambia datos, con su estado: `pending`, `result`, `error` y `calls`. Llamarla la empieza y devuelve un `concurrent.futures.Future`; `run(...)` la llama y espera (tests y scripts). `reset()` borra `result` y `error`. Es un `pz.Store`: quien lee su estado se vuelve a dibujar cuando cambia."},
+            "pyzed.Store": {**_R, "desc": "Valores que comparte toda la app (estado global). Los campos son atributos de clase anotados con su valor por defecto (cada instancia recibe su copia); `Cart(items=[...])` pone algunos. Solo se vuelven a dibujar los componentes que leyeron un campo que cambió, también si cambió en otro hilo. `update(**valores)` y `batch()` agrupan cambios, `subscribe(callback)` avisa tras cada uno, `changed()` tras cambiar una lista en su sitio, `reset()` vuelve a los valores por defecto y `to_dict()` los da. `persist = \"nombre\"` los guarda entre ejecuciones como JSON.",
+                            "example": 'class Cart(pz.Store):\n    items: list = []\n\ncart = Cart()'},
+        }),
+        ("Notificaciones", {
+            "pyzed.notify": {**_R, "desc": "Muestra una notificación nativa del escritorio (toasts en Windows, el Centro de notificaciones en macOS, el servidor de notificaciones por D-Bus en Linux) y la devuelve. `icon` e `image` son rutas o bytes PNG; `actions` son botones, como `{id: texto}` o una lista de textos (un id que empieza por `/` o `?` abre esa página); `href` es la página que abre un clic. `on_click(notificación)`, `on_action(id)` y `on_close(motivo)` corren en el hilo de la interfaz. `urgency` es `\"low\"`, `\"normal\"` o `\"critical\"`, `sound` `True`, `False` o el nombre de un sonido, `timeout` los segundos en pantalla y `tag` reemplaza a una notificación anterior con la misma etiqueta.",
+                             "example": 'pz.notify("Pedido enviado", "Va de camino", href="/orders/3")'},
+            "pyzed.DesktopNotification": {**_R, "desc": "Una notificación mostrada con `pz.notify`: `close()` la quita y `update(...)` la cambia. `native` es `False` cuando se mostró sin las notificaciones del sistema (sin botones ni clics), `closed` cuando salió de la pantalla y `reason` por qué: `\"expired\"`, `\"dismissed\"`, `\"closed\"` o `\"unknown\"`."},
+        }),
+    ],
+})
+
 # -- Más componentes: valoraciones, rangos, etiquetas, pasos, páginas, carga y datos ---------------
 _section("ui", "Controles", {
     "pyzed.ui.rating": {
