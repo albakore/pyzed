@@ -21,15 +21,13 @@ jobs:
           python -m pip install maturin pytest pytest-xdist pillow mcp anthropic
           maturin build --release --out dist
           python -m pip install --no-index --find-links dist pyzed-ui
-      - name: test_dnd alone, one process, 15 times
+      - name: whole suite, 6 times, with the state of failed drags
         shell: bash
+        env:
+          PYTHONPATH: .github
         run: |
-          for i in $(seq 15); do python -m pytest -q -p no:cacheprovider tests/test_dnd.py 2>&1 | grep -E "^FAILED|passed|failed" || true; done
-      - name: test_dnd alone, 4 workers, 15 times
-        shell: bash
-        run: |
-          for i in $(seq 15); do python -m pytest -q -p no:cacheprovider -n 4 tests/test_dnd.py 2>&1 | grep -E "^FAILED|passed|failed" || true; done
-      - name: whole suite, 3 times
-        shell: bash
-        run: |
-          for i in $(seq 3); do python -m pytest -q -p no:cacheprovider -n auto tests 2>&1 | grep -E "^FAILED|passed|failed" || true; done
+          for i in $(seq 6); do
+            python -m pytest -q -p no:cacheprovider -p dnd_debug -n auto tests > out.txt 2>&1 || true
+            grep -E "^FAILED|passed|failed" out.txt || true
+            if grep -q "^FAILED tests/test_dnd" out.txt; then sed -n '/= FAILURES =/,/short test summary/p' out.txt | grep -v "^E  \|^    " | head -400; fi
+          done
