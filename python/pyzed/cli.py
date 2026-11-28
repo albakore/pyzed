@@ -13,16 +13,22 @@ from pathlib import Path
 from typing import Optional
 
 
-def new_script(name: str) -> int:
-    """The single-file app of ``pyzed new --script``: ``main.py`` + ``requirements.txt``."""
+def new_script(name: str, *, router: bool = False) -> int:
+    """The single-file app of ``pyzed new --script``: ``main.py`` + ``requirements.txt``; with ``router`` the
+    ``main.py`` starts the routes of an ``app/`` folder (``pyzed new --script --router``)."""
     target = Path(name)
     if target.exists() and any(target.iterdir()):
         print(f"error: {target} already exists and is not empty", file=sys.stderr)
         return 1
     target.mkdir(parents=True, exist_ok=True)
     title = re.sub(r"[-_]+", " ", target.name).strip().title() or "My App"
-    template = (Path(__file__).parent / "templates" / "app.py.tmpl").read_text(encoding="utf-8")
-    (target / "main.py").write_text(template.format(name=title), encoding="utf-8")
+    if router:
+        from .project import write_router_app
+
+        write_router_app(target, title)
+    else:
+        template = (Path(__file__).parent / "templates" / "app.py.tmpl").read_text(encoding="utf-8")
+        (target / "main.py").write_text(template.format(name=title), encoding="utf-8")
     (target / "requirements.txt").write_text("--only-binary pyzed-ui\npyzed-ui\n", encoding="utf-8")
     print(f"Created {target}/main.py\n\n  cd {target}\n  python main.py\n")
     return 0
@@ -44,18 +50,20 @@ def _report(result) -> int:
 
 
 def new(name: str, *, script: bool = False, app: bool = False, git: bool = True, python=None,
-        sync: bool = True) -> int:
-    """Creates a uv project with the UI in ``ui/`` (``--script`` keeps the old single-file app)."""
+        sync: bool = True, router: bool = False) -> int:
+    """Creates a uv project with the UI in ``ui/`` (``--script`` keeps the old single-file app; ``--router`` makes
+    the pages folders of ``app/``, like Next.js)."""
     if script:
-        return new_script(name)
+        return new_script(name, router=router)
     target = Path(name)
     if target.exists() and any(target.iterdir()):
         print(f"error: {target} already exists and is not empty (use `pyzed init` inside it)", file=sys.stderr)
         return 1
-    return init(name, app=app, git=git, python=python, sync=sync)
+    return init(name, app=app, git=git, python=python, sync=sync, router=router)
 
 
-def init(path: str = ".", *, app: bool = False, git: bool = True, python=None, sync: bool = True) -> int:
+def init(path: str = ".", *, app: bool = False, git: bool = True, python=None, sync: bool = True,
+         router: bool = False) -> int:
     """Adds Pyzed to the uv project at ``path``, running ``uv init`` first if there is none."""
     from . import project
 
@@ -63,12 +71,18 @@ def init(path: str = ".", *, app: bool = False, git: bool = True, python=None, s
         print("error: uv is required: https://docs.astral.sh/uv/getting-started/installation/", file=sys.stderr)
         return 1
     try:
-        created = project.init(path, package=not app, git=git, python=python, sync=sync)
+        created = project.init(path, package=not app, git=git, python=python, sync=sync,
+                               template="router" if router else "form")
     except RuntimeError as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
     rel = os.path.relpath(created.root)
     cd = f"  cd {rel}\n" if rel != "." else ""
+    if router:
+        print(f"Created the Pyzed project {created.name} in {created.root}\n\n{cd}"
+              f"  uv run pyzed dev main.py   # run it; saved changes show up at once\n"
+              f"  add a page: app/contact/page.py is /contact\n")
+        return 0
     print(f"Created the Pyzed project {created.name} in {created.root}\n\n{cd}"
           f"  uv run pyzed design     # edit {created.main_form.relative_to(created.root).as_posix()}\n"
           f"  uv run pyzed run        # run it\n")
@@ -301,6 +315,8 @@ def main(argv=None) -> int:
         p.add_argument("--no-git", action="store_true", help="do not create a git repository")
         p.add_argument("--python", help="Python version for the project, e.g. 3.12")
         p.add_argument("--no-sync", action="store_true", help="only edit pyproject.toml; install nothing")
+        p.add_argument("--router", action="store_true",
+                       help="pages as folders of app/ (page.py, layout.py, [id]...), like Next.js")
     p_add = sub.add_parser("add", help="add or change dependencies (uv add)")
     p_add.add_argument("packages", nargs="+", metavar="PACKAGE", help='e.g. httpx or "httpx==0.27"')
     p_add.add_argument("--editable", action="store_true", help="install a local path in editable mode")
@@ -357,7 +373,8 @@ def main(argv=None) -> int:
     p_mcp.add_argument("--root", default=None, help="folder the project tools work in (default: the current one)")
     args = parser.parse_args(argv)
     if args.command in ("new", "init"):
-        options = dict(app=args.app, git=not args.no_git, python=args.python, sync=not args.no_sync)
+        options = dict(app=args.app, git=not args.no_git, python=args.python, sync=not args.no_sync,
+                       router=args.router)
         if args.command == "new":
             return new(args.name, script=args.script, **options)
         return init(args.path, **options)

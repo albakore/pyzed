@@ -1249,7 +1249,7 @@ def _ensure_config(project: Project, ui: str) -> None:
 
 def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_UI, package: bool = True,
          git: bool = True, python: Optional[str] = None, sync: bool = True,
-         dev_tools: Sequence[str] = DEV_TOOLS) -> Project:
+         dev_tools: Sequence[str] = DEV_TOOLS, template: str = "form") -> Project:
     """Creates a Pyzed project at ``path``, or adds Pyzed to the ``uv`` project already there.
 
     - No ``pyproject.toml`` yet: runs ``uv init`` (``--package`` puts the backend in
@@ -1259,6 +1259,8 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
       ``pyproject.toml``, without resolving or installing anything).
     - ``git=True`` creates a git repository unless the folder is already inside one.
     - A new project gets an ``AGENTS.md``: how AI agents should build, design and check it.
+    - ``template="router"`` makes the pages folders of ``app/`` (``pyzed.routing``, like Next.js) started by
+      ``main.py``, which becomes the project's ``script``, instead of the starter form.
 
     Raises ``RuntimeError`` with uv's message when ``uv init`` fails.
     """
@@ -1286,17 +1288,23 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
         init_py = project.src_dir / module / "__init__.py"
         if init_py.parent.is_dir():
             init_py.write_text(BACKEND.format(name=project.name), encoding="utf-8")
+    if template == "router":
+        script = "main.py" if fresh or not (root / "main.py").exists() else "app_main.py"
+        if not (root / "app").exists():
+            title = re.sub(r"[-_]+", " ", project.name).strip().title() or "My App"
+            write_router_app(root, title, main=script)
+        _set_pyzed_keys(project, script=script, main=None)
     elif fresh and not package:
         (root / "main.py").write_text(
             '"""Opens the main window: `uv run main.py`."""\n\nfrom pyzed import project\n\n'
             'if __name__ == "__main__":\n    project.run()\n', encoding="utf-8")
     agents = root / "AGENTS.md"
     if fresh and not agents.exists():  # how AI coding agents should work on the project
-        template = (Path(__file__).parent / "templates" / "AGENTS.md").read_text(encoding="utf-8")
+        guide = (Path(__file__).parent / "templates" / "AGENTS.md").read_text(encoding="utf-8")
         backend = f"`src/{module}/`" if package else "The modules next to `pyproject.toml`"
-        agents.write_text(template.replace("{backend}", backend), encoding="utf-8")
+        agents.write_text(guide.replace("{backend}", backend), encoding="utf-8")
     project.ui_dir.mkdir(parents=True, exist_ok=True)
-    if not project.main_form.exists():
+    if template != "router" and not project.main_form.exists():
         title = re.sub(r"[-_]+", " ", project.name).strip().title() or "My App"
         _write_main_form(project, title)
         handlers = project.main_form.with_suffix(".py")
@@ -1314,6 +1322,24 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
     if git and not project.is_git:
         project.git_init()
     return project.reload()
+
+
+def write_router_app(root: PathLike, title: str, *, main: Optional[str] = "main.py") -> None:
+    """Writes the starter of an app with routes in folders: ``app/`` (layout, pages, loading, error, not found)
+    and the script that runs it, called ``main`` (``None`` leaves it out). See ``pyzed.routing``."""
+    root = Path(root)
+    source = Path(__file__).parent / "templates" / "router"
+    for file in sorted(source.rglob("*.py")):
+        rel = file.relative_to(source)
+        if "__pycache__" in rel.parts:
+            continue
+        if rel.as_posix() == "main.py":
+            if main is None:
+                continue
+            rel = Path(main)
+        target = root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(file.read_text(encoding="utf-8").replace("{name}", title), encoding="utf-8")
 
 
 def run(form: Optional[PathLike] = None, *, reload: Optional[bool] = None) -> None:
